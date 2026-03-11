@@ -9,7 +9,7 @@ export default defineConfig({
     port: 5174,
     host: true,
     strictPort: true,
-    allowedHosts: ['.ngrok-free.dev', '.trycloudflare.com'],
+    allowedHosts: ['.ngrok-free.dev', '.trycloudflare.com', 'travelstream.fr', 'www.travelstream.fr'],
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

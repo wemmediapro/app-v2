@@ -9,10 +9,12 @@ import {
   Search,
   RefreshCw,
   ExternalLink,
+  Play,
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import VideoPlayerModal from '../components/VideoPlayerModal';
 
 const Bibliotheque = () => {
   const { t } = useLanguage();
@@ -26,6 +28,7 @@ const Bibliotheque = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [deletingPath, setDeletingPath] = useState(null);
+  const [videoPlayerModal, setVideoPlayerModal] = useState({ open: false, src: '', title: '' });
 
   const fetchMedia = async () => {
     setLoading(true);
@@ -212,14 +215,24 @@ const Bibliotheque = () => {
                     />
                   )}
                   {item.type === 'video' && (
-                    <video
-                      src={url}
-                      controls
-                      controlsList="nodownload"
-                      playsInline
-                      preload="metadata"
-                      className="w-full h-full object-contain bg-black"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setVideoPlayerModal({ open: true, src: item.path || item.url, title: item.name })}
+                      className="w-full h-full flex items-center justify-center bg-black relative group cursor-pointer"
+                    >
+                      <video
+                        src={url}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="w-full h-full object-contain pointer-events-none group-hover:opacity-90"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                          <Play size={28} className="text-gray-800 ml-1" fill="currentColor" />
+                        </div>
+                      </div>
+                    </button>
                   )}
                   {item.type === 'audio' && (
                     <div className="w-full p-4 flex items-center justify-center bg-gradient-to-b from-gray-100 to-gray-50">
@@ -292,6 +305,13 @@ const Bibliotheque = () => {
           })}
         </div>
       )}
+
+      <VideoPlayerModal
+        open={videoPlayerModal.open}
+        onClose={() => setVideoPlayerModal((prev) => ({ ...prev, open: false }))}
+        src={videoPlayerModal.src}
+        title={videoPlayerModal.title}
+      />
     </div>
   );
 };

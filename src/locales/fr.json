@@ -478,6 +478,12 @@
     "logout": "Déconnexion",
     "editProfile": "Modifier mon profil",
     "save": "Enregistrer",
+    "changePassword": "Changer le mot de passe",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmNewPassword": "Confirmer le nouveau mot de passe",
+    "currentPasswordRequired": "Indiquez votre mot de passe actuel.",
+    "passwordsDoNotMatch": "Les deux nouveaux mots de passe ne correspondent pas.",
     "clearCache": "Vider le cache",
     "clearPositionsOnly": "Vider les positions",
     "clearPositionsOnlyHint": "Supprime uniquement les positions de lecture (films/séries), sans effacer le cache médias."

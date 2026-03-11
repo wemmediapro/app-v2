@@ -19,10 +19,10 @@ import {
   Award
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
-import { availableShips } from '../data/ships';
 import toast from 'react-hot-toast';
 import { LANG_LIST, emptyTranslationsAll, emptyMenuTranslations, emptyPromotionTranslations } from '../utils/i18n';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useBoatConfig } from '../contexts/BoatConfigContext';
 
 /** URL d’image : si relative (/uploads/...), on préfixe par l’origine pour que le proxy du dashboard serve l’image */
 const DEFAULT_RESTAURANT_IMAGE = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=400&fit=crop';
@@ -154,6 +154,7 @@ function restaurantToFormState(r) {
 
 const Restaurants = () => {
   const { t } = useLanguage();
+  const { boatConfig } = useBoatConfig();
   const [restaurants, setRestaurants] = useState([]);
   const [restaurantsLoading, setRestaurantsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -457,7 +458,7 @@ const Restaurants = () => {
       return;
     }
 
-    if (!newRestaurant.shipId) {
+    if (!newRestaurant.shipName && !boatConfig.shipName) {
       toast.error('Veuillez sélectionner un bateau');
       return;
     }
@@ -517,8 +518,8 @@ const Restaurants = () => {
         })),
         promotions: newRestaurant.promotions || [],
         isOpen: newRestaurant.isOpen !== false,
-        shipId: newRestaurant.shipId || undefined,
-        shipName: newRestaurant.shipName || undefined,
+        shipId: newRestaurant.shipId || '1',
+        shipName: newRestaurant.shipName || boatConfig.shipName || undefined,
         image: imageUrl,
         translations: Object.keys(translations).length ? translations : undefined
       };
@@ -562,7 +563,7 @@ const Restaurants = () => {
       toast.error('Veuillez remplir au moins le nom, le type de restaurant et la description (français)');
       return;
     }
-    if (!newRestaurant.shipId) {
+    if (!newRestaurant.shipName && !boatConfig.shipName) {
       toast.error('Veuillez sélectionner un bateau');
       return;
     }
@@ -623,8 +624,8 @@ const Restaurants = () => {
         })),
         promotions: newRestaurant.promotions || [],
         isOpen: newRestaurant.isOpen !== false,
-        shipId: newRestaurant.shipId || undefined,
-        shipName: newRestaurant.shipName || undefined,
+        shipId: newRestaurant.shipId || '1',
+        shipName: newRestaurant.shipName || boatConfig.shipName || undefined,
         image: imageUrl || undefined,
         translations: Object.keys(translations).length ? translations : undefined
       };
@@ -703,8 +704,8 @@ const Restaurants = () => {
       menu: [],
       promotions: [],
       isOpen: true,
-      shipId: '',
-      shipName: '',
+      shipId: '1',
+      shipName: boatConfig.shipName || '',
       translations: emptyTranslationsAll()
     });
   };
@@ -736,7 +737,7 @@ const Restaurants = () => {
             setActiveLang('fr');
             setNewRestaurant({
               name: '', type: '', category: 'french', description: '', location: '', priceRange: '€€', openingHours: '', rating: 4.5,
-              specialties: [], menu: [], promotions: [], isOpen: true, shipId: '', shipName: '', translations: emptyTranslationsAll()
+              specialties: [], menu: [], promotions: [], isOpen: true, shipId: '1', shipName: boatConfig.shipName || '', translations: emptyTranslationsAll()
             });
             setShowAddModal(true);
           }}
@@ -1055,31 +1056,11 @@ const Restaurants = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     {getFormLabel(activeLang, 'shipLabel')} <span className="text-amber-600">*</span>
                   </label>
-                  <select
-                    value={newRestaurant.shipId}
-                    onChange={(e) => {
-                      const selectedShip = availableShips.find(ship => ship.id.toString() === e.target.value);
-                      setNewRestaurant({
-                        ...newRestaurant,
-                        shipId: e.target.value,
-                        shipName: selectedShip ? selectedShip.name : ''
-                      });
-                    }}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  >
-                    <option value="">{getFormLabel(activeLang, 'selectShipPlaceholder')}</option>
-                    {availableShips.map((ship) => (
-                      <option key={ship.id} value={ship.id}>
-                        {ship.name}
-                      </option>
-                    ))}
-                  </select>
-                  {newRestaurant.shipName && (
-                    <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-                      <Ship size={12} />
-                      {newRestaurant.shipName}
-                    </p>
-                  )}
+                  <div className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 flex items-center gap-2">
+                    <Ship size={18} className="text-slate-500 shrink-0" />
+                    {newRestaurant.shipName || boatConfig.shipName || getFormLabel(activeLang, 'selectShipPlaceholder')}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">{t('settings.boatConfigSubtitle')}</p>
                 </div>
               </section>
 

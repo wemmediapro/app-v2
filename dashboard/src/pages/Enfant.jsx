@@ -16,7 +16,6 @@ const Enfant = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [countryFilter, setCountryFilter] = useState('all');
   const [destinationFilter, setDestinationFilter] = useState('all');
-  const [shipFilter, setShipFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
   const [imageFile, setImageFile] = useState(null);

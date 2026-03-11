@@ -37,7 +37,6 @@ const Users = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [countryFilter, setCountryFilter] = useState('all');
   const [destinationFilter, setDestinationFilter] = useState('all');
-  const [shipFilter, setShipFilter] = useState('all');
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -81,7 +80,7 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [searchTerm, roleFilter, statusFilter, countryFilter, destinationFilter, shipFilter]);
+  }, [searchTerm, roleFilter, statusFilter, countryFilter, destinationFilter]);
 
   const fetchUsers = async () => {
     try {
@@ -334,8 +333,6 @@ const Users = () => {
             setCountryFilter={setCountryFilter}
             destinationFilter={destinationFilter}
             setDestinationFilter={setDestinationFilter}
-            shipFilter={shipFilter}
-            setShipFilter={setShipFilter}
           />
         </div>
       </div>

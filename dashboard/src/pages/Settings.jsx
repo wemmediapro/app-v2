@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Fragment } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -10,9 +10,13 @@ import {
   Save,
   RotateCcw,
   ChevronRight,
+  Ship,
+  Wifi,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useBoatConfig } from '../contexts/BoatConfigContext';
+import { apiService } from '../services/apiService';
 
 const STORAGE_KEY = 'dashboardAccessByRole';
 
@@ -33,6 +37,7 @@ export const DASHBOARD_MODULES = [
   { id: 'users', labelKey: 'navigation.users', groupKey: 'navigation.community' },
   { id: 'messages', labelKey: 'navigation.notifications', groupKey: 'navigation.community' },
   { id: 'settings', labelKey: 'navigation.settings', groupKey: 'navigation.community' },
+  { id: 'settings-connection', labelKey: 'settings.goToConnections', groupKey: 'navigation.community' },
 ];
 
 const ROLES = [
@@ -65,7 +70,7 @@ function getDefaultAccess() {
   const crew = Object.fromEntries(
     modules.map((id) => [
       id,
-      ['dashboard', 'radio', 'movies', 'webtv', 'bibliotheque', 'magazine', 'restaurants', 'shop', 'shipmap', 'enfant', 'banners', 'messages'].includes(id),
+      ['dashboard', 'radio', 'movies', 'webtv', 'bibliotheque', 'magazine', 'restaurants', 'shop', 'shipmap', 'enfant', 'banners', 'messages', 'settings-connection'].includes(id),
     ])
   );
   const passenger = Object.fromEntries(modules.map((id) => [id, false]));
@@ -101,8 +106,51 @@ export function getAccessByRole() {
 const Settings = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { boatConfig, loading: loadingBoat, refreshBoatConfig } = useBoatConfig();
   const [access, setAccess] = useState(() => loadAccess());
   const [saved, setSaved] = useState(true);
+
+  // Formulaire unique du bateau (nom, capacité, informations)
+  const [boatForm, setBoatForm] = useState({
+    shipName: '',
+    shipCapacity: '',
+    shipInfo: ''
+  });
+  const [savingBoat, setSavingBoat] = useState(false);
+
+  useEffect(() => {
+    if (!loadingBoat) {
+      setBoatForm({
+        shipName: boatConfig.shipName ?? '',
+        shipCapacity: boatConfig.shipCapacity != null ? String(boatConfig.shipCapacity) : '',
+        shipInfo: boatConfig.shipInfo ?? ''
+      });
+    }
+  }, [loadingBoat, boatConfig.shipName, boatConfig.shipCapacity, boatConfig.shipInfo]);
+
+  const handleSaveBoat = async (e) => {
+    e.preventDefault();
+    const shipName = (boatForm.shipName || '').trim();
+    const capacityNum = boatForm.shipCapacity === '' ? null : parseInt(boatForm.shipCapacity, 10);
+    if (capacityNum !== null && (Number.isNaN(capacityNum) || capacityNum < 0)) {
+      toast.error(t('settings.capacityInvalid'));
+      return;
+    }
+    setSavingBoat(true);
+    try {
+      await apiService.updateBoatConfig({
+        shipName: shipName || '',
+        shipCapacity: capacityNum,
+        shipInfo: (boatForm.shipInfo || '').trim()
+      });
+      toast.success(t('settings.boatConfigSaved'));
+      refreshBoatConfig();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || t('settings.boatConfigSaveError'));
+    } finally {
+      setSavingBoat(false);
+    }
+  };
 
   useEffect(() => {
     const stored = loadAccess();
@@ -149,6 +197,82 @@ const Settings = () => {
           <p className="text-sm text-slate-500 mt-0.5">{t('settings.pageSubtitle')}</p>
         </div>
       </div>
+
+      {/* Section Informations du bateau (utilisées dans restaurant, shop, plan du bateau) */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+      >
+        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Ship size={20} />
+            {t('settings.boatConfigTitle')}
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">{t('settings.boatConfigSubtitle')}</p>
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-center gap-3">
+            <Wifi className="text-blue-600 shrink-0" size={20} />
+            <p className="text-sm text-blue-800">
+              {t('settings.connectionLimitServerLocal')}{' '}
+              <Link to="/settings/connection" className="font-medium underline hover:no-underline">
+                {t('settings.goToConnections')}
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <form onSubmit={handleSaveBoat} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('settings.shipName')}
+              </label>
+              <input
+                type="text"
+                value={boatForm.shipName}
+                onChange={(e) => setBoatForm((s) => ({ ...s, shipName: e.target.value }))}
+                placeholder="Ex: GNV Excellent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('settings.capacity')}
+              </label>
+              <input
+                type="number"
+                min={0}
+                value={boatForm.shipCapacity}
+                onChange={(e) => setBoatForm((s) => ({ ...s, shipCapacity: e.target.value }))}
+                placeholder="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="lg:col-span-1 flex items-end">
+              <button
+                type="submit"
+                disabled={savingBoat}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save size={18} />
+                {savingBoat ? t('common.saving') : t('common.save')}
+              </button>
+            </div>
+            <div className="lg:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('settings.boatInfoLabel')}
+              </label>
+              <textarea
+                value={boatForm.shipInfo}
+                onChange={(e) => setBoatForm((s) => ({ ...s, shipInfo: e.target.value }))}
+                placeholder={t('settings.boatInfoPlaceholder')}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </form>
+        </div>
+      </motion.section>
 
       {/* Section Rôles */}
       <motion.section
@@ -280,6 +404,8 @@ const Settings = () => {
           </table>
         </div>
       </motion.section>
+
+      {/* Section Accès par rôle */}
     </div>
   );
 };

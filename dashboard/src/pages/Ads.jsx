@@ -5,6 +5,8 @@ import { Video, Plus, Edit, Trash2, Search, Filter, Eye, EyeOff, Calendar, X, Up
 import { apiService } from '../services/apiService';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import { getVideoPreviewUrl } from '../utils/videoPreviewUrl';
+import VideoPlayerModal from '../components/VideoPlayerModal';
 
 const Ads = () => {
   const { t } = useLanguage();
@@ -20,6 +22,7 @@ const Ads = () => {
   const [mediaLibraryLoading, setMediaLibraryLoading] = useState(false);
   const [videoUploading, setVideoUploading] = useState(false);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [videoPlayerModal, setVideoPlayerModal] = useState({ open: false, src: '', title: '' });
   const [form, setForm] = useState({
     name: '',
     videoUrl: '',
@@ -87,14 +90,6 @@ const Ads = () => {
   };
 
   const clearVideo = () => setForm((prev) => ({ ...prev, videoUrl: '' }));
-
-  /** URL complète pour l’aperçu vidéo (chemins relatifs → origine courante) */
-  const getVideoPreviewUrl = (url) => {
-    if (!url || typeof url !== 'string') return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    return origin ? `${origin}${url.startsWith('/') ? '' : '/'}${url}` : url;
-  };
 
   const fetchAds = async () => {
     try {
@@ -500,18 +495,36 @@ const Ads = () => {
                       </div>
                     )}
                     <div className="flex items-center gap-4">
-                      <div className="relative w-32 h-20 rounded-lg overflow-hidden bg-black border border-gray-200 flex items-center justify-center flex-shrink-0">
+                      <div
+                        className="relative w-32 h-20 rounded-lg overflow-hidden bg-black border border-gray-200 flex items-center justify-center flex-shrink-0 cursor-pointer group"
+                        onClick={() => form.videoUrl && getVideoPreviewUrl(form.videoUrl) && setVideoPlayerModal({ open: true, src: form.videoUrl, title: t('ads.videoSelected') || 'Vidéo sélectionnée' })}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => form.videoUrl && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setVideoPlayerModal({ open: true, src: form.videoUrl, title: t('ads.videoSelected') || 'Vidéo sélectionnée' }))}
+                        aria-label="Lire la vidéo"
+                      >
                         {videoUploading ? (
                           <Upload size={28} className="text-blue-400 animate-pulse" />
                         ) : (
-                          <video
-                            key={form.videoUrl}
-                            src={getVideoPreviewUrl(form.videoUrl)}
-                            controls
-                            playsInline
-                            className="w-full h-full object-contain"
-                            preload="metadata"
-                          />
+                          getVideoPreviewUrl(form.videoUrl) ? (
+                            <>
+                              <video
+                                key={form.videoUrl}
+                                src={getVideoPreviewUrl(form.videoUrl)}
+                                className="w-full h-full object-cover pointer-events-none group-hover:opacity-90"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow">
+                                  <Play size={16} className="text-gray-800 ml-0.5" fill="currentColor" />
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <Video size={24} className="text-white" />
+                          )
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -741,6 +754,13 @@ const Ads = () => {
           </motion.div>
         </div>
       )}
+
+      <VideoPlayerModal
+        open={videoPlayerModal.open}
+        onClose={() => setVideoPlayerModal((prev) => ({ ...prev, open: false }))}
+        src={videoPlayerModal.src}
+        title={videoPlayerModal.title}
+      />
 
     </div>
   );

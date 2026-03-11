@@ -11,11 +11,9 @@ import {
   Unlock,
   Filter,
   Globe,
-  MapPin,
-  Ship
+  MapPin
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
-import { availableShips } from '../data/ships';
 import toast from 'react-hot-toast';
 
 const getMessageContent = (msg) => msg?.content || '';
@@ -28,7 +26,7 @@ const Messages = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [countryFilter, setCountryFilter] = useState('all');
   const [destinationFilter, setDestinationFilter] = useState('all');
-  const [shipFilter, setShipFilter] = useState('all');
+  const [destinationFilter, setDestinationFilter] = useState('all');
 
   // Pays disponibles
   const availableCountries = [
@@ -140,18 +138,9 @@ const Messages = () => {
       });
     }
 
-    // Filtre par bateau
-    if (shipFilter !== 'all') {
-      filtered = filtered.filter(conv => {
-        const userShipId = conv.user?.shipId || conv.user?.shipName || '';
-        const shipIdStr = shipFilter.toString();
-        return userShipId.toString() === shipIdStr || 
-               (conv.user?.shipName && conv.user.shipName.toLowerCase().includes(availableShips.find(s => s.id.toString() === shipIdStr)?.name?.toLowerCase() || ''));
-      });
-    }
-
+    // Filtre par bateau (supprimé : un seul bateau configuré dans Paramètres)
     return filtered;
-  }, [conversations, searchQuery, countryFilter, destinationFilter, shipFilter]);
+  }, [conversations, searchQuery, countryFilter, destinationFilter]);
 
   return (
     <div className="space-y-6">
@@ -220,34 +209,13 @@ const Messages = () => {
               </select>
             </div>
 
-            {/* Filtre par bateau */}
-            <div className="flex-1 sm:min-w-[150px]">
-              <label className="block text-xs text-gray-600 mb-1 flex items-center gap-1">
-                <Ship size={12} />
-                Bateau
-              </label>
-              <select
-                value={shipFilter}
-                onChange={(e) => setShipFilter(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">Tous les bateaux</option>
-                {availableShips.map((ship) => (
-                  <option key={ship.id} value={ship.id}>
-                    {ship.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {/* Bouton réinitialiser */}
-            {(countryFilter !== 'all' || destinationFilter !== 'all' || shipFilter !== 'all') && (
+            {(countryFilter !== 'all' || destinationFilter !== 'all') && (
               <div className="flex items-end">
                 <button
                   onClick={() => {
                     setCountryFilter('all');
                     setDestinationFilter('all');
-                    setShipFilter('all');
                   }}
                   className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors border border-gray-300"
                 >

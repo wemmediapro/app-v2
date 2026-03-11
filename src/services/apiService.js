@@ -306,6 +306,7 @@ export const apiService = {
   register: (userData) => api.post('/auth/register', userData),
   getProfile: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
+  changePassword: (data) => api.put('/auth/change-password', data),
   /** Données utilisateur (favoris + positions de lecture) — persistées côté serveur */
   getUserData: () => api.get('/auth/user-data'),
   putUserData: (data) => api.put('/auth/user-data', data),

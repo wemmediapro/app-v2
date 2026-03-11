@@ -47,6 +47,10 @@ function App() {
   const [profileEditMode, setProfileEditMode] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState('');
   const [profileSaveLoading, setProfileSaveLoading] = useState(false);
+  const [profileEditCurrentPassword, setProfileEditCurrentPassword] = useState('');
+  const [profileEditNewPassword, setProfileEditNewPassword] = useState('');
+  const [profileEditConfirmPassword, setProfileEditConfirmPassword] = useState('');
+  const [showProfileEditPassword, setShowProfileEditPassword] = useState(false);
 
   // Plein écran (vidéo)
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
@@ -3292,15 +3296,17 @@ function App() {
       <AnimatePresence mode="wait">
         {!isAuthed ? (
           <>
-            {/* Barre haute : logo + sélecteur de langue */}
+            {/* Barre haute : logo + sélecteur de langue (logo masqué en inscription) */}
             <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-6 py-3 md:py-4 safe-area-top">
               <div className="flex items-center gap-2 text-white">
-                <img src="/logo-gnv.png" alt="GNV" className="h-6 md:h-7 w-auto object-contain" />
+                {authView !== 'signup' && (
+                  <img src="/logo-gnv.png" alt="GNV" className="h-6 md:h-7 w-auto object-contain" />
+                )}
                 <span className="font-bold text-lg md:text-xl">GNV OnBoard</span>
               </div>
               <LanguageSelector variant="light" />
             </header>
-          <div className="min-h-screen w-full flex flex-col items-center overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 pt-20 md:pt-24 pb-[max(2.5rem,calc(2.5rem+env(safe-area-inset-bottom,0px)))] md:pb-16">
+          <div className="relative z-10 min-h-screen w-full flex flex-col items-center overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 pt-20 md:pt-24 pb-[max(2.5rem,calc(2.5rem+env(safe-area-inset-bottom,0px)))] md:pb-16">
           <motion.div key={authView} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="w-full max-w-md md:max-w-lg lg:max-w-xl rounded-2xl md:rounded-3xl bg-white/95 md:bg-white p-5 sm:p-6 md:p-8 shadow-xl md:shadow-2xl backdrop-blur-md border border-slate-100/50 md:my-auto shrink-0">
             {authView === 'login' && (
               <>
@@ -6193,6 +6199,30 @@ function App() {
                                   country: profile.country?.trim() || undefined,
                                   dateOfBirth: profile.dob?.trim() || undefined
                                 });
+                                if (profileEditNewPassword.trim()) {
+                                  if (!profileEditCurrentPassword.trim()) {
+                                    setProfileSaveError(t('profile.currentPasswordRequired') || 'Indiquez votre mot de passe actuel.');
+                                    setProfileSaveLoading(false);
+                                    return;
+                                  }
+                                  if (profileEditNewPassword !== profileEditConfirmPassword) {
+                                    setProfileSaveError(t('profile.passwordsDoNotMatch') || 'Les deux nouveaux mots de passe ne correspondent pas.');
+                                    setProfileSaveLoading(false);
+                                    return;
+                                  }
+                                  if (profileEditNewPassword.trim().length < 8) {
+                                    setProfileSaveError(t('auth.passwordMin') || 'Le mot de passe doit contenir au moins 8 caractères.');
+                                    setProfileSaveLoading(false);
+                                    return;
+                                  }
+                                  await apiService.changePassword({
+                                    currentPassword: profileEditCurrentPassword,
+                                    newPassword: profileEditNewPassword.trim()
+                                  });
+                                  setProfileEditCurrentPassword('');
+                                  setProfileEditNewPassword('');
+                                  setProfileEditConfirmPassword('');
+                                }
                                 setProfileEditMode(false);
                               } catch (err) {
                                 setProfileSaveError(err.response?.data?.message || t('auth.signupError') || 'Erreur lors de l\'enregistrement');
@@ -6250,12 +6280,37 @@ function App() {
                                   </div>
                                 </div>
                               </div>
+                              <div className="border-t border-slate-200 pt-4 mt-2">
+                                <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-3">{t('profile.changePassword') || 'Changer le mot de passe'}</p>
+                                <div className="space-y-3">
+                                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
+                                    <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.currentPassword') || 'Mot de passe actuel'}</label>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <Lock size={16} className="text-slate-500 flex-shrink-0" />
+                                      <input type={showProfileEditPassword ? 'text' : 'password'} value={profileEditCurrentPassword} onChange={(e) => setProfileEditCurrentPassword(e.target.value)} placeholder={t('profile.currentPassword') || 'Mot de passe actuel'} className="flex-1 bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-500" autoComplete="current-password" />
+                                      <button type="button" onClick={() => setShowProfileEditPassword(!showProfileEditPassword)} className="p-1.5 text-slate-500 hover:text-slate-600 rounded" aria-label={showProfileEditPassword ? t('auth.hidePassword') : t('auth.showPassword')}>{showProfileEditPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                                    </div>
+                                  </div>
+                                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
+                                    <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.newPassword') || 'Nouveau mot de passe'}</label>
+                                    <input type={showProfileEditPassword ? 'text' : 'password'} value={profileEditNewPassword} onChange={(e) => setProfileEditNewPassword(e.target.value)} placeholder={t('profile.newPassword') || 'Nouveau mot de passe (min. 8 caractères)'} className="w-full bg-transparent text-sm font-medium text-slate-900 mt-1 outline-none placeholder:text-slate-500" autoComplete="new-password" minLength={8} />
+                                  </div>
+                                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
+                                    <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.confirmNewPassword') || 'Confirmer le nouveau mot de passe'}</label>
+                                    <input type={showProfileEditPassword ? 'text' : 'password'} value={profileEditConfirmPassword} onChange={(e) => setProfileEditConfirmPassword(e.target.value)} placeholder={t('profile.confirmNewPassword') || 'Confirmer'} className="w-full bg-transparent text-sm font-medium text-slate-900 mt-1 outline-none placeholder:text-slate-500" autoComplete="new-password" minLength={8} />
+                                  </div>
+                                  <p className="text-[11px] text-slate-500">Laissez vide pour ne pas modifier le mot de passe.</p>
+                                </div>
+                              </div>
                               <div className="flex flex-wrap gap-3 pt-2">
                                 <motion.button type="submit" disabled={profileSaveLoading} whileTap={{ scale: 0.98 }} className="min-w-[120px] rounded-xl bg-[#264FFF] px-4 py-3 text-sm font-medium text-white hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-[#264FFF] focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed">
                                   {profileSaveLoading ? t('common.loading') || 'Enregistrement…' : t('profile.save') || 'Enregistrer'}
                                 </motion.button>
                                 <motion.button type="button" disabled={profileSaveLoading} whileTap={{ scale: 0.98 }} onClick={async () => {
                                   setProfileSaveError('');
+                                  setProfileEditCurrentPassword('');
+                                  setProfileEditNewPassword('');
+                                  setProfileEditConfirmPassword('');
                                   setProfileEditMode(false);
                                   try {
                                     const res = await apiService.getProfile();
@@ -6408,9 +6463,9 @@ function App() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.25 }}
-                    className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/20"
+                    className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/20 relative"
                   >
-                    <div className="mx-auto w-full max-w-lg md:max-w-xl lg:max-w-2xl px-3 sm:px-4 md:px-6 py-6 md:py-8 pb-[max(5rem,calc(4rem+env(safe-area-inset-bottom,0px)))] sm:pb-24">
+                    <div className="relative z-10 mx-auto w-full max-w-lg md:max-w-xl lg:max-w-2xl px-3 sm:px-4 md:px-6 py-6 md:py-8 pb-[max(5rem,calc(4rem+env(safe-area-inset-bottom,0px)))] sm:pb-24">
                       <div className="bg-white rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-8 shadow-xl md:shadow-2xl border border-slate-100/50">
                         <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1 md:mb-2">Inscription</h1>
                         <div className="mt-2 md:mt-3 flex items-center gap-2 md:gap-3" role="tablist" aria-label="Étapes d'inscription">

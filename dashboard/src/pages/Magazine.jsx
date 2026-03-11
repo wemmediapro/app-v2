@@ -27,7 +27,6 @@ const Magazine = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [countryFilter, setCountryFilter] = useState('all');
   const [destinationFilter, setDestinationFilter] = useState('all');
-  const [shipFilter, setShipFilter] = useState('all');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingArticle, setEditingArticle] = useState(null);
@@ -338,11 +337,10 @@ const Magazine = () => {
         (article.countries && article.countries.some(country => country.toLowerCase().includes(countryFilter.toLowerCase())));
       const matchesDestination = destinationFilter === 'all' || 
         (article.destination && article.destination.toLowerCase().includes(destinationFilter.toLowerCase()));
-      const matchesShip = shipFilter === 'all' || 
-        (article.shipId && article.shipId.toString() === shipFilter.toString());
+      const matchesShip = true;
       return matchesSearch && matchesCategory && matchesCountry && matchesDestination && matchesShip;
     });
-  }, [articles, searchQuery, categoryFilter, countryFilter, destinationFilter, shipFilter]);
+  }, [articles, searchQuery, categoryFilter, countryFilter, destinationFilter]);
 
   /** Titre affiché selon la langue sélectionnée pour la liste */
   const getDisplayTitle = (article, lang) => {
@@ -940,9 +938,9 @@ const Magazine = () => {
           >
             <SlidersHorizontal size={18} />
             {t('common.advancedFilters') || 'Filtres avancés'}
-            {(countryFilter !== 'all' || destinationFilter !== 'all' || shipFilter !== 'all') && (
+            {(countryFilter !== 'all' || destinationFilter !== 'all') && (
               <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-indigo-100 px-1.5 text-xs font-semibold text-indigo-700">
-                {[countryFilter, destinationFilter, shipFilter].filter(v => v !== 'all').length}
+                {[countryFilter, destinationFilter].filter(v => v !== 'all').length}
               </span>
             )}
             <ChevronDown size={16} className={`transition-transform ${filtersExpanded ? 'rotate-180' : ''}`} />
@@ -955,8 +953,6 @@ const Magazine = () => {
               setCountryFilter={setCountryFilter}
               destinationFilter={destinationFilter}
               setDestinationFilter={setDestinationFilter}
-              shipFilter={shipFilter}
-              setShipFilter={setShipFilter}
             />
           </div>
         )}

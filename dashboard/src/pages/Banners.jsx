@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Image, Plus, Edit, Trash2, Search, Filter, Eye, EyeOff, Calendar, Link as LinkIcon, Monitor, Globe, Ship, FileText, X, Upload, Smartphone, Tablet, BarChart2, MousePointer } from 'lucide-react';
 import { apiService } from '../services/apiService';
-import { availableShips } from '../data/ships';
+import { useBoatConfig } from '../contexts/BoatConfigContext';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const Banners = () => {
   const { t, language } = useLanguage();
+  const { boatConfig } = useBoatConfig();
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -127,15 +128,6 @@ const Banners = () => {
       countries: newBanner.countries.includes(countryName)
         ? newBanner.countries.filter(c => c !== countryName)
         : [...newBanner.countries, countryName]
-    });
-  };
-
-  const toggleShip = (shipId) => {
-    setNewBanner({
-      ...newBanner,
-      ships: newBanner.ships.includes(shipId)
-        ? newBanner.ships.filter(s => s !== shipId)
-        : [...newBanner.ships, shipId]
     });
   };
 
@@ -507,14 +499,9 @@ const Banners = () => {
                   {banner.ships?.length > 0 && (
                     <div className="flex items-center gap-1 flex-wrap">
                       <Ship size={12} className="text-gray-400" />
-                      {banner.ships.map((shipId, idx) => {
-                        const ship = availableShips.find(s => s.id === shipId);
-                        return ship ? (
-                          <span key={idx} className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
-                            {ship.name}
-                          </span>
-                        ) : null;
-                      })}
+                      <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
+                        {boatConfig.shipName || t('shop.shipLabel')}
+                      </span>
                     </div>
                   )}
                   {banner.pages?.length > 0 && (
@@ -897,45 +884,6 @@ const Banners = () => {
                           </button>
                         </span>
                       ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Affecter aux bateaux */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <Ship size={16} className="text-green-600" />
-                    {t('banners.assignShips')}
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-gray-50 rounded-lg">
-                    {availableShips.map((ship) => (
-                      <label key={ship.id} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={newBanner.ships.includes(ship.id)}
-                          onChange={() => toggleShip(ship.id)}
-                          className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                        />
-                        <span className="text-sm text-gray-700">{ship.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {newBanner.ships.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {newBanner.ships.map((shipId) => {
-                        const ship = availableShips.find(s => s.id === shipId);
-                        return ship ? (
-                          <span key={shipId} className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-                            {ship.name}
-                            <button
-                              onClick={() => toggleShip(shipId)}
-                              className="hover:text-green-900"
-                            >
-                              <X size={12} />
-                            </button>
-                          </span>
-                        ) : null;
-                      })}
                     </div>
                   )}
                 </div>

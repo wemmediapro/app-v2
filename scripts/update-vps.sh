@@ -17,6 +17,11 @@ SRC="$(cd "$(dirname "$0")/.." && pwd)"
 UPDATE_DB="${UPDATE_DB:-0}"
 [ "$1" = "--with-db" ] && UPDATE_DB=1
 
+# Mot de passe SSH : SSHPASS ou fichier .vps-pass (comme deploy-travelstream-vps.sh)
+if [ -z "$SSHPASS" ] && [ -f "$SRC/.vps-pass" ]; then
+  export SSHPASS="$(head -n1 "$SRC/.vps-pass" | tr -d '\r\n')"
+fi
+
 if [ -n "$SSHPASS" ]; then
   command -v sshpass &>/dev/null || { echo "Installez sshpass (brew install sshpass / apt install sshpass) pour utiliser SSHPASS"; exit 1; }
   export SSHPASS

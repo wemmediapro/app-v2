@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Map, Plus, Edit, Trash2, Search, Layers, Ship, X, RefreshCw, Upload, Image, Globe } from 'lucide-react';
 import { apiService } from '../services/apiService';
-import { availableShips } from '../data/ships';
 import { LANG_LIST } from '../utils/i18n';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useBoatConfig } from '../contexts/BoatConfigContext';
 
 const DECK_TYPES = [
   { value: 'passenger', labelKey: 'shipmap.deckType_pont_cabines' },
@@ -20,11 +20,12 @@ const ShipMap = () => {
   const [decks, setDecks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [shipFilter, setShipFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [editingDeck, setEditingDeck] = useState(null);
   const [newService, setNewService] = useState('');
   const [uploadingServiceIcon, setUploadingServiceIcon] = useState(null);
+
+  const { boatConfig } = useBoatConfig();
 
   const emptyNameByLocale = () => ({ fr: '', en: '', es: '', it: '', de: '', ar: '' });
   const normalizeServiceItem = (s) => {
@@ -40,7 +41,7 @@ const ShipMap = () => {
     area: '',
     capacity: 0,
     shipId: '',
-    shipName: '',
+    shipName: boatConfig.shipName || '',
     services: [],
     isActive: true,
     nameByLocale: { fr: '', en: '', es: '', it: '', de: '', ar: '' },
@@ -49,13 +50,12 @@ const ShipMap = () => {
 
   useEffect(() => {
     fetchDecks();
-  }, [shipFilter]);
+  }, []);
 
   const fetchDecks = async () => {
     try {
       setLoading(true);
-      const params = shipFilter !== 'all' ? `shipId=${shipFilter}` : '';
-      const response = await apiService.getShipmapDecks(params);
+      const response = await apiService.getShipmapDecks('');
       setDecks(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching decks:', error);
@@ -92,7 +92,7 @@ const ShipMap = () => {
       area: '',
       capacity: 0,
       shipId: '',
-      shipName: '',
+      shipName: boatConfig.shipName || '',
       services: [],
       isActive: true,
       nameByLocale: { fr: '', en: '', es: '', it: '', de: '', ar: '' },
@@ -137,16 +137,6 @@ const ShipMap = () => {
     });
     setNewService('');
     setShowModal(true);
-  };
-
-  const handleShipSelect = (e) => {
-    const id = e.target.value;
-    const ship = availableShips.find((s) => String(s.id) === id);
-    setForm((prev) => ({
-      ...prev,
-      shipId: id ? Number(id) : '',
-      shipName: ship ? ship.name : '',
-    }));
   };
 
   const addService = () => {
@@ -211,12 +201,12 @@ const ShipMap = () => {
       toast.error(t('shipmap.fillRequired'));
       return;
     }
-    const shipId = form.shipId ? Number(form.shipId) : null;
-    const shipName = form.shipName || availableShips.find((s) => s.id === shipId)?.name || '';
-    if (!shipId || !shipName) {
+    const shipName = form.shipName || boatConfig.shipName || '';
+    if (!shipName.trim()) {
       toast.error(t('shipmap.selectShipRequired'));
       return;
     }
+    const shipId = form.shipId ? Number(form.shipId) : 1;
 
     const nameByLocale = { ...(form.nameByLocale || {}), fr: frName };
     const descriptionByLocale = { ...(form.descriptionByLocale || {}), fr: (form.descriptionByLocale?.fr ?? form.description)?.trim() || '' };
@@ -227,7 +217,7 @@ const ShipMap = () => {
       area: form.area?.trim() || undefined,
       capacity: Number(form.capacity) || 0,
       shipId,
-      shipName,
+      shipName: shipName.trim(),
       services: (form.services || []).map(normalizeServiceItem),
       isActive: form.isActive,
       nameByLocale,
@@ -319,7 +309,7 @@ const ShipMap = () => {
         </div>
       </div>
 
-      {/* Barre recherche + filtre navire */}
+      {/* Barre recherche */}
       <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
         <div className="relative flex-1 min-w-0">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -331,14 +321,6 @@ const ShipMap = () => {
             className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50/80 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-colors"
           />
         </div>
-        <select
-          value={shipFilter}
-          onChange={(e) => setShipFilter(e.target.value)}
-          className="h-10 px-4 rounded-xl border border-slate-200 bg-slate-50/80 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 shrink-0"
-        >
-          <option value="all">{t('shipmap.selectShip')}</option>
-          {availableShips.map((ship) => (<option key={ship.id} value={ship.id}>{ship.name}</option>))}
-        </select>
       </div>
 
       {/* Liste des ponts */}
@@ -385,7 +367,7 @@ const ShipMap = () => {
       {filteredDecks.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl border border-slate-200/80 bg-white">
           <div className="rounded-2xl bg-slate-100 p-6 mb-4"><Map size={40} className="text-slate-400" /></div>
-          <p className="text-slate-600 font-medium">{shipFilter !== 'all' ? t('shipmap.noDecksForShip') : t('shipmap.searchDeckPlaceholder')}</p>
+          <p className="text-slate-600 font-medium">{t('shipmap.searchDeckPlaceholder')}</p>
           <button onClick={openAddModal} className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium text-sm">{t('shipmap.addPlan')}</button>
         </div>
       )}
@@ -604,18 +586,11 @@ const ShipMap = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {t('shipmap.assignShip')}
                 </label>
-                <select
-                  value={form.shipId || ''}
-                  onChange={handleShipSelect}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">{t('shipmap.selectShipOption')}</option>
-                  {availableShips.map((ship) => (
-                    <option key={ship.id} value={ship.id}>
-                      {ship.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-700 flex items-center gap-2">
+                  <Ship size={18} className="text-slate-500 shrink-0" />
+                  {form.shipName || boatConfig.shipName || t('settings.shipName')}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{t('settings.boatConfigSubtitle')}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

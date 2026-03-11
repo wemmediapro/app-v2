@@ -99,6 +99,18 @@ const shipSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  /** Serveur d'hébergement auquel ce navire est assigné. La limite de connexions s'applique au serveur, pas au navire. */
+  hostingServer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'HostingServer',
+    default: null
+  },
+  /** @deprecated Utiliser hostingServer.maxConnections. Conservé pour rétrocompatibilité. */
+  maxConnections: {
+    type: Number,
+    min: [0, 'maxConnections cannot be negative'],
+    default: null
   }
 }, {
   timestamps: true

@@ -7,6 +7,7 @@ import { apiService } from '../services/apiService';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
 import toast from 'react-hot-toast';
+import VideoPlayerModal from '../components/VideoPlayerModal';
 
 const WebTV = () => {
   const { t } = useLanguage();
@@ -16,7 +17,6 @@ const WebTV = () => {
   const [filter, setFilter] = useState('all'); // all, live, ondemand
   const [countryFilter, setCountryFilter] = useState('all');
   const [destinationFilter, setDestinationFilter] = useState('all');
-  const [shipFilter, setShipFilter] = useState('all');
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [editingChannel, setEditingChannel] = useState(null); // copie pour modifier nom, description, etc.
   const [showModal, setShowModal] = useState(false);
@@ -54,6 +54,7 @@ const WebTV = () => {
   const [showVideoLibraryPicker, setShowVideoLibraryPicker] = useState(false);
   const [mediaLibraryVideos, setMediaLibraryVideos] = useState([]);
   const [mediaLibraryLoading, setMediaLibraryLoading] = useState(false);
+  const [videoPlayerModal, setVideoPlayerModal] = useState({ open: false, src: '', title: '' });
   const [webtvDragOverIndex, setWebtvDragOverIndex] = useState(null);
   const webtvDragSourceIndexRef = useRef(null);
   const [activeLang, setActiveLang] = useState('fr');
@@ -140,8 +141,7 @@ const WebTV = () => {
       (channel.countries && channel.countries.some(country => country.toLowerCase().includes(countryFilter.toLowerCase())));
     const matchesDestination = destinationFilter === 'all' || 
       (channel.destination && channel.destination.toLowerCase().includes(destinationFilter.toLowerCase()));
-    const matchesShip = shipFilter === 'all' || 
-      (channel.shipId && channel.shipId.toString() === shipFilter.toString());
+    const matchesShip = true;
     return matchesSearch && matchesFilter && matchesCountry && matchesDestination && matchesShip;
   });
 
@@ -1954,6 +1954,21 @@ const WebTV = () => {
                       </motion.button>
                     )}
                   </div>
+                  {newProgram.videoPreview && (
+                    <div className="mt-3 flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setVideoPlayerModal({ open: true, src: newProgram.videoPreview || newProgram.streamUrl, title: newProgram.title || 'Aperçu vidéo' })}
+                        className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                      >
+                        <Play size={18} />
+                        Lire la vidéo
+                      </button>
+                      <span className="text-xs text-gray-500">
+                        {newProgram.duration > 0 && `${Math.floor(newProgram.duration / 60)} min`}
+                      </span>
+                    </div>
+                  )}
                   {newProgram.streamUrl && (
                     <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-start justify-between">
@@ -2595,6 +2610,13 @@ const WebTV = () => {
           </motion.div>
         </div>
       )}
+
+      <VideoPlayerModal
+        open={videoPlayerModal.open}
+        onClose={() => setVideoPlayerModal((prev) => ({ ...prev, open: false }))}
+        src={videoPlayerModal.src}
+        title={videoPlayerModal.title}
+      />
     </div>
   );
 };

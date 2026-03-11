@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import { ShoppingBag, Plus, Edit, Trash2, Search, DollarSign, Package, Filter, Star, TrendingDown, X, Upload, Globe, Ship, Tag, Calendar, Percent, ChevronDown, SlidersHorizontal } from 'lucide-react';
 import FilterBar from '../components/FilterBar';
 import { apiService } from '../services/apiService';
-import { availableShips } from '../data/ships';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useBoatConfig } from '../contexts/BoatConfigContext';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
 
 /** URL d’image : chemins relatifs préfixés par l’origine pour le proxy */
@@ -23,6 +23,7 @@ function getProductImageUrl(product) {
 
 const Shop = () => {
   const { t, language } = useLanguage();
+  const { boatConfig } = useBoatConfig();
 
   /** Nom du produit selon la langue (translations ou name par défaut) */
   const getProductName = (product, lang) => {
@@ -55,7 +56,6 @@ const Shop = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [shipFilter, setShipFilter] = useState('all');
   const [countryFilter, setCountryFilter] = useState('all');
   const [destinationFilter, setDestinationFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -183,10 +183,7 @@ const Shop = () => {
                            (statusFilter === 'active' && product.isActive) ||
                            (statusFilter === 'inactive' && !product.isActive) ||
                            (statusFilter === 'out_of_stock' && product.stock === 0);
-      const matchesShip = shipFilter === 'all' || 
-                         (product.ships && product.ships.some(shipId => shipId.toString() === shipFilter)) ||
-                         (product.shipId && product.shipId.toString() === shipFilter) ||
-                         (product.shipName && product.shipName === shipFilter);
+      const matchesShip = true;
       const matchesCountry = countryFilter === 'all' || 
                             (product.countries && product.countries.some(country => country.toLowerCase().includes(countryFilter.toLowerCase())));
       const matchesDestination = destinationFilter === 'all' || 
@@ -194,7 +191,7 @@ const Shop = () => {
       
       return matchesSearch && matchesCategory && matchesStatus && matchesShip && matchesCountry && matchesDestination;
     });
-  }, [products, searchQuery, categoryFilter, statusFilter, shipFilter, countryFilter, destinationFilter, language]);
+  }, [products, searchQuery, categoryFilter, statusFilter, countryFilter, destinationFilter, language]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -328,15 +325,6 @@ const Shop = () => {
     } catch (error) {
       toast.error(error.response?.data?.message || 'Erreur lors de la suppression');
     }
-  };
-
-  const toggleShip = (shipId) => {
-    setNewProduct({
-      ...newProduct,
-      ships: newProduct.ships.includes(shipId)
-        ? newProduct.ships.filter(id => id !== shipId)
-        : [...newProduct.ships, shipId]
-    });
   };
 
   const toggleProductForPromo = (productId) => {
@@ -542,10 +530,6 @@ const Shop = () => {
       toast.error(t('shop.fillNameCategory'));
       return;
     }
-    if (newProduct.ships.length === 0) {
-      toast.error(t('shop.selectShip'));
-      return;
-    }
     if ((newProduct.price ?? 0) <= 0) {
       toast.error(t('shop.priceGreaterThanZero'));
       return;
@@ -635,7 +619,7 @@ const Shop = () => {
     );
   }
 
-  const hasActiveFilters = countryFilter !== 'all' || destinationFilter !== 'all' || shipFilter !== 'all';
+  const hasActiveFilters = countryFilter !== 'all' || destinationFilter !== 'all';
 
   return (
     <div className="space-y-5 max-w-[1400px]">
@@ -814,8 +798,6 @@ const Shop = () => {
                 setCountryFilter={setCountryFilter}
                 destinationFilter={destinationFilter}
                 setDestinationFilter={setDestinationFilter}
-                shipFilter={shipFilter}
-                setShipFilter={setShipFilter}
               />
             </div>
           )}
@@ -903,20 +885,10 @@ const Shop = () => {
                 <p className="text-sm text-gray-600 line-clamp-2 mb-3">{getProductDescription(product, language)}</p>
                 {product.ships && product.ships.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {product.ships.slice(0, 3).map((shipId, idx) => {
-                      const ship = availableShips.find(s => s.id === shipId);
-                      return ship ? (
-                        <span key={idx} className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded flex items-center gap-1">
-                          <Ship size={10} />
-                          {ship.name}
-                        </span>
-                      ) : null;
-                    })}
-                    {product.ships.length > 3 && (
-                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
-                        +{product.ships.length - 3}
-                      </span>
-                    )}
+                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded flex items-center gap-1">
+                      <Ship size={10} />
+                      {boatConfig.shipName || t('shop.shipLabel')}
+                    </span>
                   </div>
                 )}
                 {product.shipName && !product.ships && (
@@ -1174,46 +1146,6 @@ const Shop = () => {
                     </div>
                     <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                   </label>
-                )}
-              </div>
-
-              {/* Bateaux */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  {t('shop.assignShipsRequired')}
-                </label>
-                <div className="border border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
-                  {availableShips.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-4">{t('shop.noShipsAvailable')}</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {availableShips.map((ship) => (
-                        <label
-                          key={ship.id}
-                          className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={newProduct.ships.includes(ship.id)}
-                            onChange={() => toggleShip(ship.id)}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <div className="flex-1 flex items-center gap-2">
-                            <Ship size={16} className="text-gray-500" />
-                            <span className="font-medium text-gray-900">{ship.name}</span>
-                          </div>
-                          {newProduct.ships.includes(ship.id) && (
-                            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                          )}
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {newProduct.ships.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    {t('shop.shipsSelectedCount', { count: newProduct.ships.length })}
-                  </p>
                 )}
               </div>
 

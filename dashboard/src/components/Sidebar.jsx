@@ -18,6 +18,7 @@ import {
   FolderOpen,
   Map,
   Megaphone,
+  Wifi,
   X,
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -42,8 +43,14 @@ const Sidebar = ({ user, isOpen = false, onClose, isMobileView = true }) => {
   }, [location.pathname]);
 
   useEffect(() => {
-    const path = location.pathname.split('/')[1] || 'dashboard';
-    setActiveItem(path);
+    const segments = location.pathname.split('/').filter(Boolean);
+    const path = segments[0] || 'dashboard';
+    const subPath = segments[1];
+    if (path === 'settings' && subPath === 'connection') {
+      setActiveItem('settings-connection');
+    } else {
+      setActiveItem(path);
+    }
   }, [location]);
 
   useEffect(() => {
@@ -64,6 +71,7 @@ const Sidebar = ({ user, isOpen = false, onClose, isMobileView = true }) => {
       items: [
         { id: 'dashboard', labelKey: 'navigation.dashboard', icon: BarChart3, path: '/dashboard' },
         { id: 'messages', labelKey: 'navigation.notifications', icon: Bell, path: '/messages' },
+        { id: 'connexions', labelKey: 'navigation.connexions', icon: Wifi, path: '/connexions' },
       ],
     },
     {
@@ -92,6 +100,7 @@ const Sidebar = ({ user, isOpen = false, onClose, isMobileView = true }) => {
       items: [
         { id: 'users', labelKey: 'navigation.users', icon: Users, path: '/users' },
         { id: 'settings', labelKey: 'navigation.settings', icon: Settings, path: '/settings' },
+        { id: 'settings-connection', labelKey: 'settings.goToConnections', icon: Wifi, path: '/settings/connection' },
       ],
     },
   ];

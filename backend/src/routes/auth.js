@@ -246,6 +246,35 @@ router.put('/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// @route   PUT /api/auth/change-password
+// @desc    Change user password (current + new)
+// @access  Private
+router.put('/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Mot de passe actuel et nouveau mot de passe requis' });
+    }
+    if (String(newPassword).trim().length < 8) {
+      return res.status(400).json({ message: 'Le nouveau mot de passe doit contenir au moins 8 caractères' });
+    }
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const isValid = await user.comparePassword(currentPassword);
+    if (!isValid) {
+      return res.status(400).json({ message: 'Mot de passe actuel incorrect' });
+    }
+    user.password = newPassword.trim();
+    await user.save();
+    res.json({ message: 'Mot de passe modifié avec succès' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ message: 'Erreur lors du changement de mot de passe' });
+  }
+});
+
 // @route   GET /api/auth/user-data
 // @desc    Get user favorites and playback positions (for sync after login / cache clear)
 // @access  Private

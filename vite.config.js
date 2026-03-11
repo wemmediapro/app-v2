@@ -130,5 +130,8 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    allowedHosts: ['travelstream.fr'],
+  },
   base: '/', // Assure que les chemins sont relatifs
 })

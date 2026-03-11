@@ -5,6 +5,8 @@ import { Clapperboard, Plus, Edit, Trash2, Search, Film, Tv, X, Save, MapPin, Up
 import FilterBar from '../components/FilterBar';
 import { apiService } from '../services/apiService';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
+import { getVideoPreviewUrl } from '../utils/videoPreviewUrl';
+import VideoPlayerModal from '../components/VideoPlayerModal';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -73,7 +75,6 @@ const Movies = () => {
   const [filter, setFilter] = useState('all'); // all, movie, series
   const [countryFilter, setCountryFilter] = useState('all');
   const [destinationFilter, setDestinationFilter] = useState('all');
-  const [shipFilter, setShipFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [posterFile, setPosterFile] = useState(null);
   const [posterPreview, setPosterPreview] = useState(null);
@@ -93,6 +94,7 @@ const Movies = () => {
   });
   const [showEpisodeModal, setShowEpisodeModal] = useState(false);
   const [editingEpisodeIndex, setEditingEpisodeIndex] = useState(null);
+  const [videoPlayerModal, setVideoPlayerModal] = useState({ open: false, src: '', title: '' });
   const [activeLangEpisode, setActiveLangEpisode] = useState('fr');
   const [episodeDurationLoading, setEpisodeDurationLoading] = useState(false);
   const [editingMovie, setEditingMovie] = useState(null); // film/série en cours de modification
@@ -236,8 +238,7 @@ const Movies = () => {
       (movie.countries && movie.countries.some(country => country.toLowerCase().includes(countryFilter.toLowerCase())));
     const matchesDestination = destinationFilter === 'all' || 
       (movie.destination && movie.destination.toLowerCase().includes(destinationFilter.toLowerCase()));
-    const matchesShip = shipFilter === 'all' || 
-      (movie.shipId && movie.shipId.toString() === shipFilter.toString());
+    const matchesShip = true;
     return matchesSearch && matchesFilter && matchesCountry && matchesDestination && matchesShip;
   });
 
@@ -620,7 +621,7 @@ const Movies = () => {
   }
 
   const popularMovies = filteredMovies.filter((m) => m.isPopular);
-  const hasActiveFilters = countryFilter !== 'all' || destinationFilter !== 'all' || shipFilter !== 'all';
+  const hasActiveFilters = countryFilter !== 'all' || destinationFilter !== 'all';
 
   return (
     <div className="space-y-5 max-w-[1400px]">
@@ -707,8 +708,6 @@ const Movies = () => {
                 setCountryFilter={setCountryFilter}
                 destinationFilter={destinationFilter}
                 setDestinationFilter={setDestinationFilter}
-                shipFilter={shipFilter}
-                setShipFilter={setShipFilter}
               />
             </div>
           )}
@@ -1119,7 +1118,7 @@ const Movies = () => {
                     Choisir depuis la bibliothèque vidéo
                   </motion.button>
                 </div>
-                {videoPreview ? (
+                {(videoPreview || newMovie.videoUrl) ? (
                   <div className="relative">
                     <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
                       {videoUploading && (
@@ -1134,29 +1133,50 @@ const Movies = () => {
                         </div>
                       )}
                       <div className="flex items-center gap-4">
-                        <div className="relative w-32 h-20 rounded-lg overflow-hidden bg-black border border-gray-200 flex items-center justify-center">
+                        <div className="relative w-40 h-24 rounded-lg overflow-hidden bg-black border border-gray-200 flex items-center justify-center shrink-0 cursor-pointer group"
+                          onClick={() => (videoPreview || newMovie.videoUrl) && getVideoPreviewUrl(videoPreview || newMovie.videoUrl) && setVideoPlayerModal({ open: true, src: videoPreview || newMovie.videoUrl, title: videoFile?.name || 'Vidéo sélectionnée' })}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (videoPreview || newMovie.videoUrl) && getVideoPreviewUrl(videoPreview || newMovie.videoUrl) && (e.preventDefault(), setVideoPlayerModal({ open: true, src: videoPreview || newMovie.videoUrl, title: videoFile?.name || 'Vidéo sélectionnée' }))}
+                          aria-label="Lire la vidéo"
+                        >
                           {videoUploading ? (
                             <Upload size={28} className="text-blue-400 animate-pulse" />
+                          ) : (videoPreview || newMovie.videoUrl) && getVideoPreviewUrl(videoPreview || newMovie.videoUrl) ? (
+                            <>
+                              <video
+                                src={getVideoPreviewUrl(videoPreview || newMovie.videoUrl)}
+                                className="w-full h-full object-cover pointer-events-none group-hover:opacity-90"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow">
+                                  <Play size={20} className="text-gray-800 ml-0.5" fill="currentColor" />
+                                </div>
+                              </div>
+                            </>
                           ) : (
                             <Video size={24} className="text-white" />
                           )}
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900">
                             {videoFile?.name || 'Vidéo sélectionnée'}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {(videoFile?.size / (1024 * 1024)).toFixed(2)} MB {!videoUploading && '• Compressé 480p'}
+                            {videoFile ? `${(videoFile.size / (1024 * 1024)).toFixed(2)} MB` : ''} {!videoUploading && videoFile && '• Compressé 480p'}
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {videoFile?.type || 'Type de fichier'}
+                          <p className="text-xs text-gray-500 truncate" title={videoPreview || newMovie.videoUrl}>
+                            {videoPreview?.startsWith('blob:') ? 'Fichier local' : (videoPreview || newMovie.videoUrl)}
                           </p>
                         </div>
                         <button
                           type="button"
                           onClick={removeVideo}
                           disabled={videoUploading}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 shrink-0"
                         >
                           <X size={18} />
                         </button>
@@ -1211,22 +1231,52 @@ const Movies = () => {
                     </motion.button>
                   </div>
                   {episodes.length > 0 ? (
-                    <div className="border border-gray-200 rounded-lg p-4 space-y-2 max-h-64 overflow-y-auto">
+                    <div className="border border-gray-200 rounded-lg p-4 space-y-3 max-h-80 overflow-y-auto">
                       {episodes.map((episode, index) => (
                         <div
                           key={episode.id || index}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                          className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
                         >
-                          <div className="flex-1">
+                          {/* Aperçu vidéo de l'épisode (agrandi) + icône play → clic ouvre le player */}
+                          <div
+                            className="flex-shrink-0 w-52 h-28 rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center relative group cursor-pointer"
+                            onClick={() => episode.videoUrl && setVideoPlayerModal({ open: true, src: episode.videoUrl, title: episode.title || `Épisode ${index + 1}` })}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => episode.videoUrl && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setVideoPlayerModal({ open: true, src: episode.videoUrl, title: episode.title || `Épisode ${index + 1}` }))}
+                            aria-label={`Lire ${episode.title || `Épisode ${index + 1}`}`}
+                          >
+                            {episode.videoUrl ? (
+                              <>
+                                <video
+                                  src={getVideoPreviewUrl(episode.videoUrl)}
+                                  className="w-full h-full object-cover pointer-events-none"
+                                  muted
+                                  playsInline
+                                  preload="metadata"
+                                  onMouseEnter={(e) => e.target.play()}
+                                  onMouseLeave={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-80 group-hover:opacity-0 transition-opacity pointer-events-none">
+                                  <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                                    <Play size={24} className="text-gray-800 ml-0.5" fill="currentColor" />
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              <Film size={32} className="text-gray-400" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-semibold text-blue-600">Épisode {index + 1}</span>
-                              <span className="font-medium text-gray-900 text-sm">{episode.title}</span>
+                              <span className="font-medium text-gray-900 text-sm truncate">{episode.title}</span>
                             </div>
                             <p className="text-xs text-gray-500 mt-1">
                               {episode.duration} {episode.description && `• ${episode.description}`}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             <button
                               onClick={() => editEpisode(index)}
                               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -1514,8 +1564,31 @@ const Movies = () => {
                   <div className="relative">
                     <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
                       <div className="flex items-center gap-4">
-                        <div className="relative w-32 h-20 rounded-lg overflow-hidden bg-black border border-gray-200 flex items-center justify-center">
-                          <Video size={24} className="text-white" />
+                        <div className="relative w-40 h-24 rounded-lg overflow-hidden bg-black border border-gray-200 flex items-center justify-center shrink-0 cursor-pointer group"
+                          onClick={() => getVideoPreviewUrl(newEpisode.videoPreview) && setVideoPlayerModal({ open: true, src: newEpisode.videoPreview, title: newEpisode.videoFile?.name || 'Vidéo épisode' })}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && getVideoPreviewUrl(newEpisode.videoPreview) && (e.preventDefault(), setVideoPlayerModal({ open: true, src: newEpisode.videoPreview, title: newEpisode.videoFile?.name || 'Vidéo épisode' }))}
+                          aria-label="Lire la vidéo"
+                        >
+                          {getVideoPreviewUrl(newEpisode.videoPreview) ? (
+                            <>
+                              <video
+                                src={getVideoPreviewUrl(newEpisode.videoPreview)}
+                                className="w-full h-full object-cover pointer-events-none group-hover:opacity-90"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow">
+                                  <Play size={20} className="text-gray-800 ml-0.5" fill="currentColor" />
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <Video size={24} className="text-white" />
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900">
@@ -1584,6 +1657,14 @@ const Movies = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Lecteur vidéo partagé (film, épisode liste, épisode formulaire) */}
+      <VideoPlayerModal
+        open={videoPlayerModal.open}
+        onClose={() => setVideoPlayerModal((prev) => ({ ...prev, open: false }))}
+        src={videoPlayerModal.src}
+        title={videoPlayerModal.title}
+      />
 
       {/* Modal Bibliothèque vidéo (film ou épisode) */}
       {showVideoLibraryPicker && (

@@ -5,6 +5,7 @@ import axios from 'axios';
 
 // Contexts
 import { LanguageProvider } from './contexts/LanguageContext';
+import { BoatConfigProvider } from './contexts/BoatConfigContext';
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -29,6 +30,7 @@ import Ads from './pages/Ads';
 import Bibliotheque from './pages/Bibliotheque';
 import ShipMap from './pages/ShipMap';
 import Settings from './pages/Settings';
+import Connexions from './pages/Connexions';
 // Services
 import { authService } from './services/authService';
 import { useIsMobileView } from './hooks/useIsMobileView';
@@ -84,10 +86,12 @@ function App() {
 
   return (
     <LanguageProvider>
-      <Router basename="/dashboard" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AppRoutes user={user} onLogout={handleLogout} onLogin={handleLogin} isAuthenticated={isAuthenticated} />
+      <BoatConfigProvider>
+        <Router basename="/dashboard" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <AppRoutes user={user} onLogout={handleLogout} onLogin={handleLogin} isAuthenticated={isAuthenticated} />
         <Toaster position="top-right" />
       </Router>
+      </BoatConfigProvider>
     </LanguageProvider>
   );
 }
@@ -124,7 +128,9 @@ function AppRoutes({ user, onLogout, onLogin, isAuthenticated }) {
                 <Route path="/banners" element={<Banners />} />
                 <Route path="/ads" element={<Ads />} />
                 <Route path="/messages" element={<Notifications />} />
+                <Route path="/connexions" element={<Connexions />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/settings/connection" element={<Connexions />} />
               </Routes>
             </main>
           </div>

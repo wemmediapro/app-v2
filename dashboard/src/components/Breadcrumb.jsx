@@ -18,7 +18,9 @@ const pathToLabel = {
   banners: 'navigation.banners',
   ads: 'navigation.ads',
   messages: 'navigation.notifications',
+  connexions: 'navigation.connexions',
   settings: 'navigation.settings',
+  connection: 'settings.connectionTitle',
   login: 'navigation.login',
 };
 

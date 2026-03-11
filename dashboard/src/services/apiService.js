@@ -215,7 +215,20 @@ export const apiService = {
 
   // Health check
   healthCheck: () => api.get('/health'),
-  
+
+  // Navires (GNV) — liste, détail, création, mise à jour
+  getShips: (all = false) => api.get(`/gnv/ships${all ? '?all=true' : ''}`),
+  getShip: (id) => api.get(`/gnv/ships/${id}`),
+  createShip: (data) => api.post('/gnv/ships', data),
+  updateShip: (id, data) => api.patch(`/gnv/ships/${id}`, data),
+  deleteShip: (id) => api.delete(`/gnv/ships/${id}`),
+  // Configuration du bateau unique (nom, capacité, informations) — utilisée dans restaurant, shop, plan du bateau
+  getBoatConfig: () => api.get('/gnv/boat-config'),
+  updateBoatConfig: (data) => api.patch('/gnv/boat-config', data),
+  // Limite de connexions du serveur local (où tourne le backend)
+  getConnectionLimit: () => api.get('/gnv/connection-limit'),
+  updateConnectionLimit: (data) => api.patch('/gnv/connection-limit', data),
+
   // Generic GET method
   get: (url) => api.get(url),
   post: (url, data) => api.post(url, data),

@@ -478,6 +478,12 @@
     "logout": "Logout",
     "editProfile": "Edit My Profile",
     "save": "Save",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "currentPasswordRequired": "Enter your current password.",
+    "passwordsDoNotMatch": "The two new passwords do not match.",
     "clearCache": "Clear cache",
     "clearPositionsOnly": "Clear positions",
     "clearPositionsOnlyHint": "Remove playback positions only (movies/series), without clearing media cache."
