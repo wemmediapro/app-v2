@@ -1,0 +1,58 @@
+# Exemple de configuration nginx pour déporter le streaming (vidéo/audio)
+# et alléger le serveur Node. À adapter selon votre hébergement.
+#
+# Objectif : nginx sert les fichiers sous /uploads (Range, cache) ;
+# Node ne gère que l'API (port 3000). Pour ~2000 connexions, le streaming
+# ne passe plus par Node.
+#
+# Usage :
+#   - Copier vers /etc/nginx/sites-available/gnv-onboard (ou équivalent)
+#   - Remplacer /chemin/vers/app3 par le chemin réel du projet
+#   - Remplacer api.domaine.com par votre domaine API
+#   - Activer : sudo ln -s /etc/nginx/sites-available/gnv-onboard /etc/nginx/sites-enabled/
+#   - Tester : sudo nginx -t && sudo systemctl reload nginx
+
+upstream node_api {
+    server 127.0.0.1:3000;
+    keepalive 64;
+}
+
+# Servir les médias (streaming) directement par nginx avec support Range
+server {
+    listen 80;
+    server_name stream.domaine.com;   # ou le même domaine avec /uploads
+
+    root /chemin/vers/app3/backend/public;
+    location /uploads/ {
+        alias /chemin/vers/app3/backend/public/uploads/;
+        # Support HTTP Range pour le streaming
+        add_header Accept-Ranges bytes;
+        add_header Cache-Control "public, max-age=86400, stale-while-revalidate=3600";
+        # Types MIME
+        location ~* \.(mp4|webm|ogg|mov)$ {
+            add_header Content-Disposition inline;
+        }
+        location ~* \.(mp3|wav|ogg|m4a|webm)$ {
+            add_header Content-Disposition inline;
+        }
+    }
+}
+
+# API et reste du trafic vers Node
+server {
+    listen 80;
+    server_name api.domaine.com;
+
+    location / {
+        proxy_pass http://node_api;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+    }
+
+    # Optionnel : ne pas faire passer /uploads par Node si vous utilisez le server block ci-dessus
+    # location /uploads/ { proxy_pass http://node_api; ... }
+}

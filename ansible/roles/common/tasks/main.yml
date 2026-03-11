@@ -1,0 +1,38 @@
+# Rôle common — paquets de base et sécurisation minimale
+- name: Mise à jour du cache apt
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Installation des paquets de base
+  ansible.builtin.apt:
+    name:
+      - build-essential
+      - curl
+      - git
+      - wget
+      - software-properties-common
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - ufw
+      - htop
+      - net-tools
+    state: present
+
+- name: Optionnel — fail2ban
+  ansible.builtin.apt:
+    name: fail2ban
+    state: present
+  when: fail2ban_enabled | default(false) | bool
+
+- name: Règles UFW (autoriser SSH, HTTP, HTTPS)
+  ansible.builtin.shell: |
+    ufw allow OpenSSH
+    ufw allow 'Nginx Full'
+  when: ufw_enabled | default(true) | bool
+
+- name: Activer UFW (non interactif)
+  ansible.builtin.shell: ufw --force enable
+  when: ufw_enabled | default(true) | bool

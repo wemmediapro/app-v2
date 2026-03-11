@@ -1,0 +1,24 @@
+# MongoDB 8 — compatible Ubuntu 24.04 (MongoDB 7 Enterprise non dispo pour 24.04)
+# Redis — obligatoire en mode cluster PM2 pour Socket.IO
+# Usage : docker-compose up -d (démarre mongo + redis)
+# L’application (backend, frontend) se déploie avec PM2 sur l’OS, pas dans Docker.
+
+services:
+  mongo:
+    image: mongo:8
+    container_name: gnv-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: gnv-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

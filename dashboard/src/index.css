@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  body {
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    min-width: 0;
+  }
+  #root {
+    min-width: 0;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+
+  .article-preview-content figure.article-inline-image,
+  .article-preview-content figure.article-inline-video {
+    @apply my-4;
+  }
+  .article-preview-content figure.article-inline-image img {
+    @apply max-w-full h-auto rounded-lg;
+  }
+  .article-preview-content figure.article-inline-video .aspect-video iframe {
+    @apply w-full h-full;
+  }
+  .article-preview-content figcaption {
+    @apply text-sm text-gray-500 mt-1 italic;
+  }
+}
+
+/* Affiche style Netflix : ratio 2/3, ombre, hover zoom */
+.poster-netflix {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  background: linear-gradient(145deg, #e2e8f0 0%, #cbd5e1 100%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.poster-netflix img {
+  transition: transform 0.25s ease-out;
+}
+.poster-netflix:hover img {
+  transform: scale(1.05);
+}
+
+/* Netflix-style movies page - lignes horizontales */
+.movies-row {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+.movies-row::-webkit-scrollbar {
+  height: 6px;
+}
+.movies-row::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+.movies-row::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.movies-row::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.movie-card-poster {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Menu latéral : défilement fluide sur mobile (iOS) */
+.sidebar-nav-scroll {
+  -webkit-overflow-scrolling: touch;
+}

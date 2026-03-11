@@ -1,0 +1,12 @@
+# Inventaire Ansible — GNV OnBoard
+# Remplacer IP_OU_DOMAINE par l'IP ou le hostname du serveur.
+
+all:
+  children:
+    gnv_servers:
+      hosts:
+        gnv_app:
+          ansible_host: IP_OU_DOMAINE  # ex: 192.168.1.10 ou app.gnv.example.com
+      vars:
+        ansible_ssh_private_key_file: ~/.ssh/id_rsa  # optionnel
+        # ansible_user: ubuntu  # si pas root

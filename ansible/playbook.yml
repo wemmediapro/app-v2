@@ -1,0 +1,24 @@
+# Playbook principal — déploiement GNV OnBoard sur Ubuntu 22.04
+# Usage: ansible-playbook -i inventory.yml playbook.yml
+# Depuis la racine du projet : ansible-playbook -i ansible/inventory.yml ansible/playbook.yml
+# Avec variables: ansible-playbook -i inventory.yml playbook.yml -e "nginx_server_name=app.example.com"
+
+- name: Déployer GNV OnBoard
+  hosts: gnv_servers
+  become: true
+  vars_files:
+    - group_vars/all.yml
+
+  roles:
+    - role: common
+      tags: [common, system]
+    - role: mongodb
+      tags: [mongodb]
+    - role: redis
+      tags: [redis]
+    - role: nodejs
+      tags: [nodejs]
+    - role: nginx
+      tags: [nginx]
+    - role: app
+      tags: [app, deploy]

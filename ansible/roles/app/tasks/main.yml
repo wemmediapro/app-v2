@@ -1,0 +1,141 @@
+# Rôle app — déploiement de l'application GNV OnBoard
+# Déploiement par copie locale (synchronize) depuis la machine qui lance Ansible.
+# Alternative : déploiement par Git (voir variables app_git_repo / app_git_version).
+
+- name: Créer le répertoire de déploiement
+  ansible.builtin.file:
+    path: "{{ app_deploy_path }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+
+- name: Déployer le code (sync depuis le projet local)
+  ansible.builtin.synchronize:
+    src: "{{ playbook_dir }}/../"
+    dest: "{{ app_deploy_path }}/"
+    delete: false
+    exclude:
+      - "node_modules/"
+      - "backend/node_modules/"
+      - "dashboard/node_modules/"
+      - ".git/"
+      - "ansible/"
+    rsync_opts:
+      - "--exclude=*.log"
+      - "--exclude=logs/"
+  become_user: "{{ app_user }}"
+  when: app_deploy_method | default('sync') == 'sync'
+
+- name: Déployer le code (clone Git)
+  ansible.builtin.git:
+    repo: "{{ app_git_repo }}"
+    dest: "{{ app_deploy_path }}"
+    version: "{{ app_git_version }}"
+    force: true
+    update: true
+  become_user: "{{ app_user }}"
+  when: app_deploy_method | default('sync') == 'git' and app_git_repo | length > 0
+
+- name: Créer dossiers logs et uploads
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+  loop:
+    - "{{ app_deploy_path }}/logs"
+    - "{{ app_deploy_path }}/backend/public/uploads"
+    - "{{ app_deploy_path }}/backend/public/uploads/videos"
+    - "{{ app_deploy_path }}/backend/public/uploads/images"
+    - "{{ app_deploy_path }}/backend/public/uploads/audio"
+    - "{{ app_deploy_path }}/backend/public/uploads/temp"
+
+- name: Fichier config.env backend (production)
+  ansible.builtin.template:
+    src: backend_config.env.j2
+    dest: "{{ app_deploy_path }}/backend/config.env"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0600"
+
+- name: Installer les dépendances (racine)
+  ansible.builtin.shell: |
+    . "{{ app_home }}/.nvm/nvm.sh"
+    cd {{ app_deploy_path }} && npm ci --omit=dev
+  args:
+    executable: /bin/bash
+  become_user: "{{ app_user }}"
+  environment:
+    HOME: "{{ app_home }}"
+
+- name: Installer les dépendances backend
+  ansible.builtin.shell: |
+    . "{{ app_home }}/.nvm/nvm.sh"
+    cd {{ app_deploy_path }}/backend && npm ci --omit=dev
+  args:
+    executable: /bin/bash
+  become_user: "{{ app_user }}"
+  environment:
+    HOME: "{{ app_home }}"
+
+- name: Installer les dépendances dashboard
+  ansible.builtin.shell: |
+    . "{{ app_home }}/.nvm/nvm.sh"
+    cd {{ app_deploy_path }}/dashboard && npm ci --omit=dev
+  args:
+    executable: /bin/bash
+  become_user: "{{ app_user }}"
+  environment:
+    HOME: "{{ app_home }}"
+
+- name: Build frontend (racine)
+  ansible.builtin.shell: |
+    . "{{ app_home }}/.nvm/nvm.sh"
+    cd {{ app_deploy_path }} && npm run build
+  args:
+    executable: /bin/bash
+  become_user: "{{ app_user }}"
+  environment:
+    HOME: "{{ app_home }}"
+
+- name: Build dashboard
+  ansible.builtin.shell: |
+    . "{{ app_home }}/.nvm/nvm.sh"
+    cd {{ app_deploy_path }}/dashboard && npm run build
+  args:
+    executable: /bin/bash
+  become_user: "{{ app_user }}"
+  environment:
+    HOME: "{{ app_home }}"
+
+- name: Démarrer / redémarrer avec PM2
+  ansible.builtin.shell: |
+    . "{{ app_home }}/.nvm/nvm.sh"
+    cd {{ app_deploy_path }}
+    pm2 delete ecosystem.config.cjs 2>/dev/null || true
+    pm2 start ecosystem.config.cjs --env production
+    pm2 save
+  args:
+    executable: /bin/bash
+  become_user: "{{ app_user }}"
+  environment:
+    HOME: "{{ app_home }}"
+
+- name: Configurer PM2 startup systemd
+  ansible.builtin.shell: |
+    . "{{ app_home }}/.nvm/nvm.sh"
+    pm2 startup systemd -u {{ app_user }} --hp {{ app_home }} 2>/dev/null || true
+  args:
+    executable: /bin/bash
+  become_user: "{{ app_user }}"
+  environment:
+    HOME: "{{ app_home }}"
+  register: pm2_startup
+  changed_when: false
+
+- name: Afficher la commande PM2 startup si nécessaire
+  ansible.builtin.debug:
+    msg: "Exécutez sur le serveur (en root si demandé) : {{ pm2_startup.stdout }}"
+  when: pm2_startup.stdout is defined and pm2_startup.stdout | length > 0

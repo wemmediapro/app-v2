@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Tunnel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test de Connexion au Tunnel</h1>
+    
+    <div class="test-box">
+        <h2>Test 1: Vérification de la connexion</h2>
+        <div id="connection-status" class="status info">Test en cours...</div>
+        <button onclick="testConnection()">Tester la connexion</button>
+    </div>
+    
+    <div class="test-box">
+        <h2>Test 2: Chargement des ressources</h2>
+        <div id="resources-status" class="status info">En attente...</div>
+        <button onclick="testResources()">Tester les ressources</button>
+    </div>
+    
+    <div class="test-box">
+        <h2>Test 3: Accès à l'application</h2>
+        <div id="app-status" class="status info">En attente...</div>
+        <button onclick="testApp()">Tester l'application</button>
+    </div>
+    
+    <div class="test-box">
+        <h2>Informations</h2>
+        <p><strong>URL du tunnel:</strong> <span id="tunnel-url">https://uninverted-appreciatorily-oakley.ngrok-free.dev</span></p>
+        <p><strong>URL locale:</strong> http://localhost:5173</p>
+        <p><strong>User Agent:</strong> <span id="user-agent"></span></p>
+    </div>
+
+    <script>
+        document.getElementById('user-agent').textContent = navigator.userAgent;
+        
+        async function testConnection() {
+            const status = document.getElementById('connection-status');
+            status.className = 'status info';
+            status.textContent = 'Test en cours...';
+            
+            try {
+                const response = await fetch('/');
+                if (response.ok) {
+                    status.className = 'status success';
+                    status.textContent = '✅ Connexion réussie! Status: ' + response.status;
+                } else {
+                    status.className = 'status error';
+                    status.textContent = '❌ Erreur: ' + response.status + ' ' + response.statusText;
+                }
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '❌ Erreur de connexion: ' + error.message;
+            }
+        }
+        
+        async function testResources() {
+            const status = document.getElementById('resources-status');
+            status.className = 'status info';
+            status.textContent = 'Test en cours...';
+            
+            const resources = [
+                '/@vite/client',
+                '/src/main.jsx',
+                '/src/index.css'
+            ];
+            
+            let success = 0;
+            let failed = 0;
+            
+            for (const resource of resources) {
+                try {
+                    const response = await fetch(resource);
+                    if (response.ok) {
+                        success++;
+                    } else {
+                        failed++;
+                    }
+                } catch (error) {
+                    failed++;
+                }
+            }
+            
+            if (failed === 0) {
+                status.className = 'status success';
+                status.textContent = `✅ Toutes les ressources sont accessibles (${success}/${resources.length})`;
+            } else {
+                status.className = 'status error';
+                status.textContent = `⚠️ Certaines ressources ne sont pas accessibles (${success} réussis, ${failed} échoués)`;
+            }
+        }
+        
+        async function testApp() {
+            const status = document.getElementById('app-status');
+            status.className = 'status info';
+            status.textContent = 'Test en cours...';
+            
+            try {
+                const response = await fetch('/');
+                const html = await response.text();
+                
+                if (html.includes('root') && html.includes('main.jsx')) {
+                    status.className = 'status success';
+                    status.textContent = '✅ L\'application semble correctement configurée!';
+                } else {
+                    status.className = 'status error';
+                    status.textContent = '❌ Structure HTML incorrecte';
+                }
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '❌ Erreur: ' + error.message;
+            }
+        }
+        
+        // Tests automatiques au chargement
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testConnection();
+                setTimeout(() => testResources(), 1000);
+                setTimeout(() => testApp(), 2000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+name: gnv-backend
+services:
+  - name: backend
+    type: web
+    build:
+      type: dockerfile
+      dockerfile_path: ./Dockerfile
+    env:
+      - name: NODE_ENV
+        value: production
+      - name: PORT
+        value: "3000"
+    regions:
+      - fra  # Frankfurt (proche de la France)
+
+

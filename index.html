@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚢</text></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+    <meta name="theme-color" content="#0E8BFE" />
+    <meta name="description" content="Portail des services à bord. Fonctionne hors ligne." />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: data: blob:; connect-src 'self' https: http: ws: wss:;">
+    <title>GNV OnBoard App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      /* Style de chargement initial */
+      #root {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #loading {
+        color: white;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        text-align: center;
+      }
+      #loading::after {
+        content: '...';
+        animation: dots 1.5s steps(4, end) infinite;
+      }
+      @keyframes dots {
+        0%, 20% { content: '.'; }
+        40% { content: '..'; }
+        60%, 100% { content: '...'; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div id="loading">Chargement de l'application</div>
+    </div>
+    <script>
+      // Message de débogage
+      console.log('🚀 Démarrage de l\'application GNV');
+      console.log('📍 URL:', window.location.href);
+      console.log('🌐 User Agent:', navigator.userAgent);
+      
+      // Vérifier que le DOM est prêt
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          console.log('✅ DOM chargé');
+        });
+      } else {
+        console.log('✅ DOM déjà chargé');
+      }
+      
+      // Gérer les erreurs
+      window.addEventListener('error', (e) => {
+        console.error('❌ Erreur:', e.message, e.filename, e.lineno);
+      });
+      
+      // Masquer le loader une fois que React prend le contrôle
+      // Le loader sera masqué par main.jsx après le montage de React
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const loading = document.getElementById('loading');
+          if (loading && loading.parentElement) {
+            loading.style.display = 'none';
+          }
+        }, 500);
+      });
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

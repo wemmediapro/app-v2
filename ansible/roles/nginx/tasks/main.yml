@@ -1,0 +1,37 @@
+# Rôle nginx — installer Nginx et configurer le site GNV
+- name: Installation Nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+
+- name: Configurer le site GNV
+  ansible.builtin.template:
+    src: gnv-app.conf.j2
+    dest: /etc/nginx/sites-available/gnv-app
+    mode: "0644"
+
+- name: Activer le site (symlink)
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/gnv-app
+    dest: /etc/nginx/sites-enabled/gnv-app
+    state: link
+  notify: Reload Nginx
+
+- name: Désactiver le site par défaut
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload Nginx
+
+- name: Vérifier la config Nginx
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  register: nginx_test
+  failed_when: nginx_test.rc != 0
+
+- name: Démarrer et activer Nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: started
+    enabled: true
+    daemon_reload: true

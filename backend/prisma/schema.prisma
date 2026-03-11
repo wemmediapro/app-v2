@@ -1,0 +1,311 @@
+// Prisma Schema pour GNV OnBoard Application
+// MongoDB Database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+}
+
+model User {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName    String
+  lastName     String
+  email        String   @unique
+  password     String
+  phone        String?
+  cabinNumber  String?
+  role         String   @default("passenger") // passenger, crew, admin
+  preferences  UserPreferences?
+  isActive     Boolean  @default(true)
+  lastLogin    DateTime?
+  avatar       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  feedbacks    Feedback[]
+  sentMessages Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  assignedFeedbacks Feedback[] @relation("AssignedFeedbacks")
+
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model UserPreferences {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @unique @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language     String   @default("fr") // fr, en, it, es
+  notifications NotificationPreferences?
+
+  @@map("user_preferences")
+}
+
+model NotificationPreferences {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  prefsId String @unique @db.ObjectId
+  prefs   UserPreferences @relation(fields: [prefsId], references: [id], onDelete: Cascade)
+  email   Boolean @default(true)
+  push    Boolean @default(true)
+  sms     Boolean @default(false)
+
+  @@map("notification_preferences")
+}
+
+model Restaurant {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  type         String   // Restaurant à la carte, Restaurant Self-Service, Café & Snacks, etc.
+  category     String   // french, fastfood, dessert, seafood
+  location     String
+  description  String
+  rating       Float    @default(0)
+  priceRange   String   // €, €€, €€€, €€€€
+  image        String
+  isOpen       Boolean  @default(true)
+  openingHours String
+  specialties  String[]
+  menu         MenuItem[]
+  promotions   Promotion[]
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@index([isOpen])
+  @@map("restaurants")
+}
+
+model MenuItem {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  restaurantId String  @db.ObjectId
+  restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuId      Int
+  name        String
+  description String
+  price       Float
+  category    String
+  isPopular   Boolean  @default(false)
+  allergens   String[]
+  image       String?
+
+  @@map("menu_items")
+}
+
+model Promotion {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  restaurantId String   @db.ObjectId
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  promoId      Int
+  title        String
+  description  String
+  price        Float
+  originalPrice Float
+  discount     Float
+  validUntil   DateTime
+
+  @@map("promotions")
+}
+
+model Feedback {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // complaint, suggestion, compliment, technical
+  category    String   // restaurant, entertainment, service, technical, other
+  title       String
+  description String
+  priority    String   @default("medium") // low, medium, high, urgent
+  status      String   @default("open") // open, in-progress, resolved, closed
+  assignedToId String? @db.ObjectId
+  assignedTo  User?    @relation("AssignedFeedbacks", fields: [assignedToId], references: [id])
+  response    String?
+  rating      Int?
+  attachments Attachment[]
+  isAnonymous Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, priority, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([assignedToId])
+  @@map("feedbacks")
+}
+
+model Attachment {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  feedbackId  String?  @db.ObjectId
+  feedback    Feedback? @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  messageId   String?  @db.ObjectId
+  message     Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  filename    String
+  originalName String
+  mimetype    String
+  size        Int
+  url         String
+
+  @@map("attachments")
+}
+
+model Message {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId    String   @db.ObjectId
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String   @db.ObjectId
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content     String
+  type        String   @default("text") // text, image, file
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  attachments Attachment[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([senderId, receiverId, createdAt(sort: Desc)])
+  @@index([receiverId, isRead])
+  @@map("messages")
+}
+
+model Movie {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  description     String
+  genre           String[] // action, comedy, drama, horror, etc.
+  year            Int
+  duration        Int      // en minutes
+  rating          Float?
+  imdbRating      Float?
+  posterUrl       String?
+  trailerUrl      String?
+  streamUrl       String
+  language        String   // fr, en, it, es, de, other
+  subtitles       Subtitle[]
+  ageRating       String   @default("Not Rated") // G, PG, PG-13, R, NC-17, Not Rated
+  director        String?
+  cast            CastMember[]
+  isActive        Boolean  @default(true)
+  isFeatured      Boolean  @default(false)
+  isNewRelease    Boolean  @default(false)
+  categories      String[] // trending, popular, new, classic, recommended
+  statistics      MovieStatistics?
+  metadata        MovieMetadata?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([genre, isActive])
+  @@index([year(sort: Desc)])
+  @@index([rating(sort: Desc)])
+  @@index([isFeatured, isActive])
+  @@index([language])
+  @@map("movies")
+}
+
+model Subtitle {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  movieId String @db.ObjectId
+  movie   Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  language String
+  url     String
+
+  @@map("subtitles")
+}
+
+model CastMember {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  movieId String @db.ObjectId
+  movie   Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  name    String
+  character String
+
+  @@map("cast_members")
+}
+
+model MovieStatistics {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  movieId         String @unique @db.ObjectId
+  movie           Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  views           Int    @default(0)
+  likes           Int    @default(0)
+  dislikes        Int    @default(0)
+  averageWatchTime Float @default(0)
+
+  @@map("movie_statistics")
+}
+
+model MovieMetadata {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  movieId String @unique @db.ObjectId
+  movie   Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  fileSize Int?
+  quality String @default("HD") // SD, HD, FHD, 4K
+  format  String @default("mp4") // mp4, mkv, avi, mov
+
+  @@map("movie_metadata")
+}
+
+model RadioStation {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String?
+  genre           String   // pop, rock, jazz, classical, news, talk, sports, children, other
+  streamUrl       String
+  imageUrl        String?
+  isActive        Boolean  @default(true)
+  isLive          Boolean  @default(false)
+  currentListeners Int     @default(0)
+  maxListeners    Int      @default(1000)
+  quality         String   @default("medium") // low, medium, high
+  language        String   @default("fr") // fr, en, it, es
+  schedule        ScheduleItem[]
+  metadata        RadioMetadata?
+  statistics      RadioStatistics?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([genre, isActive])
+  @@index([isLive])
+  @@index([language])
+  @@map("radio_stations")
+}
+
+model ScheduleItem {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  stationId   String @db.ObjectId
+  station     RadioStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  day         String // monday, tuesday, wednesday, thursday, friday, saturday, sunday
+  startTime   String
+  endTime     String
+  program     String
+
+  @@map("schedule_items")
+}
+
+model RadioMetadata {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  stationId   String @unique @db.ObjectId
+  station     RadioStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  currentSong String?
+  artist      String?
+  album       String?
+  duration    Int?
+  lastUpdated DateTime?
+
+  @@map("radio_metadata")
+}
+
+model RadioStatistics {
+  id                String @id @default(auto()) @map("_id") @db.ObjectId
+  stationId         String @unique @db.ObjectId
+  station           RadioStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  totalPlays        Int    @default(0)
+  totalListeners    Int    @default(0)
+  averageListenTime Float  @default(0)
+
+  @@map("radio_statistics")
+}

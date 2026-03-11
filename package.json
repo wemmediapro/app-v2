@@ -1,0 +1,45 @@
+{
+  "name": "gnv-onboard-app",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "axios": "^1.6.0",
+    "framer-motion": "^11.0.0",
+    "hls.js": "^1.6.15",
+    "lucide-react": "^0.378.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.3",
+    "socket.io-client": "^4.8.1",
+    "tailwindcss": "^3.4.0"
+  },
+  "scripts": {
+    "analyze": "node scripts/analyze-and-sync.cjs --sync-db",
+    "verify": "node scripts/verify-backend.cjs http://localhost:3000",
+    "verify:tablet": "node scripts/verify-tablet-categories.cjs http://localhost:5173",
+    "dev": "vite",
+    "dev:tunnel": "node start-tunnel.js",
+    "tunnel": "node start-tunnel.js",
+    "tunnel:secure": "node start-tunnel-secure.js",
+    "tunnel:ngrok": "./start-ngrok-tunnel.sh",
+    "tunnel:lt": "node start-tunnel-lt.js",
+    "tunnel:lt-capture": "node start-tunnel-lt-capture.js",
+    "tunnel:cf": "node start-tunnel-cf.js",
+    "build": "vite build",
+    "preview": "vite preview",
+    "audit": "npm audit",
+    "audit:ci": "npm audit --audit-level=moderate"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.4",
+    "autoprefixer": "^10.4.21",
+    "ngrok": "^5.0.0-beta.2",
+    "playwright": "^1.58.2",
+    "pm2": "^6.0.14",
+    "postcss": "^8.5.6",
+    "vite": "^7.1.10",
+    "vite-plugin-pwa": "^1.2.0",
+    "workbox-window": "^7.4.0"
+  }
+}

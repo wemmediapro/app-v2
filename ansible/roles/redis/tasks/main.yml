@@ -1,0 +1,17 @@
+# Rôle redis — Redis serveur
+- name: Installation Redis
+  ansible.builtin.apt:
+    name: redis-server
+    state: present
+
+- name: Démarrer et activer Redis
+  ansible.builtin.systemd:
+    name: redis-server
+    state: started
+    enabled: true
+
+- name: Vérifier Redis
+  ansible.builtin.command: redis-cli ping
+  register: redis_ping
+  changed_when: false
+  failed_when: redis_ping.stdout != "PONG"

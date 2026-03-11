@@ -1,0 +1,38 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  base: '/dashboard/', // Servi sous http://domaine.com/dashboard/
+  plugins: [react()],
+  server: {
+    port: 5174,
+    host: true,
+    strictPort: true,
+    allowedHosts: ['.ngrok-free.dev', '.trycloudflare.com'],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/uploads': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        timeout: 0, // Pas de timeout pour le streaming audio (lecture longue)
+      },
+      '/socket.io': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        ws: true,
+      },
+    },
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+  },
+  optimizeDeps: {
+    force: true, // Force la réoptimisation des dépendances
+    include: ['react', 'react-dom', 'react-router-dom', 'axios', 'react-hot-toast']
+  }
+})

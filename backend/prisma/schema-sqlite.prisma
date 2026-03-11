@@ -1,0 +1,152 @@
+// Prisma Schema pour GNV OnBoard Application
+// SQLite Database (Alternative simple)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String   @unique
+  password     String
+  phone        String?
+  cabinNumber  String?
+  role         String   @default("passenger") // passenger, crew, admin
+  isActive     Boolean  @default(true)
+  lastLogin    DateTime?
+  avatar       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  feedbacks    Feedback[]
+  sentMessages Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  assignedFeedbacks Feedback[] @relation("AssignedFeedbacks")
+  preferences  UserPreferences?
+
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model UserPreferences {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language     String   @default("fr") // fr, en, it, es
+  notifications NotificationPreferences?
+
+  @@map("user_preferences")
+}
+
+model NotificationPreferences {
+  id      String @id @default(uuid())
+  prefsId String @unique
+  prefs   UserPreferences @relation(fields: [prefsId], references: [id], onDelete: Cascade)
+  email   Boolean @default(true)
+  push    Boolean @default(true)
+  sms     Boolean @default(false)
+
+  @@map("notification_preferences")
+}
+
+model Restaurant {
+  id           String   @id @default(uuid())
+  name         String
+  type         String
+  category     String
+  location     String
+  description  String
+  rating       Float    @default(0)
+  priceRange   String
+  image        String
+  isOpen       Boolean  @default(true)
+  openingHours String
+  specialties  String   // JSON string pour SQLite
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  menu         MenuItem[]
+  promotions   Promotion[]
+
+  @@index([category])
+  @@index([isActive])
+  @@index([isOpen])
+  @@map("restaurants")
+}
+
+model MenuItem {
+  id          String   @id @default(uuid())
+  restaurantId String
+  restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuId      Int
+  name        String
+  description String
+  price       Float
+  category    String
+  isPopular   Boolean  @default(false)
+  allergens   String   // JSON string pour SQLite
+  image       String?
+
+  @@map("menu_items")
+}
+
+model Promotion {
+  id           String   @id @default(uuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  promoId      Int
+  title        String
+  description  String
+  price        Float
+  originalPrice Float
+  discount     Float
+  validUntil   DateTime
+
+  @@map("promotions")
+}
+
+model Feedback {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String   // compliment, complaint, suggestion
+  subject     String
+  message     String
+  status      String   @default("open") // open, in_progress, resolved
+  assignedToId String?
+  assignedTo  User?    @relation("AssignedFeedbacks", fields: [assignedToId], references: [id])
+  isAnonymous Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("feedbacks")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  senderId  String
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([isRead])
+  @@map("messages")
+}
+
