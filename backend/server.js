@@ -87,7 +87,21 @@ if (config.redis && config.redis.uri) {
 }
 
 // Middleware
-app.use(helmet());
+app.set('trust proxy', 1);
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      mediaSrc: ["'self'", "blob:"],
+      connectSrc: ["'self'", "ws:", "wss:"],
+      fontSrc: ["'self'", "https:", "data:"],
+    },
+  },
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
 app.use(cookieParser());
 const corsOptions = {
   origin: (origin, callback) => {
@@ -224,11 +238,7 @@ mountRoutes(app, { dbManager });
 
 // Socket.io : authentification par JWT (évite accès anonyme aux rooms / send-message)
 const { verifyToken } = require('./src/middleware/auth');
-const connectionCounters = require('./src/lib/connectionCounters');
-const mongoose = require('mongoose');
-const LocalServerConfig = require('./src/models/LocalServerConfig');
-
-io.use(async (socket, next) => {
+io.use((socket, next) => {
   const token = socket.handshake.auth?.token || socket.handshake.query?.token;
   if (!token) {
     return next(new Error('Authentication required'));
@@ -236,46 +246,28 @@ io.use(async (socket, next) => {
   try {
     const decoded = verifyToken(token);
     socket.user = decoded;
+    next();
   } catch (err) {
-    return next(new Error('Invalid token'));
+    next(new Error('Invalid token'));
   }
-  socket._shipId = connectionCounters.getShipId(socket) || null;
-  try {
-    if (mongoose.connection.readyState === 1) {
-      const config = await LocalServerConfig.findOne({ id: 'local' }).lean();
-      const maxConn = config?.maxConnections;
-      if (maxConn != null && maxConn >= 0) {
-        const current = connectionCounters.getTotalCount();
-        if (current >= maxConn) {
-          return next(new Error('Connection limit reached for this server'));
-        }
-      }
-    }
-  } catch (err) {
-    return next(err);
-  }
-  next();
 });
 
 // Socket.io for real-time features
 io.on('connection', (socket) => {
-  const shipId = socket._shipId || connectionCounters.getShipId(socket);
-  connectionCounters.increment();
-  console.log('👤 User connected:', socket.id, socket.user?.email || '', shipId ? `(ship: ${shipId})` : '');
-
+  console.log('👤 User connected:', socket.id, socket.user?.email || '');
+  
   socket.on('join-room', (room) => {
     if (typeof room !== 'string' || room.length > 64) return;
     socket.join(room);
     console.log(`👤 User ${socket.id} joined room: ${room}`);
   });
-
+  
   socket.on('send-message', (data) => {
     if (!data || typeof data.room !== 'string' || data.room.length > 64) return;
     socket.to(data.room).emit('new-message', data);
   });
-
+  
   socket.on('disconnect', () => {
-    connectionCounters.decrement();
     console.log('👤 User disconnected:', socket.id);
   });
 });
