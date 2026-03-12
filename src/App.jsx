@@ -370,8 +370,8 @@ function App() {
     // En dev : même origine pour passer par le proxy Vite (/socket.io → backend). En prod : VITE_SOCKET_URL ou origine API.
     const socketUrl = import.meta.env.DEV
       ? ''
-      : (import.meta.env.VITE_SOCKET_URL || (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') || 'http://localhost:3000');
-    
+      : (import.meta.env.VITE_SOCKET_URL || (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'));
+
     try {
       const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
       newSocket = io(socketUrl || undefined, {
