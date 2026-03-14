@@ -1,145 +1,233 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const User = require('../models/User');
+const Movie = require('../models/Movie');
+const Article = require('../models/Article');
+const RadioStation = require('../models/RadioStation');
+const EnfantActivity = require('../models/EnfantActivity');
+const Product = require('../models/Product');
+const Restaurant = require('../models/Restaurant');
+const WebTVChannel = require('../models/WebTVChannel');
+const Feedback = require('../models/Feedback');
+const connectionCounters = require('../lib/connectionCounters');
 
-// Demo analytics data
-const analyticsData = {
-  connections: {
-    totalConnections: 1247,
-    activeConnections: 89,
-    peakConnections: 156,
-    averageSessionDuration: 45,
-    connectionTypes: [
-      { type: 'WiFi', count: 892, percentage: 71.5 },
-      { type: 'Mobile Data', count: 234, percentage: 18.8 },
-      { type: 'Ethernet', count: 121, percentage: 9.7 }
-    ],
-    hourlyConnections: [
-      { hour: '00:00', connections: 12 }, { hour: '01:00', connections: 8 }, { hour: '02:00', connections: 5 },
-      { hour: '03:00', connections: 3 }, { hour: '04:00', connections: 4 }, { hour: '05:00', connections: 7 },
-      { hour: '06:00', connections: 15 }, { hour: '07:00', connections: 28 }, { hour: '08:00', connections: 45 },
-      { hour: '09:00', connections: 67 }, { hour: '10:00', connections: 89 }, { hour: '11:00', connections: 95 },
-      { hour: '12:00', connections: 102 }, { hour: '13:00', connections: 98 }, { hour: '14:00', connections: 87 },
-      { hour: '15:00', connections: 92 }, { hour: '16:00', connections: 88 }, { hour: '17:00', connections: 76 },
-      { hour: '18:00', connections: 64 }, { hour: '19:00', connections: 52 }, { hour: '20:00', connections: 38 },
-      { hour: '21:00', connections: 25 }, { hour: '22:00', connections: 18 }, { hour: '23:00', connections: 14 }
-    ],
-    deviceTypes: [
-      { type: 'Smartphone', count: 567, percentage: 45.5 },
-      { type: 'Laptop', count: 389, percentage: 31.2 },
-      { type: 'Tablet', count: 201, percentage: 16.1 },
-      { type: 'Desktop', count: 90, percentage: 7.2 }
-    ],
-    bandwidthUsage: {
-      total: 2.4, average: 1.8, peak: 3.2,
-      byContent: [
-        { type: 'Videos', usage: 1.2, percentage: 50 },
-        { type: 'Web Browsing', usage: 0.6, percentage: 25 },
-        { type: 'Streaming', usage: 0.4, percentage: 16.7 },
-        { type: 'Downloads', usage: 0.2, percentage: 8.3 }
-      ]
-    }
-  },
-  content: {
-    totalContent: 1247,
-    contentTypes: [
-      { type: 'Movies', count: 45, views: 2340, rating: 4.2 },
-      { type: 'TV Shows', count: 78, views: 1890, rating: 4.1 },
-      { type: 'Music', count: 156, views: 3450, rating: 4.3 },
-      { type: 'Podcasts', count: 23, views: 890, rating: 4.0 },
-      { type: 'Games', count: 34, views: 1200, rating: 4.4 },
-      { type: 'Books', count: 67, views: 980, rating: 3.9 }
-    ],
-    popularContent: [
-      { id: 1, title: 'Avengers: Endgame', type: 'Movie', views: 156, rating: 4.8, duration: '3h 1min', category: 'Action' },
-      { id: 2, title: 'Stranger Things S4', type: 'TV Show', views: 134, rating: 4.6, duration: '8 episodes', category: 'Drama' },
-      { id: 3, title: 'Top Hits 2024', type: 'Music', views: 289, rating: 4.4, duration: '1h 23min', category: 'Pop' },
-      { id: 4, title: 'The Witcher 3', type: 'Game', views: 98, rating: 4.9, duration: '50+ hours', category: 'RPG' },
-      { id: 5, title: 'Dune', type: 'Movie', views: 112, rating: 4.3, duration: '2h 35min', category: 'Sci-Fi' }
-    ],
-    contentEngagement: {
-      averageWatchTime: 67, completionRate: 78.5,
-      favoriteGenres: [
-        { genre: 'Action', percentage: 28.5 }, { genre: 'Comedy', percentage: 22.3 },
-        { genre: 'Drama', percentage: 18.7 }, { genre: 'Sci-Fi', percentage: 15.2 },
-        { genre: 'Horror', percentage: 8.9 }, { genre: 'Romance', percentage: 6.4 }
-      ],
-      peakViewingHours: [
-        { hour: '20:00', viewers: 89 }, { hour: '21:00', viewers: 95 }, { hour: '22:00', viewers: 87 },
-        { hour: '19:00', viewers: 76 }, { hour: '23:00', viewers: 64 }
-      ]
-    },
-    userBehavior: {
-      averageSessionTime: 45, bounceRate: 12.3, returnVisitors: 68.7, newVisitors: 31.3,
-      mostActiveUsers: [
-        { name: 'Sophie Leroy', sessions: 23, timeSpent: 18.5 },
-        { name: 'Pierre Moreau', sessions: 19, timeSpent: 15.2 },
-        { name: 'Marie Dubois', sessions: 17, timeSpent: 12.8 },
-        { name: 'Jean Martin', sessions: 15, timeSpent: 11.4 },
-        { name: 'Emma Bernard', sessions: 14, timeSpent: 10.9 }
-      ]
-    }
-  },
-  performance: {
-    serverResponseTime: 245, pageLoadTime: 1.8, errorRate: 0.8, uptime: 99.7, cacheHitRate: 87.3,
-    databaseQueries: { total: 12450, average: 12.3, slowQueries: 23, optimization: 'Good' }
+/** Uptime en pourcentage (basé sur process.uptime(), plafonné à 100 %) */
+function getSystemUptimePercent() {
+  try {
+    const seconds = process.uptime();
+    const hours = seconds / 3600;
+    // Au-delà de 24h on considère 100 %, sinon proportionnel (ex: 12h = 50 %)
+    if (hours >= 24) return 100;
+    return Math.min(100, Math.round((hours / 24) * 1000) / 10);
+  } catch {
+    return 0;
   }
-};
+}
 
-// Données démo — protéger par auth admin pour cohérence (si données réelles plus tard)
-router.get('/connections', authMiddleware, adminMiddleware, (req, res) => {
-  res.json(analyticsData.connections);
+/** Croissance en % entre période actuelle et période précédente */
+function growthPercent(current, previous) {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  const pct = ((current - previous) / previous) * 100;
+  return Math.round(pct * 10) / 10;
+}
+
+// @route   GET /api/analytics/connections
+// @desc    Statistiques de connexions (réelles : Socket.io local)
+router.get('/connections', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const activeConnections = connectionCounters.getTotalCount ? connectionCounters.getTotalCount() : 0;
+    res.json({
+      totalConnections: activeConnections,
+      activeConnections,
+      peakConnections: activeConnections,
+      averageSessionDuration: null,
+      connectionTypes: [],
+      hourlyConnections: [],
+      deviceTypes: [],
+      bandwidthUsage: { total: null, average: null, peak: null, byContent: [] }
+    });
+  } catch (err) {
+    console.error('Analytics connections error:', err);
+    res.status(500).json({ message: 'Erreur lors du chargement des connexions' });
+  }
 });
 
 // @route   GET /api/analytics/content
-// @desc    Get content statistics
-router.get('/content', authMiddleware, adminMiddleware, (req, res) => {
-  res.json(analyticsData.content);
+// @desc    Statistiques de contenu (réelles depuis la BDD)
+router.get('/content', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({ totalContent: 0, contentTypes: [], popularContent: [], contentEngagement: {}, userBehavior: {} });
+    }
+    const [totalMovies, totalArticles, totalRadio, totalActivities, totalProducts, totalRestaurants, viewersResult] = await Promise.all([
+      Movie.countDocuments().catch(() => 0),
+      Article.countDocuments().catch(() => 0),
+      RadioStation.countDocuments().catch(() => 0),
+      EnfantActivity.countDocuments().catch(() => 0),
+      Product.countDocuments().catch(() => 0),
+      Restaurant.countDocuments({ isActive: true }).catch(() => 0),
+      WebTVChannel.aggregate([{ $group: { _id: null, total: { $sum: '$viewers' } } }]).catch(() => [])
+    ]);
+    const totalViewers = (viewersResult && viewersResult[0] && viewersResult[0].total) || 0;
+    const totalContent = totalMovies + totalArticles + totalRadio + totalActivities + totalProducts + totalRestaurants;
+    const contentTypes = [
+      { type: 'Films & séries', count: totalMovies, views: 0, rating: null },
+      { type: 'Articles magazine', count: totalArticles, views: 0, rating: null },
+      { type: 'Stations radio', count: totalRadio, views: 0, rating: null },
+      { type: 'Activités enfant', count: totalActivities, views: 0, rating: null },
+      { type: 'Produits shop', count: totalProducts, views: 0, rating: null },
+      { type: 'Restaurants', count: totalRestaurants, views: 0, rating: null }
+    ].filter((c) => c.count > 0);
+
+    res.json({
+      totalContent,
+      contentTypes,
+      popularContent: [],
+      contentEngagement: { averageWatchTime: null, completionRate: null, favoriteGenres: [], peakViewingHours: [] },
+      userBehavior: { averageSessionTime: null, bounceRate: null, returnVisitors: null, newVisitors: null, mostActiveUsers: [] },
+      totalViewers
+    });
+  } catch (err) {
+    console.error('Analytics content error:', err);
+    res.status(500).json({ message: 'Erreur lors du chargement du contenu' });
+  }
 });
 
 // @route   GET /api/analytics/performance
-// @desc    Get performance statistics
-router.get('/performance', authMiddleware, adminMiddleware, (req, res) => {
-  res.json(analyticsData.performance);
+// @desc    Statistiques de performance (uptime réel, pas de mock)
+router.get('/performance', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const uptime = getSystemUptimePercent();
+    res.json({
+      serverResponseTime: null,
+      pageLoadTime: null,
+      errorRate: null,
+      uptime,
+      cacheHitRate: null,
+      databaseQueries: { total: null, average: null, slowQueries: null, optimization: null }
+    });
+  } catch (err) {
+    console.error('Analytics performance error:', err);
+    res.status(500).json({ message: 'Erreur lors du chargement des performances' });
+  }
 });
 
 // @route   GET /api/analytics/overview
-// @desc    Get overview statistics
-router.get('/overview', authMiddleware, adminMiddleware, (req, res) => {
-  res.json({
-    summary: {
-      totalUsers: 1247,
-      activeUsers: 89,
-      totalContent: 403,
-      totalViews: 10850,
-      averageRating: 4.2,
-      systemUptime: 99.7
-    },
-    trends: {
-      userGrowth: 12.5, // percentage
-      contentGrowth: 8.3, // percentage
-      engagementGrowth: 15.7, // percentage
-      performanceImprovement: 5.2 // percentage
-    },
-    alerts: [
-      {
-        type: 'warning',
-        message: 'High bandwidth usage detected',
-        timestamp: new Date().toISOString()
-      },
-      {
+// @desc    Vue d'ensemble : utilisateurs, contenu, tendances et alertes réelles
+router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({
+        summary: { totalUsers: 0, activeUsers: 0, totalContent: 0, systemUptime: 0 },
+        trends: { userGrowth: 0, contentGrowth: 0, engagementGrowth: 0, performanceImprovement: 0 },
+        alerts: []
+      });
+    }
+
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+    const [
+      totalUsers,
+      activeUsers,
+      totalMovies,
+      totalArticles,
+      totalRadio,
+      totalActivities,
+      totalProducts,
+      totalRestaurants,
+      usersLast30Days,
+      usersPrevious30Days,
+      moviesLast30Days,
+      moviesPrevious30Days,
+      articlesLast30Days,
+      articlesPrevious30Days,
+      recentFeedbacks,
+      recentMovies,
+      recentArticles
+    ] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ isActive: true }),
+      Movie.countDocuments().catch(() => 0),
+      Article.countDocuments().catch(() => 0),
+      RadioStation.countDocuments().catch(() => 0),
+      EnfantActivity.countDocuments().catch(() => 0),
+      Product.countDocuments().catch(() => 0),
+      Restaurant.countDocuments({ isActive: true }).catch(() => 0),
+      User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
+      User.countDocuments({ createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } }),
+      Movie.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }).catch(() => 0),
+      Movie.countDocuments({ createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } }).catch(() => 0),
+      Article.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }).catch(() => 0),
+      Article.countDocuments({ createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } }).catch(() => 0),
+      Feedback.find().sort({ createdAt: -1 }).limit(5).lean(),
+      Movie.find().sort({ createdAt: -1 }).limit(3).select('title translations createdAt').lean(),
+      Article.find().sort({ createdAt: -1 }).limit(3).select('translations createdAt').lean()
+    ]);
+
+    const totalContent = totalMovies + totalArticles + totalRadio + totalActivities + totalProducts + totalRestaurants;
+    const contentLast30 = moviesLast30Days + articlesLast30Days;
+    const contentPrevious30 = moviesPrevious30Days + articlesPrevious30Days;
+
+    const userGrowth = growthPercent(usersLast30Days, usersPrevious30Days);
+    const contentGrowth = growthPercent(contentLast30, contentPrevious30);
+    const systemUptime = getSystemUptimePercent();
+
+    const alerts = [];
+    recentFeedbacks.forEach((f) => {
+      const status = f.status || 'nouveau';
+      const type = status === 'resolved' ? 'success' : status === 'pending' ? 'warning' : 'info';
+      alerts.push({
+        type,
+        message: `${(f.message || '').slice(0, 60)}${(f.message && f.message.length > 60) ? '…' : ''}`,
+        timestamp: f.createdAt
+      });
+    });
+    if (recentMovies.length > 0) {
+      const titles = recentMovies.map((m) => (m.translations && m.translations.fr && m.translations.fr.title) || m.title || 'Film').slice(0, 2);
+      alerts.push({
         type: 'info',
-        message: 'New content added: 5 movies, 3 TV shows',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+        message: `Nouveau(x) film(s) ajouté(s): ${titles.join(', ')}`,
+        timestamp: recentMovies[0].createdAt
+      });
+    }
+    if (recentArticles.length > 0) {
+      const titles = recentArticles.map((a) => (a.translations && a.translations.fr && a.translations.fr.title) || 'Article').slice(0, 2);
+      alerts.push({
+        type: 'info',
+        message: `Nouveau(x) article(s) magazine: ${titles.join(', ')}`,
+        timestamp: recentArticles[0].createdAt
+      });
+    }
+    alerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const alertsFormatted = alerts.slice(0, 10).map((a) => ({
+      type: a.type,
+      message: a.message,
+      timestamp: a.timestamp instanceof Date ? a.timestamp.toISOString() : a.timestamp
+    }));
+
+    res.json({
+      summary: {
+        totalUsers,
+        activeUsers,
+        totalContent,
+        systemUptime
       },
-      {
-        type: 'success',
-        message: 'System performance optimized',
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
-      }
-    ]
-  });
+      trends: {
+        userGrowth,
+        contentGrowth,
+        engagementGrowth: 0,
+        performanceImprovement: systemUptime >= 99 ? 0 : Math.round((systemUptime / 100) * 10 * 10) / 10
+      },
+      alerts: alertsFormatted
+    });
+  } catch (err) {
+    console.error('Analytics overview error:', err);
+    res.status(500).json({ message: 'Erreur lors du chargement de la vue d\'ensemble' });
+  }
 });
 
 module.exports = router;
-

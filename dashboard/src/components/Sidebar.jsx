@@ -20,6 +20,7 @@ import {
   Megaphone,
   Wifi,
   X,
+  LineChart,
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getAccessByRole } from '../pages/Settings';
@@ -70,6 +71,7 @@ const Sidebar = ({ user, isOpen = false, onClose, isMobileView = true }) => {
       labelKey: 'navigation.overview',
       items: [
         { id: 'dashboard', labelKey: 'navigation.dashboard', icon: BarChart3, path: '/dashboard' },
+        { id: 'statistics', labelKey: 'navigation.statistics', icon: LineChart, path: '/statistics' },
         { id: 'messages', labelKey: 'navigation.notifications', icon: Bell, path: '/messages' },
         { id: 'connexions', labelKey: 'navigation.connexions', icon: Wifi, path: '/connexions' },
       ],

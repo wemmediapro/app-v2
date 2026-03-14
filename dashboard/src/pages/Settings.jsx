@@ -23,6 +23,7 @@ const STORAGE_KEY = 'dashboardAccessByRole';
 // Liste des modules du dashboard (ids comme dans la Sidebar) — exportée pour la page Users
 export const DASHBOARD_MODULES = [
   { id: 'dashboard', labelKey: 'navigation.dashboard', groupKey: 'navigation.overview' },
+  { id: 'statistics', labelKey: 'navigation.statistics', groupKey: 'navigation.overview' },
   { id: 'radio', labelKey: 'navigation.radio', groupKey: 'navigation.media' },
   { id: 'movies', labelKey: 'navigation.movies', groupKey: 'navigation.media' },
   { id: 'webtv', labelKey: 'navigation.webtv', groupKey: 'navigation.media' },
@@ -70,7 +71,7 @@ function getDefaultAccess() {
   const crew = Object.fromEntries(
     modules.map((id) => [
       id,
-      ['dashboard', 'radio', 'movies', 'webtv', 'bibliotheque', 'magazine', 'restaurants', 'shop', 'shipmap', 'enfant', 'banners', 'messages', 'settings-connection'].includes(id),
+      ['dashboard', 'statistics', 'radio', 'movies', 'webtv', 'bibliotheque', 'magazine', 'restaurants', 'shop', 'shipmap', 'enfant', 'banners', 'messages', 'settings-connection'].includes(id),
     ])
   );
   const passenger = Object.fromEntries(modules.map((id) => [id, false]));

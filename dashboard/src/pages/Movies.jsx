@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Clapperboard, Plus, Edit, Trash2, Search, Film, Tv, X, Save, MapPin, Upload, Video, FileVideo, Clock, Play, Languages, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { Clapperboard, Plus, Edit, Trash2, Search, Film, Tv, X, Save, MapPin, Upload, Video, FileVideo, Clock, Play, Languages, ChevronDown, SlidersHorizontal, Eye } from 'lucide-react';
 import FilterBar from '../components/FilterBar';
 import { apiService } from '../services/apiService';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
@@ -810,7 +810,11 @@ const Movies = () => {
                 </div>
               ) : null}
               <div className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5 text-[11px] text-slate-400 mt-auto">
-                {movie.genre ? <span>{movie.genre}</span> : null}
+                <span className="flex items-center gap-0.5">
+                  <Eye size={12} className="text-slate-400 shrink-0" aria-hidden />
+                  {(movie.viewCount ?? 0).toLocaleString()} {t('movies.views') || 'vues'}
+                </span>
+                {movie.genre ? <span> · {movie.genre}</span> : null}
                 {formatDurationDisplay(movie.duration) ? (
                   <span>{movie.genre ? ' · ' : ''}{formatDurationDisplay(movie.duration)}</span>
                 ) : null}

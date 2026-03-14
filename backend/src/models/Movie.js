@@ -60,6 +60,12 @@ const movieSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  /** Nombre de vues (film ou série) — pour statistiques et affichage dashboard */
+  viewCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   countries: [{
     type: String,
     trim: true

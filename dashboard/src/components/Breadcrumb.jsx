@@ -4,6 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 const pathToLabel = {
   dashboard: 'navigation.dashboard',
+  statistics: 'navigation.statistics',
   users: 'navigation.users',
   radio: 'navigation.radio',
   library: 'navigation.library',

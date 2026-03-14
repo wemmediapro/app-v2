@@ -24,15 +24,12 @@ import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { apiService } from '../services/apiService';
 import { useLanguage } from '../contexts/LanguageContext';
 
-const DEMO_ANALYTICS_OVERVIEW = {
-  summary: { totalUsers: 1247, activeUsers: 89, totalContent: 403, systemUptime: 99.7 },
-  trends: { userGrowth: 12.5, contentGrowth: 8.3, engagementGrowth: 15.7, performanceImprovement: 5.2 },
-  alerts: [
-    { type: 'warning', message: 'High bandwidth usage detected', timestamp: '2026-03-11T00:41:30' },
-    { type: 'info', message: 'New content added: 5 movies, 3 TV shows', timestamp: '2026-03-10T22:41:30' },
-    { type: 'success', message: 'System performance optimized', timestamp: '2026-03-10T20:41:30' }
-  ]
-};
+function formatTrend(value) {
+  const num = Number(value);
+  if (Number.isNaN(num)) return '—';
+  if (num === 0) return '0%';
+  return num > 0 ? `+${num}%` : `${num}%`;
+}
 
 const Dashboard = () => {
   const { t } = useLanguage();
@@ -41,6 +38,12 @@ const Dashboard = () => {
   const [activeAnalyticsTab, setActiveAnalyticsTab] = useState('overview');
   const [analyticsData, setAnalyticsData] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [connectionsData, setConnectionsData] = useState(null);
+  const [connectionsLoading, setConnectionsLoading] = useState(false);
+  const [contentData, setContentData] = useState(null);
+  const [contentLoading, setContentLoading] = useState(false);
+  const [performanceData, setPerformanceData] = useState(null);
+  const [performanceLoading, setPerformanceLoading] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -52,15 +55,63 @@ const Dashboard = () => {
       setAnalyticsLoading(true);
       try {
         const res = await apiService.getAnalyticsOverview();
-        setAnalyticsData(res?.data || DEMO_ANALYTICS_OVERVIEW);
+        setAnalyticsData(res?.data ?? null);
       } catch {
-        setAnalyticsData(DEMO_ANALYTICS_OVERVIEW);
+        setAnalyticsData(null);
       } finally {
         setAnalyticsLoading(false);
       }
     };
     fetchOverview();
   }, [loading]);
+
+  useEffect(() => {
+    if (activeAnalyticsTab !== 'connections') return;
+    const fetchConnections = async () => {
+      setConnectionsLoading(true);
+      try {
+        const res = await apiService.getAnalyticsConnections();
+        setConnectionsData(res?.data ?? null);
+      } catch {
+        setConnectionsData(null);
+      } finally {
+        setConnectionsLoading(false);
+      }
+    };
+    fetchConnections();
+  }, [activeAnalyticsTab]);
+
+  useEffect(() => {
+    if (activeAnalyticsTab !== 'content') return;
+    const fetchContent = async () => {
+      setContentLoading(true);
+      try {
+        const res = await apiService.getAnalyticsContent();
+        setContentData(res?.data ?? null);
+      } catch {
+        setContentData(null);
+      } finally {
+        setContentLoading(false);
+      }
+    };
+    fetchContent();
+  }, [activeAnalyticsTab]);
+
+  useEffect(() => {
+    if (activeAnalyticsTab !== 'performance') return;
+    const fetchPerformance = async () => {
+      setPerformanceLoading(true);
+      try {
+        const res = await apiService.getAnalyticsPerformance();
+        setPerformanceData(res?.data ?? null);
+      } catch {
+        setPerformanceData(null);
+      } finally {
+        setPerformanceLoading(false);
+      }
+    };
+    fetchPerformance();
+  }, [activeAnalyticsTab]);
 
   const fetchDashboardData = async () => {
     try {
@@ -88,16 +139,16 @@ const Dashboard = () => {
   }
 
   const statCards = [
-    { title: t('dashboard.users'), value: stats?.statistics?.totalUsers ?? 0, change: '+12%', changeType: 'positive', icon: Users, color: 'blue' },
-    { title: t('dashboard.viewers'), value: stats?.statistics?.totalViewers ?? 0, change: '—', changeType: 'positive', icon: Eye, color: 'violet' },
-    { title: t('dashboard.restaurants'), value: stats?.statistics?.totalRestaurants ?? 0, change: '+2', changeType: 'positive', icon: Utensils, color: 'green' },
-    { title: t('dashboard.radioStations'), value: stats?.statistics?.totalRadioStations ?? 0, change: '+1', changeType: 'positive', icon: Radio, color: 'cyan' },
-    { title: t('dashboard.moviesSeries'), value: stats?.statistics?.totalMovies ?? 0, change: '+5', changeType: 'positive', icon: Clapperboard, color: 'purple' },
-    { title: t('dashboard.magazineArticles'), value: stats?.statistics?.totalArticles ?? 0, change: '+3', changeType: 'positive', icon: BookOpen, color: 'indigo' },
-    { title: t('dashboard.kidsActivities'), value: stats?.statistics?.totalActivities ?? 0, change: '+2', changeType: 'positive', icon: Baby, color: 'pink' },
-    { title: t('dashboard.shopProducts'), value: stats?.statistics?.totalProducts ?? 0, change: '+8', changeType: 'positive', icon: ShoppingBag, color: 'amber' },
-    { title: t('dashboard.messages'), value: stats?.statistics?.totalMessages ?? 0, change: '+8%', changeType: 'positive', icon: MessageSquare, color: 'emerald' },
-    { title: t('navigation.feedback'), value: stats?.statistics?.totalFeedback ?? 0, change: '-3%', changeType: 'negative', icon: AlertCircle, color: 'orange' }
+    { title: t('dashboard.users'), value: stats?.statistics?.totalUsers ?? 0, change: '—', changeType: 'neutral', icon: Users, color: 'blue' },
+    { title: t('dashboard.viewers'), value: stats?.statistics?.totalViewers ?? 0, change: '—', changeType: 'neutral', icon: Eye, color: 'violet' },
+    { title: t('dashboard.restaurants'), value: stats?.statistics?.totalRestaurants ?? 0, change: '—', changeType: 'neutral', icon: Utensils, color: 'green' },
+    { title: t('dashboard.radioStations'), value: stats?.statistics?.totalRadioStations ?? 0, change: '—', changeType: 'neutral', icon: Radio, color: 'cyan' },
+    { title: t('dashboard.moviesSeries'), value: stats?.statistics?.totalMovies ?? 0, change: '—', changeType: 'neutral', icon: Clapperboard, color: 'purple' },
+    { title: t('dashboard.magazineArticles'), value: stats?.statistics?.totalArticles ?? 0, change: '—', changeType: 'neutral', icon: BookOpen, color: 'indigo' },
+    { title: t('dashboard.kidsActivities'), value: stats?.statistics?.totalActivities ?? 0, change: '—', changeType: 'neutral', icon: Baby, color: 'pink' },
+    { title: t('dashboard.shopProducts'), value: stats?.statistics?.totalProducts ?? 0, change: '—', changeType: 'neutral', icon: ShoppingBag, color: 'amber' },
+    { title: t('dashboard.messages'), value: stats?.statistics?.totalMessages ?? 0, change: '—', changeType: 'neutral', icon: MessageSquare, color: 'emerald' },
+    { title: t('navigation.feedback'), value: stats?.statistics?.totalFeedback ?? 0, change: '—', changeType: 'neutral', icon: AlertCircle, color: 'orange' }
   ];
 
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
@@ -156,12 +207,9 @@ const Dashboard = () => {
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">{stat.title}</p>
                     <p className="mt-1 text-xl font-bold text-gray-900 tabular-nums">{stat.value}</p>
                     <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                      {stat.changeType === 'positive' ? (
-                        <TrendingUp size={14} className="text-emerald-500 flex-shrink-0" aria-hidden />
-                      ) : (
-                        <TrendingDown size={14} className="text-red-500 flex-shrink-0" aria-hidden />
-                      )}
-                      <span className={`text-xs font-medium ${stat.changeType === 'positive' ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {stat.changeType === 'positive' && <TrendingUp size={14} className="text-emerald-500 flex-shrink-0" aria-hidden />}
+                      {stat.changeType === 'negative' && <TrendingDown size={14} className="text-red-500 flex-shrink-0" aria-hidden />}
+                      <span className={`text-xs font-medium ${stat.changeType === 'positive' ? 'text-emerald-600' : stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-500'}`}>
                         {stat.change}
                       </span>
                       <span className="text-xs text-gray-400">{t('common.vsLastMonth')}</span>
@@ -324,19 +372,19 @@ const Dashboard = () => {
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                         <div className="text-center p-3 rounded-lg bg-gray-50/80">
                           <p className="text-sm text-gray-600">{t('analytics.userGrowth') || 'Croissance utilisateurs'}</p>
-                          <p className="mt-1 text-xl font-bold text-green-600">+{analyticsData.trends.userGrowth}%</p>
+                          <p className="mt-1 text-xl font-bold text-green-600">{formatTrend(analyticsData.trends.userGrowth)}</p>
                         </div>
                         <div className="text-center p-3 rounded-lg bg-gray-50/80">
                           <p className="text-sm text-gray-600">{t('analytics.contentGrowth') || 'Croissance contenu'}</p>
-                          <p className="mt-1 text-xl font-bold text-blue-600">+{analyticsData.trends.contentGrowth}%</p>
+                          <p className="mt-1 text-xl font-bold text-blue-600">{formatTrend(analyticsData.trends.contentGrowth)}</p>
                         </div>
                         <div className="text-center p-3 rounded-lg bg-gray-50/80">
                           <p className="text-sm text-gray-600">{t('analytics.engagement') || 'Engagement'}</p>
-                          <p className="mt-1 text-xl font-bold text-purple-600">+{analyticsData.trends.engagementGrowth}%</p>
+                          <p className="mt-1 text-xl font-bold text-purple-600">{formatTrend(analyticsData.trends.engagementGrowth)}</p>
                         </div>
                         <div className="text-center p-3 rounded-lg bg-gray-50/80">
                           <p className="text-sm text-gray-600">{t('analytics.performanceLabel') || 'Performance'}</p>
-                          <p className="mt-1 text-xl font-bold text-orange-600">+{analyticsData.trends.performanceImprovement}%</p>
+                          <p className="mt-1 text-xl font-bold text-orange-600">{formatTrend(analyticsData.trends.performanceImprovement)}</p>
                         </div>
                       </div>
                     </div>
@@ -371,10 +419,156 @@ const Dashboard = () => {
               )}
             </>
           )}
-          {activeAnalyticsTab !== 'overview' && (
-            <p className="text-sm text-gray-500 py-12 text-center">
-              Consultez la page Analytics pour les données Connexions, Contenu et Performance.
-            </p>
+          {activeAnalyticsTab === 'connections' && (
+            <>
+              {connectionsLoading ? (
+                <div className="flex items-center justify-center min-h-[240px]" aria-label={t('common.loading') || 'Chargement'}>
+                  <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-blue-600" />
+                </div>
+              ) : connectionsData ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('analytics.totalConnections') || 'Connexions totales'}</p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900">{(connectionsData.totalConnections ?? 0).toLocaleString()}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-blue-50"><Wifi size={24} className="text-blue-600" aria-hidden /></div>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('analytics.activeConnections') || 'Connexions actives'}</p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900">{(connectionsData.activeConnections ?? 0).toLocaleString()}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-green-50"><Activity size={24} className="text-green-600" aria-hidden /></div>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('analytics.peakConnections') || 'Pic de connexions'}</p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900">{(connectionsData.peakConnections ?? 0).toLocaleString()}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-amber-50"><BarChart3 size={24} className="text-amber-600" aria-hidden /></div>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('analytics.averageSessionDuration') || 'Durée moyenne session'}</p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900">{connectionsData.averageSessionDuration != null ? `${connectionsData.averageSessionDuration} min` : '—'}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-purple-50"><Activity size={24} className="text-purple-600" aria-hidden /></div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    {t('analytics.connectionsHelp') || 'Les connexions actives correspondent aux clients Socket.io connectés à cette instance du serveur.'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 py-12 text-center">{t('analytics.noConnectionsData') || 'Aucune donnée de connexions disponible.'}</p>
+              )}
+            </>
+          )}
+
+          {activeAnalyticsTab === 'content' && (
+            <>
+              {contentLoading ? (
+                <div className="flex items-center justify-center min-h-[240px]" aria-label={t('common.loading') || 'Chargement'}>
+                  <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-blue-600" />
+                </div>
+              ) : contentData ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('analytics.totalContent') || 'Contenu total'}</p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900">{(contentData.totalContent ?? 0).toLocaleString()}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-purple-50"><Play size={24} className="text-purple-600" aria-hidden /></div>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('dashboard.viewers') || 'Spectateurs WebTV'}</p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900">{(contentData.totalViewers ?? 0).toLocaleString()}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-violet-50"><Eye size={24} className="text-violet-600" aria-hidden /></div>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-xl border border-gray-200/80 p-5 shadow-sm">
+                    <h3 className="text-base font-semibold text-gray-900 mb-4">{t('analytics.contentByType') || 'Contenu par type'}</h3>
+                    {(contentData.contentTypes && contentData.contentTypes.length > 0) ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-gray-200 text-left text-gray-600">
+                              <th className="py-3 px-2 font-medium">{t('analytics.type') || 'Type'}</th>
+                              <th className="py-3 px-2 font-medium text-right">{t('analytics.count') || 'Nombre'}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {contentData.contentTypes.map((row, idx) => (
+                              <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
+                                <td className="py-3 px-2 text-gray-900">{row.type}</td>
+                                <td className="py-3 px-2 text-right font-medium tabular-nums">{row.count.toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 py-4">{t('analytics.noContentByType') || 'Aucun contenu pour le moment.'}</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 py-12 text-center">{t('analytics.noContentData') || 'Aucune donnée de contenu disponible.'}</p>
+              )}
+            </>
+          )}
+
+          {activeAnalyticsTab === 'performance' && (
+            <>
+              {performanceLoading ? (
+                <div className="flex items-center justify-center min-h-[240px]" aria-label={t('common.loading') || 'Chargement'}>
+                  <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-blue-600" />
+                </div>
+              ) : performanceData ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('analytics.systemUptime') || 'Uptime système'}</p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900">{performanceData.uptime != null ? `${performanceData.uptime}%` : '—'}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-green-50"><Server size={24} className="text-green-600" aria-hidden /></div>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('analytics.serverResponseTime') || 'Temps de réponse serveur'}</p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900">{performanceData.serverResponseTime != null ? `${performanceData.serverResponseTime} ms` : '—'}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-blue-50"><Activity size={24} className="text-blue-600" aria-hidden /></div>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('analytics.errorRate') || 'Taux d\'erreur'}</p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900">{performanceData.errorRate != null ? `${performanceData.errorRate}%` : '—'}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-amber-50"><AlertCircle size={24} className="text-amber-600" aria-hidden /></div>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200/80 p-5 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('analytics.cacheHitRate') || 'Taux de cache'}</p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900">{performanceData.cacheHitRate != null ? `${performanceData.cacheHitRate}%` : '—'}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-indigo-50"><BarChart3 size={24} className="text-indigo-600" aria-hidden /></div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    {t('analytics.performanceHelp') || 'L\'uptime est calculé depuis le dernier redémarrage du serveur. Les autres métriques seront disponibles lorsque le monitoring sera configuré.'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 py-12 text-center">{t('analytics.noPerformanceData') || 'Aucune donnée de performance disponible.'}</p>
+              )}
+            </>
           )}
         </div>
       </motion.section>

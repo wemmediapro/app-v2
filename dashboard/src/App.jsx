@@ -31,6 +31,7 @@ import Bibliotheque from './pages/Bibliotheque';
 import ShipMap from './pages/ShipMap';
 import Settings from './pages/Settings';
 import Connexions from './pages/Connexions';
+import Statistics from './pages/Statistics';
 // Services
 import { authService } from './services/authService';
 import { useIsMobileView } from './hooks/useIsMobileView';
@@ -114,6 +115,7 @@ function AppRoutes({ user, onLogout, onLogin, isAuthenticated }) {
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/statistics" element={<Statistics />} />
                 <Route path="/users" element={<Users />} />
                 <Route path="/radio" element={<Radio />} />
                 <Route path="/library" element={<Library />} />
