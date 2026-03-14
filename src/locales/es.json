@@ -45,6 +45,15 @@
     "clearSearchAndFilters": "Borrar búsqueda y filtros",
     "noFavoritesYet": "Ningún favorito por el momento"
   },
+  "conditions": {
+    "title": "Condiciones de uso",
+    "subtitle": "Lea y acepte las condiciones para acceder a la aplicación.",
+    "paragraph1": "La aplicación GNV OnBoard le da acceso a los servicios a bordo (películas, radio, revista, restauración, tienda, etc.). Al utilizar esta aplicación, acepta utilizar el contenido y los servicios con fines personales y no comerciales.",
+    "paragraph2": "El contenido (videos, artículos, programas) es proporcionado por GNV y sus socios. Cualquier reproducción o distribución no autorizada está prohibida. La aplicación puede utilizarse sin conexión dentro de los límites de los datos en caché.",
+    "paragraph3": "GNV se reserva el derecho de modificar los servicios y las condiciones. El acceso a la aplicación puede restringirse en caso de incumplimiento de estas condiciones.",
+    "acceptLabel": "Acepto las condiciones de uso",
+    "acceptButton": "Aceptar y continuar"
+  },
   "radio": {
     "title": "Radio",
     "selectStation": "Selecciona una estación",

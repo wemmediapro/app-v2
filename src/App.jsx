@@ -32,25 +32,14 @@ function parsePhonePrefix(phoneStr) {
 
 function App() {
   const { t, language, changeLanguage } = useLanguage();
-  const [isAuthed, setIsAuthed] = useState(false);
-  const [authView, setAuthView] = useState('login'); // 'login' | 'signup' | 'forgot'
-  const [signupStep, setSignupStep] = useState('profile'); // 'profile' | 'consents'
-  const [profile, setProfile] = useState({ firstName: '', lastName: '', country: '', dob: '', phonePrefix: '', phone: '', cabinNumber: '', email: '', password: '' });
-  const [consents, setConsents] = useState({ promo: '', analysis: '', rulesAccepted: true });
-  const [forgotSent, setForgotSent] = useState(false);
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [showSignupPassword, setShowSignupPassword] = useState(false);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [authError, setAuthError] = useState('');
-  const [authLoading, setAuthLoading] = useState(false);
-  const [profileEditMode, setProfileEditMode] = useState(false);
-  const [profileSaveError, setProfileSaveError] = useState('');
-  const [profileSaveLoading, setProfileSaveLoading] = useState(false);
-  const [profileEditCurrentPassword, setProfileEditCurrentPassword] = useState('');
-  const [profileEditNewPassword, setProfileEditNewPassword] = useState('');
-  const [profileEditConfirmPassword, setProfileEditConfirmPassword] = useState('');
-  const [showProfileEditPassword, setShowProfileEditPassword] = useState(false);
+  const CONDITIONS_ACCEPTED_KEY = 'gnv_conditions_accepted';
+  const [conditionsAccepted, setConditionsAccepted] = useState(() => {
+    try {
+      return localStorage.getItem(CONDITIONS_ACCEPTED_KEY) === 'true';
+    } catch (_) {
+      return false;
+    }
+  });
 
   // Plein écran (vidéo)
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
@@ -103,7 +92,7 @@ function App() {
   const navigate = useNavigate();
   const pathnameToPage = (pathname) => {
     const p = (pathname || '').replace(/^\/+|\/+$/g, '') || 'home';
-    const map = { shop: 'shop', radio: 'radio', movies: 'movies', webtv: 'webtv', magazine: 'magazine', restaurant: 'restaurant', restaurants: 'restaurant', enfant: 'enfant', shipmap: 'shipmap', 'plan-du-navire': 'shipmap', favorites: 'favorites', profile: 'profile', signup: 'signup', notifications: 'notifications' };
+    const map = { shop: 'shop', radio: 'radio', movies: 'movies', webtv: 'webtv', magazine: 'magazine', restaurant: 'restaurant', restaurants: 'restaurant', enfant: 'enfant', shipmap: 'shipmap', 'plan-du-navire': 'shipmap', favorites: 'favorites', notifications: 'notifications' };
     return map[p] || (p === '' ? 'home' : null);
   };
   const pageToPathname = (p) => (p === 'home' ? '/' : `/${p}`);
@@ -119,57 +108,12 @@ function App() {
   }, [location.pathname]);
   useEffect(() => {
     const p = (location.pathname || '').replace(/^\/+|\/+$/g, '');
-    if (p === 'feedback') {
+    if (p === 'feedback' || p === 'profile' || p === 'signup') {
       navigate('/', { replace: true });
+      if (p === 'profile' || p === 'signup') setPageState('home');
     }
   }, [location.pathname, navigate]);
 
-  // Restaurer la session au chargement (token en localStorage)
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    apiService.getProfile()
-      .then((res) => {
-        const u = res?.data;
-        if (u) {
-          const { phonePrefix, phone } = parsePhonePrefix(u.phone);
-          setProfile((prev) => ({
-            ...prev,
-            id: u._id ?? u.id ?? prev.id,
-            firstName: u.firstName ?? prev.firstName,
-            lastName: u.lastName ?? prev.lastName,
-            country: u.country ?? prev.country,
-            dob: u.dateOfBirth ?? u.dob ?? prev.dob,
-            phonePrefix: phonePrefix || prev.phonePrefix,
-            phone: phone ?? (prev.phone !== undefined ? prev.phone : ''),
-            cabinNumber: u.cabinNumber ?? prev.cabinNumber,
-            email: u.email ?? prev.email,
-            password: ''
-          }));
-          if (u.userData) {
-            const fav = u.userData.favorites || {};
-            const playback = u.userData.playbackPositions || {};
-            setMagazineFavoritesIds(Array.isArray(fav.magazineIds) ? fav.magazineIds : []);
-            setRestaurantFavoritesIds(Array.isArray(fav.restaurantIds) ? fav.restaurantIds : []);
-            setEnfantFavoritesIds(Array.isArray(fav.enfantIds) ? fav.enfantIds : []);
-            setWatchlist(Array.isArray(fav.watchlist) ? fav.watchlist : []);
-            setShopFavorites(Array.isArray(fav.shopItems) ? fav.shopItems : []);
-            const playbackData = typeof playback === 'object' && playback !== null ? playback : {};
-            const userId = u._id ?? u.id;
-            if (userId && Object.keys(playbackData).length > 0) {
-              try {
-                localStorage.setItem(getPlaybackStorageKey(String(userId)), JSON.stringify(playbackData));
-              } catch (_) {}
-            }
-            userDataLoadedFromServerRef.current = true;
-          }
-          setIsAuthed(true);
-        }
-      })
-      .catch(() => {
-        localStorage.removeItem('token');
-      });
-  }, []);
   // Bannières d'accueil : chargées depuis l'API (position home-top ou home), toutes affichées
   const [homeBanners, setHomeBanners] = useState([]);
   // Largeur fenêtre pour choisir image responsive (mobile / tablette / desktop) par bannière
@@ -623,7 +567,7 @@ function App() {
   }), [language, t]);
 
   // Clé de stockage des favoris : par profil connecté ou "guest"
-  const favoritesStorageSuffix = (isAuthed && profile?.id) ? String(profile.id) : 'guest';
+  const favoritesStorageSuffix = 'guest';
 
   // Charger les favoris (et positions de lecture) : depuis le serveur si connecté, sinon localStorage
   useEffect(() => {
@@ -3100,191 +3044,6 @@ function App() {
   // Activités enfant en favoris (même source que la page Espace Enfant)
   const enfantFavoritesActivities = enfantActivities.filter(a => enfantFavoritesIds.some(id => String(id) === String(a.id)));
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setAuthError('');
-    setAuthLoading(true);
-    apiService.login({ email: loginEmail.trim(), password: loginPassword })
-      .then((res) => {
-        const { token, user } = res?.data || {};
-        if (token) localStorage.setItem('token', token);
-        if (user) {
-          const { phonePrefix, phone } = parsePhonePrefix(user.phone);
-          setProfile((prev) => ({
-            ...prev,
-            id: user.id ?? user._id,
-            firstName: user.firstName ?? '',
-            lastName: user.lastName ?? '',
-            country: user.country ?? prev.country,
-            dob: user.dateOfBirth ?? user.dob ?? prev.dob,
-            phonePrefix: phonePrefix || prev.phonePrefix,
-            phone: phone ?? '',
-            cabinNumber: user.cabinNumber ?? '',
-            email: user.email ?? '',
-            password: ''
-          }));
-          const ud = user.userData;
-          if (ud) {
-            const fav = ud.favorites || {};
-            const playback = ud.playbackPositions || {};
-            setMagazineFavoritesIds(Array.isArray(fav.magazineIds) ? fav.magazineIds : []);
-            setRestaurantFavoritesIds(Array.isArray(fav.restaurantIds) ? fav.restaurantIds : []);
-            setEnfantFavoritesIds(Array.isArray(fav.enfantIds) ? fav.enfantIds : []);
-            setWatchlist(Array.isArray(fav.watchlist) ? fav.watchlist : []);
-            setShopFavorites(Array.isArray(fav.shopItems) ? fav.shopItems : []);
-            const playbackData = typeof playback === 'object' && playback !== null ? playback : {};
-            const userId = user?.id ?? user?._id;
-            if (userId && Object.keys(playbackData).length > 0) {
-              try {
-                localStorage.setItem(getPlaybackStorageKey(String(userId)), JSON.stringify(playbackData));
-              } catch (_) {}
-            }
-            userDataLoadedFromServerRef.current = true;
-          }
-        }
-        if (user?.userData) {
-          setIsAuthed(true);
-          setPage('home');
-          navigate('/', { replace: true });
-          return;
-        }
-        return apiService.getUserData().then((res) => ({ user, res }));
-      })
-      .then((data) => {
-        if (!data) return;
-        if (data.user && !data.user.userData && data.res) {
-          const fav = data.res?.data?.favorites || {};
-          const playback = data.res?.data?.playbackPositions || {};
-          setMagazineFavoritesIds(Array.isArray(fav.magazineIds) ? fav.magazineIds : []);
-          setRestaurantFavoritesIds(Array.isArray(fav.restaurantIds) ? fav.restaurantIds : []);
-          setEnfantFavoritesIds(Array.isArray(fav.enfantIds) ? fav.enfantIds : []);
-          setWatchlist(Array.isArray(fav.watchlist) ? fav.watchlist : []);
-          setShopFavorites(Array.isArray(fav.shopItems) ? fav.shopItems : []);
-          const playbackData = typeof playback === 'object' && playback !== null ? playback : {};
-          const userId = data.user?.id ?? data.user?._id;
-          if (userId && Object.keys(playbackData).length > 0) {
-            try {
-              localStorage.setItem(getPlaybackStorageKey(String(userId)), JSON.stringify(playbackData));
-            } catch (_) {}
-          }
-          userDataLoadedFromServerRef.current = true;
-        }
-        if (data && data.user) {
-          setIsAuthed(true);
-          setPage('home');
-          navigate('/', { replace: true });
-        }
-      })
-      .catch((err) => {
-        if (err?.config?.url?.includes('user-data') && err?.response?.status !== 401) {
-          userDataLoadedFromServerRef.current = true;
-          setIsAuthed(true);
-          setPage('home');
-          navigate('/', { replace: true });
-          return;
-        }
-        if (err?.response?.status === 401) {
-          setAuthError(err.response?.data?.message || t('auth.loginError'));
-          return;
-        }
-        const msg = err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || t('auth.loginError');
-        setAuthError(msg);
-      })
-      .finally(() => setAuthLoading(false));
-  };
-
-  const handleRegister = (userData) => {
-    setAuthError('');
-    setAuthLoading(true);
-    apiService.register(userData)
-      .then((res) => {
-        const { token, user } = res?.data || {};
-        if (token) localStorage.setItem('token', token);
-        if (user) {
-          const { phonePrefix, phone } = parsePhonePrefix(user.phone);
-          setProfile((prev) => ({
-            ...prev,
-            id: user.id ?? user._id,
-            firstName: user.firstName ?? '',
-            lastName: user.lastName ?? '',
-            country: user.country ?? prev.country,
-            dob: user.dateOfBirth ?? user.dob ?? prev.dob,
-            phonePrefix: phonePrefix || prev.phonePrefix,
-            phone: phone ?? '',
-            cabinNumber: user.cabinNumber ?? '',
-            email: user.email ?? '',
-            password: ''
-          }));
-          const ud = user.userData;
-          if (ud) {
-            const fav = ud.favorites || {};
-            const playback = ud.playbackPositions || {};
-            setMagazineFavoritesIds(Array.isArray(fav.magazineIds) ? fav.magazineIds : []);
-            setRestaurantFavoritesIds(Array.isArray(fav.restaurantIds) ? fav.restaurantIds : []);
-            setEnfantFavoritesIds(Array.isArray(fav.enfantIds) ? fav.enfantIds : []);
-            setWatchlist(Array.isArray(fav.watchlist) ? fav.watchlist : []);
-            setShopFavorites(Array.isArray(fav.shopItems) ? fav.shopItems : []);
-            const playbackData = typeof playback === 'object' && playback !== null ? playback : {};
-            const userId = user?.id ?? user?._id;
-            if (userId && Object.keys(playbackData).length > 0) {
-              try {
-                localStorage.setItem(getPlaybackStorageKey(String(userId)), JSON.stringify(playbackData));
-              } catch (_) {}
-            }
-            userDataLoadedFromServerRef.current = true;
-          }
-        }
-        if (user?.userData) {
-          setIsAuthed(true);
-          setPage('home');
-          navigate('/', { replace: true });
-          return;
-        }
-        return apiService.getUserData().then((res) => ({ user, res }));
-      })
-      .then((data) => {
-        if (!data) return;
-        if (data.user && !data.user.userData && data.res) {
-          const fav = data.res?.data?.favorites || {};
-          const playback = data.res?.data?.playbackPositions || {};
-          setMagazineFavoritesIds(Array.isArray(fav.magazineIds) ? fav.magazineIds : []);
-          setRestaurantFavoritesIds(Array.isArray(fav.restaurantIds) ? fav.restaurantIds : []);
-          setEnfantFavoritesIds(Array.isArray(fav.enfantIds) ? fav.enfantIds : []);
-          setWatchlist(Array.isArray(fav.watchlist) ? fav.watchlist : []);
-          setShopFavorites(Array.isArray(fav.shopItems) ? fav.shopItems : []);
-          const playbackData = typeof playback === 'object' && playback !== null ? playback : {};
-          const userId = data.user?.id ?? data.user?._id;
-          if (userId && Object.keys(playbackData).length > 0) {
-            try {
-              localStorage.setItem(getPlaybackStorageKey(String(userId)), JSON.stringify(playbackData));
-            } catch (_) {}
-          }
-          userDataLoadedFromServerRef.current = true;
-        }
-        if (data && data.user) {
-          setIsAuthed(true);
-          setPage('home');
-          navigate('/', { replace: true });
-        }
-      })
-      .catch((err) => {
-        if (err?.config?.url?.includes('user-data') && err?.response?.status !== 401) {
-          userDataLoadedFromServerRef.current = true;
-          setIsAuthed(true);
-          setPage('home');
-          navigate('/', { replace: true });
-          return;
-        }
-        if (err?.response?.status === 401) {
-          setAuthError(err.response?.data?.message || t('auth.signupError'));
-          return;
-        }
-        const msg = err.response?.data?.message || (Array.isArray(err.response?.data?.errors) && err.response.data.errors[0]?.msg) || t('auth.signupError');
-        setAuthError(msg);
-      })
-      .finally(() => setAuthLoading(false));
-  };
-
   useEffect(() => {
     if (page === 'restaurant') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3294,227 +3053,61 @@ function App() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#264FFF] to-[#264FFF]">
       <AnimatePresence mode="wait">
-        {!isAuthed ? (
+        {!conditionsAccepted ? (
           <>
-            {/* Barre haute : logo + sélecteur de langue (logo masqué en inscription) */}
             <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-6 py-3 md:py-4 safe-area-top">
               <div className="flex items-center gap-2 text-white">
-                {authView !== 'signup' && (
-                  <img src="/logo-gnv.png" alt="GNV" className="h-6 md:h-7 w-auto object-contain" />
-                )}
+                <img src="/logo-gnv.png" alt="GNV" className="h-6 md:h-7 w-auto object-contain" />
                 <span className="font-bold text-lg md:text-xl">GNV OnBoard</span>
               </div>
               <LanguageSelector variant="light" />
             </header>
-          <div className="relative z-10 min-h-screen w-full flex flex-col items-center overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 pt-20 md:pt-24 pb-[max(2.5rem,calc(2.5rem+env(safe-area-inset-bottom,0px)))] md:pb-16">
-          <motion.div key={authView} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="w-full max-w-md md:max-w-lg lg:max-w-xl rounded-2xl md:rounded-3xl bg-white/95 md:bg-white p-5 sm:p-6 md:p-8 shadow-xl md:shadow-2xl backdrop-blur-md border border-slate-100/50 md:my-auto shrink-0">
-            {authView === 'login' && (
-              <>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{t('auth.loginTitle')}</h1>
-                <p className="text-sm md:text-base text-slate-600 mt-1 md:mt-2">{t('auth.loginSubtitle')}</p>
-                {authError && (
-                  <div className="mt-3 md:mt-4 rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 md:py-3 text-sm text-red-700" role="alert">
-                    {authError}
-                  </div>
-                )}
-                <form onSubmit={handleLogin} className="mt-6 md:mt-8 space-y-5 md:space-y-6">
-                  <div>
-                    <label htmlFor="login-email" className="sr-only">{t('profile.emailPlaceholder')}</label>
-                    <div className="flex items-center gap-3 rounded-xl md:rounded-2xl border border-slate-200 bg-white px-4 py-3 md:py-3.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                      <Mail size={20} className="text-slate-500 flex-shrink-0 md:w-5 md:h-5" />
-                      <input id="login-email" type="email" required autoComplete="email" value={loginEmail} onChange={(e)=>{ setLoginEmail(e.target.value); setAuthError(''); }} placeholder={t('profile.emailPlaceholder')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" />
-                    </div>
-                  </div>
-                  <div>
-                    <label htmlFor="login-password" className="sr-only">{t('auth.passwordPlaceholder')}</label>
-                    <div className="flex items-center gap-3 rounded-xl md:rounded-2xl border border-slate-200 bg-white px-4 py-3 md:py-3.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                      <Lock size={20} className="text-slate-500 flex-shrink-0 md:w-5 md:h-5" />
-                      <input id="login-password" type={showLoginPassword ? 'text' : 'password'} required autoComplete="current-password" value={loginPassword} onChange={(e)=>{ setLoginPassword(e.target.value); setAuthError(''); }} placeholder={t('auth.passwordPlaceholder')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" />
-                      <button type="button" onClick={() => setShowLoginPassword(!showLoginPassword)} className="p-1.5 md:p-2 text-slate-500 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#264FFF]/30 rounded-lg min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 flex items-center justify-center" aria-label={showLoginPassword ? t('auth.hidePassword') || 'Masquer le mot de passe' : t('auth.showPassword') || 'Afficher le mot de passe'}>
-                        {showLoginPassword ? <EyeOff size={20} className="md:w-5 md:h-5" /> : <Eye size={20} className="md:w-5 md:h-5" />}
-                      </button>
-                    </div>
-                  </div>
-                  <motion.button disabled={authLoading} whileTap={authLoading ? undefined : { scale: 0.98 }} type="submit" className="mt-2 w-full rounded-xl md:rounded-2xl bg-slate-900 px-4 py-3 md:py-4 text-sm md:text-base font-medium text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 flex justify-center items-center gap-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed">
-                    {authLoading ? t('auth.loading') : t('auth.loginButton')} <ArrowRight size={18} className="md:w-5 md:h-5" />
+            <div className="relative z-10 min-h-screen w-full flex flex-col items-center overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 pt-20 md:pt-24 pb-[max(2.5rem,calc(2.5rem+env(safe-area-inset-bottom,0px)))] md:pb-16">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-md md:max-w-lg lg:max-w-xl rounded-2xl md:rounded-3xl bg-white/95 md:bg-white p-5 sm:p-6 md:p-8 shadow-xl md:shadow-2xl backdrop-blur-md border border-slate-100/50 md:my-auto shrink-0"
+              >
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{t('conditions.title')}</h1>
+                <p className="text-sm md:text-base text-slate-600 mt-1 md:mt-2">{t('conditions.subtitle')}</p>
+                <div className="mt-5 md:mt-6 max-h-[50vh] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-4 md:p-5 text-sm md:text-base text-slate-700 space-y-3">
+                  <p>{t('conditions.paragraph1')}</p>
+                  <p>{t('conditions.paragraph2')}</p>
+                  <p>{t('conditions.paragraph3')}</p>
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!e.target.querySelector('#accept-conditions')?.checked) return;
+                    try {
+                      localStorage.setItem(CONDITIONS_ACCEPTED_KEY, 'true');
+                    } catch (_) {}
+                    setConditionsAccepted(true);
+                    setPage('home');
+                    navigate('/', { replace: true });
+                  }}
+                  className="mt-5 md:mt-6 space-y-4"
+                >
+                  <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4 cursor-pointer has-[:checked]:border-[#264FFF] has-[:checked]:bg-blue-50/30 transition-all">
+                    <input
+                      type="checkbox"
+                      id="accept-conditions"
+                      name="accept-conditions"
+                      required
+                      className="mt-1 rounded border-slate-300 text-[#264FFF] focus:ring-[#264FFF]"
+                    />
+                    <span className="text-sm md:text-base text-slate-700">{t('conditions.acceptLabel')}</span>
+                  </label>
+                  <motion.button
+                    type="submit"
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full rounded-xl md:rounded-2xl bg-[#264FFF] px-4 py-3 md:py-4 text-sm md:text-base font-medium text-white hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-[#264FFF] focus:ring-offset-2"
+                  >
+                    {t('conditions.acceptButton')} <ArrowRight size={18} className="inline-block ml-1 md:w-5 md:h-5" />
                   </motion.button>
                 </form>
-                <div className="mt-5 md:mt-6 flex flex-wrap items-center justify-end gap-2 text-xs md:text-sm text-slate-700">
-                  <button type="button" className="underline hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-[#264FFF]/30 rounded px-1 py-1" onClick={() => { setAuthView('signup'); setAuthError(''); }}>{t('auth.createAccount')}</button>
-                </div>
-              </>
-            )}
-
-            {authView === 'signup' && (
-              <>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{t('auth.signupTitle')}</h1>
-                <div className="mt-2 md:mt-3 flex items-center gap-2 md:gap-3" role="tablist" aria-label="Étapes d'inscription">
-                  <span className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-full text-xs md:text-sm font-semibold bg-[#264FFF] text-white">{signupStep === 'profile' ? '1' : '✓'}</span>
-                  <span className="h-0.5 w-6 md:w-8 rounded bg-slate-200" />
-                  <span className={`flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-full text-xs md:text-sm font-semibold ${signupStep === 'consents' ? 'bg-[#264FFF] text-white' : 'bg-slate-200 text-slate-600'}`}>2</span>
-                  <span className="ml-2 text-xs md:text-sm text-slate-600">{signupStep === 'profile' ? t('auth.stepProfile') : t('auth.stepConsents')}</span>
-                </div>
-                {authError && (
-                  <div className="mt-3 md:mt-4 rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 md:py-3 text-sm text-red-700" role="alert">
-                    {authError}
-                  </div>
-                )}
-                {signupStep === 'profile' ? (
-                  <form onSubmit={(e)=>{e.preventDefault(); if ((profile.password || '').trim().length < 8) { setAuthError(t('auth.passwordMin')); return; } setAuthError(''); setSignupStep('consents');}} className="mt-5 md:mt-6 space-y-5 md:space-y-6">
-                    <div className="space-y-4 md:space-y-5">
-                      <p className="text-xs md:text-sm font-medium text-slate-500 uppercase tracking-wide">{t('auth.identity')}</p>
-                      <div className="grid grid-cols-2 gap-3 md:gap-4">
-                        <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                          <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">{t('profile.firstName')}</label>
-                          <input required value={profile.firstName} onChange={(e)=>setProfile({...profile, firstName: e.target.value})} placeholder={t('profile.firstName')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" />
-                        </div>
-                        <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                          <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">{t('profile.lastName')}</label>
-                          <input required value={profile.lastName} onChange={(e)=>setProfile({...profile, lastName: e.target.value})} placeholder={t('profile.lastName')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                        <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                          <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">{t('profile.country')}</label>
-                          <select required value={profile.country} onChange={(e)=>setProfile({...profile, country: e.target.value})} className="w-full bg-transparent text-sm md:text-base outline-none">
-                            <option value="">{t('auth.choose')}</option>
-                            <option>France</option>
-                            <option>Maroc</option>
-                            <option>Italie</option>
-                            <option>Espagne</option>
-                            <option>Tunisie</option>
-                          </select>
-                        </div>
-                        <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                          <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">{t('profile.birthDate')}</label>
-                          <input required type="date" value={profile.dob} onChange={(e)=>setProfile({...profile, dob: e.target.value})} className="w-full bg-transparent text-sm md:text-base outline-none" />
-                        </div>
-                        <div className="md:col-span-2 rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                          <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">{t('auth.cabinNumber')}</label>
-                          <input value={profile.cabinNumber} onChange={(e)=>setProfile({...profile, cabinNumber: e.target.value})} placeholder={t('auth.cabinOptional')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-4 md:space-y-5">
-                      <p className="text-xs md:text-sm font-medium text-slate-500 uppercase tracking-wide">{t('auth.contact')}</p>
-                      <div className="grid grid-cols-3 gap-3 md:gap-4">
-                        <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                          <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">{t('auth.prefix')}</label>
-                          <select value={profile.phonePrefix} onChange={(e)=>setProfile({...profile, phonePrefix: e.target.value})} className="w-full bg-transparent text-sm md:text-base outline-none">
-                            <option>+33</option>
-                            <option>+39</option>
-                            <option>+212</option>
-                            <option>+34</option>
-                            <option>+216</option>
-                          </select>
-                        </div>
-                        <div className="col-span-2 rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                          <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">{t('auth.phone')}</label>
-                          <input value={profile.phone} onChange={(e)=>setProfile({...profile, phone: e.target.value})} placeholder={t('profile.phonePlaceholder')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" />
-                        </div>
-                      </div>
-                      <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                        <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">{t('profile.email')}</label>
-                        <input required type="email" value={profile.email} onChange={(e)=>setProfile({...profile, email: e.target.value})} placeholder={t('profile.emailPlaceholder')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" autoComplete="email" />
-                      </div>
-                    </div>
-                    <div className="space-y-3 md:space-y-4">
-                      <p className="text-xs md:text-sm font-medium text-slate-500 uppercase tracking-wide">{t('auth.security')}</p>
-                      <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                        <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">{t('profile.passwordPlaceholder')}</label>
-                        <div className="flex items-center gap-2">
-                          <input required type={showSignupPassword ? 'text' : 'password'} minLength={8} value={profile.password} onChange={(e)=>setProfile({...profile, password: e.target.value})} placeholder={t('profile.passwordPlaceholder')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" autoComplete="new-password" />
-                          <button type="button" onClick={() => setShowSignupPassword(!showSignupPassword)} className="p-1.5 md:p-2 text-slate-500 hover:text-slate-600 rounded" aria-label={showSignupPassword ? t('auth.hidePassword') : t('auth.showPassword')}>{showSignupPassword ? <EyeOff size={18} className="md:w-5 md:h-5" /> : <Eye size={18} className="md:w-5 md:h-5" />}</button>
-                        </div>
-                        <p className="text-[11px] md:text-xs text-slate-500 mt-1">{t('auth.passwordMin')}</p>
-                      </div>
-                    </div>
-                    <motion.button whileTap={{ scale: 0.98 }} type="submit" className="w-full rounded-xl md:rounded-2xl bg-[#264FFF] px-4 py-3 md:py-4 text-sm md:text-base font-medium text-white hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-[#264FFF] focus:ring-offset-2">{t('auth.continue')}</motion.button>
-                    <p className="text-center text-xs md:text-sm text-slate-600">{t('auth.termsNotice')}</p>
-                  </form>
-                ) : (
-                  <form onSubmit={(e)=>{
-                    e.preventDefault();
-                    const phone = (profile.phonePrefix + (profile.phone || '').replace(/\s/g, '')).trim() || undefined;
-                    handleRegister({
-                      firstName: profile.firstName.trim(),
-                      lastName: profile.lastName.trim(),
-                      email: profile.email.trim(),
-                      password: profile.password,
-                      phone: phone || undefined,
-                      cabinNumber: profile.cabinNumber?.trim() || undefined,
-                      country: profile.country?.trim() || undefined,
-                      dateOfBirth: profile.dob?.trim() || undefined
-                    });
-                  }} className="mt-5 space-y-5">
-                    <h2 className="text-base md:text-lg font-semibold text-slate-900">{t('auth.consentsTitle')}</h2>
-                    <p className="text-xs md:text-sm text-slate-600">{t('auth.consentsNotice')}</p>
-                    <div className="space-y-4 md:space-y-5">
-                      <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-slate-50/50 p-4 md:p-5">
-                        <p className="text-sm md:text-base font-medium text-slate-800 mb-3 md:mb-4">* {t('auth.consentPromo')}</p>
-                        <div className="flex gap-3 md:gap-4">
-                          <label className="flex-1 flex items-center justify-center gap-2 rounded-lg md:rounded-xl border-2 px-4 py-3 md:py-4 cursor-pointer transition-all has-[:checked]:border-[#264FFF] has-[:checked]:bg-blue-50">
-                            <input type="radio" name="promo" value="oui" required checked={consents.promo==='oui'} onChange={()=>setConsents({...consents, promo:'oui'})} className="sr-only" />
-                            <span className="text-sm md:text-base font-medium">{t('auth.yes')}</span>
-                          </label>
-                          <label className="flex-1 flex items-center justify-center gap-2 rounded-lg md:rounded-xl border-2 px-4 py-3 md:py-4 cursor-pointer transition-all has-[:checked]:border-[#264FFF] has-[:checked]:bg-blue-50">
-                            <input type="radio" name="promo" value="non" required checked={consents.promo==='non'} onChange={()=>setConsents({...consents, promo:'non'})} className="sr-only" />
-                            <span className="text-sm md:text-base font-medium">{t('auth.no')}</span>
-                          </label>
-                        </div>
-                      </div>
-                      <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-slate-50/50 p-4 md:p-5">
-                        <p className="text-sm md:text-base font-medium text-slate-800 mb-3 md:mb-4">* {t('auth.consentAnalysis')}</p>
-                        <div className="flex gap-3 md:gap-4">
-                          <label className="flex-1 flex items-center justify-center gap-2 rounded-lg md:rounded-xl border-2 px-4 py-3 md:py-4 cursor-pointer transition-all has-[:checked]:border-[#264FFF] has-[:checked]:bg-blue-50">
-                            <input type="radio" name="analysis" value="oui" required checked={consents.analysis==='oui'} onChange={()=>setConsents({...consents, analysis:'oui'})} className="sr-only" />
-                            <span className="text-sm md:text-base font-medium">{t('auth.yes')}</span>
-                          </label>
-                          <label className="flex-1 flex items-center justify-center gap-2 rounded-lg md:rounded-xl border-2 px-4 py-3 md:py-4 cursor-pointer transition-all has-[:checked]:border-[#264FFF] has-[:checked]:bg-blue-50">
-                            <input type="radio" name="analysis" value="non" required checked={consents.analysis==='non'} onChange={()=>setConsents({...consents, analysis:'non'})} className="sr-only" />
-                            <span className="text-sm md:text-base font-medium">{t('auth.no')}</span>
-                          </label>
-                        </div>
-                      </div>
-                      <label className="flex items-start gap-3 rounded-xl md:rounded-2xl border border-slate-200 bg-slate-50/50 p-4 md:p-5 cursor-pointer has-[:checked]:border-[#264FFF] has-[:checked]:bg-blue-50/30 transition-all">
-                        <input type="checkbox" required checked={consents.rulesAccepted} onChange={(e)=>setConsents({...consents, rulesAccepted: e.target.checked})} className="mt-1 rounded border-slate-300 text-[#264FFF] focus:ring-[#264FFF]" />
-                        <span className="text-sm md:text-base text-slate-700">{t('auth.consentRules')} <a className="underline hover:text-slate-900" href="#">{t('auth.consentRulesLink')}</a>{t('auth.consentRulesAfter')}</span>
-                      </label>
-                    </div>
-                    <div className="flex gap-3 md:gap-4 pt-1">
-                      <motion.button type="button" whileTap={{scale:0.98}} onClick={()=>{ setSignupStep('profile'); setAuthError(''); }} className="flex-1 rounded-xl md:rounded-2xl border-2 border-slate-300 px-4 py-3 md:py-4 text-sm md:text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300">{t('common.back')}</motion.button>
-                      <motion.button disabled={authLoading} whileTap={authLoading ? undefined : { scale: 0.98 }} type="submit" className="flex-1 rounded-xl md:rounded-2xl bg-slate-900 px-4 py-3 md:py-4 text-sm md:text-base font-medium text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed">{authLoading ? t('auth.loading') : t('auth.createAccountButton')}</motion.button>
-                    </div>
-                    <p className="text-[11px] md:text-xs text-slate-500">* {t('auth.requiredFields')}</p>
-                  </form>
-                )}
-                <div className="mt-5 md:mt-6 pt-4 md:pt-5 border-t border-slate-200 text-center text-sm md:text-base text-slate-700">
-                  {t('auth.alreadyRegistered')} <button type="button" className="underline font-medium hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-[#264FFF]/30 rounded px-1 py-1" onClick={() => {setAuthView('login'); setSignupStep('profile'); setAuthError('');}}>{t('auth.loginLink')}</button>
-                </div>
-              </>
-            )}
-
-            {authView === 'forgot' && (
-              <>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Mot de passe oublié</h1>
-                <p className="mt-1 md:mt-2 text-sm md:text-base text-slate-600">Saisissez votre e-mail pour recevoir un lien de réinitialisation.</p>
-                <form onSubmit={(e)=>{e.preventDefault(); setForgotSent(true);}} className="mt-5 md:mt-6 space-y-4 md:space-y-5">
-                  <div className="flex items-center gap-2 md:gap-3 rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2 md:py-3">
-                    <Mail size={18} className="text-slate-500 md:w-5 md:h-5" />
-                    <input type="email" required placeholder={t('profile.emailPlaceholder')} className="w-full bg-transparent p-1 text-sm md:text-base outline-none" />
-                  </div>
-                  <motion.button whileTap={{ scale: 0.98 }} type="submit" className="w-full rounded-xl md:rounded-2xl bg-slate-900 px-4 py-2.5 md:py-3.5 text-sm md:text-base font-medium text-white hover:bg-slate-700">Envoyer le lien</motion.button>
-                </form>
-                {forgotSent && (
-                  <p className="mt-3 md:mt-4 rounded-lg md:rounded-xl bg-green-50 p-2.5 md:p-3 text-xs md:text-sm text-green-700">Si cet e-mail existe, un lien de réinitialisation a été envoyé.</p>
-                )}
-                <div className="mt-4 md:mt-5 text-center text-xs md:text-sm text-slate-700">
-                  <button className="underline py-1" onClick={() => setAuthView('login')}>{t('auth.backToLogin')}</button>
-                </div>
-              </>
-            )}
-          </motion.div>
-          </div>
+              </motion.div>
+            </div>
           </>
         ) : (
           <motion.div
@@ -6150,453 +5743,6 @@ function App() {
                       </div>
                     )}
                   </motion.div>
-                ) : page === 'profile' ? (
-                  <motion.div
-                    key="profile"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.25 }}
-                    className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/20"
-                  >
-                    <div className="mx-auto w-full max-w-full px-3 py-6 space-y-6">
-                      {/* Profile Header */}
-                      <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#264FFF] via-[#264FFF] to-[#264FFF] opacity-95"></div>
-                        <div className="relative px-4 py-6 sm:px-6">
-                          <div className="flex items-center gap-4">
-                            <div className="flex h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-md shadow-lg border-4 border-white/30">
-                              <User size={36} className="text-white" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <h1 className="text-xl sm:text-2xl font-bold text-white truncate">{profile.firstName} {profile.lastName}</h1>
-                              <p className="text-sm text-white/90 truncate mt-0.5">{profile.email}</p>
-                              {profile.phone && (
-                                <p className="text-xs text-white/80 mt-1 flex items-center gap-1"><Phone size={12} /> {profile.phonePrefix} {profile.phone}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Profile Information */}
-                      <div className="space-y-4">
-                        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-lg">
-                          <h2 className="text-lg font-bold text-slate-900 mb-4">{t('profile.personalInfo')}</h2>
-                          {profileEditMode ? (
-                            /* Formulaire Modifier mon profil — prérempli avec les infos d'inscription */
-                            <form onSubmit={async (e) => {
-                              e.preventDefault();
-                              setProfileSaveError('');
-                              setProfileSaveLoading(true);
-                              const phone = ((profile.phonePrefix || '') + (profile.phone || '').replace(/\s/g, '')).trim() || undefined;
-                              try {
-                                await apiService.updateProfile({
-                                  firstName: profile.firstName.trim(),
-                                  lastName: profile.lastName.trim(),
-                                  phone: phone || undefined,
-                                  cabinNumber: profile.cabinNumber?.trim() || undefined,
-                                  country: profile.country?.trim() || undefined,
-                                  dateOfBirth: profile.dob?.trim() || undefined
-                                });
-                                if (profileEditNewPassword.trim()) {
-                                  if (!profileEditCurrentPassword.trim()) {
-                                    setProfileSaveError(t('profile.currentPasswordRequired') || 'Indiquez votre mot de passe actuel.');
-                                    setProfileSaveLoading(false);
-                                    return;
-                                  }
-                                  if (profileEditNewPassword !== profileEditConfirmPassword) {
-                                    setProfileSaveError(t('profile.passwordsDoNotMatch') || 'Les deux nouveaux mots de passe ne correspondent pas.');
-                                    setProfileSaveLoading(false);
-                                    return;
-                                  }
-                                  if (profileEditNewPassword.trim().length < 8) {
-                                    setProfileSaveError(t('auth.passwordMin') || 'Le mot de passe doit contenir au moins 8 caractères.');
-                                    setProfileSaveLoading(false);
-                                    return;
-                                  }
-                                  await apiService.changePassword({
-                                    currentPassword: profileEditCurrentPassword,
-                                    newPassword: profileEditNewPassword.trim()
-                                  });
-                                  setProfileEditCurrentPassword('');
-                                  setProfileEditNewPassword('');
-                                  setProfileEditConfirmPassword('');
-                                }
-                                setProfileEditMode(false);
-                              } catch (err) {
-                                setProfileSaveError(err.response?.data?.message || t('auth.signupError') || 'Erreur lors de l\'enregistrement');
-                              } finally {
-                                setProfileSaveLoading(false);
-                              }
-                            }} className="space-y-4">
-                              {profileSaveError && (
-                                <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 text-sm text-red-700" role="alert">{profileSaveError}</div>
-                              )}
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.firstName')}</label>
-                                  <input required value={profile.firstName} onChange={(e) => setProfile({ ...profile, firstName: e.target.value })} placeholder={t('profile.firstName')} className="w-full bg-transparent text-sm font-medium text-slate-900 mt-1 outline-none placeholder:text-slate-500" />
-                                </div>
-                                <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.lastName')}</label>
-                                  <input required value={profile.lastName} onChange={(e) => setProfile({ ...profile, lastName: e.target.value })} placeholder={t('profile.lastName')} className="w-full bg-transparent text-sm font-medium text-slate-900 mt-1 outline-none placeholder:text-slate-500" />
-                                </div>
-                                <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 sm:col-span-2 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.email')}</label>
-                                  <input type="email" value={profile.email} readOnly className="w-full bg-slate-100/80 text-sm font-medium text-slate-700 mt-1 outline-none cursor-not-allowed" />
-                                  <p className="text-[11px] text-slate-500 mt-0.5">L&apos;e-mail ne peut pas être modifié ici.</p>
-                                </div>
-                                <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.country')}</label>
-                                  <select value={profile.country} onChange={(e) => setProfile({ ...profile, country: e.target.value })} className="w-full bg-transparent text-sm font-medium text-slate-900 mt-1 outline-none">
-                                    <option value="">{t('auth.choose')}</option>
-                                    <option>France</option>
-                                    <option>Maroc</option>
-                                    <option>Italie</option>
-                                    <option>Espagne</option>
-                                    <option>Tunisie</option>
-                                  </select>
-                                </div>
-                                <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.birthDate')}</label>
-                                  <input type="date" value={profile.dob} onChange={(e) => setProfile({ ...profile, dob: e.target.value })} className="w-full bg-transparent text-sm font-medium text-slate-900 mt-1 outline-none" />
-                                </div>
-                                <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-xs text-slate-500 uppercase tracking-wide">{t('auth.cabinOptional')}</label>
-                                  <input value={profile.cabinNumber || ''} onChange={(e) => setProfile({ ...profile, cabinNumber: e.target.value })} placeholder={t('auth.cabinOptional')} className="w-full bg-transparent text-sm font-medium text-slate-900 mt-1 outline-none placeholder:text-slate-500" />
-                                </div>
-                                <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all sm:col-span-2">
-                                  <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.phonePlaceholder')}</label>
-                                  <div className="flex gap-2 mt-1">
-                                    <select value={profile.phonePrefix} onChange={(e) => setProfile({ ...profile, phonePrefix: e.target.value })} className="w-24 bg-transparent text-sm font-medium text-slate-900 outline-none rounded-lg border border-slate-200 px-2 py-2">
-                                      <option>+33</option>
-                                      <option>+39</option>
-                                      <option>+212</option>
-                                      <option>+34</option>
-                                      <option>+216</option>
-                                    </select>
-                                    <input value={profile.phone || ''} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder={t('profile.phonePlaceholder')} className="flex-1 bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-500" />
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="border-t border-slate-200 pt-4 mt-2">
-                                <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-3">{t('profile.changePassword') || 'Changer le mot de passe'}</p>
-                                <div className="space-y-3">
-                                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                    <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.currentPassword') || 'Mot de passe actuel'}</label>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <Lock size={16} className="text-slate-500 flex-shrink-0" />
-                                      <input type={showProfileEditPassword ? 'text' : 'password'} value={profileEditCurrentPassword} onChange={(e) => setProfileEditCurrentPassword(e.target.value)} placeholder={t('profile.currentPassword') || 'Mot de passe actuel'} className="flex-1 bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-500" autoComplete="current-password" />
-                                      <button type="button" onClick={() => setShowProfileEditPassword(!showProfileEditPassword)} className="p-1.5 text-slate-500 hover:text-slate-600 rounded" aria-label={showProfileEditPassword ? t('auth.hidePassword') : t('auth.showPassword')}>{showProfileEditPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
-                                    </div>
-                                  </div>
-                                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                    <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.newPassword') || 'Nouveau mot de passe'}</label>
-                                    <input type={showProfileEditPassword ? 'text' : 'password'} value={profileEditNewPassword} onChange={(e) => setProfileEditNewPassword(e.target.value)} placeholder={t('profile.newPassword') || 'Nouveau mot de passe (min. 8 caractères)'} className="w-full bg-transparent text-sm font-medium text-slate-900 mt-1 outline-none placeholder:text-slate-500" autoComplete="new-password" minLength={8} />
-                                  </div>
-                                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                    <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.confirmNewPassword') || 'Confirmer le nouveau mot de passe'}</label>
-                                    <input type={showProfileEditPassword ? 'text' : 'password'} value={profileEditConfirmPassword} onChange={(e) => setProfileEditConfirmPassword(e.target.value)} placeholder={t('profile.confirmNewPassword') || 'Confirmer'} className="w-full bg-transparent text-sm font-medium text-slate-900 mt-1 outline-none placeholder:text-slate-500" autoComplete="new-password" minLength={8} />
-                                  </div>
-                                  <p className="text-[11px] text-slate-500">Laissez vide pour ne pas modifier le mot de passe.</p>
-                                </div>
-                              </div>
-                              <div className="flex flex-wrap gap-3 pt-2">
-                                <motion.button type="submit" disabled={profileSaveLoading} whileTap={{ scale: 0.98 }} className="min-w-[120px] rounded-xl bg-[#264FFF] px-4 py-3 text-sm font-medium text-white hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-[#264FFF] focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed">
-                                  {profileSaveLoading ? t('common.loading') || 'Enregistrement…' : t('profile.save') || 'Enregistrer'}
-                                </motion.button>
-                                <motion.button type="button" disabled={profileSaveLoading} whileTap={{ scale: 0.98 }} onClick={async () => {
-                                  setProfileSaveError('');
-                                  setProfileEditCurrentPassword('');
-                                  setProfileEditNewPassword('');
-                                  setProfileEditConfirmPassword('');
-                                  setProfileEditMode(false);
-                                  try {
-                                    const res = await apiService.getProfile();
-                                    const u = res?.data;
-                                    if (u) {
-                                      const { phonePrefix, phone } = parsePhonePrefix(u.phone);
-                                      setProfile((prev) => ({
-                                        ...prev,
-                                        firstName: u.firstName ?? prev.firstName,
-                                        lastName: u.lastName ?? prev.lastName,
-                                        country: u.country ?? prev.country,
-                                        dob: u.dateOfBirth ?? u.dob ?? prev.dob,
-                                        phonePrefix: phonePrefix || prev.phonePrefix,
-                                        phone: phone ?? prev.phone,
-                                        cabinNumber: u.cabinNumber ?? prev.cabinNumber,
-                                        email: u.email ?? prev.email
-                                      }));
-                                    }
-                                  } catch (_) {}
-                                }} className="min-w-[100px] rounded-xl border-2 border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300">
-                                  {t('common.cancel') || 'Annuler'}
-                                </motion.button>
-                              </div>
-                            </form>
-                          ) : (
-                            <>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="rounded-xl bg-slate-50/80 p-3">
-                                  <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.firstName')}</label>
-                                  <p className="text-sm font-medium text-slate-900 mt-1">{profile.firstName}</p>
-                                </div>
-                                <div className="rounded-xl bg-slate-50/80 p-3">
-                                  <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.lastName')}</label>
-                                  <p className="text-sm font-medium text-slate-900 mt-1">{profile.lastName}</p>
-                                </div>
-                                <div className="rounded-xl bg-slate-50/80 p-3 sm:col-span-2">
-                                  <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.email')}</label>
-                                  <p className="text-sm font-medium text-slate-900 mt-1 break-all">{profile.email}</p>
-                                </div>
-                                {profile.country && (
-                                  <div className="rounded-xl bg-slate-50/80 p-3">
-                                    <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.country')}</label>
-                                    <p className="text-sm font-medium text-slate-900 mt-1">{profile.country}</p>
-                                  </div>
-                                )}
-                                {profile.dob && (
-                                  <div className="rounded-xl bg-slate-50/80 p-3">
-                                    <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.birthDate')}</label>
-                                    <p className="text-sm font-medium text-slate-900 mt-1">{new Date(profile.dob).toLocaleDateString(language === 'fr' ? 'fr-FR' : language === 'en' ? 'en-US' : language === 'es' ? 'es-ES' : language === 'it' ? 'it-IT' : language === 'de' ? 'de-DE' : 'fr-FR')}</p>
-                                  </div>
-                                )}
-                                {(profile.cabinNumber != null && profile.cabinNumber !== '') && (
-                                  <div className="rounded-xl bg-slate-50/80 p-3">
-                                    <label className="text-xs text-slate-500 uppercase tracking-wide">{t('auth.cabinOptional')}</label>
-                                    <p className="text-sm font-medium text-slate-900 mt-1">{profile.cabinNumber}</p>
-                                  </div>
-                                )}
-                                {(profile.phonePrefix || profile.phone) && (
-                                  <div className="rounded-xl bg-slate-50/80 p-3 sm:col-span-2">
-                                    <label className="text-xs text-slate-500 uppercase tracking-wide">{t('profile.phonePlaceholder')}</label>
-                                    <p className="text-sm font-medium text-slate-900 mt-1">{[profile.phonePrefix, profile.phone].filter(Boolean).join(' ').trim() || '—'}</p>
-                                  </div>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-lg">
-                          <h2 className="text-lg font-bold text-slate-900 mb-4">{t('profile.actions')}</h2>
-                          <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-                            {!profileEditMode && (
-                              <motion.button type="button" whileTap={{ scale: 0.98 }} onClick={async () => {
-                                setProfileSaveError('');
-                                try {
-                                  const res = await apiService.getProfile();
-                                  const u = res?.data;
-                                  if (u) {
-                                    const { phonePrefix, phone } = parsePhonePrefix(u.phone);
-                                    setProfile((prev) => ({
-                                      ...prev,
-                                      firstName: u.firstName ?? prev.firstName,
-                                      lastName: u.lastName ?? prev.lastName,
-                                      country: u.country ?? prev.country,
-                                      dob: u.dateOfBirth ?? u.dob ?? prev.dob,
-                                      phonePrefix: phonePrefix || prev.phonePrefix,
-                                      phone: phone ?? prev.phone,
-                                      cabinNumber: u.cabinNumber ?? prev.cabinNumber,
-                                      email: u.email ?? prev.email
-                                    }));
-                                  }
-                                  setProfileEditMode(true);
-                                } catch (_) {
-                                  setProfileEditMode(true);
-                                }
-                              }} className="flex-1 min-w-[140px] rounded-xl bg-[#264FFF] px-4 py-3 text-sm font-medium text-white hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-[#264FFF] focus:ring-offset-2 flex items-center justify-center gap-2">
-                                <User size={18} />
-                                {t('profile.editProfile')}
-                              </motion.button>
-                            )}
-                            <motion.button type="button" whileTap={{ scale: 0.98 }} onClick={async () => {
-                              try {
-                                await clearOfflineCache();
-                                localStorage.removeItem(getPlaybackStorageKey(favoritesStorageSuffix));
-                                if (favoritesStorageSuffix !== 'guest') {
-                                  apiService.getUserData().then((res) => {
-                                    const playback = res?.data?.playbackPositions || {};
-                                    const data = typeof playback === 'object' && playback !== null ? playback : {};
-                                    if (Object.keys(data).length > 0) {
-                                      try {
-                                        localStorage.setItem(getPlaybackStorageKey(favoritesStorageSuffix), JSON.stringify(data));
-                                      } catch (_) {}
-                                    }
-                                  }).catch(() => {});
-                                }
-                              } catch (_) {}
-                            }} className="flex-1 min-w-[140px] rounded-xl border-2 border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 flex items-center justify-center gap-2">
-                              <RefreshCw size={18} />
-                              {t('profile.clearCache')}
-                            </motion.button>
-                            <motion.button type="button" whileTap={{ scale: 0.98 }} onClick={() => {
-                              localStorage.removeItem('token');
-                              setIsAuthed(false);
-                              setProfile({ firstName: '', lastName: '', country: '', dob: '', phonePrefix: '', phone: '', cabinNumber: '', email: '', password: '' });
-                              setProfileEditMode(false);
-                              setProfileSaveError('');
-                              setAuthView('login');
-                              setCurrentRadio(null);
-                              setRadioPlaylistTracks([]);
-                              setRadioPlaylistIndex(0);
-                              setIsPlaying(false);
-                              if (audioRef.current) {
-                                audioRef.current.pause();
-                                audioRef.current.src = '';
-                              }
-                            }} className="flex-1 min-w-[140px] rounded-xl border-2 border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 flex items-center justify-center gap-2">
-                              <Lock size={18} />
-                              {t('profile.logout')}
-                            </motion.button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ) : page === 'signup' ? (
-                  <motion.div
-                    key="signup"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.25 }}
-                    className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/20 relative"
-                  >
-                    <div className="relative z-10 mx-auto w-full max-w-lg md:max-w-xl lg:max-w-2xl px-3 sm:px-4 md:px-6 py-6 md:py-8 pb-[max(5rem,calc(4rem+env(safe-area-inset-bottom,0px)))] sm:pb-24">
-                      <div className="bg-white rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-8 shadow-xl md:shadow-2xl border border-slate-100/50">
-                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1 md:mb-2">Inscription</h1>
-                        <div className="mt-2 md:mt-3 flex items-center gap-2 md:gap-3" role="tablist" aria-label="Étapes d'inscription">
-                          <span className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-full text-xs md:text-sm font-semibold bg-[#264FFF] text-white">{signupStep === 'profile' ? '1' : '✓'}</span>
-                          <span className="h-0.5 w-6 md:w-8 rounded bg-slate-200" />
-                          <span className={`flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-full text-xs md:text-sm font-semibold ${signupStep === 'consents' ? 'bg-[#264FFF] text-white' : 'bg-slate-200 text-slate-600'}`}>2</span>
-                          <span className="ml-1 md:ml-2 text-xs md:text-sm text-slate-600">{signupStep === 'profile' ? t('auth.stepProfile') : t('auth.stepConsents')}</span>
-                        </div>
-                        {authError && (
-                          <div className="mt-3 md:mt-4 rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 md:py-3 text-sm text-red-700" role="alert">
-                            {authError}
-                          </div>
-                        )}
-                        {signupStep === 'profile' ? (
-                          <form onSubmit={(e)=>{e.preventDefault(); if ((profile.password || '').trim().length < 8) { setAuthError(t('auth.passwordMin')); return; } setAuthError(''); setSignupStep('consents');}} className="mt-6 md:mt-8 space-y-5 md:space-y-6">
-                            <div className="space-y-4 md:space-y-5">
-                              <p className="text-xs md:text-sm font-medium text-slate-500 uppercase tracking-wide">Identité</p>
-                              <div className="grid grid-cols-2 gap-3 md:gap-4">
-                                <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">{t('profile.firstName')}</label>
-                                  <input required value={profile.firstName} onChange={(e)=>setProfile({...profile, firstName: e.target.value})} placeholder={t('profile.firstName')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" />
-                                </div>
-                                <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">{t('profile.lastName')}</label>
-                                  <input required value={profile.lastName} onChange={(e)=>setProfile({...profile, lastName: e.target.value})} placeholder={t('profile.lastName')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" />
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                                <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">Pays / Région</label>
-                                  <select required value={profile.country} onChange={(e)=>setProfile({...profile, country: e.target.value})} className="w-full bg-transparent text-sm md:text-base outline-none">
-                                    <option value="">Choisir</option>
-                                    <option>France</option>
-                                    <option>Maroc</option>
-                                    <option>Italie</option>
-                                    <option>Espagne</option>
-                                    <option>Tunisie</option>
-                                  </select>
-                                </div>
-                                <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">Date de naissance</label>
-                                  <input required type="date" value={profile.dob} onChange={(e)=>setProfile({...profile, dob: e.target.value})} className="w-full bg-transparent text-sm md:text-base outline-none" />
-                                </div>
-                              </div>
-                            </div>
-                            <div className="space-y-4 md:space-y-5">
-                              <p className="text-xs md:text-sm font-medium text-slate-500 uppercase tracking-wide">Contact</p>
-                              <div className="grid grid-cols-3 gap-3 md:gap-4">
-                                <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">Préfixe</label>
-                                  <select value={profile.phonePrefix} onChange={(e)=>setProfile({...profile, phonePrefix: e.target.value})} className="w-full bg-transparent text-sm md:text-base outline-none">
-                                    <option>+33</option>
-                                    <option>+39</option>
-                                    <option>+212</option>
-                                    <option>+34</option>
-                                    <option>+216</option>
-                                  </select>
-                                </div>
-                                <div className="col-span-2 rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                  <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">Téléphone</label>
-                                  <input value={profile.phone} onChange={(e)=>setProfile({...profile, phone: e.target.value})} placeholder={t('profile.phonePlaceholder')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" />
-                                </div>
-                              </div>
-                              <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">E-mail</label>
-                                <input required type="email" value={profile.email} onChange={(e)=>setProfile({...profile, email: e.target.value})} placeholder={t('profile.emailPlaceholder')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" autoComplete="email" />
-                              </div>
-                            </div>
-                            <div className="space-y-3 md:space-y-4">
-                              <p className="text-xs md:text-sm font-medium text-slate-500 uppercase tracking-wide">Sécurité</p>
-                              <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-white px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#264FFF] focus-within:ring-2 focus-within:ring-[#264FFF]/20 transition-all">
-                                <label className="text-[11px] md:text-xs text-slate-500 block mb-0.5 md:mb-1">Mot de passe</label>
-                                <div className="flex items-center gap-2">
-                                  <input required type={showSignupPassword ? 'text' : 'password'} minLength={8} value={profile.password} onChange={(e)=>setProfile({...profile, password: e.target.value})} placeholder={t('profile.passwordPlaceholder')} className="w-full bg-transparent text-sm md:text-base outline-none placeholder:text-slate-500" autoComplete="new-password" />
-                                  <button type="button" onClick={() => setShowSignupPassword(!showSignupPassword)} className="p-1.5 md:p-2 text-slate-500 hover:text-slate-600 rounded" aria-label={showSignupPassword ? t('auth.hidePassword') : t('auth.showPassword')}>{showSignupPassword ? <EyeOff size={18} className="md:w-5 md:h-5" /> : <Eye size={18} className="md:w-5 md:h-5" />}</button>
-                                </div>
-                                <p className="text-[11px] md:text-xs text-slate-500 mt-1">{t('auth.passwordMin')}</p>
-                              </div>
-                            </div>
-                            <motion.button whileTap={{ scale: 0.98 }} type="submit" className="w-full rounded-xl md:rounded-2xl bg-[#264FFF] px-4 py-3 md:py-4 text-sm md:text-base font-medium text-white hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-[#264FFF] focus:ring-offset-2">Continuer</motion.button>
-                            <p className="text-center text-xs md:text-sm text-slate-600">En continuant, vous acceptez nos <a className="underline hover:text-slate-800" href="#">Conditions</a> et notre <a className="underline hover:text-slate-800" href="#">Politique de confidentialité</a>.</p>
-                          </form>
-                        ) : (
-                          <form onSubmit={(e)=>{e.preventDefault(); setIsAuthed(true); setPage('home'); navigate('/', { replace: true });}} className="mt-6 md:mt-8 space-y-5 md:space-y-6">
-                            <h2 className="text-base md:text-lg font-semibold text-slate-900">Mentions légales et consentements</h2>
-                            <p className="text-xs md:text-sm text-slate-600">Vos données sont traitées conformément au RGPD. <a className="underline hover:text-slate-800" href="#">Politique de confidentialité</a>.</p>
-                            <div className="space-y-4 md:space-y-5">
-                              <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-slate-50/50 p-4 md:p-5">
-                                <p className="text-sm md:text-base font-medium text-slate-800 mb-3 md:mb-4">* {t('auth.consentPromo')}</p>
-                                <div className="flex gap-3 md:gap-4">
-                                  <label className="flex-1 flex items-center justify-center gap-2 rounded-lg md:rounded-xl border-2 px-4 py-3 md:py-4 cursor-pointer transition-all has-[:checked]:border-[#264FFF] has-[:checked]:bg-blue-50">
-                                    <input type="radio" name="promoPage" value="oui" required checked={consents.promo==='oui'} onChange={()=>setConsents({...consents, promo:'oui'})} className="sr-only" />
-                                    <span className="text-sm md:text-base font-medium">{t('auth.yes')}</span>
-                                  </label>
-                                  <label className="flex-1 flex items-center justify-center gap-2 rounded-lg md:rounded-xl border-2 px-4 py-3 md:py-4 cursor-pointer transition-all has-[:checked]:border-[#264FFF] has-[:checked]:bg-blue-50">
-                                    <input type="radio" name="promoPage" value="non" required checked={consents.promo==='non'} onChange={()=>setConsents({...consents, promo:'non'})} className="sr-only" />
-                                    <span className="text-sm md:text-base font-medium">{t('auth.no')}</span>
-                                  </label>
-                                </div>
-                              </div>
-                              <div className="rounded-xl md:rounded-2xl border border-slate-200 bg-slate-50/50 p-4 md:p-5">
-                                <p className="text-sm md:text-base font-medium text-slate-800 mb-3 md:mb-4">* {t('auth.consentAnalysis')}</p>
-                                <div className="flex gap-3 md:gap-4">
-                                  <label className="flex-1 flex items-center justify-center gap-2 rounded-lg md:rounded-xl border-2 px-4 py-3 md:py-4 cursor-pointer transition-all has-[:checked]:border-[#264FFF] has-[:checked]:bg-blue-50">
-                                    <input type="radio" name="analysisPage" value="oui" required checked={consents.analysis==='oui'} onChange={()=>setConsents({...consents, analysis:'oui'})} className="sr-only" />
-                                    <span className="text-sm md:text-base font-medium">{t('auth.yes')}</span>
-                                  </label>
-                                  <label className="flex-1 flex items-center justify-center gap-2 rounded-lg md:rounded-xl border-2 px-4 py-3 md:py-4 cursor-pointer transition-all has-[:checked]:border-[#264FFF] has-[:checked]:bg-blue-50">
-                                    <input type="radio" name="analysisPage" value="non" required checked={consents.analysis==='non'} onChange={()=>setConsents({...consents, analysis:'non'})} className="sr-only" />
-                                    <span className="text-sm md:text-base font-medium">{t('auth.no')}</span>
-                                  </label>
-                                </div>
-                              </div>
-                              <label className="flex items-start gap-3 rounded-xl md:rounded-2xl border border-slate-200 bg-slate-50/50 p-4 md:p-5 cursor-pointer has-[:checked]:border-[#264FFF] has-[:checked]:bg-blue-50/30 transition-all">
-                                <input type="checkbox" required checked={consents.rulesAccepted} onChange={(e)=>setConsents({...consents, rulesAccepted: e.target.checked})} className="mt-1 rounded border-slate-300 text-[#264FFF] focus:ring-[#264FFF]" />
-                                <span className="text-sm md:text-base text-slate-700">{t('auth.consentRules')} <a className="underline hover:text-slate-900" href="#">{t('auth.consentRulesLink')}</a>{t('auth.consentRulesAfter')}</span>
-                              </label>
-                            </div>
-                            <div className="flex gap-3 md:gap-4 pt-1">
-                              <motion.button type="button" whileTap={{scale:0.98}} onClick={()=>{ setSignupStep('profile'); setAuthError(''); }} className="flex-1 rounded-xl md:rounded-2xl border-2 border-slate-300 px-4 py-3 md:py-4 text-sm md:text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300">{t('common.back')}</motion.button>
-                              <motion.button whileTap={{ scale: 0.98 }} type="submit" className="flex-1 rounded-xl md:rounded-2xl bg-slate-900 px-4 py-3 md:py-4 text-sm md:text-base font-medium text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">{t('auth.createAccountButton')}</motion.button>
-                            </div>
-                            <p className="text-[11px] md:text-xs text-slate-500">* {t('auth.requiredFields')}</p>
-                          </form>
-                        )}
-                        <div className="mt-5 md:mt-6 pt-4 md:pt-5 border-t border-slate-200 text-center text-sm md:text-base text-slate-700">
-                          {t('auth.alreadyRegistered')} <button type="button" className="underline font-medium hover:opacity-80 py-1" onClick={() => {setPage('home'); setIsAuthed(false); setAuthView('login'); setSignupStep('profile');}}>{t('auth.loginLink')}</button>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
                 ) : page === 'favorites' ? (
                   <motion.div
                     key="favorites"
@@ -6813,14 +5959,14 @@ function App() {
 
       <nav
         aria-label="Navigation principale"
-        className={`fixed bottom-0 left-0 right-0 z-50 w-full max-w-[768px] min-h-[44px] sm:min-h-[48px] mx-auto bg-gray-50 border-t border-gray-200 overflow-visible safe-area-bottom flex items-center ${!isAuthed ? 'hidden' : ''}`}
+        className={`fixed bottom-0 left-0 right-0 z-50 w-full max-w-[768px] min-h-[44px] sm:min-h-[48px] mx-auto bg-gray-50 border-t border-gray-200 overflow-visible safe-area-bottom flex items-center ${!conditionsAccepted ? 'hidden' : ''}`}
         style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}
       >
         <div className="flex items-center justify-center sm:justify-start w-full py-1.5 px-2 sm:px-2 gap-0 sm:gap-1 min-h-[44px] sm:min-h-[48px] overflow-visible">
           {useMemo(() => [
             { key: 'home', icon: <Home size={26} />, label: t('common.home') },
             { key: 'radio', icon: <Radio size={26} />, label: t('common.radio') },
-            { key: 'profile', icon: <User size={26} />, label: t('profile.title') },
+            { key: 'movies', icon: <Clapperboard size={26} />, label: t('common.movies') },
             { key: 'notifications', icon: <Bell size={26} />, label: t('notifications.title') },
             { key: 'favorites', icon: <Heart size={26} />, label: t('common.favorites') }
           ], [language, t]).map((item) => (

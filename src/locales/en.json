@@ -46,6 +46,15 @@
     "clearSearchAndFilters": "Clear search and filters",
     "noFavoritesYet": "No favorites yet"
   },
+  "conditions": {
+    "title": "Terms of use",
+    "subtitle": "Please read and accept the terms to access the application.",
+    "paragraph1": "The GNV OnBoard application gives you access to on-board services (movies, radio, magazine, dining, shop, etc.). By using this application, you agree to use the content and services for personal, non-commercial purposes.",
+    "paragraph2": "Content (videos, articles, programs) is provided by GNV and its partners. Any unauthorized reproduction or distribution is prohibited. The application may be used offline within the limits of cached data.",
+    "paragraph3": "GNV reserves the right to modify services and terms. Access to the application may be restricted in case of non-compliance with these terms.",
+    "acceptLabel": "I accept the terms of use",
+    "acceptButton": "Accept and continue"
+  },
   "radio": {
     "title": "Radio",
     "selectStation": "Select a station",

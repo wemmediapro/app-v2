@@ -1,10 +1,12 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
+import { SkipForward } from 'lucide-react';
 import { attachVideoSource } from '../utils/hlsVideo';
 import { getStreamingVideoUrl, getHlsUrlFromVideoUrl } from '../services/apiService';
 
 /**
  * Slot publicitaire : affiche un clip vidéo (MP4/HLS).
- * skipAfterPercent : % de la durée après lequel le bouton "Passer" est actif (0 = dès le début, 100 = à la fin).
+ * Passer par flèche (clavier ou bouton) et bouton "Ignorer".
+ * skipAfterPercent : % de la durée après lequel le bouton "Ignorer" est actif (0 = dès le début, 100 = à la fin).
  */
 function AdSlot({ adUrl, skipAfterPercent = 0, onComplete, onError }) {
   const videoRef = useRef(null);
@@ -71,7 +73,7 @@ function AdSlot({ adUrl, skipAfterPercent = 0, onComplete, onError }) {
     };
   }, [resolvedUrl, skipAfterPercent]);
 
-  const handleSkip = () => {
+  const handleSkip = useCallback(() => {
     if (!canSkip || skipTriggeredRef.current) return;
     skipTriggeredRef.current = true;
     const el = videoRef.current;
@@ -88,7 +90,19 @@ function AdSlot({ adUrl, skipAfterPercent = 0, onComplete, onError }) {
     requestAnimationFrame(() => {
       callback?.();
     });
-  };
+  }, [canSkip, onComplete]);
+
+  // Passer la publicité par flèche clavier (flèche droite ou gauche)
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handleSkip();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [handleSkip]);
 
   if (!resolvedUrl) return null;
 
@@ -108,9 +122,11 @@ function AdSlot({ adUrl, skipAfterPercent = 0, onComplete, onError }) {
         type="button"
         onClick={handleSkip}
         disabled={!canSkip}
-        className="absolute bottom-4 right-4 px-4 py-2 bg-black/70 text-white text-sm font-medium rounded-lg hover:bg-black/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 px-4 py-2 bg-black/70 text-white text-sm font-medium rounded-lg hover:bg-black/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Ignorer la publicité"
       >
-        Passer la publicité
+        <SkipForward size={18} aria-hidden />
+        Ignorer
       </button>
     </div>
   );
