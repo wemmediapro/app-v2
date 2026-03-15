@@ -885,26 +885,25 @@ function App() {
 
       const maxRetries = 2;
       const retryDelayMs = 1500;
-      const handleErrorOrStalled = () => {
+      const handleError = () => {
         if (radioRetryCountRef.current >= maxRetries) {
           console.error('Stream radio: échec après', maxRetries, 'tentatives');
           setIsPlaying(false);
           return;
         }
         radioRetryCountRef.current += 1;
-        audioElement.removeEventListener('error', handleErrorOrStalled);
-        audioElement.removeEventListener('stalled', handleErrorOrStalled);
+        audioElement.removeEventListener('error', handleError);
         radioRetryTimeoutRef.current = setTimeout(() => {
           radioRetryTimeoutRef.current = null;
           audioElement.src = streamUrl;
           audioElement.load();
-          audioElement.addEventListener('error', handleErrorOrStalled, { once: true });
-          audioElement.addEventListener('stalled', handleErrorOrStalled, { once: true });
+          audioElement.addEventListener('error', handleError, { once: true });
           audioElement.play().catch(() => setIsPlaying(false));
         }, retryDelayMs);
       };
-      audioElement.addEventListener('error', handleErrorOrStalled, { once: true });
-      audioElement.addEventListener('stalled', handleErrorOrStalled, { once: true });
+      // Ne relancer que sur "error". "stalled" est normal en flux direct (buffer vide entre segments)
+      // et déclenchait un reload ~toutes les 6 s → coupure / "relance" du titre (ex. Radio GNV Just Relax).
+      audioElement.addEventListener('error', handleError, { once: true });
 
       // Ne lancer play() que si la source vient d'être mise (évite de casser la lecture déjà lancée au clic)
       // Ne pas lancer play() si le seek+play est géré dans le contexte du clic (évite lecture depuis 0 avant le qualage)
@@ -927,8 +926,7 @@ function App() {
         }
         audioElement.removeEventListener('canplay', onCanPlay);
         audioElement.removeEventListener('loadedmetadata', onCanPlay);
-        audioElement.removeEventListener('error', handleErrorOrStalled);
-        audioElement.removeEventListener('stalled', handleErrorOrStalled);
+        audioElement.removeEventListener('error', handleError);
         // Ne pas appeler pause() ici : au clic sur une autre station, ce cleanup s'exécute
         // et couperait la lecture lancée par startRadioPlayInClickContext (contexte du clic).
         // Le pause est géré par le bloc else quand isPlaying ou currentRadio change.
