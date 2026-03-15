@@ -955,17 +955,32 @@ function App() {
   // Enchaînement des titres : programmation (station.programs) ou playlist locale (playlistId)
   useEffect(() => {
     if (!audioElement || !currentRadio || radioPlaylistTracks.length === 0) return;
+    const normalizeUrl = (url) => {
+      if (!url || typeof url !== 'string') return '';
+      try {
+        const u = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+        return (u.pathname || '').replace(/\/+/g, '/').replace(/\/$/, '') || '/';
+      } catch (_) {
+        return (url.split('?')[0] || '').replace(/\/+/g, '/').replace(/\/$/, '') || '/';
+      }
+    };
+    const uniqueUrls = [...new Set(radioPlaylistTracks.filter((t) => t?.streamUrl).map((t) => normalizeUrl(t.streamUrl)))];
+    const isSingleStreamPlaylist = uniqueUrls.length <= 1;
+
     const onEnded = () => {
+      // Flux unique (ex. Radio GNV) : une seule URL pour toute la grille → ne jamais avancer sur "ended"
+      // (le navigateur peut émettre "ended" à chaque segment ~6 s sur les streams ICEcast/HLS).
+      if (isSingleStreamPlaylist) return;
+
       // Sur mobile, "ended" peut être déclenché par buffer underrun ou mise en arrière-plan sans fin réelle de piste.
-      // En flux continu (streaming), le navigateur peut émettre "ended" à chaque segment (~6 s) : ne pas avancer.
       const dur = audioElement.duration;
       const pos = audioElement.currentTime;
       const hasValidDuration = typeof dur === 'number' && !isNaN(dur) && isFinite(dur) && dur > 0;
-      const isShortSegment = hasValidDuration && dur < 30; // segment très court = probablement flux segmenté, pas une vraie fin de piste
+      const isShortSegment = hasValidDuration && dur < 60; // < 1 min = segment/flux, pas une vraie piste
       const reallyEnded = hasValidDuration && !isShortSegment && (pos >= dur - 2);
       if (!reallyEnded) return;
 
-      const currentUrl = currentRadio?.streamUrl;
+      const currentNorm = normalizeUrl(currentRadio?.streamUrl);
 
       // Passer à la piste suivante en ignorant les null (programmes sans streamUrl)
       let nextIndex = radioPlaylistIndex + 1;
@@ -973,8 +988,7 @@ function App() {
       if (nextIndex < radioPlaylistTracks.length) {
         const nextTrack = radioPlaylistTracks[nextIndex];
         if (nextTrack) {
-          // Même URL = même flux continu : ne pas changer de titre ni relancer (évite le flip toutes les ~6 s)
-          if (nextTrack.streamUrl && nextTrack.streamUrl === currentUrl) return;
+          if (normalizeUrl(nextTrack.streamUrl) === currentNorm) return;
           setRadioPlaylistIndex(nextIndex);
           setCurrentRadio(prev => prev ? {
             ...prev,
@@ -987,7 +1001,7 @@ function App() {
         const firstIndex = radioPlaylistTracks.findIndex((t) => t != null);
         if (firstIndex >= 0) {
           const first = radioPlaylistTracks[firstIndex];
-          if (first && first.streamUrl && first.streamUrl === currentUrl) return;
+          if (first && normalizeUrl(first.streamUrl) === currentNorm) return;
           setRadioPlaylistIndex(firstIndex);
           setCurrentRadio(prev => prev ? {
             ...prev,
