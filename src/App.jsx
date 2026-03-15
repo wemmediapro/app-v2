@@ -957,12 +957,15 @@ function App() {
     if (!audioElement || !currentRadio || radioPlaylistTracks.length === 0) return;
     const onEnded = () => {
       // Sur mobile, "ended" peut être déclenché par buffer underrun ou mise en arrière-plan sans fin réelle de piste.
-      // N'avancer qu si la piste a vraiment terminé (durée connue et currentTime proche de la fin).
+      // En flux continu (streaming), le navigateur peut émettre "ended" à chaque segment (~6 s) : ne pas avancer.
       const dur = audioElement.duration;
       const pos = audioElement.currentTime;
       const hasValidDuration = typeof dur === 'number' && !isNaN(dur) && isFinite(dur) && dur > 0;
-      const reallyEnded = !hasValidDuration || (pos >= dur - 2);
+      const isShortSegment = hasValidDuration && dur < 30; // segment très court = probablement flux segmenté, pas une vraie fin de piste
+      const reallyEnded = hasValidDuration && !isShortSegment && (pos >= dur - 2);
       if (!reallyEnded) return;
+
+      const currentUrl = currentRadio?.streamUrl;
 
       // Passer à la piste suivante en ignorant les null (programmes sans streamUrl)
       let nextIndex = radioPlaylistIndex + 1;
@@ -970,6 +973,8 @@ function App() {
       if (nextIndex < radioPlaylistTracks.length) {
         const nextTrack = radioPlaylistTracks[nextIndex];
         if (nextTrack) {
+          // Même URL = même flux continu : ne pas changer de titre ni relancer (évite le flip toutes les ~6 s)
+          if (nextTrack.streamUrl && nextTrack.streamUrl === currentUrl) return;
           setRadioPlaylistIndex(nextIndex);
           setCurrentRadio(prev => prev ? {
             ...prev,
@@ -982,6 +987,7 @@ function App() {
         const firstIndex = radioPlaylistTracks.findIndex((t) => t != null);
         if (firstIndex >= 0) {
           const first = radioPlaylistTracks[firstIndex];
+          if (first && first.streamUrl && first.streamUrl === currentUrl) return;
           setRadioPlaylistIndex(firstIndex);
           setCurrentRadio(prev => prev ? {
             ...prev,
