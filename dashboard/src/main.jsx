@@ -3,6 +3,26 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 
+// Sentry (initialisation conditionnelle pour le dashboard)
+(async function initSentry() {
+  try {
+    const dsn = import.meta.env.VITE_SENTRY_DSN;
+    if (!dsn) return;
+    const Sentry = await import('@sentry/react');
+    const { BrowserTracing } = await import('@sentry/tracing');
+
+    Sentry.init({
+      dsn,
+      integrations: [new BrowserTracing()],
+      tracesSampleRate: parseFloat(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE || '0.02'),
+      environment: import.meta.env.MODE || 'development'
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('Sentry init failed (optional).', err);
+  }
+})();
+
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null }
   static getDerivedStateFromError(error) {

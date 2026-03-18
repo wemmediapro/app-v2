@@ -5,6 +5,40 @@ const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, 'config.env') });
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+// -------------------------
+// Startup security checks
+// -------------------------
+function assertProductionSecrets() {
+  if (process.env.NODE_ENV !== 'production') return;
+
+  const forbiddenDefaults = new Set(['', 'changeme', 'password', 'default']);
+  const checks = [
+    { key: 'MONGO_INITDB_ROOT_PASSWORD', name: 'MongoDB root password' },
+    { key: 'REDIS_PASSWORD', name: 'Redis password' },
+    { key: 'MONGO_ROOT_PASSWORD', name: 'MongoDB root password (alternate)' },
+    { key: 'ADMIN_PASSWORD', name: 'ADMIN_PASSWORD' },
+    { key: 'JWT_SECRET', name: 'JWT_SECRET' }
+  ];
+
+  const errors = [];
+  for (const c of checks) {
+    const val = process.env[c.key];
+    if (!val || forbiddenDefaults.has(String(val).trim())) {
+      errors.push(`${c.name} (${c.key}) is missing or using an insecure default.`);
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error('CRITICAL: insecure environment configuration detected:');
+    for (const e of errors) console.error(' -', e);
+    console.error('Aborting startup. Set secure env vars before running in production.');
+    process.exit(1);
+  }
+}
+
+// Appel immédiat
+assertProductionSecrets();
+
 const { validateSecurityConfig } = require('./src/lib/security-config');
 try {
   validateSecurityConfig();

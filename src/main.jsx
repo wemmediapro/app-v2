@@ -6,6 +6,27 @@ import './styles/fonts.css'
 import './styles/index.css'
 import { LanguageProvider } from './contexts/LanguageContext'
 
+// Sentry (initialisation conditionnelle côté client — Vite expose VITE_ env vars)
+(async function initSentry() {
+  try {
+    const dsn = import.meta.env.VITE_SENTRY_DSN;
+    if (!dsn) return;
+    const Sentry = await import('@sentry/react');
+    const { BrowserTracing } = await import('@sentry/tracing');
+
+    Sentry.init({
+      dsn,
+      integrations: [new BrowserTracing()],
+      tracesSampleRate: parseFloat(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE || '0.02'),
+      environment: import.meta.env.MODE || 'development'
+    });
+  } catch (err) {
+    // Ne pas empêcher l'app de démarrer si Sentry n'est pas installé
+    // eslint-disable-next-line no-console
+    console.warn('Sentry init failed (optional).', err);
+  }
+})();
+
 // ——— Service Worker (PWA) ———
 // En développement : désinscrire tout SW pour éviter le cache et voir les changements à chaud
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
