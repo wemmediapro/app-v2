@@ -11,7 +11,7 @@ module.exports = {
       name: 'gnv-backend',
       script: './backend/server.js',
       
-      // Clustering - Utilise tous les cœurs CPU disponibles
+      // Clustering - PM2 gère le scaling (server.js uniquement ; cluster.js non utilisé)
       instances: process.env.CLUSTER_WORKERS || 'max',
       exec_mode: 'cluster',
       
@@ -47,8 +47,8 @@ module.exports = {
       watch: false,              // Pas de watch en production
       ignore_watch: ['node_modules', 'logs', '*.log', 'uploads'],
       
-      // Gestion des processus
-      kill_timeout: 5000,        // Timeout pour arrêt propre
+      // Gestion des processus (graceful shutdown 30s dans server.js → 35s pour laisser finir)
+      kill_timeout: 35000,       // 5s de marge au-dessus du timeout interne
       wait_ready: true,          // Attend le signal 'ready'
       listen_timeout: 10000,     // Timeout pour écoute
       instance_var: 'INSTANCE_ID',
@@ -62,8 +62,6 @@ module.exports = {
       
       // Variables spécifiques au clustering
       autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
       
       // Source maps (désactivé en production)
       source_map_support: false,
@@ -78,6 +76,8 @@ module.exports = {
         ports: true
       }
     },
+    // En production réelle, préférer servir dist/ via Nginx (root /path/to/dist; try_files $uri /index.html;)
+    // plutôt que vite preview qui est destiné aux tests et ajoute un overhead inutile.
     {
       name: 'gnv-frontend',
       script: 'npx',
@@ -105,6 +105,7 @@ module.exports = {
       max_restarts: 5,
       restart_delay: 3000
     },
+    // Idem : en prod, servir dashboard/dist via Nginx plutôt que vite preview.
     {
       name: 'gnv-dashboard',
       script: 'npx',

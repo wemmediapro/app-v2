@@ -1,6 +1,10 @@
 /**
  * Gestionnaire de connexions optimisé pour 2000+ connexions simultanées
  * Gère les connexions Socket.io, MongoDB, Redis et les limites système
+ *
+ * Limitation : singleton en mémoire, non partagé entre workers PM2. Les stats (byIP, peak, etc.)
+ * et les limites par IP sont locales à chaque processus. Pour des limites cross-workers,
+ * utiliser connectionCounters (Redis) côté serveur principal — voir server.js.
  */
 
 const EventEmitter = require('events');

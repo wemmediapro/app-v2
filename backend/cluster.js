@@ -1,7 +1,8 @@
 /**
- * Point d'entrée cluster pour scaler le backend sur tous les cœurs CPU.
- * Usage : NODE_ENV=production node cluster.js
- * En dev : node server.js ou npm run dev (un seul processus)
+ * Point d'entrée cluster (module cluster Node.js).
+ * Usage : NODE_ENV=production node cluster.js (ou npm run start:cluster).
+ * En prod avec PM2 : ecosystem utilise server.js + exec_mode: 'cluster' → ce fichier n'est pas utilisé.
+ * En dev : node server.js ou npm run dev (un seul processus).
  * Anti crash-loop : max 5 redémarrages en 60s par worker, puis backoff exponentiel.
  */
 const cluster = require('cluster');

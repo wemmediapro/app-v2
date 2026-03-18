@@ -5,8 +5,9 @@
 
 const { createClient } = require('redis');
 
-/** TTL par type de contenu (secondes) : banners 300s, GNV 60s, positions 30s, films 86400s, radio 600s */
+/** TTL par type de contenu (secondes) : banners 300s, GNV 60s, positions 30s, films 86400s, radio 600s, auth 60s */
 const TTL_BY_PREFIX = [
+  { prefix: 'auth:user:', ttl: 60 },
   { prefix: 'list:banners:', ttl: 300 },
   { prefix: 'banner:', ttl: 300 },
   { prefix: 'list:gnv:', ttl: 60 },

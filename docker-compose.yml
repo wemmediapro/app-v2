@@ -14,8 +14,9 @@ services:
     image: mongo:8
     container_name: gnv-mongo
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin   # C5 : auth (--auth activé automatiquement par l'image)
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-changeme}
+    command: mongod --auth
     ports:
       - "127.0.0.1:27017:27017"  # C5 : bind loopback uniquement
     volumes:
@@ -29,7 +30,7 @@ services:
       - "127.0.0.1:6379:6379"  # C4 : bind loopback uniquement
     volumes:
       - redis_data:/data       # C4 : volume persistant
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme} --maxmemory 512mb --maxmemory-policy allkeys-lru
     restart: unless-stopped
 
 volumes:

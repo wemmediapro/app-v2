@@ -35,9 +35,9 @@ class DatabaseManager {
       serverSelectionTimeoutMS: 10000,
       heartbeatFrequencyMS: 10000,
       connectTimeoutMS: 30000,
-      // Options de performance — primary par défaut ; pour lectures publiques (films, banners, radio, restaurants) utiliser readPreferencePublic dans les requêtes
-      readPreference: 'primary',
-      readConcern: { level: 'majority' },
+      // Options de performance — secondaryPreferred pour alléger le primary ; pour lectures critiques (ex. paiement) passer readPreference: 'primary' au niveau requête
+      readPreference: 'secondaryPreferred',
+      readConcern: { level: 'local' },
       writeConcern: { w: 'majority', j: true },
       // Compression
       compressors: ['zlib', 'snappy'],
