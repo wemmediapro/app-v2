@@ -753,15 +753,25 @@ function App() {
     }
     let cancelled = false;
     (async () => {
+      // Toujours rafraîchir l'heure serveur avant toute décision de lecture (position, créneau)
       try {
         const d = await apiService.getServerTime();
         if (cancelled) return;
         if (d) radioServerTimeOffsetRef.current = d.getTime() - Date.now();
       } catch (_) {}
       if (cancelled) return;
+      // Auto-démarrage une seule station avec programmation : s'assurer d'avoir l'offset avant de lancer
       if (radioStations.length === 1 && !currentRadio && !radioAutoStartedRef.current) {
         const station = radioStations[0];
         if (station.programs && station.programs.length > 0) {
+          // Si l'offset n'a pas été mis à jour (ex: getServerTime en échec), retry une fois pour utiliser l'heure serveur au lancement
+          if (radioServerTimeOffsetRef.current === null) {
+            try {
+              const d2 = await apiService.getServerTime();
+              if (d2) radioServerTimeOffsetRef.current = d2.getTime() - Date.now();
+            } catch (_) {}
+          }
+          if (cancelled) return;
           radioAutoStartedRef.current = true;
           toggleRadio(station);
         }
@@ -1175,26 +1185,22 @@ function App() {
       }
       return { ...best, matched: true };
     }
-    // Cas 2 : aucun startTime -> grille virtuelle depuis 00:00, bouclée sur 24h (ordre + durées)
-    let totalAcc = 0;
-    for (const { prog } of forToday) totalAcc += Math.max(0, Number(prog.duration) || 60);
-    const nowInGrid = totalAcc > 0 ? now % totalAcc : 0;
-    let acc = 0;
-    for (let j = 0; j < forToday.length; j++) {
-      const { prog, originalIndex: i } = forToday[j];
-      const dur = Math.max(0, Number(prog.duration) || 60);
-      const endAcc = acc + dur;
-      if (nowInGrid >= acc && nowInGrid < endAcc) {
-        const positionInSeconds = Math.min(nowInGrid - acc, dur);
-        return { index: i, positionInSeconds, matched: true };
-      }
-      acc = endAcc;
-    }
-    if (forToday.length > 0 && nowInGrid >= acc) {
-      const last = forToday[forToday.length - 1];
-      return { index: last.originalIndex, positionInSeconds: 0, matched: true };
-    }
-    return { index: 0, positionInSeconds: 0, matched: false };
+    // Cas 2 : aucun startTime -> grille virtuelle répartie sur 24h selon l'heure serveur (comme Mosaïque)
+    // Répartition égale sur la journée : chaque programme couvre 86400/n secondes, pour éviter de toujours
+    // retomber sur le 1er programme à 0s quand la grille est courte (ex. 10×60s → now % 600 = 0 à 10h).
+    const daySeconds = 24 * 3600;
+    const n = forToday.length;
+    if (n === 0) return { index: 0, positionInSeconds: 0, matched: false };
+    const segmentLength = daySeconds / n;
+    const programIndexInDay = Math.min(Math.floor(now / segmentLength), n - 1);
+    const { prog, originalIndex: i } = forToday[programIndexInDay];
+    const dur = Math.max(0, Number(prog.duration) || 60);
+    const positionInSegment = now - programIndexInDay * segmentLength;
+    const positionInSeconds = Math.min(
+      Math.floor((positionInSegment / segmentLength) * dur),
+      Math.max(0, dur - 1)
+    );
+    return { index: i, positionInSeconds, matched: true };
   };
 
   /** Progression du flux radio en mode programmation (streaming) : position et durée du créneau courant selon l'heure serveur.
@@ -1282,10 +1288,14 @@ function App() {
       // Reprise (Play après Pause) : réaligner la lecture sur l'heure serveur seulement si un créneau correspond
       if (station.programs && station.programs.length > 0) {
         (async () => {
-          try {
-            const d = await apiService.getServerTime();
-            if (d) radioServerTimeOffsetRef.current = d.getTime() - Date.now();
-          } catch (_) {}
+          const setOffsetFromServer = async () => {
+            try {
+              const d = await apiService.getServerTime();
+              if (d) radioServerTimeOffsetRef.current = d.getTime() - Date.now();
+            } catch (_) {}
+          };
+          await setOffsetFromServer();
+          if (radioServerTimeOffsetRef.current === null) await setOffsetFromServer();
           const sorted = [...station.programs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
         const resolveTracks = sorted.map((prog) => {
           if (prog.streamUrl) return { streamUrl: getRadioStreamUrl(prog.streamUrl), title: prog.title, artist: prog.artist || '', duration: prog.duration };
@@ -1356,10 +1366,14 @@ function App() {
     // Nouvelle station avec programmes
     if (station.programs && station.programs.length > 0) {
       (async () => {
-        try {
-          const d = await apiService.getServerTime();
-          if (d) radioServerTimeOffsetRef.current = d.getTime() - Date.now();
-        } catch (_) {}
+        const setOffsetFromServer = async () => {
+          try {
+            const d = await apiService.getServerTime();
+            if (d) radioServerTimeOffsetRef.current = d.getTime() - Date.now();
+          } catch (_) {}
+        };
+        await setOffsetFromServer();
+        if (radioServerTimeOffsetRef.current === null) await setOffsetFromServer();
         const sorted = [...station.programs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       // Garder le même ordre que sorted : resolveTracks[i] = piste pour sorted[i] ou null
       const resolveTracks = sorted.map((prog) => {

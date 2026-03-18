@@ -25,7 +25,6 @@
     "dev:tunnel": "node start-tunnel.js",
     "tunnel": "node start-tunnel.js",
     "tunnel:secure": "node start-tunnel-secure.js",
-    "tunnel:ngrok": "./start-ngrok-tunnel.sh",
     "tunnel:lt": "node start-tunnel-lt.js",
     "tunnel:lt-capture": "node start-tunnel-lt-capture.js",
     "tunnel:cf": "node start-tunnel-cf.js",

@@ -60,17 +60,6 @@ coverage/
 # Mot de passe VPS (ne pas versionner)
 .vps-pass
 
-# Cursor / rapports et artefacts locaux
-.cursor/
+# Rapports de tests et artefacts locaux
 playwright-report/
 test-results/
-docs/AUDIT-*.md
-docs/CHECKLIST-*.md
-docs/LOAD-TEST*.md
-docs/LOAD-TESTING*.md
-docs/STRATEGIE-*.md
-docs/refactor/
-docs/testing/
-scripts/load-test-*.yml
-scripts/load-test-*.js
-scripts/monitor-load-test.sh
