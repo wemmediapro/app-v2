@@ -8,7 +8,7 @@ import { getStreamingVideoUrl, getHlsUrlFromVideoUrl } from '../services/apiServ
  * Passer par flèche (clavier ou bouton) et bouton "Ignorer".
  * skipAfterPercent : % de la durée après lequel le bouton "Ignorer" est actif (0 = dès le début, 100 = à la fin).
  */
-function AdSlot({ adUrl, skipAfterPercent = 0, onComplete, onError }) {
+function AdSlot({ adUrl, skipAfterPercent = 0, onComplete, onError, t }) {
   const videoRef = useRef(null);
   const cleanupRef = useRef(null);
   const [canSkip, setCanSkip] = useState(skipAfterPercent <= 0);
@@ -123,10 +123,10 @@ function AdSlot({ adUrl, skipAfterPercent = 0, onComplete, onError }) {
         onClick={handleSkip}
         disabled={!canSkip}
         className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 px-4 py-2 bg-black/70 text-white text-sm font-medium rounded-lg hover:bg-black/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label="Ignorer la publicité"
+        aria-label={t ? t('common.skipAd') : 'Skip ad'}
       >
         <SkipForward size={18} aria-hidden />
-        Ignorer
+        {t ? t('common.skip') : 'Skip'}
       </button>
     </div>
   );

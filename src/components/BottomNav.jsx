@@ -23,7 +23,7 @@ function BottomNav({ page, setPage, t, notificationsUnreadCount = 0, hidden = fa
 
   return (
     <nav
-      aria-label="Navigation principale"
+      aria-label={t('common.mainNav')}
       className="fixed bottom-0 left-0 right-0 z-50 w-full max-w-[768px] min-h-[44px] sm:min-h-[48px] mx-auto bg-gray-50 border-t border-gray-200 overflow-visible safe-area-bottom flex items-center"
       style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}
     >

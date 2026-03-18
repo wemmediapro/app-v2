@@ -37,13 +37,26 @@ export const LanguageProvider = ({ children }) => {
   // Mémoriser la fonction t pour qu'elle se mette à jour quand la langue change
   const t = useCallback((key, params = {}) => {
     const keys = key.split('.');
-    let value = translations[language];
-    
-    for (const k of keys) {
-      value = value?.[k];
-    }
-    
+    const getByKeys = (obj) => {
+      let v = obj;
+      for (const k of keys) {
+        v = v?.[k];
+      }
+      return v;
+    };
+
+    let value = getByKeys(translations[language]);
+
+    // Fallback fr puis en si la clé manque (ex. cache Vite sur les JSON)
     if (value === undefined) {
+      if (language !== 'fr') {
+        const fromFr = getByKeys(translations.fr);
+        if (typeof fromFr === 'string') return fromFr;
+      }
+      if (language !== 'en') {
+        const fromEn = getByKeys(translations.en);
+        if (typeof fromEn === 'string') return fromEn;
+      }
       if (import.meta.env.DEV) {
         console.warn(`Translation missing for key: ${key} in language: ${language}`);
       }

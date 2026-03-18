@@ -67,7 +67,11 @@ router.get('/decks', async (req, res) => {
         const n = Number(shipIdParam);
         if (!Number.isNaN(n) && n >= 1) query.shipId = n;
       }
-      const decks = await Shipmap.find(query).lean().sort({ name: 1 });
+      let decks = await Shipmap.find(query).lean().sort({ name: 1 });
+      // Si aucun pont pour ce navire, proposer ceux du navire 7 (GNV Excellent / seed)
+      if (decks.length === 0 && query.shipId && query.shipId !== 7) {
+        decks = await Shipmap.find({ shipId: 7 }).lean().sort({ name: 1 });
+      }
       return res.json(decks.map((doc) => {
         const localized = localizeDeck(doc, lang);
         return {

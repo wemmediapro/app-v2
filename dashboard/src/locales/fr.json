@@ -35,7 +35,19 @@
     "accessDenied": "Accès refusé",
     "retry": "Réessayer",
     "advancedFilters": "Filtres avancés",
-    "movies": "Films & Séries"
+    "movies": "Films & Séries",
+    "menu": "Menu",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "loginForm": "Formulaire de connexion",
+    "searchButton": "Rechercher",
+    "playVideo": "Lire la vidéo",
+    "analyticsTabs": "Onglets Analytics",
+    "breadcrumb": "Fil d'Ariane",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "connecting": "Connexion en cours",
+    "signIn": "Se connecter"
   },
   "dashboard": {
     "title": "Tableau de bord",

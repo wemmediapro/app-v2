@@ -74,7 +74,7 @@ export default function BannersCarousel({
               type="button"
               onClick={() => setBannerIndex((i) => (i - 1 + banners.length) % banners.length)}
               className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors z-10"
-              aria-label="Bannière précédente"
+              aria-label={t('common.bannerPrevious')}
             >
               <ChevronLeft size={24} />
             </button>
@@ -82,7 +82,7 @@ export default function BannersCarousel({
               type="button"
               onClick={() => setBannerIndex((i) => (i + 1) % banners.length)}
               className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors z-10"
-              aria-label="Bannière suivante"
+              aria-label={t('common.bannerNext')}
             >
               <ChevronRight size={24} />
             </button>
@@ -93,7 +93,7 @@ export default function BannersCarousel({
                   type="button"
                   onClick={() => setBannerIndex(i)}
                   className={`w-2.5 h-2.5 rounded-full transition-colors ${i === bannerIndex ? 'bg-white scale-110' : 'bg-white/50 hover:bg-white/80'}`}
-                  aria-label={`Bannière ${i + 1}`}
+                  aria-label={t('common.bannerIndex', { index: i + 1 })}
                   aria-current={i === bannerIndex ? 'true' : undefined}
                 />
               ))}

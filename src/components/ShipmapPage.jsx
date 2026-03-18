@@ -143,6 +143,22 @@ export default function ShipmapPage({
           </div>
         )}
 
+        {/* État vide : pas de ponts chargés */}
+        {!shipmapLoading && shipDecks.length === 0 && (
+          <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden p-6 sm:p-8 text-center">
+            <Map size={48} className="mx-auto text-slate-300" strokeWidth={1.5} />
+            <h2 className="mt-4 text-lg font-semibold text-slate-800">{t('shipmap.noPlanTitle')}</h2>
+            <p className="mt-2 text-sm text-slate-600 max-w-md mx-auto">{t('shipmap.noPlanHint')}</p>
+            <button
+              type="button"
+              onClick={() => refetchShipmap?.()}
+              className="mt-5 px-4 py-2.5 bg-[#264FFF] text-white rounded-xl text-sm font-medium hover:bg-[#1e3fe6] transition-colors"
+            >
+              {t('shipmap.refresh')}
+            </button>
+          </div>
+        )}
+
         {/* Contenu avec ponts et détail */}
         {!shipmapLoading && shipDecks.length > 0 && (
           <>

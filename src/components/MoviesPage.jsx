@@ -547,6 +547,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                     adUrl={currentAd.videoUrl}
                     skipAfterPercent={playbackPhase === 'midroll' ? (currentAd.skipAfterPercent ?? 0) : 0}
                     onComplete={playbackPhase === 'midroll' ? handleMidrollComplete : handlePrerollComplete}
+                    t={t}
                   />
                 ) : playbackPhase === 'preroll' && !currentAd ? (
                   <div className="flex flex-col items-center justify-center p-8 text-center text-white/80">

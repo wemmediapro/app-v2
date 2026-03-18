@@ -348,11 +348,12 @@ router.get('/boat-config', async (req, res) => {
       });
     }
     const config = await LocalServerConfig.findOne({ id: 'local' }).lean();
+    const defaultShipId = 7; // GNV Excellent — correspond au seed shipmap
     const data = {
       shipName: config?.shipName ?? '',
       shipCapacity: config?.shipCapacity != null ? config.shipCapacity : null,
       shipInfo: config?.shipInfo ?? '',
-      shipId: config?.shipId != null && config.shipId >= 1 ? config.shipId : 1
+      shipId: config?.shipId != null && config.shipId >= 1 ? config.shipId : defaultShipId
     };
     res.json({
       success: true,
@@ -392,7 +393,7 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
     }
     if (shipId !== undefined) {
       const id = typeof shipId === 'number' ? shipId : parseInt(shipId, 10);
-      update.shipId = (id >= 1 && !Number.isNaN(id)) ? id : 1;
+      update.shipId = (id >= 1 && !Number.isNaN(id)) ? id : 7;
     }
     if (Object.keys(update).length === 0) {
       return res.status(400).json({ success: false, message: 'Aucune modification fournie' });
@@ -408,7 +409,7 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
         shipName: config.shipName ?? '',
         shipCapacity: config.shipCapacity != null ? config.shipCapacity : null,
         shipInfo: config.shipInfo ?? '',
-        shipId: config.shipId != null && config.shipId >= 1 ? config.shipId : 1
+        shipId: config.shipId != null && config.shipId >= 1 ? config.shipId : 7
       },
       timestamp: new Date().toISOString()
     });

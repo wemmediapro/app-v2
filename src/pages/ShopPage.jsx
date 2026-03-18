@@ -386,7 +386,7 @@ export default function ShopPage({
                   <button
                     onClick={() => removeFromShopFavorites(item.id)}
                     className="p-2 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition-colors flex-shrink-0"
-                    aria-label="Retirer des favoris"
+                    aria-label={t('common.removeFromFavorites')}
                   >
                     <Trash2 size={16} strokeWidth={1.75} />
                   </button>
@@ -443,7 +443,7 @@ export default function ShopPage({
                         setSelectedProductImageIndex(prev => prev === 0 ? selectedProduct.gallery.length - 1 : prev - 1);
                       }}
                       className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 p-2.5 sm:p-2 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center bg-white/95 rounded-full text-slate-700 shadow-md hover:bg-white transition-colors"
-                      aria-label="Image précédente"
+                      aria-label={t('common.imagePrevious')}
                     >
                       <ChevronLeft size={20} className="sm:w-[18px] sm:h-[18px]" />
                     </button>
@@ -454,7 +454,7 @@ export default function ShopPage({
                         setSelectedProductImageIndex(prev => prev === selectedProduct.gallery.length - 1 ? 0 : prev + 1);
                       }}
                       className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 p-2.5 sm:p-2 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center bg-white/95 rounded-full text-slate-700 shadow-md hover:bg-white transition-colors"
-                      aria-label="Image suivante"
+                      aria-label={t('common.imageNext')}
                     >
                       <ChevronRight size={20} className="sm:w-[18px] sm:h-[18px]" />
                     </button>
@@ -467,7 +467,7 @@ export default function ShopPage({
                           className={`h-1.5 rounded-full transition-all flex-shrink-0 ${
                             index === selectedProductImageIndex ? 'bg-white w-6' : 'bg-white/60 w-1.5 hover:bg-white/80'
                           }`}
-                          aria-label={`Image ${index + 1}`}
+                          aria-label={t('common.imageIndex', { index: index + 1 })}
                         />
                       ))}
                     </div>
@@ -477,7 +477,7 @@ export default function ShopPage({
                   type="button"
                   onClick={closeModal}
                   className="absolute top-3 right-3 p-2.5 sm:p-2 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center bg-white/95 rounded-full text-slate-700 shadow-md hover:bg-white transition-colors"
-                  aria-label="Fermer"
+                  aria-label={t('common.close')}
                 >
                   <X size={20} className="sm:w-[18px] sm:h-[18px]" />
                 </button>

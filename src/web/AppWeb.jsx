@@ -206,7 +206,7 @@ export default function AppWeb() {
             type="button"
             onClick={() => setSidebarOpen((o) => !o)}
             className="hidden lg:flex p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-            aria-label="Menu"
+            aria-label={t('common.menu')}
           >
             <Menu size={22} />
           </button>
@@ -230,7 +230,7 @@ export default function AppWeb() {
               type="button"
               onClick={() => setShowNotificationsPanel((open) => !open)}
               className={`relative p-2 rounded-lg transition-colors ${showNotificationsPanel ? 'text-white bg-slate-800' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
-              aria-label="Notifications"
+              aria-label={t('common.notifications')}
               aria-expanded={showNotificationsPanel}
             >
               <Bell size={20} />
@@ -272,16 +272,16 @@ export default function AppWeb() {
               )}
             </AnimatePresence>
           </div>
-          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" aria-label="Luminosité">
+          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" aria-label={t('common.brightness')}>
             <Sun size={20} />
           </button>
-          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 hidden sm:block" aria-label="Recherche">
+          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 hidden sm:block" aria-label={t('common.search')}>
             <Search size={20} />
           </button>
-          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 hidden sm:block" aria-label="Paramètres">
+          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 hidden sm:block" aria-label={t('common.settings')}>
             <Settings size={20} />
           </button>
-          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" aria-label="Aide">
+          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" aria-label={t('common.help')}>
             <HelpCircle size={20} />
           </button>
           <div className="ml-1">
@@ -291,7 +291,7 @@ export default function AppWeb() {
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
             className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-            aria-label="Menu"
+            aria-label={t('common.menu')}
           >
             {menuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
