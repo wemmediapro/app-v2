@@ -49,10 +49,13 @@ describe('API Shop', () => {
       expect(Array.isArray(res.body)).toBe(true);
     });
 
-    it('retourne 400 si limit > 100', async () => {
-      await request(app)
+    it('plafonne limit à 100 (pas de 400, cap côté middleware pagination)', async () => {
+      const res = await request(app)
         .get('/api/shop?limit=101')
-        .expect(400);
+        .expect(200);
+      const data = res.body?.data ?? res.body;
+      expect(Array.isArray(data)).toBe(true);
+      if (res.body.limit != null) expect(res.body.limit).toBe(100);
     });
   });
 

@@ -4,19 +4,14 @@ const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, 'config.env') });
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const config = require('./src/config');
-
-// En production : refuser de démarrer sans secrets obligatoires
-if (config.env === 'production') {
-  if (!config.jwt.secret) {
-    console.error('CRITICAL: JWT_SECRET must be set in production. Set it in config.env or .env.');
-    process.exit(1);
-  }
-  if (!process.env.ADMIN_PASSWORD) {
-    console.error('CRITICAL: ADMIN_PASSWORD must be set in production. Set it in config.env or .env.');
-    process.exit(1);
-  }
+const { validateSecurityConfig } = require('./src/lib/security-config');
+try {
+  validateSecurityConfig();
+} catch (e) {
+  console.error(e.message);
+  process.exit(1);
 }
+const config = require('./src/config');
 
 const express = require('express');
 const cors = require('cors');
@@ -103,6 +98,9 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 app.use(cookieParser());
+const { csrfCookie, csrfProtection } = require('./src/middleware/csrf');
+app.use('/api', csrfCookie);
+app.use('/api', csrfProtection);
 const corsOptions = {
   origin: (origin, callback) => {
     const allowed = config.cors.origins;
@@ -208,22 +206,29 @@ async function setupAfterDb() {
     const cacheConnected = await cacheManager.connect(config.redis.uri);
     if (cacheConnected) console.log('✅ Cache listes (Redis) actif — TTL 60s');
   }
-  // req.path est relatif au mount /api/ → '/health', '/time', etc.
+  const jwt = require('jsonwebtoken');
   const skipApiLimit = (req) => {
     const p = (req.path || '').toLowerCase();
-    if (p === '/health' || p === '/time') return true; // santé / horloge : pas de limite (monitoring, k6)
+    if (p === '/health' || p === '/time') return true;
     if (p.startsWith('/stream') || p.startsWith('/upload') || p.startsWith('/media-library')) return true;
+    try {
+      const token = req.get('Authorization')?.replace('Bearer ', '') || req.cookies?.adminToken;
+      if (token && config.jwt?.secret) {
+        const decoded = jwt.verify(token, config.jwt.secret);
+        if (decoded.role === 'admin') return true;
+      }
+    } catch (e) { /* ignore */ }
     return false;
   };
   const apiLimitMax = process.env.RATE_LIMIT_LOAD_TEST === '1' ? 1000000 : config.rateLimit.max;
   const apiLimiter = rateLimit({
     windowMs: config.rateLimit.windowMs,
     max: apiLimitMax,
+    skip: skipApiLimit,
     message: { success: false, message: 'Trop de requêtes. Veuillez patienter quelques minutes.' },
     standardHeaders: true,
     legacyHeaders: false,
     store: redisStore || undefined,
-    skip: skipApiLimit,
   });
   app.use('/api/', apiLimiter);
   if (redisStore) console.log('✅ Rate limit API : store Redis actif');
@@ -242,6 +247,9 @@ async function setupAfterDb() {
   app.use('*', (req, res) => {
     res.status(404).json({ message: 'Route not found' });
   });
+
+  const { globalErrorHandler } = require('./src/utils/errors');
+  app.use(globalErrorHandler(config));
 }
 
 function startServer() {
@@ -274,7 +282,7 @@ dbManager.connect(config.mongodb.uri).then(async (connected) => {
 
 // Socket.io : authentification par JWT (évite accès anonyme aux rooms / send-message)
 const { verifyToken } = require('./src/middleware/auth');
-const { logSocketAuthFailed } = require('./src/lib/logger');
+const { logSocketAuthFailed, redact } = require('./src/lib/logger');
 const mongoose = require('mongoose');
 const LocalServerConfig = require('./src/models/LocalServerConfig');
 
@@ -309,39 +317,9 @@ io.use(async (socket, next) => {
   next();
 });
 
-// Socket.io for real-time features
-io.on('connection', (socket) => {
-  const shipId = socket._shipId || connectionCounters.getShipId(socket);
-  connectionCounters.increment();
-  console.log('👤 User connected:', socket.id, socket.user?.email || '', shipId ? `(ship: ${shipId})` : '');
-
-  socket.on('join-room', (room) => {
-    if (typeof room !== 'string' || room.length > 64) return;
-    socket.join(room);
-    console.log(`👤 User ${socket.id} joined room: ${room}`);
-  });
-
-  socket.on('send-message', (data) => {
-    if (!data || typeof data.room !== 'string' || data.room.length > 64) return;
-    socket.to(data.room).emit('new-message', data);
-  });
-
-  socket.on('disconnect', () => {
-    connectionCounters.decrement();
-    console.log('👤 User disconnected:', socket.id);
-  });
-});
-
-// Gestion des erreurs (réponse cohérente) + logging
-const logger = require('./src/lib/logger');
-app.use((err, req, res, next) => {
-  logger.error({ err: err.message, stack: err.stack, path: req?.path, method: req?.method });
-  res.status(500).json({
-    success: false,
-    message: err.message || 'Erreur serveur',
-    ...(config.env === 'development' && { stack: err.stack }),
-  });
-});
+// Socket.io : handlers (autorisation rooms, sanitization, logging)
+const { attachSocketHandlers } = require('./src/socket/handlers');
+attachSocketHandlers(io, connectionCounters);
 
 // Démarrage après tentative de connexion MongoDB (voir plus haut)
 module.exports = { app, io };

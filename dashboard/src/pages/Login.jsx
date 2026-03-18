@@ -81,7 +81,7 @@ const Login = ({ onLogin }) => {
                 required
                 autoComplete="email"
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
-                placeholder="admin@gnv.com"
+                placeholder="votre@email.com"
               />
             </div>
 
@@ -132,14 +132,13 @@ const Login = ({ onLogin }) => {
             </motion.button>
           </form>
 
-          {/* Demo credentials */}
-          <div className="mt-6 p-4 bg-blue-50/80 rounded-xl border border-blue-100">
-            <h3 className="text-sm font-medium text-blue-900 mb-2">Identifiants de démonstration</h3>
-            <div className="text-xs text-blue-800 space-y-1">
-              <p><strong>Email :</strong> admin@gnv.com</p>
-              <p><strong>Mot de passe :</strong> Admin123!</p>
+          {/* Demo credentials : affiché uniquement en développement */}
+          {import.meta.env.DEV && (
+            <div className="mt-6 p-4 bg-amber-50/80 rounded-xl border border-amber-200">
+              <h3 className="text-sm font-medium text-amber-900 mb-2">Configuration requise</h3>
+              <p className="text-xs text-amber-800">Définissez ADMIN_EMAIL et ADMIN_PASSWORD dans backend/config.env pour vous connecter.</p>
             </div>
-          </div>
+          )}
         </motion.div>
       </motion.div>
     </div>

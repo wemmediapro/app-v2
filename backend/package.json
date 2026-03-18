@@ -11,6 +11,7 @@
     "audit:ci": "npm audit --audit-level=moderate",
     "init-db": "node scripts/init-database.js",
     "init-db-prisma": "node scripts/init-database-prisma.js",
+    "init-admin": "node scripts/init-admin.js",
     "seed:radio": "node scripts/seed-radio.js",
     "seed:magazine-openai": "node scripts/seed-magazine-openai.js",
     "seed:magazine-translations-openai": "node scripts/seed-magazine-translations-openai.js",

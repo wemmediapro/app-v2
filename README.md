@@ -133,15 +133,17 @@ cd backend && npm start
 - **Backend API** : http://localhost:3000
 - **Documentation API** : http://localhost:3000/api/health
 
-## 🔑 Identifiants par défaut
+## 🔑 Connexion administrateur
 
-### Administrateur
-- **Email** : admin@gnv.com
-- **Mot de passe** : admin123
+Aucun identifiant par défaut (sécurité). Créez un admin une fois la base configurée :
 
-### Utilisateur de test
-- **Email** : user@gnv.com
-- **Mot de passe** : user123
+```bash
+cd backend
+# Définir ADMIN_EMAIL et ADMIN_PASSWORD dans config.env
+node scripts/init-admin.js
+```
+
+Conservez le mot de passe temporaire affiché et changez-le à la première connexion.
 
 ## 📊 Structure du projet
 
@@ -177,10 +179,15 @@ gnv_onboard_app/
 PORT=3000
 NODE_ENV=development
 MONGODB_URI=mongodb://localhost:27017/gnv_onboard
-JWT_SECRET=your-secret-key
+JWT_SECRET=your-secret-key-min-32-characters-required-in-production
 JWT_EXPIRE=7d
+ADMIN_EMAIL=admin@votredomaine.local
+ADMIN_PASSWORD=MotDePasseFort!
 FRONTEND_URL=http://localhost:5173
+REDIS_URI=redis://localhost:6379
 ```
+
+En production : `JWT_SECRET` (≥ 32 caractères), `ADMIN_PASSWORD` et `MONGODB_URI` sont obligatoires.
 
 ### Variables d'environnement Dashboard
 ```env

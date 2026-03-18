@@ -1,4 +1,4 @@
-const { body, validationResult } = require('express-validator');
+const { body, query, param, validationResult } = require('express-validator');
 
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
@@ -10,6 +10,28 @@ const handleValidationErrors = (req, res, next) => {
   }
   next();
 };
+
+// --- Validators réutilisables (express-validator) ---
+const validateEmail = () => body('email').isEmail().withMessage('Invalid email').normalizeEmail();
+const validatePassword = (minLen = 8) =>
+  body('password').isLength({ min: minLen }).withMessage(`Password must be at least ${minLen} characters`);
+const validateObjectId = (paramName = 'id') =>
+  param(paramName).isMongoId().withMessage('Invalid ID');
+const validateOptionalObjectId = (fieldName) =>
+  body(fieldName).optional().isMongoId().withMessage(`Invalid ${fieldName}`);
+
+/** Middleware : valider le body avec les chaînes de validation passées */
+function validateBody(...validators) {
+  return [...validators, handleValidationErrors];
+}
+/** Middleware : valider la query (ex. page, limit) */
+function validateQuery(...validators) {
+  return [...validators, handleValidationErrors];
+}
+/** Middleware : valider les paramètres (ex. :id) */
+function validateParams(...validators) {
+  return [...validators, handleValidationErrors];
+}
 
 /** Exige au moins 8 caractères, une majuscule, une minuscule, un chiffre et un symbole (pour admin) */
 const strongPassword = (value) => {
@@ -100,21 +122,23 @@ const feedbackValidation = [
 ];
 
 const validatePagination = (req, res, next) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
-  
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
+
   if (page < 1) {
     return res.status(400).json({ message: 'Page must be greater than 0' });
   }
-  
-  if (limit < 1 || limit > 100) {
-    return res.status(400).json({ message: 'Limit must be between 1 and 100' });
-  }
-  
+
   req.query.page = page;
   req.query.limit = limit;
   next();
 };
+
+/** Validation des IDs MongoDB (à utiliser sur les routes :id) */
+const validateMongoId = (paramName = 'id') => [
+  param(paramName).isMongoId().withMessage('Invalid ID'),
+  handleValidationErrors,
+];
 
 const articleValidation = [
   body('title').trim().notEmpty().withMessage('Title is required').isLength({ max: 300 }),
@@ -153,6 +177,14 @@ module.exports = {
   feedbackValidation,
   handleValidationErrors,
   validatePagination,
+  validateMongoId,
+  validateBody,
+  validateQuery,
+  validateParams,
+  validateEmail,
+  validatePassword,
+  validateObjectId,
+  validateOptionalObjectId,
   strongPassword,
   articleValidation,
   bannerValidation,

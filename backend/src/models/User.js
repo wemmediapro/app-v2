@@ -72,6 +72,10 @@ const userSchema = new mongoose.Schema({
   lastLogin: {
     type: Date
   },
+  mustChangePassword: {
+    type: Boolean,
+    default: false
+  },
   avatar: {
     type: String,
     default: null

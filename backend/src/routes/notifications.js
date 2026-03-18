@@ -8,6 +8,8 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const Notification = require('../models/Notification');
+const { paginate } = require('../middleware/pagination');
+const { validateMongoId } = require('../middleware/validation');
 
 const VALID_TYPES = ['restaurant', 'boarding', 'info', 'alert', 'other'];
 
@@ -50,27 +52,27 @@ function sendEmptyNotifications(res) {
   if (!res.headersSent) res.json([]);
 }
 
-router.get('/', async (req, res) => {
+router.get('/', paginate, async (req, res) => {
   try {
-    const limitParam = req.query.limit != null ? req.query.limit : 50;
     const langParam = req.query.lang != null ? req.query.lang : 'fr';
-    const limit = Math.min(parseInt(limitParam, 10) || 50, 100);
     const lang = typeof langParam === 'string' ? langParam.trim().toLowerCase() : 'fr';
+    const { skip, limit } = req.pagination;
 
     if (mongoose.connection.readyState !== 1) {
       return sendEmptyNotifications(res);
     }
     const now = new Date();
-    const notifications = await Notification.find({
+    const query = {
       isActive: true,
       $or: [
         { scheduledAt: null },
         { scheduledAt: { $lte: now } }
       ]
-    })
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
+    };
+    const [notifications, total] = await Promise.all([
+      Notification.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Notification.countDocuments(query),
+    ]);
 
     const list = notifications.map((n) => {
       const fallbackLangs = [lang, 'fr', 'en'].filter((l, i, a) => a.indexOf(l) === i);
@@ -96,7 +98,7 @@ router.get('/', async (req, res) => {
         createdAt: n.createdAt
       };
     });
-    if (!res.headersSent) res.json(list);
+    if (!res.headersSent) res.json({ data: list, total, page: req.pagination.page, limit });
   } catch (error) {
     console.error('Get notifications error:', error);
     sendEmptyNotifications(res);

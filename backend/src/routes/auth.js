@@ -82,19 +82,18 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
     const adminPassword = process.env.ADMIN_PASSWORD;
     const isProduction = process.env.NODE_ENV === 'production';
 
-    // En production : pas de mot de passe admin par défaut
-    if (isProduction && (!adminEmail || !adminPassword)) {
-      // Connexion avec identifiants admin non configurés → refus
-      const emailMatch = email && email.trim().toLowerCase() === (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-      if (emailMatch) {
+    // Aucun fallback sur identifiants admin : exiger ADMIN_EMAIL et ADMIN_PASSWORD (prod et dev)
+    if (!adminEmail || !adminPassword) {
+      const emailMatch = email && email.trim().toLowerCase() === adminEmail;
+      if (emailMatch || !adminEmail) {
         return res.status(503).json({
-          message: 'Admin login is not configured. Set ADMIN_EMAIL and ADMIN_PASSWORD in config.env.',
+          message: 'Admin login is not configured. Set ADMIN_EMAIL and ADMIN_PASSWORD in config.env (no default credentials).',
         });
       }
     }
 
-    const effectiveAdminEmail = adminEmail || 'admin@gnv.com';
-    const effectiveAdminPassword = isProduction ? adminPassword : (adminPassword || 'Admin123!');
+    const effectiveAdminEmail = adminEmail;
+    const effectiveAdminPassword = adminPassword;
 
     // Find user by email
     let user = await User.findOne({ email: email.trim().toLowerCase() });

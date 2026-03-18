@@ -61,13 +61,13 @@ export default defineConfig({
               cacheableResponse: { statuses: [200] },
             },
           },
-          // Cache des médias (vidéo MP4, HLS playlist+segments, audio, images) — CacheFirst, 14 jours (offline 1000+ users)
+          // Cache des médias (vidéo MP4, HLS, audio, images) — CacheFirst, 7j + fraîcheur (offline 1000+ users)
           {
             urlPattern: /\/uploads\/(videos|videos_hls|audio|images)\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'gnv-offline-media',
-              expiration: { maxEntries: 180, maxAgeSeconds: 14 * 24 * 60 * 60 },
+              expiration: { maxEntries: 180, maxAgeSeconds: 7 * 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200, 206] },
             },
           },

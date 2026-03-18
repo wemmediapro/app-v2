@@ -3,22 +3,24 @@ const mongoose = require('mongoose');
 const { authMiddleware } = require('../middleware/auth');
 const User = require('../models/User');
 const { safeRegexSearch } = require('../utils/regex-escape');
+const { paginate } = require('../middleware/pagination');
+const { validateMongoId } = require('../middleware/validation');
 
 const router = express.Router();
 
 // @route   GET /api/users
-// @desc    Get all users (for messaging)
+// @desc    Get all users (for messaging) — pagination (défaut 20, max 100)
 // @access  Public (Demo mode)
-router.get('/', async (req, res) => {
+router.get('/', paginate, async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) return res.json([]);
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({ data: [], total: 0, page: req.pagination.page, limit: req.pagination.limit });
+    }
 
     const { search } = req.query;
-    
-    let query = { 
-      isActive: true 
-    };
-    
+    const { skip, limit } = req.pagination;
+
+    let query = { isActive: true };
     if (search) {
       const safe = safeRegexSearch(search);
       if (safe) {
@@ -30,12 +32,13 @@ router.get('/', async (req, res) => {
         ];
       }
     }
-    
-    const users = await User.find(query)
-      .select('firstName lastName email cabinNumber avatar')
-      .limit(20);
-    
-    res.json(users);
+
+    const [data, total] = await Promise.all([
+      User.find(query).select('firstName lastName email cabinNumber avatar').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      User.countDocuments(query),
+    ]);
+
+    res.json({ data, total, page: req.pagination.page, limit });
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -45,7 +48,7 @@ router.get('/', async (req, res) => {
 // @route   GET /api/users/:id
 // @desc    Get user profile
 // @access  Public (Demo mode)
-router.get('/:id', async (req, res) => {
+router.get('/:id', validateMongoId('id'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
       .select('-password');

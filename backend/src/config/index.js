@@ -19,11 +19,23 @@ module.exports = {
     reconnectDelayMaxMs: parseInt(process.env.MONGODB_RECONNECT_DELAY_MAX_MS, 10) || 60000,
   },
 
-  // JWT (en production, pas de fallback — exiger JWT_SECRET dans l'environnement)
-  jwt: {
-    secret: process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'dev-secret-change-in-production'),
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  },
+  // JWT : en production exiger JWT_SECRET ≥ 32 caractères (OWASP / RFC)
+  jwt: (() => {
+    const JWT_MIN_LENGTH = 32;
+    const rawSecret = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'dev-secret-change-in-production');
+    if (process.env.NODE_ENV === 'production') {
+      if (!rawSecret || typeof rawSecret !== 'string' || rawSecret.length < JWT_MIN_LENGTH) {
+        console.error(`CRITICAL: JWT_SECRET must be set and at least ${JWT_MIN_LENGTH} characters in production.`);
+        process.exit(1);
+      }
+    } else if (rawSecret && rawSecret.length < JWT_MIN_LENGTH) {
+      console.warn(`WARN: JWT_SECRET should be at least ${JWT_MIN_LENGTH} characters for production.`);
+    }
+    return {
+      secret: rawSecret,
+      expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    };
+  })(),
 
   // CORS : origines autorisées (+ tunnels type Cloudflare pour accès distant)
   cors: {

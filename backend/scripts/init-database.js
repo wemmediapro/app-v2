@@ -45,21 +45,32 @@ async function connectDB() {
   }
 }
 
-// Fonction pour créer l'utilisateur admin
+// Fonction pour créer l'utilisateur admin (ADMIN_EMAIL et ADMIN_PASSWORD requis dans config.env)
 async function createAdminUser() {
   try {
-    // Vérifier si l'admin existe déjà
-    const existingAdmin = await User.findOne({ email: 'admin@gnv.com' });
+    const adminEmail = (process.env.ADMIN_EMAIL || '').trim();
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminPassword) {
+      console.error('CRITICAL: ADMIN_PASSWORD must be set in config.env to create admin user. No default password.');
+      if (process.env.NODE_ENV === 'production') throw new Error('ADMIN_PASSWORD required');
+      return null;
+    }
+    if (!adminEmail) {
+      console.error('CRITICAL: ADMIN_EMAIL must be set in config.env for admin user.');
+      if (process.env.NODE_ENV === 'production') throw new Error('ADMIN_EMAIL required');
+      return null;
+    }
+
+    const existingAdmin = await User.findOne({ email: adminEmail });
     if (existingAdmin) {
       console.log('ℹ️  Utilisateur admin existe déjà');
       return existingAdmin;
     }
-
     const admin = await User.create({
       firstName: 'Admin',
       lastName: 'GNV',
-      email: 'admin@gnv.com',
-      password: process.env.ADMIN_PASSWORD || 'admin123',
+      email: adminEmail,
+      password: adminPassword,
       role: 'admin',
       phone: '+33 1 23 45 67 89',
       cabinNumber: 'ADMIN-001',
@@ -74,7 +85,7 @@ async function createAdminUser() {
       isActive: true
     });
 
-    console.log('✅ Utilisateur admin créé:', admin.email);
+    console.log('✅ Utilisateur admin créé. Définissez ADMIN_EMAIL/ADMIN_PASSWORD dans config.env pour la connexion.');
     return admin;
   } catch (error) {
     console.error('❌ Erreur création admin:', error.message);
