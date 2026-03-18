@@ -18,7 +18,7 @@ jest.mock('../../models/User', () => {
       comparePassword: mockComparePassword,
     };
   }
-  MockUser.findOne = jest.fn();
+  MockUser.findOne = jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue(Promise.resolve(null)) });
   MockUser.create = jest.fn();
   MockUser.findById = jest.fn();
   MockUser.findByIdAndUpdate = jest.fn();
@@ -38,6 +38,13 @@ function mockFindByIdChain(userDoc) {
   return {
     select: jest.fn().mockReturnValue(chain),
     then(resolve, reject) { return Promise.resolve(doc).then(resolve, reject); },
+  };
+}
+
+/** Chaîne findOne().select('+password') pour le login (password à select: false dans le schéma) */
+function mockFindOneChain(resolvedValue) {
+  return {
+    select: jest.fn().mockReturnValue(Promise.resolve(resolvedValue)),
   };
 }
 
@@ -109,7 +116,7 @@ describe('API Auth', () => {
     });
 
     it('retourne 401 si utilisateur non trouvé ou mot de passe invalide', async () => {
-      User.findOne.mockResolvedValue(null);
+      User.findOne.mockReturnValue(mockFindOneChain(null));
       await request(app)
         .post('/api/auth/login')
         .send({ email: 'unknown@test.com', password: 'wrong' })
@@ -127,7 +134,7 @@ describe('API Auth', () => {
         save: mockSave,
         comparePassword: mockComparePassword,
       };
-      User.findOne.mockResolvedValue(fakeUser);
+      User.findOne.mockReturnValue(mockFindOneChain(fakeUser));
       const res = await request(app)
         .post('/api/auth/login')
         .send({ email: 'user@test.com', password: 'validpass' })

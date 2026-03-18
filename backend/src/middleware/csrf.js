@@ -58,7 +58,9 @@ function csrfProtection(req, res, next) {
   if (EXEMPT_PATH_PATTERNS.some((re) => re.test(path))) return next();
   const cookieToken = req.cookies[COOKIE_NAME];
   const headerToken = req.get(HEADER_NAME) || req.body?._csrf;
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+  if (!cookieToken || !headerToken ||
+      cookieToken.length !== headerToken.length ||
+      !crypto.timingSafeEqual(Buffer.from(cookieToken, 'utf8'), Buffer.from(headerToken, 'utf8'))) {
     return res.status(403).json({ success: false, message: 'Invalid CSRF token', code: 'CSRF_INVALID' });
   }
   next();

@@ -125,8 +125,8 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
     // P3 : jamais de comparaison en clair — hash bcrypt pré-calculé (SEC-1/PERF-1)
     const adminPasswordHash = await getAdminPasswordHash(effectiveAdminPassword);
 
-    // Find user by email
-    let user = await User.findOne({ email: email.trim().toLowerCase() });
+    // Find user by email (inclure le password pour comparePassword, car select: false sur le schéma)
+    let user = await User.findOne({ email: email.trim().toLowerCase() }).select('+password');
     if (!user) {
       // C3 / P2 : auto-création admin — comparaison uniquement via bcrypt.compare (jamais === en clair).
       // User créé avec mot de passe en clair puis save() → pre('save') bcrypt du modèle hash avant persistance.

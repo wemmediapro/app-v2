@@ -186,7 +186,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(require('./src/middleware/language'));
 
 // Rate limiting — protège l’API pour 1000+ connexions (exclusions: stream, upload, health)

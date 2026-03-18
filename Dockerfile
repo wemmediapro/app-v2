@@ -1,27 +1,25 @@
-# Dockerfile pour le backend GNV
-# Utilisable avec Koyeb, Fly.io, ou toute plateforme Docker
-# Build depuis la racine du projet avec: docker build -f Dockerfile --build-arg BUILD_CONTEXT=backend .
+# Build stage
+FROM node:22-alpine AS builder
+WORKDIR /app
+COPY backend/package*.json ./
+RUN npm ci --only=production && npm cache clean --force
 
+# Production stage
 FROM node:22-alpine
-# Node.js 22 est LTS actif jusqu'à avril 2027
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
 WORKDIR /app
 
-# Copier les fichiers de dépendances du backend
-COPY backend/package*.json ./
-
-# Installer les dépendances
-RUN npm ci --only=production
-
-# Copier le code du backend
+COPY --from=builder /app/node_modules ./node_modules
 COPY backend/ ./
 
-# Créer le dossier uploads
-RUN mkdir -p public/uploads
+RUN mkdir -p public/uploads && chown -R nodejs:nodejs /app
 
-# Exposer le port (sera surchargé par la variable d'environnement PORT)
+USER nodejs
+
 EXPOSE 3000
 
-# Démarrer l'application
-CMD ["node", "server.js"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
+CMD ["node", "server.js"]

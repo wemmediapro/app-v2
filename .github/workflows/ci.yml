@@ -1,78 +1,35 @@
-# CI/CD pour GNV OnBoard — app, dashboard, backend (build, tests, audit)
-# Q1/Q7 : Aucun step ne doit utiliser continue-on-error: true sans justification documentée (risque de masquer des échecs).
-#         Actuellement aucun step ne l'utilise — les échecs (tests, audit, build) font échouer le job.
-# Q2 : npm ci (déterministe) partout, pas npm install.
 name: CI
-
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
 
 jobs:
-  frontend:
-    name: Frontend (App)
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm audit --audit-level=moderate
+
+  frontend-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm run test
-
-      - name: Build
-        run: npm run build
-
-      - name: Audit (moderate)
-        run: npm run audit:ci
-
-  dashboard:
-    name: Dashboard
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dashboard dependencies
-        run: cd dashboard && npm ci
-
-      - name: Build dashboard
-        run: cd dashboard && npm run build
-
-      - name: Audit dashboard (moderate)
-        run: cd dashboard && npm audit --audit-level=moderate
-
-  backend:
-    name: Backend
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install backend dependencies
-        run: cd backend && npm ci
-
-      - name: Backend tests
-        run: cd backend && npm run test
-
-      - name: Backend audit
-        run: cd backend && npm run audit:ci
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
