@@ -175,7 +175,8 @@ const api = axios.create({
   timeout: 10000,
 });
 
-// Request interceptor
+// Request interceptor — JWT actuellement en localStorage (risque XSS si script malveillant).
+// Migration prévue : cookie httpOnly envoyé par le backend au login, avecCredentials: true, et lecture côté backend depuis req.cookies.
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');

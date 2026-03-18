@@ -15,8 +15,11 @@ const Login = ({ onLogin }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [configRequired, setConfigRequired] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e) => {
+    if (errorMessage) setErrorMessage('');
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -26,6 +29,7 @@ const Login = ({ onLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMessage('');
 
     try {
       const response = await authService.login(formData);
@@ -35,10 +39,25 @@ const Login = ({ onLogin }) => {
         toast.success('Connexion réussie !');
         navigate('/dashboard', { replace: true });
       } else {
-        toast.error('Accès refusé. Privilèges administrateur requis.');
+        const msg = 'Accès refusé. Privilèges administrateur requis.';
+        setErrorMessage(msg);
+        toast.error(msg);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Erreur de connexion');
+      const isNetworkError = !error.response && (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED' || error.message?.includes('Network Error'));
+      if (isNetworkError) {
+        const displayMsg = 'Serveur inaccessible. Démarrez le backend (dans backend/ : npm run dev).';
+        setErrorMessage(displayMsg);
+        toast.error(displayMsg);
+        setConfigRequired(false);
+        return;
+      }
+      const is503 = error.response?.status === 503;
+      const msg = error.response?.data?.message || error.response?.data?.error || '';
+      setConfigRequired(!!(import.meta.env.DEV && is503 && msg.includes('ADMIN_EMAIL')));
+      const displayMsg = msg.trim() || 'Erreur de connexion. Vérifiez l\'email et le mot de passe.';
+      setErrorMessage(displayMsg);
+      toast.error(displayMsg);
     } finally {
       setLoading(false);
     }
@@ -114,6 +133,12 @@ const Login = ({ onLogin }) => {
               </div>
             </div>
 
+            {errorMessage && (
+              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800" role="alert">
+                {errorMessage}
+              </div>
+            )}
+
             <motion.button
               type="submit"
               disabled={loading}
@@ -134,11 +159,11 @@ const Login = ({ onLogin }) => {
             </motion.button>
           </form>
 
-          {/* Demo credentials : affiché uniquement en développement */}
-          {import.meta.env.DEV && (
+          {/* Avertissement affiché seulement si le backend renvoie 503 (config manquante) */}
+          {import.meta.env.DEV && configRequired && (
             <div className="mt-6 p-4 bg-amber-50/80 rounded-xl border border-amber-200">
               <h3 className="text-sm font-medium text-amber-900 mb-2">Configuration requise</h3>
-              <p className="text-xs text-amber-800">Définissez ADMIN_EMAIL et ADMIN_PASSWORD dans backend/config.env pour vous connecter.</p>
+              <p className="text-xs text-amber-800">Définissez ADMIN_EMAIL et ADMIN_PASSWORD dans backend/config.env, puis redémarrez le backend.</p>
             </div>
           )}
         </motion.div>

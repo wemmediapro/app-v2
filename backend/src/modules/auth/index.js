@@ -146,9 +146,10 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Tous les champs sont requis' });
     }
 
-    // Vérification si l'utilisateur existe déjà
-    // En mode démo, on simule une vérification
-    const userExists = false; // Simulation
+    // Vérification si l'utilisateur existe déjà (même liste que le login en mode démo)
+    const demoEmails = ['admin@gnv.com', 'crew@gnv.com', 'user@gnv.com'];
+    const emailNorm = String(email).trim().toLowerCase();
+    const userExists = demoEmails.some((e) => e.toLowerCase() === emailNorm);
 
     if (userExists) {
       return res.status(400).json({ error: 'Un compte existe déjà avec cet email' });

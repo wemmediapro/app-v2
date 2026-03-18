@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// Même logique que apiService : en prod utiliser /api relatif pour éviter localhost (CORS)
-const API_BASE_URL = import.meta.env.VITE_API_URL !== undefined
+// Même logique que apiService : en dev /api passe par le proxy Vite → backend:3000
+const API_BASE_URL = import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== ''
   ? import.meta.env.VITE_API_URL
-  : (import.meta.env.DEV ? '' : '/api');
+  : '/api';
 
 const authApi = axios.create({
   baseURL: API_BASE_URL,

@@ -1018,12 +1018,15 @@ const Bateaux = () => {
   const fetchShips = async () => {
     try {
       setLoading(true);
-      // TODO: Appel API pour récupérer les navires
-      // const response = await apiService.get('/ships');
-      // setShips(response.data || defaultShips);
-      setShips(defaultShips);
-      if (defaultShips.length > 0) {
-        setSelectedShip(defaultShips[0]);
+      const response = await apiService.getShips();
+      const list = response?.data?.data ?? response?.data ?? response;
+      const nextShips = Array.isArray(list) && list.length > 0 ? list : defaultShips;
+      setShips(nextShips);
+      if (nextShips.length > 0 && !selectedShip) {
+        setSelectedShip(nextShips[0]);
+      } else if (nextShips.length > 0 && selectedShip) {
+        const stillSelected = nextShips.find((s) => (s._id || s.id) === (selectedShip._id || selectedShip.id));
+        if (!stillSelected) setSelectedShip(nextShips[0]);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des navires:', error);

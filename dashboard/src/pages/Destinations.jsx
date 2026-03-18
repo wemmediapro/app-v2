@@ -276,12 +276,15 @@ const Destinations = () => {
   const fetchDestinations = async () => {
     try {
       setLoading(true);
-      // TODO: Appel API pour récupérer les destinations
-      // const response = await apiService.get('/destinations');
-      // setDestinations(response.data || defaultDestinations);
-      setDestinations(defaultDestinations);
-      if (defaultDestinations.length > 0) {
-        setSelectedDestination(defaultDestinations[0]);
+      const response = await apiService.getDestinations();
+      const list = response?.data?.data ?? response?.data ?? response;
+      const nextDest = Array.isArray(list) && list.length > 0 ? list : defaultDestinations;
+      setDestinations(nextDest);
+      if (nextDest.length > 0 && !selectedDestination) {
+        setSelectedDestination(nextDest[0]);
+      } else if (nextDest.length > 0 && selectedDestination) {
+        const stillSelected = nextDest.find((d) => (d._id || d.id) === (selectedDestination._id || selectedDestination.id));
+        if (!stillSelected) setSelectedDestination(nextDest[0]);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des destinations:', error);

@@ -208,6 +208,7 @@ export const apiService = {
   // Navires (GNV) — liste, détail, création, mise à jour
   getShips: (all = false) => api.get(`/gnv/ships${all ? '?all=true' : ''}`),
   getShip: (id) => api.get(`/gnv/ships/${id}`),
+  getDestinations: () => api.get('/gnv/destinations'),
   createShip: (data) => api.post('/gnv/ships', data),
   updateShip: (id, data) => api.patch(`/gnv/ships/${id}`, data),
   deleteShip: (id) => api.delete(`/gnv/ships/${id}`),

@@ -33,8 +33,8 @@ function csrfCookie(req, res, next) {
   next();
 }
 
-/** Chemins exemptés (login/register avant que le client n'ait le cookie) */
-const EXEMPT_PATHS = ['/auth/login', '/auth/register', '/auth/refresh'];
+/** Chemins exemptés (login/register avant que le client n'ait le cookie ; logout sans token) */
+const EXEMPT_PATHS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'];
 
 /** Patterns exemptés : tracking public (impressions, clics, listeners) — pas d’auth, pas de CSRF */
 /** Exemptions = tracking public only. Do not add write/admin/personal data routes. */

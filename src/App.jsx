@@ -1,3 +1,7 @@
+/**
+ * Point d’entrée principal de l’app passagers.
+ * Logique Radio/WebTV extraite dans src/hooks/useRadio.js et src/hooks/useWebtv.js.
+ */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";

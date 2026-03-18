@@ -1,3 +1,9 @@
+/**
+ * Serveur de production (PM2 / déploiement).
+ * Rôle : même stack que server.js mais sans clustering Node (le clustering est géré par PM2),
+ * avec options Socket.io/Redis adaptées à la prod. À utiliser comme point d’entrée en production
+ * (ex. ecosystem.config.cjs) à la place de server.js.
+ */
 require('dotenv').config({ path: './config.env' });
 const express = require('express');
 const path = require('path');

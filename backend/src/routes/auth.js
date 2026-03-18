@@ -5,10 +5,10 @@ const { generateToken, generateAccessToken, authMiddleware } = require('../middl
 const User = require('../models/User');
 const { logFailedLogin, logApiError } = require('../lib/logger');
 
-// Limite : 5 tentatives de login par 15 min par IP (sécurité)
+// Limite : 15 tentatives de login par 15 min par IP (évite 429 en dev tout en limitant le brute-force)
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX, 10) || 15,
   message: { message: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
