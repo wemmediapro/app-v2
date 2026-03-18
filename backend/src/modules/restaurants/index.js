@@ -1,6 +1,6 @@
 // Module de gestion des restaurants et gastronomie
 const express = require('express');
-const { authenticateToken, requireAdmin } = require('../auth');
+const { authMiddleware: authenticateToken, adminMiddleware: requireAdmin } = require('../../middleware/auth');
 
 const router = express.Router();
 

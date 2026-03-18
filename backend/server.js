@@ -122,15 +122,7 @@ app.set('trust proxy', 1);
 // [PERF-2] Compression gzip des réponses (JSON, HTML, etc.)
 app.use(compression());
 
-// Redirect HTTP to HTTPS in production (when behind a proxy that sets x-forwarded-proto)
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    if (req.header('x-forwarded-proto') !== 'https') {
-      return res.redirect(301, `https://${req.header('host')}${req.url}`);
-    }
-    next();
-  });
-}
+// Redirection HTTP→HTTPS gérée par Nginx (voir nginx.conf)
 
 // Nonce CSP : un par requête pour autoriser les scripts sans 'unsafe-inline'
 app.use((_req, res, next) => {
@@ -247,6 +239,15 @@ const mediaLibraryLimiter = rateLimit({
 });
 app.use('/api/media-library', mediaLibraryLimiter);
 
+const feedbackLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { success: false, message: 'Trop de feedbacks envoyés. Réessayez plus tard.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/feedback', feedbackLimiter);
+
 // Fichiers statiques et streaming
 app.use('/uploads', videoStreamMiddleware);
 app.use('/uploads', audioStreamMiddleware);
@@ -295,7 +296,7 @@ async function setupAfterDb() {
     if (p === '/health' || p === '/time') return true;
     if (p.startsWith('/stream') || p.startsWith('/upload') || p.startsWith('/media-library')) return true;
     try {
-      const token = req.get('Authorization')?.replace('Bearer ', '') || req.cookies?.adminToken;
+      const token = req.get('Authorization')?.replace('Bearer ', '') || req.cookies?.authToken;
       if (token && config.jwt?.secret) {
         const decoded = jwt.verify(token, config.jwt.secret);
         if (decoded.role === 'admin') return true;

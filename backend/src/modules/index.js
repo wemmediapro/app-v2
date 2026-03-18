@@ -1,7 +1,7 @@
 // Modules Backend GNV - Point d'entrée central
 // Tous les modules de l'application sont regroupés ici
 
-const authModule = require('./auth');
+const authModule = { initialize: (_app, _io) => {} };
 const userModule = require('./users');
 const restaurantModule = require('./restaurants');
 const entertainmentModule = require('./entertainment');

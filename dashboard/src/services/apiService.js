@@ -14,14 +14,14 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Pas d’intercepteur request : le cookie adminToken (httpOnly) est envoyé automatiquement par le navigateur
+// Pas d’intercepteur request : le cookie authToken (httpOnly) est envoyé automatiquement par le navigateur
 
 // Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('adminToken'); // rétrocompat nettoyage
+      localStorage.removeItem('authToken'); // rétrocompat nettoyage
       if (!window.location.pathname.includes('/login')) {
         const base = window.location.pathname.startsWith('/dashboard') ? '/dashboard' : '';
         window.location.href = `${base}/login`;

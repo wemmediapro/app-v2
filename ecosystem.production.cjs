@@ -12,7 +12,7 @@ module.exports = {
       name: 'gnv-backend',
       script: './backend/server.js',
       
-      // Clustering : PM2 lance N processus server.js (exec_mode: 'cluster'). backend/cluster.js n'est pas utilisé (code mort en prod PM2).
+      // Clustering : PM2 gère le multi-process via exec_mode: 'cluster'.
       instances: process.env.CLUSTER_WORKERS || 'max',
       exec_mode: 'cluster',
       
@@ -51,7 +51,7 @@ module.exports = {
       watch: false,              // Pas de watch en production
       ignore_watch: ['node_modules', 'logs', '*.log', 'uploads'],
       
-      // Gestion des processus (graceful shutdown 30s dans server.production.js → 35s pour laisser finir)
+      // Gestion des processus (graceful shutdown 30s dans server.js → 35s pour laisser finir)
       kill_timeout: 35000,       // 5s de marge au-dessus du timeout interne
       wait_ready: true,          // Attend le signal 'ready'
       listen_timeout: 10000,     // Timeout pour écoute
@@ -85,7 +85,7 @@ module.exports = {
       ref: 'origin/main',
       repo: 'git@github.com:wemmediapro/app-v2.git',
       path: process.env.DEPLOY_PATH || '/var/www/app-v2',
-      'post-deploy': 'npm install --production && npm run build && pm2 reload ecosystem.production.cjs --env production',
+      'post-deploy': 'npm install --production && npm run build && cd backend && npm install --production && cd ../dashboard && npm install --production && npm run build && cd .. && pm2 reload ecosystem.production.cjs --env production',
       'pre-setup': 'apt-get update && apt-get install -y git'
     }
   }

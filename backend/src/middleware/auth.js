@@ -1,5 +1,5 @@
 /**
- * Auth middleware unique (backend/src). Token : cookie adminToken ou header Authorization.
+ * Auth middleware unique (backend/src). Token : cookie authToken ou header Authorization.
  * Vérification : JWT + lookup MongoDB User (existence, isActive). backend/middleware/auth.js en est un wrapper.
  * Cache Redis 1 min pour éviter un hit MongoDB à chaque requête (invalide immédiatement si user supprimé/désactivé après 1 min max).
  * Voir backend/docs/AUTH-MIDDLEWARE.md.
@@ -37,7 +37,7 @@ function getSecret() {
 
 /** Récupère le token depuis le cookie httpOnly (dashboard) ou le header Authorization */
 function getTokenFromRequest(req) {
-  return req.cookies?.adminToken || req.header('Authorization')?.replace('Bearer ', '') || '';
+  return req.cookies?.authToken || req.header('Authorization')?.replace('Bearer ', '') || '';
 }
 
 const generateToken = (payload) => {
@@ -68,6 +68,14 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
     const decoded = verifyToken(token);
+    if (cacheManager.isConnected) {
+      try {
+        const blacklisted = await cacheManager.get(`blacklist:${token}`);
+        if (blacklisted) {
+          return res.status(401).json({ message: 'Token has been revoked.', code: 'TOKEN_REVOKED' });
+        }
+      } catch (_) { /* Redis down, skip check */ }
+    }
     const userId = decoded.id || decoded.userId || decoded._id;
     if (!userId) {
       return res.status(401).json({ message: 'Invalid token payload.' });

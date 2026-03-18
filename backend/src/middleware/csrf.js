@@ -19,11 +19,14 @@ function getToken() {
 function csrfCookie(req, res, next) {
   if (!req.cookies[COOKIE_NAME]) {
     const token = getToken();
+    const isSecure = process.env.NODE_ENV === 'production' && (
+      req.get('X-Forwarded-Proto') === 'https' || req.secure
+    );
     res.cookie(COOKIE_NAME, token, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, // Q5 : 24h au lieu de 7 jours
+      secure: isSecure,
+      sameSite: isSecure ? 'strict' : 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
       path: '/',
     });
     req.csrfToken = token;

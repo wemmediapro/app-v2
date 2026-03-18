@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Email is required'],
     unique: true,
     lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
+    match: [/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, 'Please enter a valid email']
   },
   password: {
     type: String,
@@ -80,6 +80,20 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     default: null
+  },
+  /** Favoris et historique de lecture (persistés côté serveur, survivent au vidage du cache). */
+  userData: {
+    type: mongoose.Schema.Types.Mixed,
+    default: () => ({
+      favorites: {
+        magazineIds: [],
+        restaurantIds: [],
+        enfantIds: [],
+        watchlist: [],
+        shopItems: []
+      },
+      playbackPositions: {}
+    })
   }
 }, {
   timestamps: true

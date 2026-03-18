@@ -37,7 +37,7 @@ export const authService = {
     try {
       await authApi.post('/auth/logout');
     } catch (_) {}
-    localStorage.removeItem('adminToken');
+    localStorage.removeItem('authToken');
   }
 };
 

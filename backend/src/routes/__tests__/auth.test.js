@@ -50,12 +50,14 @@ function mockFindOneChain(resolvedValue) {
 
 const request = require('supertest');
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const authRouter = require('../auth');
 const { generateToken } = require('../../middleware/auth');
 const User = require('../../models/User');
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 app.use('/api/auth', authRouter);
 
 describe('API Auth', () => {
@@ -66,18 +68,21 @@ describe('API Auth', () => {
   });
 
   describe('POST /api/auth/register', () => {
-    it('retourne 400 si email ou password manquants', async () => {
+    it('retourne 401 sans token admin', async () => {
       const res = await request(app)
         .post('/api/auth/register')
-        .send({ firstName: 'A', lastName: 'B' })
-        .expect(400);
+        .send({ firstName: 'A', lastName: 'B', email: 'a@b.com', password: 'password123' })
+        .expect(401);
       expect(res.body).toHaveProperty('message');
     });
 
-    it('retourne 201 et user + cookie adminToken (SEC-4: pas de token dans le body)', async () => {
+    it('retourne 201 et user + cookie authToken avec token admin (SEC-4: pas de token dans le body)', async () => {
+      const adminToken = generateToken({ id: 'admin-id', email: 'admin@test.com', role: 'admin' });
       User.findOne.mockResolvedValue(null);
+      User.findById.mockReturnValue(mockFindByIdChain({ _id: 'admin-id', role: 'admin', isActive: true }));
       const res = await request(app)
         .post('/api/auth/register')
+        .set('Cookie', `authToken=${adminToken}`)
         .send({
           firstName: 'John',
           lastName: 'Doe',
@@ -87,15 +92,18 @@ describe('API Auth', () => {
         .expect(201);
       expect(res.body).not.toHaveProperty('token');
       expect(res.headers['set-cookie']).toBeDefined();
-      expect(res.headers['set-cookie'].some((c) => c.startsWith('adminToken='))).toBe(true);
+      expect(res.headers['set-cookie'].some((c) => c.startsWith('authToken='))).toBe(true);
       expect(res.body).toHaveProperty('user');
       expect(res.body.user.email).toBe('new@test.com');
     });
 
-    it('retourne 400 si email déjà utilisé', async () => {
+    it('retourne 400 si email déjà utilisé (avec token admin)', async () => {
+      const adminToken = generateToken({ id: 'admin-id', email: 'admin@test.com', role: 'admin' });
       User.findOne.mockResolvedValue({ _id: 'existing' });
+      User.findById.mockReturnValue(mockFindByIdChain({ _id: 'admin-id', role: 'admin', isActive: true }));
       await request(app)
         .post('/api/auth/register')
+        .set('Cookie', `authToken=${adminToken}`)
         .send({
           firstName: 'John',
           lastName: 'Doe',
@@ -123,7 +131,7 @@ describe('API Auth', () => {
         .expect(401);
     });
 
-    it('retourne 200 + cookie adminToken (SEC-4: pas de token dans le body)', async () => {
+    it('retourne 200 + cookie authToken (SEC-4: pas de token dans le body)', async () => {
       const fakeUser = {
         _id: '507f1f77bcf86cd799439011',
         email: 'user@test.com',
@@ -141,7 +149,7 @@ describe('API Auth', () => {
         .expect(200);
       expect(res.body).not.toHaveProperty('token');
       expect(res.headers['set-cookie']).toBeDefined();
-      expect(res.headers['set-cookie'].some((c) => c.startsWith('adminToken='))).toBe(true);
+      expect(res.headers['set-cookie'].some((c) => c.startsWith('authToken='))).toBe(true);
       expect(res.body).toHaveProperty('user');
     });
   });
@@ -196,7 +204,7 @@ describe('API Auth', () => {
         .expect(401);
     });
 
-    it('retourne 200 + cookie adminToken (SEC-4: pas de token dans le body)', async () => {
+    it('retourne 200 + cookie authToken (SEC-4: pas de token dans le body)', async () => {
       const token = generateToken({ id: '507f1f77bcf86cd799439011', email: 'u@test.com', role: 'user' });
       const fakeUser = { _id: '507f1f77bcf86cd799439011', email: 'u@test.com', role: 'user', isActive: true };
       User.findById.mockReturnValue(mockFindByIdChain(fakeUser));
@@ -206,7 +214,7 @@ describe('API Auth', () => {
         .expect(200);
       expect(res.body).not.toHaveProperty('token');
       expect(res.headers['set-cookie']).toBeDefined();
-      expect(res.headers['set-cookie'].some((c) => c.startsWith('adminToken='))).toBe(true);
+      expect(res.headers['set-cookie'].some((c) => c.startsWith('authToken='))).toBe(true);
       expect(res.body).toHaveProperty('message');
     });
   });

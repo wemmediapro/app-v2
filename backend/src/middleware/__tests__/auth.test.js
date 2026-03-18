@@ -23,8 +23,8 @@ const {
 
 describe('auth middleware', () => {
   describe('getTokenFromRequest', () => {
-    it('retourne le token depuis le cookie adminToken', () => {
-      const req = { cookies: { adminToken: 'cookie-token' }, header: () => '' };
+    it('retourne le token depuis le cookie authToken', () => {
+      const req = { cookies: { authToken: 'cookie-token' }, header: () => '' };
       expect(getTokenFromRequest(req)).toBe('cookie-token');
     });
 

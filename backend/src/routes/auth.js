@@ -2,8 +2,9 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const { registerValidation, loginValidation, profileValidation } = require('../middleware/validation');
-const { generateToken, generateAccessToken, authMiddleware } = require('../middleware/auth');
+const { generateToken, generateAccessToken, verifyToken, authMiddleware, adminMiddleware } = require('../middleware/auth');
 const User = require('../models/User');
+const cacheManager = require('../lib/cache-manager');
 const { logFailedLogin, logApiError } = require('../lib/logger');
 
 // [SEC-1/PERF-1] Hash bcrypt admin pré-calculé une fois au premier login (évite bcrypt.hash à chaque requête)
@@ -20,6 +21,14 @@ const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX, 10) || 5,
   message: { message: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: 'Trop de tentatives d\'inscription. Réessayez dans 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -45,9 +54,9 @@ function getCookieOptions(req) {
 }
 
 // @route   POST /api/auth/register
-// @desc    Register a new user
-// @access  Public
-router.post('/register', registerValidation, async (req, res) => {
+// @desc    Register a new user (admin only)
+// @access  Private (admin)
+router.post('/register', authMiddleware, adminMiddleware, registerLimiter, registerValidation, async (req, res) => {
   try {
     const { firstName, lastName, email, password, phone, cabinNumber, country, dateOfBirth } = req.body;
 
@@ -77,7 +86,7 @@ router.post('/register', registerValidation, async (req, res) => {
       email: user.email,
       role: user.role
     });
-    res.cookie('adminToken', token, getCookieOptions(req));
+    res.cookie('authToken', token, getCookieOptions(req));
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -173,7 +182,7 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
       role: user.role
     });
 
-    res.cookie('adminToken', token, getCookieOptions(req));
+    res.cookie('authToken', token, getCookieOptions(req));
 
     // [SEC-4] JWT uniquement dans le cookie, pas dans le body
     res.json({
@@ -201,10 +210,22 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
 });
 
 // @route   POST /api/auth/logout
-// @desc    Invalide la session (supprime le cookie adminToken)
+// @desc    Invalide la session (supprime le cookie authToken, blacklist JWT)
 // @access  Public
-router.post('/logout', (req, res) => {
-  res.clearCookie('adminToken', { path: '/', httpOnly: true });
+router.post('/logout', async (req, res) => {
+  const token = req.cookies?.authToken || req.header('Authorization')?.replace('Bearer ', '');
+  if (token && cacheManager.isConnected) {
+    try {
+      const decoded = verifyToken(token);
+      const ttl = decoded.exp ? decoded.exp - Math.floor(Date.now() / 1000) : 7 * 24 * 60 * 60;
+      if (ttl > 0) {
+        await cacheManager.set(`blacklist:${token}`, '1', ttl);
+      }
+    } catch (e) {
+      // Token invalide ou expiré, pas besoin de blacklister
+    }
+  }
+  res.clearCookie('authToken', { path: '/', httpOnly: true });
   res.json({ message: 'Logged out successfully' });
 });
 
@@ -218,7 +239,7 @@ router.post('/refresh', authMiddleware, (req, res) => {
     email: req.user.email,
     role: req.user.role
   });
-  res.cookie('adminToken', newToken, getCookieOptions(req));
+  res.cookie('authToken', newToken, getCookieOptions(req));
   res.json({ message: 'Token refreshed' });
 });
 
