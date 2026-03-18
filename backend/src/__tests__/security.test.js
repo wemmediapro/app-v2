@@ -6,6 +6,7 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const request = require('supertest');
+const crypto = require('crypto');
 const { redact } = require('../lib/logger');
 const { AppError } = require('../lib/AppError');
 const { csrfCookie, csrfProtection } = require('../middleware/csrf');
@@ -114,6 +115,29 @@ describe('Security', () => {
         .send({})
         .expect(200);
       expect(res.body.ok).toBe(true);
+    });
+
+    it('retourne 403 quand timingSafeEqual lance (try/catch renvoie CSRF_INVALID)', async () => {
+      const originalTimingSafeEqual = crypto.timingSafeEqual;
+      crypto.timingSafeEqual = () => {
+        throw new Error('mock throw');
+      };
+      const app = buildApp();
+      const getRes = await request(app).get('/api/any');
+      const cookie = getRes.headers['set-cookie'];
+      const tokenMatch = getRes.headers['set-cookie']?.[0]?.match(/csrfToken=([^;]+)/);
+      const token = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
+      try {
+        const res = await request(app)
+          .post('/api/csrf-test')
+          .set('Cookie', cookie || [])
+          .set('x-csrf-token', token)
+          .send({});
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('CSRF_INVALID');
+      } finally {
+        crypto.timingSafeEqual = originalTimingSafeEqual;
+      }
     });
   });
 });

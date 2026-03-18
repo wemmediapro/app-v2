@@ -91,4 +91,21 @@ async function createRedisStore(redisUri, prefix = 'rl:api:') {
   }
 }
 
-module.exports = { RedisStore, createRedisStore };
+const rateLimit = require('express-rate-limit');
+
+/**
+ * Factory : crée un rate limiter avec store Redis optionnel (après DB/Redis ready).
+ * @param {RedisStore|null} store - Store Redis ou null pour mémoire
+ * @param {object} options - Options express-rate-limit (windowMs, max, message, ...)
+ * @returns {import('express-rate-limit').RateLimitRequestHandler}
+ */
+function createLimiter(store, options = {}) {
+  return rateLimit({
+    ...options,
+    store: store || undefined,
+    standardHeaders: options.standardHeaders !== false,
+    legacyHeaders: options.legacyHeaders !== false,
+  });
+}
+
+module.exports = { RedisStore, createRedisStore, createLimiter };

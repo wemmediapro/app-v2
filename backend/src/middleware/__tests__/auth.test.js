@@ -19,7 +19,9 @@ const {
   requireRole,
   generateToken,
   verifyToken,
+  optionalAuth,
 } = require('../auth');
+const config = require('../../config');
 
 describe('auth middleware', () => {
   describe('getTokenFromRequest', () => {
@@ -109,6 +111,21 @@ describe('auth middleware', () => {
       expect(decoded).toMatchObject({ id: payload.id, email: payload.email, role: payload.role });
       expect(decoded.exp).toBeDefined();
       expect(decoded.iat).toBeDefined();
+    });
+  });
+
+  describe('optionalAuth', () => {
+    it('quand JWT non configuré (getSecret lève), met req.user = null et appelle next() sans renvoyer 503', async () => {
+      const originalSecret = config.jwt?.secret;
+      config.jwt = { secret: '' };
+      const req = {};
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+      const next = jest.fn();
+      await optionalAuth(req, res, next);
+      expect(req.user).toBeNull();
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalledWith(503);
+      config.jwt = { secret: originalSecret };
     });
   });
 });

@@ -1,11 +1,11 @@
 const express = require('express');
-const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const { registerValidation, loginValidation, profileValidation } = require('../middleware/validation');
 const { generateToken, generateAccessToken, verifyToken, authMiddleware, adminMiddleware } = require('../middleware/auth');
 const User = require('../models/User');
 const cacheManager = require('../lib/cache-manager');
 const { logFailedLogin, logApiError } = require('../lib/logger');
+const { createRedisStore, createLimiter } = require('../lib/rateLimitRedisStore');
 
 // [SEC-1/PERF-1] Hash bcrypt admin pré-calculé une fois au premier login (évite bcrypt.hash à chaque requête)
 let cachedAdminPasswordHash = null;
@@ -16,24 +16,29 @@ async function getAdminPasswordHash(adminPassword) {
   return cachedAdminPasswordHash;
 }
 
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
 // Limite : 5 tentatives de login par 15 min par IP (brute-force protection, configurable via LOGIN_RATE_LIMIT_MAX)
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+const defaultLoginLimiter = createLimiter(null, {
+  windowMs: LOGIN_WINDOW_MS,
   max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX, 10) || 5,
   message: { message: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
-const registerLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+const defaultRegisterLimiter = createLimiter(null, {
+  windowMs: LOGIN_WINDOW_MS,
   max: 10,
   message: { message: 'Trop de tentatives d\'inscription. Réessayez dans 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
-const router = express.Router();
+/**
+ * Construit le routeur auth avec les limiters fournis (Redis-backed si stores passés).
+ * @param {import('express-rate-limit').RateLimitRequestHandler} loginLimiter
+ * @param {import('express-rate-limit').RateLimitRequestHandler} registerLimiter
+ * @returns {express.Router}
+ */
+function createRouterWithLimiters(loginLimiter, registerLimiter) {
+  const router = express.Router();
 
 /** Option secure du cookie : true seulement si la requête arrive en HTTPS (évite 401 sur dashboard en HTTP). */
 function isSecureRequest(req) {
@@ -56,7 +61,7 @@ function getCookieOptions(req) {
 // @route   POST /api/auth/register
 // @desc    Register a new user (admin only)
 // @access  Private (admin)
-router.post('/register', authMiddleware, adminMiddleware, registerLimiter, registerValidation, async (req, res) => {
+  router.post('/register', authMiddleware, adminMiddleware, registerLimiter, registerValidation, async (req, res) => {
   try {
     const { firstName, lastName, email, password, phone, cabinNumber, country, dateOfBirth } = req.body;
 
@@ -112,7 +117,7 @@ router.post('/register', authMiddleware, adminMiddleware, registerLimiter, regis
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public
-router.post('/login', loginLimiter, loginValidation, async (req, res) => {
+  router.post('/login', loginLimiter, loginValidation, async (req, res) => {
   try {
     const { email, password } = req.body;
     const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
@@ -212,7 +217,7 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
 // @route   POST /api/auth/logout
 // @desc    Invalide la session (supprime le cookie authToken, blacklist JWT)
 // @access  Public
-router.post('/logout', async (req, res) => {
+  router.post('/logout', async (req, res) => {
   const token = req.cookies?.authToken || req.header('Authorization')?.replace('Bearer ', '');
   if (token && cacheManager.isConnected) {
     try {
@@ -233,7 +238,7 @@ router.post('/logout', async (req, res) => {
 // @desc    Renvoie un nouveau token dans le cookie httpOnly pour prolonger la session
 // @access  Private (token valide requis)
 // [SEC-4] JWT uniquement dans le cookie, pas dans le body
-router.post('/refresh', authMiddleware, (req, res) => {
+  router.post('/refresh', authMiddleware, (req, res) => {
   const newToken = generateToken({
     id: req.user.id,
     email: req.user.email,
@@ -246,7 +251,7 @@ router.post('/refresh', authMiddleware, (req, res) => {
 // @route   GET /api/auth/me
 // @desc    Get current user
 // @access  Private
-router.get('/me', authMiddleware, async (req, res) => {
+  router.get('/me', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) {
@@ -265,7 +270,7 @@ router.get('/me', authMiddleware, async (req, res) => {
 // @desc    Update user profile
 // @access  Private
 // [Q1] Validation des champs (longueurs, format téléphone, date ISO, etc.)
-router.put('/profile', authMiddleware, profileValidation, async (req, res) => {
+  router.put('/profile', authMiddleware, profileValidation, async (req, res) => {
   try {
     const { firstName, lastName, phone, cabinNumber, country, dateOfBirth, preferences } = req.body;
     
@@ -308,7 +313,7 @@ router.put('/profile', authMiddleware, profileValidation, async (req, res) => {
 // @route   PUT /api/auth/change-password
 // @desc    Change user password (current + new)
 // @access  Private
-router.put('/change-password', authMiddleware, async (req, res) => {
+  router.put('/change-password', authMiddleware, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) {
@@ -338,7 +343,7 @@ router.put('/change-password', authMiddleware, async (req, res) => {
 // @route   GET /api/auth/user-data
 // @desc    Get user favorites and playback positions (for sync after login / cache clear)
 // @access  Private
-router.get('/user-data', authMiddleware, async (req, res) => {
+  router.get('/user-data', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('userData').lean();
     if (!user) {
@@ -359,7 +364,7 @@ router.get('/user-data', authMiddleware, async (req, res) => {
 // @route   PUT /api/auth/user-data
 // @desc    Save user favorites and/or playback positions
 // @access  Private
-router.put('/user-data', authMiddleware, async (req, res) => {
+  router.put('/user-data', authMiddleware, async (req, res) => {
   try {
     const { favorites, playbackPositions } = req.body;
     const user = await User.findById(req.user.id);
@@ -398,7 +403,34 @@ router.put('/user-data', authMiddleware, async (req, res) => {
   }
 });
 
-module.exports = router;
+  return router;
+}
+
+/** Crée le routeur auth avec limiters Redis quand redisUri est configuré (après DB/Redis ready). */
+async function createAuthRouter(redisUri) {
+  let loginStore = null;
+  let registerStore = null;
+  if (redisUri) {
+    loginStore = await createRedisStore(redisUri, 'rl:login:');
+    if (loginStore) loginStore.init({ windowMs: LOGIN_WINDOW_MS });
+    registerStore = await createRedisStore(redisUri, 'rl:register:');
+    if (registerStore) registerStore.init({ windowMs: LOGIN_WINDOW_MS });
+  }
+  const loginLimiter = createLimiter(loginStore, {
+    windowMs: LOGIN_WINDOW_MS,
+    max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX, 10) || 5,
+    message: { message: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.' },
+  });
+  const registerLimiter = createLimiter(registerStore, {
+    windowMs: LOGIN_WINDOW_MS,
+    max: 10,
+    message: { message: 'Trop de tentatives d\'inscription. Réessayez dans 15 minutes.' },
+  });
+  return createRouterWithLimiters(loginLimiter, registerLimiter);
+}
+
+module.exports = createRouterWithLimiters(defaultLoginLimiter, defaultRegisterLimiter);
+module.exports.createAuthRouter = createAuthRouter;
 
 
 

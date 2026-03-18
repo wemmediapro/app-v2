@@ -12,7 +12,7 @@ function mountRoutes(app, deps = {}) {
   app.use('/api/upload/media', mediaLibraryRouter);
 
   // Routes métier
-  app.use('/api/auth', require('./auth'));
+  app.use('/api/auth', (deps.authRouter != null ? deps.authRouter : require('./auth')));
   app.use('/api/users', require('./users'));
   app.use('/api/restaurants', require('./restaurants'));
   app.use('/api/movies', require('./movies'));
