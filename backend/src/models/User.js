@@ -38,11 +38,11 @@ const userSchema = new mongoose.Schema({
   },
   country: {
     type: String,
-    trim: true
+    trim: true,
+    maxlength: [100, 'Country name cannot exceed 100 characters']
   },
   dateOfBirth: {
-    type: String,
-    trim: true
+    type: Date
   },
   role: {
     type: String,
@@ -59,7 +59,15 @@ const userSchema = new mongoose.Schema({
       email: { type: Boolean, default: true },
       push: { type: Boolean, default: true },
       sms: { type: Boolean, default: false }
-    }
+    },
+    dietaryRestrictions: [String],
+    accessibilityNeeds: [String]
+  },
+  consents: {
+    marketing: { type: Boolean, default: false },
+    analytics: { type: Boolean, default: false },
+    termsAccepted: { type: Boolean, default: false },
+    privacyAccepted: { type: Boolean, default: false }
   },
   isActive: {
     type: Boolean,
@@ -99,11 +107,17 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Hash password before saving
+// Hash password before saving — try/catch pour éviter un crash si bcrypt échoue sous charge
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
+
+  try {
+    const salt = await bcrypt.genSalt(12);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Compare password method
@@ -122,6 +136,10 @@ userSchema.methods.toJSON = function() {
   delete user.password;
   return user;
 };
+
+// Indexes pour performance (queries admin, filtres par cabine/rôle)
+userSchema.index({ cabinNumber: 1 });
+userSchema.index({ role: 1 });
 
 module.exports = mongoose.model('User', userSchema);
 
