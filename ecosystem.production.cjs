@@ -1,3 +1,4 @@
+// PM2 production config — uses the unified server.js
 /**
  * Configuration PM2 pour Production - 2000 Connexions Simultanées
  * 
@@ -9,11 +10,9 @@ module.exports = {
   apps: [
     {
       name: 'gnv-backend',
-      script: './backend/server.production.js',
-      // En production : server.production.js (Redis obligatoire, Sentry, mountRoutes, pas de cluster Node — PM2 gère les workers).
-      // server.js = point d'entrée dev (npm run dev). server.optimized.js = ancienne variante, non utilisée par PM2.
+      script: './backend/server.js',
       
-      // Clustering : PM2 lance N processus server.production.js (exec_mode: 'cluster'). backend/cluster.js n'est pas utilisé (code mort en prod PM2).
+      // Clustering : PM2 lance N processus server.js (exec_mode: 'cluster'). backend/cluster.js n'est pas utilisé (code mort en prod PM2).
       instances: process.env.CLUSTER_WORKERS || 'max',
       exec_mode: 'cluster',
       

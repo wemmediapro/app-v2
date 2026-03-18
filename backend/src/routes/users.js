@@ -10,8 +10,8 @@ const router = express.Router();
 
 // @route   GET /api/users
 // @desc    Get all users (for messaging) — pagination (défaut 20, max 100)
-// @access  Public (Demo mode)
-router.get('/', paginate, async (req, res) => {
+// @access  Private
+router.get('/', authMiddleware, paginate, async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       return res.json({ data: [], total: 0, page: req.pagination.page, limit: req.pagination.limit });
@@ -47,8 +47,8 @@ router.get('/', paginate, async (req, res) => {
 
 // @route   GET /api/users/:id
 // @desc    Get user profile
-// @access  Public (Demo mode)
-router.get('/:id', validateMongoId('id'), async (req, res) => {
+// @access  Private
+router.get('/:id', authMiddleware, validateMongoId('id'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
       .select('-password');

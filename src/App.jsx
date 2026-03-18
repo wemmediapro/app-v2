@@ -6,9 +6,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 // Icônes Lucide : importées dans les composants enfants (BottomNav, AppHeader, pages) pour alléger le bundle racine
-import { apiService, getStreamingVideoUrl, getPosterUrl, BACKEND_ORIGIN } from "./services/apiService";
-import { attachVideoSource } from "./utils/hlsVideo";
-import { getMediaUrlForPlayback, clearOfflineCache } from "./services/offlineMedia";
+import { apiService, getPosterUrl } from "./services/apiService";
 import { getPlaybackStorageKey } from "./hooks/useMoviePlayback";
 import { useLanguage } from "./contexts/LanguageContext";
 import { useMagazine } from "./hooks/useMagazine";
@@ -22,7 +20,6 @@ import { useRadio } from "./hooks/useRadio";
 import { useWebtv } from "./hooks/useWebtv";
 import { useChat } from "./hooks/useChat";
 import { useOnline } from "./hooks/useOnline";
-import LanguageSelector from "./components/LanguageSelector";
 import BottomNav from "./components/BottomNav";
 import AppHeader from "./components/AppHeader";
 import BannersCarousel from "./components/BannersCarousel";
@@ -34,19 +31,6 @@ import { gnvShipsList, currentShip } from "./data/ships";
 
 // Image défaut 100% offline (data URI) — plus de dépendance Unsplash
 const DEFAULT_RESTAURANT_IMAGE = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400"><rect fill="%23e5e7eb" width="800" height="400"/><text x="400" y="220" font-size="24" fill="%239ca3af" text-anchor="middle" font-family="system-ui,sans-serif">Restaurant</text></svg>');
-
-/** Découpe un numéro stocké (ex. "+33123456789") en préfixe + numéro local */
-function parsePhonePrefix(phoneStr) {
-  if (!phoneStr || typeof phoneStr !== 'string') return { phonePrefix: '+33', phone: '' };
-  const s = phoneStr.trim().replace(/\s/g, '');
-  const prefixes = ['+212', '+216', '+33', '+34', '+39'];
-  for (const p of prefixes) {
-    if (s.startsWith(p)) {
-      return { phonePrefix: p, phone: s.slice(p.length).trim() };
-    }
-  }
-  return { phonePrefix: '+33', phone: s };
-}
 
 function App() {
   const { t, language, changeLanguage } = useLanguage();
@@ -279,8 +263,6 @@ function App() {
     dutyfree: t('common.dutyFreeShop'),
     kids: t('common.kidsZone'),
     info: t('common.moreInfo'),
-    profile: t('profile.title'),
-    signup: t('common.signup'),
     notifications: t('notifications.title')
   }), [language, t]);
 
