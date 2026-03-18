@@ -855,7 +855,7 @@ const Restaurants = () => {
                       type="button"
                       onClick={() => setActionMenuOpen(actionMenuOpen === r._id ? null : r._id)}
                       className="p-1.5 rounded-lg bg-white/95 backdrop-blur shadow-sm text-slate-600 hover:text-slate-900 hover:bg-white transition-colors"
-                      aria-label="Actions"
+                      aria-label={t('common.actions')}
                     >
                       <MoreVertical size={18} />
                     </button>

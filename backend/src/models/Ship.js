@@ -116,8 +116,7 @@ const shipSchema = new mongoose.Schema({
   timestamps: true
 });
 
-shipSchema.index({ name: 1 });
-shipSchema.index({ slug: 1 });
+// Index compound uniquement (name et slug ont déjà un index via unique: true dans le schéma)
 shipSchema.index({ status: 1, isActive: 1 });
 
 module.exports = mongoose.model('Ship', shipSchema);

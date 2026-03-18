@@ -448,7 +448,7 @@ const Ads = () => {
               <button
                 onClick={() => setShowModal(false)}
                 className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                aria-label="Fermer"
+                aria-label={t('common.close')}
               >
                 <X size={22} />
               </button>
@@ -501,7 +501,7 @@ const Ads = () => {
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => form.videoUrl && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setVideoPlayerModal({ open: true, src: form.videoUrl, title: t('ads.videoSelected') || 'Vidéo sélectionnée' }))}
-                        aria-label="Lire la vidéo"
+                        aria-label={t('common.playVideo')}
                       >
                         {videoUploading ? (
                           <Upload size={28} className="text-blue-400 animate-pulse" />

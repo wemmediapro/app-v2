@@ -1195,7 +1195,7 @@ const WebTV = () => {
                   setEditingChannel(null);
                 }}
                 className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                aria-label="Fermer"
+                aria-label={t('common.close')}
               >
                 <X size={22} />
               </button>

@@ -35,7 +35,19 @@
     "accessDenied": "Access denied",
     "retry": "Retry",
     "advancedFilters": "Advanced filters",
-    "movies": "Movies & Series"
+    "movies": "Movies & Series",
+    "menu": "Menu",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "loginForm": "Login form",
+    "searchButton": "Search",
+    "playVideo": "Play video",
+    "analyticsTabs": "Analytics tabs",
+    "breadcrumb": "Breadcrumb",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "connecting": "Connecting",
+    "signIn": "Sign in"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -235,7 +247,21 @@
     "audioFileSaved": "Audio file saved",
     "uploadAudioError": "Audio upload error",
     "programMustHaveAudio": "Program must have an audio file",
-    "durationNotAvailable": "File selected (duration not available, enter end time if needed)"
+    "durationNotAvailable": "File selected (duration not available, enter end time if needed)",
+    "programDeleted": "Program deleted",
+    "scheduleBroadcastSubtitle": "Schedule the broadcast of your programs and playlists.",
+    "addTimeSlot": "Add a time slot",
+    "noBreaksConfigured": "No breaks configured",
+    "addBreaksHint": "Add breaks to schedule commercial slots",
+    "enableDailyGenerationHint": "Enable automatic generation of daily programming",
+    "selectTemplate": "Select template...",
+    "noHistoryAvailable": "No history available",
+    "programHistoryHint": "Program history will appear here",
+    "dailyGeneration": "Daily generation",
+    "webRadio": "Web radio",
+    "programUpdatedToast": "Program updated",
+    "programCreatedToast": "Program created",
+    "addTimeSlotTitle": "Add a time slot"
   },
   "webtv": {
     "title": "WebTV Management",

@@ -307,7 +307,7 @@ const Dashboard = () => {
             <h2 id="analytics-heading" className="text-lg font-semibold text-gray-900">{t('analytics.title') || 'Analytics'}</h2>
             <p className="mt-1 text-sm text-gray-500">{t('analytics.subtitle') || 'Statistiques détaillées sur les connexions et le contenu'}</p>
           </div>
-          <nav className="flex flex-wrap gap-1 px-6 pt-2" aria-label="Onglets Analytics">
+          <nav className="flex flex-wrap gap-1 px-6 pt-2" aria-label={t('common.analyticsTabs')}>
             {[
               { id: 'overview', label: t('analytics.overview') || 'Vue d\'ensemble', icon: BarChart3 },
               { id: 'connections', label: t('analytics.connections') || 'Connexions', icon: Wifi },

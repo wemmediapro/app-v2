@@ -106,7 +106,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce || ''}'`],
       imgSrc: ["'self'", "data:", "https:"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'"],
       mediaSrc: ["'self'", "blob:"],
       connectSrc: ["'self'", "ws:", "wss:"],
       fontSrc: ["'self'", "https:", "data:"],
@@ -279,11 +279,12 @@ async function setupAfterDb() {
     }
   };
   app.get('/', sendIndexWithNonce);
-  app.get('*', (req, res, next) => {
+  // Express 5 : wildcard doit être nommé (ex. /*splat)
+  app.get('/*splat', (req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
     sendIndexWithNonce(req, res);
   });
-  app.use('*', (req, res) => {
+  app.use('/*splat', (req, res) => {
     res.status(404).json({ message: 'Route not found' });
   });
 

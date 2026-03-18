@@ -4,9 +4,11 @@ import { motion } from 'framer-motion';
 import { Ship, Eye, EyeOff, LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService } from '../services/authService';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Login = ({ onLogin }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -67,7 +69,7 @@ const Login = ({ onLogin }) => {
           transition={{ delay: 0.1 }}
           className="bg-white rounded-2xl shadow-xl p-6 sm:p-8"
         >
-          <form onSubmit={handleSubmit} className="space-y-5" aria-label="Formulaire de connexion">
+          <form onSubmit={handleSubmit} className="space-y-5" aria-label={t('common.loginForm')}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Email
@@ -104,7 +106,7 @@ const Login = ({ onLogin }) => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  aria-label={showPassword ? t('common.hidePassword') : t('common.showPassword')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -116,7 +118,7 @@ const Login = ({ onLogin }) => {
               type="submit"
               disabled={loading}
               aria-busy={loading}
-              aria-label={loading ? 'Connexion en cours' : 'Se connecter'}
+              aria-label={loading ? t('common.connecting') : t('common.signIn')}
               whileHover={loading ? undefined : { scale: 1.01 }}
               whileTap={loading ? undefined : { scale: 0.98 }}
               className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium py-3.5 px-4 rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"

@@ -798,7 +798,7 @@ const Radio = () => {
                           <button
                             onClick={() => {
                               setPrograms(prev => prev.filter(p => p.id !== program.id));
-                              toast.success('Program deleted');
+                              toast.success(t('radio.programDeleted'));
                             }}
                             className="text-red-600 hover:text-red-900"
                           >
@@ -912,7 +912,7 @@ const Radio = () => {
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Planning</h2>
-            <p className="text-gray-600 mt-1">Schedule the broadcast of your programs and playlists.</p>
+            <p className="text-gray-600 mt-1">{t('radio.scheduleBroadcastSubtitle')}</p>
           </div>
           <div className="flex items-center gap-3">
             <motion.button
@@ -922,7 +922,7 @@ const Radio = () => {
               className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
             >
               <Plus size={18} />
-              Add a time slot
+              {t('radio.addTimeSlot')}
             </motion.button>
             <button className="p-2 hover:bg-gray-100 rounded-lg">
               <MoreVertical size={20} className="text-gray-600" />
@@ -1096,8 +1096,8 @@ const Radio = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="text-center py-12">
             <ClockIcon size={48} className="mx-auto mb-4 text-gray-400" />
-            <p className="text-lg font-medium text-gray-900 mb-2">No breaks configured</p>
-            <p className="text-gray-600">Add breaks to schedule commercial slots</p>
+            <p className="text-lg font-medium text-gray-900 mb-2">{t('radio.noBreaksConfigured')}</p>
+            <p className="text-gray-600">{t('radio.addBreaksHint')}</p>
           </div>
         </div>
       </div>
@@ -1117,7 +1117,7 @@ const Radio = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium text-gray-900">Automatic Daily Generation</h3>
-                <p className="text-sm text-gray-600 mt-1">Enable automatic generation of daily programming</p>
+                <p className="text-sm text-gray-600 mt-1">{t('radio.enableDailyGenerationHint')}</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -1148,7 +1148,7 @@ const Radio = () => {
                     onChange={(e) => setDailyGeneration({ ...dailyGeneration, template: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Select template...</option>
+                    <option value="">{t('radio.selectTemplate')}</option>
                     <option value="morning">Morning Template</option>
                     <option value="afternoon">Afternoon Template</option>
                     <option value="evening">Evening Template</option>
@@ -1173,8 +1173,8 @@ const Radio = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="text-center py-12">
             <History size={48} className="mx-auto mb-4 text-gray-400" />
-            <p className="text-lg font-medium text-gray-900 mb-2">No history available</p>
-            <p className="text-gray-600">Program history will appear here</p>
+            <p className="text-lg font-medium text-gray-900 mb-2">{t('radio.noHistoryAvailable')}</p>
+            <p className="text-gray-600">{t('radio.programHistoryHint')}</p>
           </div>
         </div>
       </div>
@@ -2469,7 +2469,7 @@ const Radio = () => {
                 }`}
               >
                 <Zap size={16} />
-                <span>Daily generation</span>
+                <span>{t('radio.dailyGeneration')}</span>
               </button>
               <button
                 onClick={() => setActiveSection('history')}
@@ -2526,7 +2526,7 @@ const Radio = () => {
                     )}
                     <div>
                       <p className="font-semibold text-gray-900">{selectedStation.name}</p>
-                      <p className="text-sm text-gray-500">{selectedStation.genre || 'Web radio'}</p>
+                      <p className="text-sm text-gray-500">{selectedStation.genre || t('radio.webRadio')}</p>
                     </div>
                   </div>
                 )}
@@ -2685,10 +2685,10 @@ const Radio = () => {
                     setPrograms(prev => prev.map(p => 
                       p.id === editingProgram.id ? { ...newProgram, id: editingProgram.id } : p
                     ));
-                    toast.success('Program updated');
+                    toast.success(t('radio.programUpdatedToast'));
                   } else {
                     setPrograms(prev => [...prev, { ...newProgram, id: `program_${Date.now()}` }]);
-                    toast.success('Program created');
+                    toast.success(t('radio.programCreatedToast'));
                   }
                   setShowProgramModal(false);
                   setEditingProgram(null);
@@ -2726,7 +2726,7 @@ const Radio = () => {
           >
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-gray-900">Add a time slot</h3>
+                <h3 className="text-xl font-bold text-gray-900">{t('radio.addTimeSlotTitle')}</h3>
                 <button
                   onClick={() => {
                     setShowTimeSlotModal(false);

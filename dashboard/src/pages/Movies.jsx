@@ -884,7 +884,7 @@ const Movies = () => {
                   </p>
                 </div>
               </div>
-              <button type="button" onClick={closeModal} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors" aria-label="Fermer">
+              <button type="button" onClick={closeModal} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors" aria-label={t('common.close')}>
                 <X size={22} />
               </button>
             </div>
@@ -1144,7 +1144,7 @@ const Movies = () => {
                           role="button"
                           tabIndex={0}
                           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (videoPreview || newMovie.videoUrl) && getVideoPreviewUrl(videoPreview || newMovie.videoUrl) && (e.preventDefault(), setVideoPlayerModal({ open: true, src: videoPreview || newMovie.videoUrl, title: videoFile?.name || 'Vidéo sélectionnée' }))}
-                          aria-label="Lire la vidéo"
+                          aria-label={t('common.playVideo')}
                         >
                           {videoUploading ? (
                             <Upload size={28} className="text-blue-400 animate-pulse" />
@@ -1575,7 +1575,7 @@ const Movies = () => {
                           role="button"
                           tabIndex={0}
                           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && getVideoPreviewUrl(newEpisode.videoPreview) && (e.preventDefault(), setVideoPlayerModal({ open: true, src: newEpisode.videoPreview, title: newEpisode.videoFile?.name || 'Vidéo épisode' }))}
-                          aria-label="Lire la vidéo"
+                          aria-label={t('common.playVideo')}
                         >
                           {getVideoPreviewUrl(newEpisode.videoPreview) ? (
                             <>

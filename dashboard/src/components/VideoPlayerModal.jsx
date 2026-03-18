@@ -2,12 +2,14 @@ import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { getVideoPreviewUrl } from '../utils/videoPreviewUrl';
+import { useLanguage } from '../contexts/LanguageContext';
 
 /**
  * Lecteur vidéo modal partagé pour tous les aperçus (Films, Épisodes, Publicités, WebTV, Bibliothèque).
  * Même UI partout : fond sombre, barre de titre, vidéo avec contrôles.
  */
 export default function VideoPlayerModal({ open, onClose, src, title = 'Vidéo' }) {
+  const { t } = useLanguage();
   const resolvedSrc = src ? getVideoPreviewUrl(src) : null;
 
   useEffect(() => {
@@ -36,7 +38,7 @@ export default function VideoPlayerModal({ open, onClose, src, title = 'Vidéo' 
             type="button"
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-700 text-white transition-colors shrink-0"
-            aria-label="Fermer"
+            aria-label={t('common.close')}
           >
             <X size={22} />
           </button>

@@ -144,7 +144,7 @@ const Sidebar = ({ user, isOpen = false, onClose, isMobileView = true }) => {
             type="button"
             onClick={() => typeof onClose === 'function' && onClose()}
             className={isMobileView ? 'p-2.5 -m-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg touch-manipulation' : 'hidden'}
-            aria-label="Fermer le menu"
+            aria-label={t('common.closeMenu')}
           >
             <X size={22} />
           </button>

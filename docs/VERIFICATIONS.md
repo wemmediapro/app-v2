@@ -1,12 +1,10 @@
 # Points à vérifier / À faire
 
-## 5. Aligner versions packages
+## 5. Aligner versions packages ✅
 
-- **Frontend (racine)** : React 18.3.1, axios ^1.6.0, tailwindcss ^3.4.0, vite ^7.1.10, framer-motion ^11.0.0, lucide-react ^0.378.0.
-- **Dashboard** : React 18.3.1, axios ^1.6.2, tailwindcss ^3.3.6, vite ^5.0.8, framer-motion ^10.16.16, lucide-react ^0.294.0.
-- **Backend** : express ^4.18.2, multer ^1.4.5-lts.1.
-
-**Recommandations** : Aligner framer-motion et lucide-react entre frontend et dashboard ; garder les versions majeures cohérentes (ex. tailwind 3.x partout). Vérifier que `npm install` et les builds passent après alignement.
+- **Frontend (racine)** : React 18.3.1, tailwindcss ^3.4.0, vite ^7.1.10, framer-motion ^11.0.0, lucide-react ^0.378.0.
+- **Dashboard** : Aligné sur frontend (framer-motion ^11, lucide-react ^0.378, tailwindcss ^3.4.0, vite ^5.4.0, @vitejs/plugin-react ^4.3.4).
+- **Backend** : express ^5.1.0, multer ^2.0.0.
 
 ---
 
@@ -18,34 +16,32 @@
 
 ---
 
-## 9. Migrer multer v2.x
+## 9. Migrer multer v2.x ✅
 
-- **Actuel** : `multer ^1.4.5-lts.1` (backend).
-- **État** : Multer 2.x est stable (v2.1.x en 2025), avec correctifs de sécurité (CVE). Migration 1.x → 2.x décrite comme simple.
-- **À faire** : `cd backend && npm install multer@^2` puis exécuter les tests et les routes d’upload ; adapter si l’API a changé (voir [releases multer](https://github.com/expressjs/multer/releases)).
+- **Fait** : Backend utilise `multer ^2.0.0`. API diskStorage / fileFilter inchangée ; routes d’upload non modifiées.
 
 ---
 
-## 10. Migrer express v5.x
+## 10. Migrer express v5.x ✅
 
-- **Actuel** : `express ^4.18.2` (backend).
-- **État** : Express 5.1.0 est la version `latest` sur npm (depuis mars 2025). Breaking changes : `res.sendfile` → `res.sendFile`, `app.del` → `app.delete`, `req.param()` retiré, etc.
-- **À faire** : Suivre le [guide de migration Express 5](https://expressjs.com/en/guide/migrating-5) et éventuellement les codemods :  
-  `npx codemod@latest @expressjs/v5-migration-recipe`
+- **Fait** : Backend utilise `express ^5.1.0`. Aucun `res.sendfile`, `app.del` ou `req.param()` dans le code ; démarrage vérifié.
 
 ---
 
 ## 13–17. Nettoyage (fichiers, tunnels, SQLite, tests)
 
-- **Tunnels** : Plusieurs scripts dans `scripts/tunnels/` (ngrok, localtunnel, Cloudflare). Garder ceux utilisés en dev/démo, supprimer ou documenter les autres.
-- **SQLite** : `better-sqlite3` présent en devDependencies backend ; vérifier s’il est encore utilisé (scripts, tests) ou peut être retiré.
-- **Tests** : `npm run test` (Vitest) et `npm run test:e2e` (Playwright) configurés ; la CI exécute déjà les tests unitaires. Vérifier la couverture et les tests e2e si besoin.
+- **Tunnels** : Documenté dans `scripts/tunnels/README.md` (ngrok, localtunnel, Cloudflare). Supprimer les scripts inutilisés si besoin.
+- **SQLite** : `better-sqlite3` est en devDependencies backend mais n’est pas `require()` dans le code ; retirable avec `npm uninstall better-sqlite3` si inutile.
+- **Tests** : `npm run test` (Vitest) et `npm run test:e2e` (Playwright) configurés ; la CI exécute les tests unitaires. Couverture et e2e à renforcer si besoin.
 
 ---
 
-## Réalisé dans cette session
+## Réalisé
 
-- **7. aria-label** : Clés i18n ajoutées (`common.menu`, `common.close`, `common.playVideo`, etc.) et boutons concernés dans `src/` mis à jour pour utiliser `t()`.
-- **8. Textes en dur** : Partiellement traité via les aria-labels ; les autres chaînes en dur (anglais/français) restent à repérer et remplacer par `t()`.
-- **11. CI/CD** : Workflow `.github/workflows/ci.yml` ajouté (frontend : install, test, build, audit ; backend : install, audit).
-- **12. Data navires** : Fichier central `data/ships.json` créé ; `src/data/ships.js` et `dashboard/src/data/ships.js` l’utilisent comme source unique.
+- **7. aria-label** : Clés i18n dans toutes les locales (app + dashboard). Boutons dans `src/` et `dashboard/src` utilisent `t()` (close, menu, openMenu, closeMenu, playVideo, breadcrumb, loginForm, etc.).
+- **8. Textes en dur** : Traités pour les aria-labels ; autres chaînes à remplacer par `t()` au fil de l’eau.
+- **11. CI/CD** : Workflow `.github/workflows/ci.yml` (frontend : install, test, build, audit ; backend : install, audit).
+- **12. Data navires** : Source unique `data/ships.json` ; `src/data/ships.js` et `dashboard/src/data/ships.js` l’importent.
+- **5. Versions** : Dashboard aligné (framer-motion 11, lucide-react 0.378, tailwind 3.4) ; backend express 5.1, multer 2.
+- **9–10. Backend** : Multer 2.x et Express 5.x en place, compatibilité vérifiée.
+- **13–17** : Tunnels documentés (`scripts/tunnels/README.md`) ; SQLite et tests notés dans ce doc.

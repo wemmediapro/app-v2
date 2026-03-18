@@ -24,7 +24,7 @@ const Header = ({ user, onLogout, onMenuClick, showHamburger = false }) => {
                 type="button"
                 onClick={onMenuClick}
                 className="flex items-center justify-center w-10 h-10 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 bg-white transition-colors shrink-0"
-                aria-label="Ouvrir le menu"
+                aria-label={t('common.openMenu')}
                 title="Menu"
               >
                 <Menu size={22} strokeWidth={2} />

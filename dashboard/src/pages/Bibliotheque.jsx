@@ -129,7 +129,7 @@ const Bibliotheque = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-colors"
-                  aria-label="Rechercher"
+                  aria-label={t('common.searchButton')}
                 />
               </div>
               <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
