@@ -18,7 +18,7 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        timeout: 0, // Pas de timeout pour le streaming audio (lecture longue)
+        timeout: 600000, // 10 min — streaming vidéo/audio longue durée
       },
       '/socket.io': {
         target: 'http://localhost:3000',
@@ -29,7 +29,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: 'hidden', // source maps générés mais non exposés au navigateur (sécurité)
   },
   optimizeDeps: {
     force: true, // Force la réoptimisation des dépendances

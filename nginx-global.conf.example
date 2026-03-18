@@ -1,0 +1,15 @@
+# À intégrer dans /etc/nginx/nginx.conf (fichier global, pas le vhost).
+# Ces directives optimisent Nginx pour haute charge (workers, connexions, keepalive).
+#
+# En tête du fichier (bloc global) :
+worker_processes auto;
+worker_rlimit_nofile 65535;
+
+# Bloc events (au même niveau que http { }, pas à l'intérieur) :
+events {
+    worker_connections 4096;
+    # use epoll;   # Linux uniquement — décommenter sur Linux pour meilleures perfs
+    multi_accept on;
+}
+
+# Le reste du fichier (include, http { }, etc.) reste inchangé.

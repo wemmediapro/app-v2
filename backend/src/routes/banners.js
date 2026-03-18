@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
           { pages: pageId }
         ];
       }
-      const banners = await Banner.find(query).sort({ order: 1, createdAt: -1 }).lean();
+      const banners = await Banner.find(query).read('secondaryPreferred').sort({ order: 1, createdAt: -1 }).lean();
       return res.json(banners.map(doc => localizeBanner(doc, langStr)));
     }
     return res.json([]);

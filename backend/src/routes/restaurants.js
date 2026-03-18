@@ -85,7 +85,7 @@ router.get('/', async (req, res) => {
       }
     }
     
-    const restaurants = await Restaurant.find(query).sort({ name: 1 }).lean();
+    const restaurants = await Restaurant.find(query).read('secondaryPreferred').sort({ name: 1 }).lean();
     res.json(restaurants.map(doc => localizeRestaurant(doc, lang)));
   } catch (error) {
     console.error('Get restaurants error:', error);
@@ -101,7 +101,7 @@ router.get('/:id', async (req, res) => {
       if (!restaurant) return res.status(404).json({ message: 'Restaurant not found' });
       return res.json(restaurant);
     }
-    const restaurant = await Restaurant.findById(req.params.id).lean();
+    const restaurant = await Restaurant.findById(req.params.id).read('secondaryPreferred').lean();
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }

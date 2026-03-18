@@ -197,8 +197,7 @@ router.post('/:id/generate-poster', authMiddleware, adminMiddleware, async (req,
 });
 
 // @route   GET /api/movies — ?lang= pour contenu localisé, pagination via middleware (défaut 20, max 100)
-// Cache Redis 60s pour listes publiques (sans Authorization) — audit CTO
-const LIST_CACHE_TTL = 60;
+// Cache Redis pour listes publiques (sans Authorization) — TTL par type dans cache-manager (films 86400s)
 router.get('/', paginate, async (req, res) => {
   try {
     const { lang } = req.query;
@@ -214,8 +213,8 @@ router.get('/', paginate, async (req, res) => {
     let body;
     if (useMongo()) {
       const [movies, total] = await Promise.all([
-        Movie.find({ isActive: true }).lean().sort({ createdAt: -1 }).skip(skip).limit(limit),
-        Movie.countDocuments({ isActive: true }),
+        Movie.find({ isActive: true }).read('secondaryPreferred').lean().sort({ createdAt: -1 }).skip(skip).limit(limit),
+        Movie.countDocuments({ isActive: true }).read('secondaryPreferred'),
       ]);
       body = {
         data: movies.map(doc => localizeMovie(doc, lang)),
@@ -236,7 +235,7 @@ router.get('/', paginate, async (req, res) => {
     }
     if (!req.get('Authorization')) {
       const cacheKey = `list:movies:${langNorm}:${page}:${limit}`;
-      await cacheManager.set(cacheKey, body, LIST_CACHE_TTL);
+      await cacheManager.set(cacheKey, body);
     }
     res.json(body);
   } catch (error) {

@@ -35,7 +35,7 @@ class DatabaseManager {
       serverSelectionTimeoutMS: 10000,
       heartbeatFrequencyMS: 10000,
       connectTimeoutMS: 30000,
-      // Options de performance
+      // Options de performance — primary par défaut ; pour lectures publiques (films, banners, radio, restaurants) utiliser readPreferencePublic dans les requêtes
       readPreference: 'primary',
       readConcern: { level: 'majority' },
       writeConcern: { w: 'majority', j: true },
@@ -227,5 +227,8 @@ class DatabaseManager {
 
 // Instance singleton
 const dbManager = new DatabaseManager();
+
+/** Lecture préférentielle secondaire pour requêtes publiques (films, banners, radio, restaurants) — allège le primary */
+dbManager.readPreferencePublic = 'secondaryPreferred';
 
 module.exports = dbManager;

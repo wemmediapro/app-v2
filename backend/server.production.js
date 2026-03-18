@@ -186,7 +186,8 @@ const workerId = process.env.INSTANCE_ID || process.pid;
     });
   });
   
-  // Socket.io optimisé pour production
+  // Socket.io optimisé pour production (rate limit par socket = protection flood)
+  const { checkSocketRateLimit, checkSendMessageRateLimit, clearSocketRateLimit } = require('./src/socket/handlers');
   let connectionCount = 0;
   const maxConnections = 2000; // Par worker
   
@@ -205,6 +206,7 @@ const workerId = process.env.INSTANCE_ID || process.pid;
     }
     
     socket.on('join-room', (room) => {
+      if (!checkSocketRateLimit(socket)) return;
       socket.join(room);
       if (!isProduction) {
         console.log(`👤 User ${socket.id} joined room: ${room}`);
@@ -212,10 +214,13 @@ const workerId = process.env.INSTANCE_ID || process.pid;
     });
     
     socket.on('send-message', (data) => {
+      if (!checkSocketRateLimit(socket)) return;
+      if (!checkSendMessageRateLimit(socket)) return; // C6 : 60 msg/min/socket
       socket.to(data.room).emit('new-message', data);
     });
     
     socket.on('disconnect', () => {
+      clearSocketRateLimit(socket.id);
       connectionCount--;
       if (!isProduction) {
         console.log(`👤 User disconnected: ${socket.id} (Total: ${connectionCount})`);

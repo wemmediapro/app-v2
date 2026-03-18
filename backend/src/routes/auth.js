@@ -1,5 +1,6 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcryptjs');
 const { registerValidation, loginValidation } = require('../middleware/validation');
 const { generateToken, generateAccessToken, authMiddleware } = require('../middleware/auth');
 const User = require('../models/User');
@@ -29,7 +30,7 @@ router.post('/register', registerValidation, async (req, res) => {
       return res.status(400).json({ message: 'User already exists with this email' });
     }
 
-    // Create new user
+    // C3 : new User() + save() → mot de passe hashé par le hook pre('save') du modèle User (bcrypt).
     const user = new User({
       firstName,
       lastName,
@@ -94,13 +95,17 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
 
     const effectiveAdminEmail = adminEmail;
     const effectiveAdminPassword = adminPassword;
+    // P3 : jamais de comparaison en clair — hash bcrypt du mot de passe env pour comparaison avec l'entrée utilisateur
+    const adminPasswordHash = effectiveAdminPassword ? await bcrypt.hash(effectiveAdminPassword, 12) : null;
 
     // Find user by email
     let user = await User.findOne({ email: email.trim().toLowerCase() });
     if (!user) {
-      // Fallback : identifiants admin depuis la config (création de l'admin à la première connexion)
-      if (email.trim().toLowerCase() === effectiveAdminEmail && password === effectiveAdminPassword) {
-        user = await User.create({
+      // C3 / P2 : auto-création admin — comparaison uniquement via bcrypt.compare (jamais === en clair).
+      // User créé avec mot de passe en clair puis save() → pre('save') bcrypt du modèle hash avant persistance.
+      const envPasswordMatches = adminPasswordHash && await bcrypt.compare(password, adminPasswordHash);
+      if (email.trim().toLowerCase() === effectiveAdminEmail && envPasswordMatches) {
+        const adminUser = new User({
           firstName: 'Admin',
           lastName: 'GNV',
           email: effectiveAdminEmail,
@@ -108,6 +113,8 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
           role: 'admin',
           isActive: true
         });
+        await adminUser.save();
+        user = adminUser;
       } else {
         logFailedLogin(email, 'user_not_found', req);
         return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
@@ -119,9 +126,9 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
         return res.status(401).json({ message: 'Compte désactivé' });
       }
 
-      // Check password (allow env admin password for admin role if set)
+      // C3 / P3 : comparaison toujours via bcrypt.compare / user.comparePassword, jamais timing ou === en clair.
       const isPasswordValid = await user.comparePassword(password);
-      const envPasswordMatch = (user.role === 'admin' && effectiveAdminPassword && password === effectiveAdminPassword);
+      const envPasswordMatch = (user.role === 'admin' && adminPasswordHash && await bcrypt.compare(password, adminPasswordHash));
       if (!isPasswordValid && !envPasswordMatch) {
         logFailedLogin(email, 'invalid_password', req);
         return res.status(401).json({ message: 'Email ou mot de passe incorrect' });

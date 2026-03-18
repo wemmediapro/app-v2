@@ -45,7 +45,7 @@ router.get('/ships', optionalAuth, async (req, res) => {
     }
     const allRequested = req.query.all === 'true' && req.user && req.user.role === 'admin';
     const filter = allRequested ? {} : { isActive: true };
-    const ships = await Ship.find(filter).sort({ name: 1 }).lean();
+    const ships = await Ship.find(filter).read('secondaryPreferred').sort({ name: 1 }).lean();
     const data = ships.map((d) => {
       const out = toShipResponse(d);
       if (allRequested) out.isActive = d.isActive !== false;
@@ -80,7 +80,7 @@ router.get('/ships/:id', async (req, res) => {
       });
     }
     const { id } = req.params;
-    const bySlug = await Ship.findOne({ slug: id, isActive: true }).lean();
+    const bySlug = await Ship.findOne({ slug: id, isActive: true }).read('secondaryPreferred').lean();
     if (bySlug) {
       const out = toShipResponse(bySlug);
       return res.json({
@@ -90,7 +90,7 @@ router.get('/ships/:id', async (req, res) => {
       });
     }
     if (mongoose.Types.ObjectId.isValid(id)) {
-      const byId = await Ship.findOne({ _id: id, isActive: true }).lean();
+      const byId = await Ship.findOne({ _id: id, isActive: true }).read('secondaryPreferred').lean();
       if (byId) {
         const out = toShipResponse(byId);
         return res.json({
@@ -429,7 +429,9 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
  */
 router.get('/connection-limit', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const currentConnections = connectionCounters.getTotalCount();
+    const currentConnections = typeof connectionCounters.getTotalCountAsync === 'function'
+      ? await connectionCounters.getTotalCountAsync()
+      : (connectionCounters.getTotalCount ? connectionCounters.getTotalCount() : 0);
     let maxConnections = null;
     if (mongoose.connection.readyState === 1) {
       const config = await LocalServerConfig.findOne({ id: 'local' }).lean();
@@ -471,7 +473,9 @@ router.patch('/connection-limit', authMiddleware, adminMiddleware, async (req, r
       { $set: { maxConnections: value } },
       { new: true, upsert: true }
     ).lean();
-    const currentConnections = connectionCounters.getTotalCount();
+    const currentConnections = typeof connectionCounters.getTotalCountAsync === 'function'
+      ? await connectionCounters.getTotalCountAsync()
+      : (connectionCounters.getTotalCount ? connectionCounters.getTotalCount() : 0);
     res.json({
       success: true,
       data: {

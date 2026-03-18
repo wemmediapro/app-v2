@@ -236,7 +236,8 @@ app.get('/api/stats', (req, res) => {
   }
 });
 
-// Configuration Socket.io avec gestionnaire de connexions
+// Configuration Socket.io avec gestionnaire de connexions (rate limit par socket = protection flood)
+const { checkSocketRateLimit, checkSendMessageRateLimit, clearSocketRateLimit } = require('./src/socket/handlers');
 setupRedisAdapter().then(() => {
   io.on('connection', (socket) => {
     // Enregistrer la connexion
@@ -247,6 +248,7 @@ setupRedisAdapter().then(() => {
 
     // Mettre à jour l'activité
     socket.onAny(() => {
+      if (!checkSocketRateLimit(socket)) return;
       connectionManager.updateActivity(socket.id);
     });
 
@@ -261,11 +263,13 @@ setupRedisAdapter().then(() => {
     });
 
     socket.on('send-message', (data) => {
+      if (!checkSendMessageRateLimit(socket)) return; // C6 : 60 msg/min/socket
       connectionManager.updateActivity(socket.id);
       socket.to(data.room).emit('new-message', data);
     });
 
     socket.on('disconnect', (reason) => {
+      clearSocketRateLimit(socket.id);
       connectionManager.removeConnection(socket.id);
       if (!isProduction) {
         console.log(`👤 Disconnected: ${socket.id} (${reason})`);

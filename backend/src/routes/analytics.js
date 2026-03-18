@@ -37,7 +37,9 @@ function growthPercent(current, previous) {
 // @desc    Statistiques de connexions (réelles : Socket.io local)
 router.get('/connections', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const activeConnections = connectionCounters.getTotalCount ? connectionCounters.getTotalCount() : 0;
+    const activeConnections = connectionCounters.getTotalCountAsync
+      ? await connectionCounters.getTotalCountAsync()
+      : (connectionCounters.getTotalCount ? connectionCounters.getTotalCount() : 0);
     res.json({
       totalConnections: activeConnections,
       activeConnections,

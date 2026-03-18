@@ -2,13 +2,22 @@
 # Redis — obligatoire en mode cluster PM2 pour Socket.IO
 # Usage : docker-compose up -d (démarre mongo + redis)
 # L’application (backend, frontend) se déploie avec PM2 sur l’OS, pas dans Docker.
+#
+# MongoDB (S5) : auth + bind loopback. MONGO_ROOT_PASSWORD (défaut "changeme"). En prod : mot de passe fort.
+# Backend : MONGODB_URI=mongodb://admin:${MONGO_ROOT_PASSWORD}@localhost:27017/gnv_onboard
+#
+# Redis (S4) : bind loopback + requirepass + volume persistant. REDIS_PASSWORD (défaut "changeme"). En prod : mot de passe fort.
+# Backend : REDIS_URI=redis://:${REDIS_PASSWORD}@localhost:6379
 
 services:
   mongo:
     image: mongo:8
     container_name: gnv-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin   # C5 : auth (--auth activé automatiquement par l'image)
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-changeme}
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"  # C5 : bind loopback uniquement
     volumes:
       - mongo_data:/data/db
     restart: unless-stopped
@@ -17,8 +26,12 @@ services:
     image: redis:7-alpine
     container_name: gnv-redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"  # C4 : bind loopback uniquement
+    volumes:
+      - redis_data:/data       # C4 : volume persistant
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme} --maxmemory 256mb --maxmemory-policy allkeys-lru
     restart: unless-stopped
 
 volumes:
   mongo_data:
+  redis_data:

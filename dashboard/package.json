@@ -29,7 +29,6 @@
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.16",
-    "express": "^5.1.0",
     "http-proxy": "^1.18.1",
     "localtunnel": "^2.0.2",
     "postcss": "^8.4.32",

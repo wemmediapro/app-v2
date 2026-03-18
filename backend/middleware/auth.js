@@ -1,126 +1,48 @@
 /**
- * Auth middleware (backend/middleware) — utilisé UNIQUEMENT par backend/routes/*.js (racine).
- * JWT contient userId ; vérification via MongoDB User ; utilise process.env.JWT_SECRET directement.
- *
- * ⚠️ Double implémentation : l’API principale utilise backend/src/middleware/auth.js (src/routes/*, server.js).
- * Ne pas mélanger les deux : routes sous backend/routes/ → ce fichier ; routes sous backend/src/routes/ → src/middleware/auth.js.
+ * Wrapper de compatibilité : délègue à backend/src/middleware/auth.js (seule implémentation).
+ * JWT_SECRET est géré uniquement dans src/middleware/auth.js via getSecret() (P1 : pas d'accès direct sans guard).
+ * C2 : guard explicite avant toute utilisation JWT — throw si JWT_SECRET absent.
+ * Utilisé par backend/routes/*.js si ces routes sont montées.
  */
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const srcAuth = require('../src/middleware/auth');
+const config = require('../src/config');
 
-// Verify JWT token
-const authenticateToken = async (req, res, next) => {
-  try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
-    if (!token) {
-      return res.status(401).json({ 
-        message: 'Access token required',
-        code: 'NO_TOKEN'
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('-password');
-    
-    if (!user) {
-      return res.status(401).json({ 
-        message: 'Invalid token - user not found',
-        code: 'INVALID_TOKEN'
-      });
-    }
-
-    if (!user.isActive) {
-      return res.status(401).json({ 
-        message: 'Account is deactivated',
-        code: 'ACCOUNT_DEACTIVATED'
-      });
-    }
-
-    req.user = user;
-    next();
-  } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ 
-        message: 'Invalid token',
-        code: 'INVALID_TOKEN'
-      });
-    }
-    
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
-        message: 'Token expired',
-        code: 'TOKEN_EXPIRED'
-      });
-    }
-
-    console.error('Auth middleware error:', error);
-    res.status(500).json({ 
-      message: 'Authentication error',
-      code: 'AUTH_ERROR'
-    });
+/** C2 : throw si JWT_SECRET absent (avant jwt.verify / jwt.sign). */
+function guardJwtSecret() {
+  const secret = config.jwt?.secret ?? process.env.JWT_SECRET;
+  if (!secret || typeof secret !== 'string' || secret.length === 0) {
+    throw new Error('JWT_SECRET must be set in config.env or .env');
   }
-};
-
-// Check if user has required role
-const requireRole = (...roles) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ 
-        message: 'Authentication required',
-        code: 'AUTH_REQUIRED'
-      });
-    }
-
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ 
-        message: 'Insufficient permissions',
-        code: 'INSUFFICIENT_PERMISSIONS'
-      });
-    }
-
-    next();
-  };
-};
-
-// Optional authentication (doesn't fail if no token)
-const optionalAuth = async (req, res, next) => {
-  try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.userId).select('-password');
-      
-      if (user && user.isActive) {
-        req.user = user;
-      }
-    }
-
-    next();
-  } catch (error) {
-    // Ignore token errors for optional auth
-    next();
+  if (process.env.NODE_ENV === 'production' && secret.length < 32) {
+    throw new Error('JWT_SECRET must be at least 32 characters in production');
   }
+}
+
+const wrapAuth = (fn) => (req, res, next) => {
+  try {
+    guardJwtSecret();
+  } catch (e) {
+    return res.status(503).json({ message: e.message, code: 'JWT_NOT_CONFIGURED' });
+  }
+  return fn(req, res, next);
 };
 
-// Generate JWT token
-const generateToken = (userId) => {
-  return jwt.sign(
-    { userId },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-  );
+const wrapOptionalAuth = (fn) => async (req, res, next) => {
+  try {
+    guardJwtSecret();
+  } catch (e) {
+    return res.status(503).json({ message: e.message, code: 'JWT_NOT_CONFIGURED' });
+  }
+  return fn(req, res, next);
 };
 
 module.exports = {
-  authenticateToken,
-  requireRole,
-  optionalAuth,
-  generateToken
+  authenticateToken: wrapAuth(srcAuth.authMiddleware),
+  requireRole: srcAuth.requireRole,
+  optionalAuth: wrapOptionalAuth(srcAuth.optionalAuth),
+  /** Compatibilité backend/routes : generateToken(userId) → payload { id, userId } */
+  generateToken: (userId) => {
+    guardJwtSecret();
+    return srcAuth.generateToken(typeof userId === 'object' ? userId : { id: userId, userId });
+  }
 };
-
-
-

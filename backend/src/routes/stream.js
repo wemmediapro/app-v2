@@ -1,6 +1,6 @@
 /**
- * Route de streaming vidéo avec support des requêtes Range (HTTP 206)
- * Optimisé pour un grand nombre de connexions : ETag/304, buffer 512KB, non-buffering proxy.
+ * Route de streaming vidéo/audio avec support des requêtes Range (HTTP 206)
+ * Optimisé pour un grand nombre de connexions : ETag/304, buffer 128KB, non-buffering proxy.
  */
 
 const express = require('express');
@@ -17,7 +17,7 @@ const AUDIO_DIR = config.paths.audio;
 /** Taille de buffer pour createReadStream — 128KB pour un premier octet plus rapide (TTFB) tout en limitant les appels système */
 const STREAM_HIGH_WATER_MARK = 128 * 1024;
 
-const MIME_TYPES = {
+const MIME_TYPES_VIDEO = {
   '.mp4': 'video/mp4',
   '.webm': 'video/webm',
   '.ogg': 'video/ogg',
@@ -51,9 +51,9 @@ function setStreamHeaders(res, contentType, options = {}) {
   res.setHeader('Access-Control-Expose-Headers', exposeHeaders);
 }
 
-function pipeWithErrorHandling(stream, res) {
+function pipeWithErrorHandling(stream, res, errMessage = 'Erreur lecture média') {
   stream.on('error', (err) => {
-    if (!res.headersSent) res.status(500).json({ message: 'Erreur lecture vidéo' });
+    if (!res.headersSent) res.status(500).json({ message: errMessage });
     else res.destroy();
   });
   res.on('close', () => stream.destroy());
@@ -61,27 +61,29 @@ function pipeWithErrorHandling(stream, res) {
 }
 
 /**
- * Sert un fichier vidéo avec support Range pour le streaming (GET ou HEAD).
+ * Sert un fichier (vidéo ou audio) avec support Range pour le streaming (GET ou HEAD).
  * @param {object} req
  * @param {object} res
  * @param {string} filePath
- * @param {function} [next] - Si fourni et fichier absent, appelle next() au lieu d’envoyer 404 (middleware).
+ * @param {object} mimeMap - ex. MIME_TYPES_VIDEO ou MIME_TYPES_AUDIO
+ * @param {function} [next] - Si fourni et fichier absent, appelle next() au lieu d'envoyer 404 (middleware).
+ * @param {string} [notFoundMessage] - Message 404 si fichier absent.
  */
-async function streamVideo(req, res, filePath, next) {
+async function streamFile(req, res, filePath, mimeMap, next, notFoundMessage = 'Fichier non trouvé') {
   let stat;
   try {
     stat = await fsp.stat(filePath);
   } catch (e) {
     if (e.code === 'ENOENT') {
       if (typeof next === 'function') return next();
-      return res.status(404).json({ message: 'Vidéo non trouvée' });
+      return res.status(404).json({ message: notFoundMessage });
     }
     throw e;
   }
 
   const fileSize = stat.size;
   const ext = path.extname(filePath).toLowerCase();
-  const contentType = MIME_TYPES[ext] || 'video/mp4';
+  const contentType = mimeMap[ext] || (mimeMap === MIME_TYPES_VIDEO ? 'video/mp4' : 'audio/mpeg');
   const etag = etagFromStat(stat);
   const lastModified = stat.mtime.toUTCString();
 
@@ -126,12 +128,12 @@ async function streamVideo(req, res, filePath, next) {
     res.setHeader('Content-Length', chunkSize);
 
     const stream = fs.createReadStream(filePath, { start, end, highWaterMark: STREAM_HIGH_WATER_MARK });
-    pipeWithErrorHandling(stream, res);
+    pipeWithErrorHandling(stream, res, notFoundMessage);
   } else {
     res.setHeader('Content-Length', fileSize);
     res.status(200);
     const stream = fs.createReadStream(filePath, { highWaterMark: STREAM_HIGH_WATER_MARK });
-    pipeWithErrorHandling(stream, res);
+    pipeWithErrorHandling(stream, res, notFoundMessage);
   }
 }
 
@@ -153,82 +155,13 @@ const streamVideoHandler = async (req, res) => {
   }
   const filePath = path.join(VIDEOS_DIR, filename);
   try {
-    await streamVideo(req, res, filePath);
+    await streamFile(req, res, filePath, MIME_TYPES_VIDEO, null, 'Vidéo non trouvée');
   } catch (err) {
     if (!res.headersSent) res.status(500).json({ message: 'Erreur lecture vidéo' });
   }
 };
 router.get('/video/:filename', streamVideoHandler);
 router.head('/video/:filename', streamVideoHandler);
-
-/**
- * Sert un fichier audio avec support Range pour le streaming (100% offline, programmation radio).
- * Même optimisations que vidéo : ETag/304, buffer 512KB.
- */
-async function streamAudio(req, res, filePath, next) {
-  let stat;
-  try {
-    stat = await fsp.stat(filePath);
-  } catch (e) {
-    if (e.code === 'ENOENT') {
-      if (typeof next === 'function') return next();
-      return res.status(404).json({ message: 'Fichier audio non trouvé' });
-    }
-    throw e;
-  }
-
-  const fileSize = stat.size;
-  const ext = path.extname(filePath).toLowerCase();
-  const contentType = MIME_TYPES_AUDIO[ext] || 'audio/mpeg';
-  const etag = etagFromStat(stat);
-  const lastModified = stat.mtime.toUTCString();
-
-  const isHead = req.method === 'HEAD';
-  const range = req.headers.range;
-  const hasRange = range && /^bytes=/.test(range.trim());
-
-  setStreamHeaders(res, contentType, { exposeHeaders: 'Content-Range, Accept-Ranges, Content-Length' });
-  res.setHeader('Last-Modified', lastModified);
-  res.setHeader('ETag', etag);
-
-  if (isHead) {
-    res.setHeader('Content-Length', fileSize);
-    return res.status(200).end();
-  }
-
-  if (!hasRange) {
-    const ifNoneMatch = req.headers['if-none-match'];
-    const ifModifiedSince = req.headers['if-modified-since'];
-    if ((ifNoneMatch && ifNoneMatch.trim() === etag) || (ifModifiedSince && new Date(ifModifiedSince).getTime() >= stat.mtimeMs)) {
-      res.removeHeader('Content-Length');
-      return res.status(304).end();
-    }
-  }
-
-  if (hasRange) {
-    const parts = range.replace(/bytes=/, '').trim().split('-');
-    let start = parseInt(parts[0], 10);
-    let end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-    if (Number.isNaN(start)) start = 0;
-    if (Number.isNaN(end) || end >= fileSize) end = fileSize - 1;
-    if (start < 0) start = 0;
-    if (start > end) {
-      res.setHeader('Content-Range', `bytes */${fileSize}`);
-      return res.status(416).json({ message: 'Plage demandée invalide' });
-    }
-    const chunkSize = end - start + 1;
-    res.status(206);
-    res.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
-    res.setHeader('Content-Length', chunkSize);
-    const stream = fs.createReadStream(filePath, { start, end, highWaterMark: STREAM_HIGH_WATER_MARK });
-    pipeWithErrorHandling(stream, res);
-  } else {
-    res.setHeader('Content-Length', fileSize);
-    res.status(200);
-    const stream = fs.createReadStream(filePath, { highWaterMark: STREAM_HIGH_WATER_MARK });
-    pipeWithErrorHandling(stream, res);
-  }
-}
 
 /**
  * Middleware pour servir /uploads/videos/* en streaming (Range)
@@ -241,7 +174,7 @@ async function videoStreamMiddleware(req, res, next) {
   if (!filename || filename.includes('..')) return next();
   const filePath = path.join(VIDEOS_DIR, filename);
   try {
-    await streamVideo(req, res, filePath, next);
+    await streamFile(req, res, filePath, MIME_TYPES_VIDEO, next, 'Vidéo non trouvée');
   } catch (err) {
     if (!res.headersSent) next(err);
   }
@@ -249,7 +182,6 @@ async function videoStreamMiddleware(req, res, next) {
 
 /**
  * Middleware pour servir /uploads/audio/* en streaming (Range) — programmation radio 100% offline.
- * À monter sous app.use('/uploads', ...) : req.url vaut /audio/xxx.
  */
 async function audioStreamMiddleware(req, res, next) {
   const match = (req.url || req.path || '').match(/^\/audio\/([^/]+)$/);
@@ -258,12 +190,13 @@ async function audioStreamMiddleware(req, res, next) {
   if (!filename || filename.includes('..')) return next();
   const filePath = path.join(AUDIO_DIR, filename);
   try {
-    await streamAudio(req, res, filePath, next);
+    await streamFile(req, res, filePath, MIME_TYPES_AUDIO, next, 'Fichier audio non trouvé');
   } catch (err) {
     if (!res.headersSent) next(err);
   }
 }
 
 module.exports = router;
+module.exports.streamFile = streamFile;
 module.exports.videoStreamMiddleware = videoStreamMiddleware;
 module.exports.audioStreamMiddleware = audioStreamMiddleware;

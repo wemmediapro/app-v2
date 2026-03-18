@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 // config.env en premier, puis .env (pour que .env écrase et aligne la DB avec le seed magazine)
 require('dotenv').config({ path: path.join(__dirname, 'config.env') });
 require('dotenv').config({ path: path.join(__dirname, '.env') });
@@ -24,10 +25,17 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cluster = require('cluster');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
 const { verifyToken } = require('./src/middleware/auth');
-const { logSocketAuthFailed, redact } = require('./src/lib/logger');
+const { logSocketAuthFailed } = require('./src/lib/logger');
 const LocalServerConfig = require('./src/models/LocalServerConfig');
+const { csrfCookie, csrfProtection } = require('./src/middleware/csrf');
+const { videoStreamMiddleware, audioStreamMiddleware } = require('./src/routes/stream');
+const { createRedisStore } = require('./src/lib/rateLimitRedisStore');
+const { mountRoutes } = require('./src/routes');
+const { globalErrorHandler } = require('./src/utils/errors');
+const { attachSocketHandlers } = require('./src/socket/handlers');
 
 const app = express();
 
@@ -46,6 +54,7 @@ server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
 
 const io = new Server(server, {
+  transports: ['websocket'],
   cors: {
     origin: (origin, callback) => {
       const allowed = config.cors.origins;
@@ -63,15 +72,15 @@ const io = new Server(server, {
     },
     methods: ['GET', 'POST'],
   },
-  pingTimeout: 60000,
-  pingInterval: 25000,
+  pingTimeout: 20000,
+  pingInterval: 10000,
 });
 
 // Adapter Redis pour Socket.io (scalabilité multi-instances / cluster)
+const { createAdapter } = require('@socket.io/redis-adapter');
+const { createClient } = require('redis');
 if (config.redis && config.redis.uri) {
   try {
-    const { createAdapter } = require('@socket.io/redis-adapter');
-    const { createClient } = require('redis');
     const pubClient = createClient({ url: config.redis.uri });
     const subClient = pubClient.duplicate();
     Promise.all([pubClient.connect(), subClient.connect()])
@@ -101,7 +110,6 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Nonce CSP : un par requête pour autoriser les scripts sans 'unsafe-inline'
-const crypto = require('crypto');
 app.use((_req, res, next) => {
   res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
   next();
@@ -125,7 +133,6 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 app.use(cookieParser());
-const { csrfCookie, csrfProtection } = require('./src/middleware/csrf');
 app.use('/api', csrfCookie);
 app.use('/api', csrfProtection);
 const corsOptions = {
@@ -218,7 +225,6 @@ const mediaLibraryLimiter = rateLimit({
 app.use('/api/media-library', mediaLibraryLimiter);
 
 // Fichiers statiques et streaming
-const { videoStreamMiddleware, audioStreamMiddleware } = require('./src/routes/stream');
 app.use('/uploads', videoStreamMiddleware);
 app.use('/uploads', audioStreamMiddleware);
 app.use('/uploads', express.static(config.paths.uploads));
@@ -226,7 +232,6 @@ app.use('/public', express.static(config.paths.public));
 
 // Base de données (config centralisée)
 const dbManager = require('./src/lib/database');
-const { createRedisStore } = require('./src/lib/rateLimitRedisStore');
 const cacheManager = require('./src/lib/cache-manager');
 
 /** Monte le rate limit API (store Redis en cluster, sinon mémoire), connecte le cache listes, puis les routes */
@@ -235,9 +240,11 @@ async function setupAfterDb() {
   if (redisStore) redisStore.init({ windowMs: config.rateLimit.windowMs });
   if (config.redis && config.redis.uri) {
     const cacheConnected = await cacheManager.connect(config.redis.uri);
-    if (cacheConnected) console.log('✅ Cache listes (Redis) actif — TTL 60s');
+    if (cacheConnected) {
+      console.log('✅ Cache listes (Redis) actif — TTL 60s');
+      connectionCounters.initRedis(cacheManager);
+    }
   }
-  const jwt = require('jsonwebtoken');
   const skipApiLimit = (req) => {
     const p = (req.path || '').toLowerCase();
     if (p === '/health' || p === '/time') return true;
@@ -267,21 +274,30 @@ async function setupAfterDb() {
   } else if (process.env.NODE_ENV === 'production') {
     console.warn('⚠️ Rate limit API : store mémoire (REDIS_URI non configuré). En multi-process la limite n\'est pas partagée.');
   }
-  const { mountRoutes } = require('./src/routes');
   mountRoutes(app, { dbManager, connectionCounters });
 
-  // SPA fallback : substitution du nonce CSP (index.html doit contenir __CSP_NONCE__ dans les <script nonce="__CSP_NONCE__">)
+  // SPA fallback : index.html en cache mémoire, seule la substitution du nonce CSP à la volée (évite fs.readFileSync à chaque requête)
   const publicIndex = path.join(config.paths.public, 'index.html');
+  let cachedIndexHtml = null;
+  try {
+    cachedIndexHtml = fs.readFileSync(publicIndex, 'utf8');
+  } catch (err) {
+    // index.html absent au démarrage, on lira au moment de la requête (fallback)
+  }
   const sendIndexWithNonce = (req, res) => {
     const nonce = res.locals.cspNonce || '';
-    try {
-      let html = fs.readFileSync(publicIndex, 'utf8');
-      html = html.replace(/__CSP_NONCE__/g, nonce);
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.send(html);
-    } catch (err) {
-      res.status(500).send('index.html not found');
+    let html = cachedIndexHtml;
+    if (html == null) {
+      try {
+        html = fs.readFileSync(publicIndex, 'utf8');
+        cachedIndexHtml = html;
+      } catch (e) {
+        return res.status(500).send('index.html not found');
+      }
     }
+    html = html.replace(/__CSP_NONCE__/g, nonce);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
   };
   app.get('/', sendIndexWithNonce);
   // Express 5 : wildcard doit être nommé (ex. /*splat)
@@ -293,7 +309,6 @@ async function setupAfterDb() {
     res.status(404).json({ message: 'Route not found' });
   });
 
-  const { globalErrorHandler } = require('./src/utils/errors');
   app.use(globalErrorHandler(config));
 }
 
@@ -345,7 +360,7 @@ io.use(async (socket, next) => {
       const config = await LocalServerConfig.findOne({ id: 'local' }).lean();
       const maxConn = config?.maxConnections;
       if (maxConn != null && maxConn >= 0) {
-        const current = connectionCounters.getTotalCount();
+        const current = await connectionCounters.getTotalCountAsync();
         if (current >= maxConn) {
           return next(new Error('Connection limit reached for this server'));
         }
@@ -358,7 +373,6 @@ io.use(async (socket, next) => {
 });
 
 // Socket.io : handlers (autorisation rooms, sanitization, logging)
-const { attachSocketHandlers } = require('./src/socket/handlers');
 attachSocketHandlers(io, connectionCounters);
 
 // Graceful shutdown (PM2 restart, Docker stop, etc.)

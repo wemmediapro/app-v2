@@ -37,15 +37,25 @@ function mountRoutes(app, deps = {}) {
 
   // Health check enrichi (connexions Socket, mémoire) — monitoring / alerte (audit CTO)
   const configModule = require('../config');
-  app.get('/api/health', (req, res) => {
+  app.get('/api/health', async (req, res) => {
     const dbConnected = dbManager && typeof dbManager.isConnected === 'function' && dbManager.isConnected();
+    let connections;
+    if (connectionCounters && typeof connectionCounters.getTotalCountAsync === 'function') {
+      try {
+        connections = await connectionCounters.getTotalCountAsync();
+      } catch (_) {
+        connections = connectionCounters.getTotalCount ? connectionCounters.getTotalCount() : undefined;
+      }
+    } else if (connectionCounters && typeof connectionCounters.getTotalCount === 'function') {
+      connections = connectionCounters.getTotalCount();
+    }
     const payload = {
       status: 'OK',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       mongodb: dbManager && typeof dbManager.isConnected === 'function' ? (dbConnected ? 'connected' : 'disconnected') : 'unknown',
       offlineMode: !dbConnected,
-      connections: connectionCounters && typeof connectionCounters.getTotalCount === 'function' ? connectionCounters.getTotalCount() : undefined,
+      connections,
       memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
     };
     if (dbConnected && dbManager.getStats) {

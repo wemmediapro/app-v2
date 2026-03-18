@@ -1,19 +1,25 @@
 /**
- * Auth middleware principal (backend/src) — utilisé par src/routes/* et server.js (Socket verifyToken).
- * Utilise config.jwt.secret (config.env / .env). Pas de fallback secret.
- *
- * ⚠️ Double implémentation : backend/middleware/auth.js existe aussi pour backend/routes/* (racine).
- * Voir en-tête de backend/middleware/auth.js pour le périmètre de chaque fichier.
+ * Auth middleware unique (backend/src). Token : cookie adminToken ou header Authorization.
+ * Vérification : JWT + lookup MongoDB User (existence, isActive). backend/middleware/auth.js en est un wrapper.
+ * Cache Redis 1 min pour éviter un hit MongoDB à chaque requête (invalide immédiatement si user supprimé/désactivé après 1 min max).
+ * Voir backend/docs/AUTH-MIDDLEWARE.md.
  */
 const jwt = require('jsonwebtoken');
 const config = require('../config');
+const User = require('../models/User');
+const cacheManager = require('../lib/cache-manager');
+
+const AUTH_USER_CACHE_TTL = 60; // 1 min
+const AUTH_USER_CACHE_PREFIX = 'auth:user:';
 
 const isProduction = process.env.NODE_ENV === 'production';
 let secretMissingWarned = false;
 
+/** P1 : JWT_SECRET jamais utilisé sans guard — lecture centralisée avec vérification. */
+const JWT_MIN_LENGTH = 32;
 function getSecret() {
   const secret = config.jwt?.secret;
-  if (!secret) {
+  if (!secret || typeof secret !== 'string' || secret.length === 0) {
     if (isProduction) {
       throw new Error('JWT_SECRET must be set in production');
     }
@@ -22,6 +28,9 @@ function getSecret() {
       console.error('CRITICAL: JWT_SECRET is not set. Set it in backend/config.env or backend/.env. Refusing to use a fallback secret.');
     }
     throw new Error('JWT_SECRET must be set in config.env or .env');
+  }
+  if (isProduction && secret.length < JWT_MIN_LENGTH) {
+    throw new Error(`JWT_SECRET must be at least ${JWT_MIN_LENGTH} characters in production`);
   }
   return secret;
 }
@@ -54,9 +63,53 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
     const decoded = verifyToken(token);
-    req.user = decoded;
+    const userId = decoded.id || decoded.userId || decoded._id;
+    if (!userId) {
+      return res.status(401).json({ message: 'Invalid token payload.' });
+    }
+    const cacheKey = AUTH_USER_CACHE_PREFIX + userId;
+    if (cacheManager.isConnected) {
+      try {
+        const cached = await cacheManager.get(cacheKey);
+        if (cached && typeof cached === 'object') {
+          if (cached.invalid) {
+            return res.status(401).json({ message: 'User not found.', code: 'INVALID_TOKEN' });
+          }
+          if (cached.isActive === false) {
+            return res.status(401).json({ message: 'Account is deactivated.', code: 'ACCOUNT_DEACTIVATED' });
+          }
+          req.user = { ...cached, id: cached._id || cached.id };
+          return next();
+        }
+      } catch (_) {
+        /* cache miss or error: fall through to MongoDB */
+      }
+    }
+    const user = await User.findById(userId).select('-password').lean();
+    if (!user) {
+      if (cacheManager.isConnected) {
+        await cacheManager.set(cacheKey, { invalid: true }, AUTH_USER_CACHE_TTL);
+      }
+      return res.status(401).json({ message: 'User not found.', code: 'INVALID_TOKEN' });
+    }
+    if (user.isActive === false) {
+      if (cacheManager.isConnected) {
+        await cacheManager.set(cacheKey, { ...user, invalid: true }, AUTH_USER_CACHE_TTL);
+      }
+      return res.status(401).json({ message: 'Account is deactivated.', code: 'ACCOUNT_DEACTIVATED' });
+    }
+    if (cacheManager.isConnected) {
+      await cacheManager.set(cacheKey, user, AUTH_USER_CACHE_TTL);
+    }
+    req.user = { ...user, id: user._id };
     next();
   } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token.', code: 'INVALID_TOKEN' });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token expired.', code: 'TOKEN_EXPIRED' });
+    }
     res.status(401).json({ message: 'Invalid token.' });
   }
 };
@@ -75,13 +128,53 @@ const adminMiddleware = async (req, res, next) => {
   }
 };
 
+/** Vérifie que req.user a l'un des rôles autorisés (après authMiddleware/authenticateToken). */
+const requireRole = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required', code: 'AUTH_REQUIRED' });
+    }
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Insufficient permissions', code: 'INSUFFICIENT_PERMISSIONS' });
+    }
+    next();
+  };
+};
+
 const optionalAuth = async (req, res, next) => {
   try {
     const token = getTokenFromRequest(req);
     if (token) {
       try {
         const decoded = verifyToken(token);
-        req.user = decoded;
+        const userId = decoded.id || decoded.userId || decoded._id;
+        if (userId) {
+          const cacheKey = AUTH_USER_CACHE_PREFIX + userId;
+          if (cacheManager.isConnected) {
+            try {
+              const cached = await cacheManager.get(cacheKey);
+              if (cached && typeof cached === 'object' && !cached.invalid && cached.isActive !== false) {
+                req.user = { ...cached, id: cached._id || cached.id };
+                return next();
+              }
+              if (cached && cached.invalid) {
+                req.user = null;
+                return next();
+              }
+            } catch (_) { /* fall through */ }
+          }
+          const user = await User.findById(userId).select('-password').lean();
+          if (user && user.isActive !== false) {
+            if (cacheManager.isConnected) {
+              await cacheManager.set(cacheKey, user, AUTH_USER_CACHE_TTL);
+            }
+            req.user = { ...user, id: user._id };
+          } else {
+            req.user = null;
+          }
+        } else {
+          req.user = null;
+        }
       } catch (error) {
         req.user = null;
       }
@@ -105,6 +198,7 @@ module.exports = {
   authMiddleware,
   authenticateToken,
   adminMiddleware,
+  requireRole,
   optionalAuth
 };
 

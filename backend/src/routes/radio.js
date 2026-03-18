@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
     if (useMongo()) {
       const onlyActive = req.query.all !== '1';
       const filter = onlyActive ? { isActive: true } : {};
-      const stations = await RadioStation.find(filter).lean().sort({ createdAt: -1 });
+      const stations = await RadioStation.find(filter).read('secondaryPreferred').lean().sort({ createdAt: -1 });
       return res.json(stations.map(doc => localizeStation(doc, lang)));
     }
     const all = radioFallback.getStationsForApi();
@@ -83,7 +83,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { lang } = req.query;
     if (useMongo()) {
-      const station = await RadioStation.findById(req.params.id).lean();
+      const station = await RadioStation.findById(req.params.id).read('secondaryPreferred').lean();
       if (!station) return res.status(404).json({ message: 'Station non trouvée' });
       return res.json(localizeStation(station, lang));
     }

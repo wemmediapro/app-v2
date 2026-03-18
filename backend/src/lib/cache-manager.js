@@ -5,11 +5,36 @@
 
 const { createClient } = require('redis');
 
+/** TTL par type de contenu (secondes) : banners 300s, GNV 60s, positions 30s, films 86400s, radio 600s */
+const TTL_BY_PREFIX = [
+  { prefix: 'list:banners:', ttl: 300 },
+  { prefix: 'banner:', ttl: 300 },
+  { prefix: 'list:gnv:', ttl: 60 },
+  { prefix: 'gnv:', ttl: 60 },
+  { prefix: 'positions:', ttl: 30 },
+  { prefix: 'playback:', ttl: 30 },
+  { prefix: 'list:movies:', ttl: 86400 },
+  { prefix: 'list:radio:', ttl: 600 },
+  { prefix: 'radio:', ttl: 600 },
+  { prefix: 'list:magazine:', ttl: 60 },
+];
+
 class CacheManager {
   constructor() {
     this.client = null;
     this.isConnected = false;
     this.defaultTTL = 3600; // 1 heure par défaut
+  }
+
+  /**
+   * Retourne le TTL (secondes) selon le préfixe de la clé.
+   */
+  getTTL(key) {
+    if (!key || typeof key !== 'string') return this.defaultTTL;
+    for (const { prefix, ttl } of TTL_BY_PREFIX) {
+      if (key.startsWith(prefix)) return ttl;
+    }
+    return this.defaultTTL;
   }
 
   /**
@@ -84,16 +109,17 @@ class CacheManager {
   }
 
   /**
-   * Définit une valeur dans le cache
+   * Définit une valeur dans le cache (ttl optionnel : déduit du préfixe de key si absent)
    */
-  async set(key, value, ttl = this.defaultTTL) {
+  async set(key, value, ttl) {
     if (!this.isConnected || !this.client) {
       return false;
     }
+    const effectiveTTL = ttl !== undefined && ttl !== null ? ttl : this.getTTL(key);
 
     try {
       const serialized = JSON.stringify(value);
-      await this.client.setEx(key, ttl, serialized);
+      await this.client.setEx(key, effectiveTTL, serialized);
       return true;
     } catch (error) {
       console.error(`❌ Erreur Redis SET pour ${key}:`, error.message);
@@ -119,7 +145,7 @@ class CacheManager {
   }
 
   /**
-   * Supprime toutes les clés correspondant à un pattern
+   * Supprime toutes les clés correspondant à un pattern (SCAN au lieu de KEYS pour ne pas bloquer Redis).
    */
   async delPattern(pattern) {
     if (!this.isConnected || !this.client) {
@@ -127,11 +153,20 @@ class CacheManager {
     }
 
     try {
-      const keys = await this.client.keys(pattern);
-      if (keys.length > 0) {
-        await this.client.del(keys);
+      const keys = [];
+      for await (const key of this.client.scanIterator({ MATCH: pattern, COUNT: 100 })) {
+        keys.push(key);
       }
-      return keys.length;
+      let deleted = 0;
+      const batchSize = 500;
+      for (let i = 0; i < keys.length; i += batchSize) {
+        const batch = keys.slice(i, i + batchSize);
+        if (batch.length > 0) {
+          await this.client.del(batch);
+          deleted += batch.length;
+        }
+      }
+      return deleted;
     } catch (error) {
       console.error(`❌ Erreur Redis DEL PATTERN pour ${pattern}:`, error.message);
       return 0;
@@ -167,6 +202,38 @@ class CacheManager {
       return await this.client.incr(key);
     } catch (error) {
       console.error(`❌ Erreur Redis INCR pour ${key}:`, error.message);
+      return null;
+    }
+  }
+
+  /**
+   * Décrémente une valeur (pour compteur cluster-safe)
+   */
+  async decr(key) {
+    if (!this.isConnected || !this.client) {
+      return null;
+    }
+    try {
+      const n = await this.client.decr(key);
+      if (n < 0) await this.client.set(key, '0');
+      return n;
+    } catch (error) {
+      console.error(`❌ Erreur Redis DECR pour ${key}:`, error.message);
+      return null;
+    }
+  }
+
+  /**
+   * Lit une valeur brute (string, sans JSON.parse) — pour compteurs
+   */
+  async getRaw(key) {
+    if (!this.isConnected || !this.client) {
+      return null;
+    }
+    try {
+      return await this.client.get(key);
+    } catch (error) {
+      console.error(`❌ Erreur Redis GET raw pour ${key}:`, error.message);
       return null;
     }
   }

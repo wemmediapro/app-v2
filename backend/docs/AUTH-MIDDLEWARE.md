@@ -1,35 +1,35 @@
-# Quel middleware auth utiliser où
+# Auth middleware — une seule implémentation
 
-Le backend a **deux implémentations** d’auth (JWT) pour des périmètres différents. Ne pas les mélanger.
-
-## 1. `backend/src/middleware/auth.js` — API principale (recommandé)
-
-- **Utilisé par** : `backend/src/routes/*` (auth, admin, magazine, movies, shop, webtv, etc.), `server.js` (Socket.io `verifyToken`).
-- **Secret** : `config.jwt.secret` (chargé depuis `config.env` / `.env`). **Aucun fallback** : si `JWT_SECRET` est absent, l’app refuse de démarrer.
-- **Fonctions exportées** : `generateToken`, `generateAccessToken`, `verifyToken`, `getTokenFromRequest`, `authMiddleware`, `authenticateToken`, `adminMiddleware`, `optionalAuth`.
-- **Token** : cookie `adminToken` (dashboard) ou header `Authorization: Bearer <token>`.
-
-**À utiliser** pour toute nouvelle route sous `src/routes/` et pour le Socket.io.
+L’auth JWT est **centralisée** dans `backend/src/middleware/auth.js`.  
+`backend/middleware/auth.js` est un **wrapper de compatibilité** pour `backend/routes/*` (s’ils sont montés).
 
 ---
 
-## 2. `backend/middleware/auth.js` — Routes racine (legacy)
+## 1. `backend/src/middleware/auth.js` — Implémentation unique
 
-- **Utilisé par** : `backend/routes/*.js` (feedback, restaurants, radio, messaging, auth, admin, users, movies, shop, magazine) lorsque le serveur monte ces routes à la racine.
-- **Secret** : `process.env.JWT_SECRET` directement (pas de config centralisée).
-- **Fonctions exportées** : `authenticateToken`, `requireRole`, `optionalAuth`, `generateToken`.
-- **Token** : header `Authorization: Bearer <token>` uniquement ; pas de cookie.
+- **Utilisé par** : `backend/src/routes/*`, `server.js` (Socket.io : `verifyToken` en decode-only).
+- **Secret** : `config.jwt.secret` (config.env / .env). Pas de fallback.
+- **Vérification** : JWT valide **puis** lookup MongoDB `User` (existence + `isActive`). `req.user` = document user (avec `id` pour compatibilité).
+- **Fonctions** : `generateToken`, `generateAccessToken`, `verifyToken`, `getTokenFromRequest`, `authMiddleware`, `authenticateToken`, `adminMiddleware`, `requireRole`, `optionalAuth`.
+- **Token** : cookie `adminToken` (dashboard) ou header `Authorization: Bearer <token>`.
 
-**À utiliser** uniquement pour les routes définies sous `backend/routes/` (fichiers à la racine de `backend/`).
+**À utiliser** pour toute route sous `src/routes/`. Socket.io utilise uniquement `verifyToken` (sans DB lookup).
+
+---
+
+## 2. `backend/middleware/auth.js` — Wrapper (compatibilité)
+
+- **Rôle** : réexporte l’auth src pour `backend/routes/*.js` sans dupliquer la logique.
+- **API** : `authenticateToken`, `requireRole`, `optionalAuth`, `generateToken(userId)` (converti en `generateToken({ id, userId })` vers src).
+
+Si tu montes des routes sous `backend/routes/`, elles utilisent donc la **même** logique (JWT + User lookup) que `src/routes/`.
 
 ---
 
 ## Récap
 
-| Fichier de route              | Middleware auth à importer                          |
-|------------------------------|-----------------------------------------------------|
-| `backend/src/routes/*.js`    | `require('../middleware/auth')` → **src**           |
-| `backend/routes/*.js`        | `require('../middleware/auth')` → **racine**        |
-| Socket.io (server.js)        | `verifyToken` depuis **src/middleware/auth.js**     |
-
-Consolider un jour vers un seul middleware (src) et migrer les routes racine vers src/routes est recommandé.
+| Fichier de route       | Importer                          | Comportement        |
+|------------------------|-----------------------------------|---------------------|
+| `backend/src/routes/*` | `require('../middleware/auth')`   | JWT + User lookup   |
+| `backend/routes/*`     | `require('../middleware/auth')`   | Idem (via wrapper)  |
+| Socket.io (server.js)  | `verifyToken` depuis **src**      | Decode seul (pas DB)|
