@@ -251,7 +251,11 @@ async function setupAfterDb() {
     store: redisStore || undefined,
   });
   app.use('/api/', apiLimiter);
-  if (redisStore) console.log('✅ Rate limit API : store Redis actif');
+  if (redisStore) {
+    console.log('✅ Rate limit API : store Redis actif');
+  } else if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ Rate limit API : store mémoire (REDIS_URI non configuré). En multi-process la limite n\'est pas partagée.');
+  }
   const { mountRoutes } = require('./src/routes');
   mountRoutes(app, { dbManager, connectionCounters });
 
@@ -268,8 +272,8 @@ async function setupAfterDb() {
     res.status(404).json({ message: 'Route not found' });
   });
 
-  const { errorHandler } = require('./src/middleware/errorHandler');
-  app.use(errorHandler);
+  const { globalErrorHandler } = require('./src/utils/errors');
+  app.use(globalErrorHandler(config));
 }
 
 function startServer() {

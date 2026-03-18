@@ -63,3 +63,13 @@ coverage/
 # Rapports de tests et artefacts locaux
 playwright-report/
 test-results/
+
+# Scripts et docs dev / Cursor (ne pas réintroduire)
+*.sh
+scripts/*.sh
+docs/AUDIT-*.md
+docs/refactor/
+docs/testing/
+docs/CHECKLIST-*.md
+docs/STRATEGIE-*.md
+docs/LOAD-TEST*.md

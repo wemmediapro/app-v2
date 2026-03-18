@@ -1,10 +1,15 @@
 /**
  * Audit complet style OpenIA : ergonomie, navigation, architecture, fonctionnalités.
  * Utilise l'API OpenAI pour produire un rapport structuré dans docs/.
+ * Script dev uniquement — ne doit jamais s'exécuter en production.
  *
  * Usage: cd backend && node scripts/audit-complet-openia.js
  * Prérequis: OPENAI_API_KEY dans backend/config.env ou .env
  */
+if (process.env.NODE_ENV === 'production') {
+  console.error('Ce script est réservé au développement. Refus d\'exécution en production.');
+  process.exit(1);
+}
 require('dotenv').config({ path: require('path').join(__dirname, '..', 'config.env') });
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const fs = require('fs');

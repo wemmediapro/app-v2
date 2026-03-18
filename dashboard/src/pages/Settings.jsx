@@ -80,6 +80,7 @@ function getDefaultAccess() {
 
 export { getDefaultAccess };
 
+// Droits par rôle : actuellement en localStorage. Pour une vraie gestion multi-utilisateurs, persister en base (API GET/PUT /api/settings/role-access) et charger depuis le serveur.
 function loadAccess() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);

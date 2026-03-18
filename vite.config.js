@@ -61,12 +61,12 @@ export default defineConfig({
               cacheableResponse: { statuses: [200] },
             },
           },
-          // Cache des médias (vidéo MP4, HLS, audio, images) — CacheFirst, 7j + fraîcheur (offline 1000+ users)
+          // Cache des médias (vidéo MP4, HLS, audio, images) — CacheFirst, 7j. Pour invalider après mise à jour contenu : incrémenter cacheName (ex. gnv-offline-media-v3).
           {
             urlPattern: /\/uploads\/(videos|videos_hls|audio|images)\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'gnv-offline-media',
+              cacheName: 'gnv-offline-media-v2',
               expiration: { maxEntries: 180, maxAgeSeconds: 7 * 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200, 206] },
             },
@@ -120,7 +120,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        timeout: 30000,
+        timeout: 120000, // 2 min — uploads lourds (images/vidéos) ; /api/stream et /uploads ont 10 min
         configure: (proxy) => {
           proxy.on('error', (err, req, res) => {
             console.error('[Vite proxy]', req.method, req.url, '→', err.message || err.code || err);

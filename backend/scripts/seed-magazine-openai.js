@@ -1,10 +1,13 @@
 /**
  * Seed magazine : 10 articles générés par OpenAI, avec image différente par article.
+ * Script dev uniquement — ne pas exécuter en production.
  * Usage: depuis backend/ : node scripts/seed-magazine-openai.js
- *
  * Prérequis: OPENAI_API_KEY dans backend/.env et MongoDB accessible (MONGODB_URI ou DATABASE_URL).
  */
-// Même ordre que server.js : config.env puis .env (pour utiliser la même DB)
+if (process.env.NODE_ENV === 'production') {
+  console.error('Script seed OpenAI réservé au développement. Refus en production.');
+  process.exit(1);
+}
 require('dotenv').config({ path: require('path').join(__dirname, '..', 'config.env') });
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const mongoose = require('mongoose');

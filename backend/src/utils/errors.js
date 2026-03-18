@@ -1,7 +1,8 @@
 /**
  * Erreurs applicatives et gestionnaire global.
- * - AppError : erreurs opérationnelles (statusCode, code)
- * - globalErrorHandler : middleware Express (ne pas exposer stack en prod)
+ * - AppError : erreurs opérationnelles (statusCode, code). Utilisation : next(new AppError('Message', 400, 'CODE'))
+ * - globalErrorHandler : middleware Express (monté en dernier dans server.js), ne pas exposer stack en prod.
+ * Les routes devraient progressivement remplacer res.status(500).json(...) par next(new AppError(...)).
  */
 const { AppError } = require('../lib/AppError');
 const logger = require('../lib/logger');
