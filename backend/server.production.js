@@ -28,6 +28,7 @@ if (process.env.NODE_ENV === 'production' && process.env.RATE_LIMIT_LOAD_TEST) {
 }
 const express = require('express');
 const compression = require('compression');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -140,7 +141,8 @@ const workerId = process.env.INSTANCE_ID || process.pid;
   // Augmenter les limites pour les gros payloads
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-  
+  app.use(cookieParser()); // requis pour lire le cookie adminToken (dashboard auth)
+
   // Augmenter les timeouts du serveur HTTP
   server.keepAliveTimeout = 65000;
   server.headersTimeout = 66000;

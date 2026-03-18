@@ -26,6 +26,24 @@ const loginLimiter = rateLimit({
 
 const router = express.Router();
 
+/** Option secure du cookie : true seulement si la requête arrive en HTTPS (évite 401 sur dashboard en HTTP). */
+function isSecureRequest(req) {
+  const proto = req.get('X-Forwarded-Proto');
+  if (proto === 'https') return true;
+  if (proto === 'http') return false;
+  return !!req.secure;
+}
+
+function getCookieOptions(req) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production' ? isSecureRequest(req) : false,
+    sameSite: 'lax', // 'lax' pour éviter déconnexion auto (strict bloquait l'envoi du cookie après login)
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  };
+}
+
 // @route   POST /api/auth/register
 // @desc    Register a new user
 // @access  Public
@@ -59,14 +77,7 @@ router.post('/register', registerValidation, async (req, res) => {
       email: user.email,
       role: user.role
     });
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    };
-    res.cookie('adminToken', token, cookieOptions);
+    res.cookie('adminToken', token, getCookieOptions(req));
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -162,14 +173,7 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
       role: user.role
     });
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
-      path: '/',
-    };
-    res.cookie('adminToken', token, cookieOptions);
+    res.cookie('adminToken', token, getCookieOptions(req));
 
     // [SEC-4] JWT uniquement dans le cookie, pas dans le body
     res.json({
@@ -214,14 +218,7 @@ router.post('/refresh', authMiddleware, (req, res) => {
     email: req.user.email,
     role: req.user.role
   });
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    path: '/',
-  };
-  res.cookie('adminToken', newToken, cookieOptions);
+  res.cookie('adminToken', newToken, getCookieOptions(req));
   res.json({ message: 'Token refreshed' });
 });
 
