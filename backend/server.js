@@ -83,17 +83,32 @@ if (config.redis && config.redis.uri) {
 
 // Middleware
 app.set('trust proxy', 1);
+
+// Redirect HTTP to HTTPS in production (when behind a proxy that sets x-forwarded-proto)
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      return res.redirect(301, `https://${req.header('host')}${req.url}`);
+    }
+    next();
+  });
+}
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https:"],
-      imgSrc: ["'self'", "data:", "blob:"],
+      scriptSrc: ["'self'", "'unsafe-inline'"], // Improve later
+      imgSrc: ["'self'", "data:", "https:"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
       mediaSrc: ["'self'", "blob:"],
       connectSrc: ["'self'", "ws:", "wss:"],
       fontSrc: ["'self'", "https:", "data:"],
     },
+  },
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
   },
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
@@ -123,6 +138,11 @@ app.use(cors(corsOptions));
 app.use(morgan(config.env === 'production' ? 'short' : 'combined', {
   skip: (req) => req.path === '/api/health' || req.path?.startsWith('/uploads/'),
 }));
+// Identifiant de requête pour le log d'erreurs et les réponses (requestId)
+app.use((req, res, next) => {
+  req.id = req.get('x-request-id') || require('crypto').randomBytes(8).toString('hex');
+  next();
+});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(require('./src/middleware/language'));
@@ -248,8 +268,8 @@ async function setupAfterDb() {
     res.status(404).json({ message: 'Route not found' });
   });
 
-  const { globalErrorHandler } = require('./src/utils/errors');
-  app.use(globalErrorHandler(config));
+  const { errorHandler } = require('./src/middleware/errorHandler');
+  app.use(errorHandler);
 }
 
 function startServer() {

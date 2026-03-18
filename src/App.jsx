@@ -13,6 +13,7 @@ import { useRestaurant } from "./hooks/useRestaurant";
 import { useEnfant } from "./hooks/useEnfant";
 import { useNotifications } from "./hooks/useNotifications";
 import { useMoviesState } from "./hooks/useMoviesState";
+import { useBanners } from "./hooks/useBanners";
 import LanguageSelector from "./components/LanguageSelector";
 import BottomNav from "./components/BottomNav";
 import AppHeader from "./components/AppHeader";
@@ -123,23 +124,8 @@ function App() {
     }
   }, [location.pathname, navigate]);
 
-  // Bannières d'accueil : chargées depuis l'API (position home-top ou home), toutes affichées
-  const [homeBanners, setHomeBanners] = useState([]);
-  // Largeur fenêtre pour choisir image responsive (mobile / tablette / desktop) par bannière
-  const [bannerViewWidth, setBannerViewWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
-  const [bannerIndex, setBannerIndex] = useState(0);
-
-  /** URL d’image d’une bannière selon la largeur (mobile / tablette / desktop) */
-  const getBannerImageUrl = (banner, w) => {
-    const resolve = (u) => {
-      if (!u) return undefined;
-      if (u.startsWith('data:') || u.startsWith('http')) return u;
-      return `${BACKEND_ORIGIN || ''}${u.startsWith('/') ? '' : '/'}${u}`;
-    };
-    if (w < 768) return resolve(banner.imageMobile) || resolve(banner.image);
-    if (w < 1024) return resolve(banner.imageTablet) || resolve(banner.image);
-    return resolve(banner.image);
-  };
+  // Bannières d'accueil (hook useBanners)
+  const banners = useBanners(page, language);
 
   // === Radio state ===
   const [radioStations, setRadioStations] = useState([]);
@@ -353,79 +339,6 @@ function App() {
     const room = selectedChat?.id ? `room-${selectedChat.id}` : 'general';
     socket.emit('join-room', room);
   }, [socket, selectedChat?.id]);
-
-  // Bannière : charger depuis l'API avec cache 1 min pour limiter les refetch (audit perf)
-  const bannerPageId = page === 'restaurant' ? 'restaurants' : page;
-  useEffect(() => {
-    const cacheKey = `banners_${language}_${bannerPageId}`;
-    const CACHE_TTL_MS = 60_000;
-    const cache = globalThis.__BANNERS_CACHE__;
-    const cached = cache && cache[cacheKey];
-    if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
-      setHomeBanners(cached.list);
-      return;
-    }
-    let cancelled = false;
-    apiService.getBanners(`lang=${language}&page=${bannerPageId}`)
-      .then((res) => {
-        if (cancelled || !res?.data) return;
-        const list = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
-        const homePositions = ['home-top', 'home'];
-        const active = list
-          .filter((b) => {
-            if (b.isActive === false) return false;
-            const pos = String(b.position || '').toLowerCase().replace(/\s+/g, '-');
-            return homePositions.includes(pos);
-          })
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || new Date(b.startDate || 0) - new Date(a.startDate || 0));
-        if (!globalThis.__BANNERS_CACHE__) globalThis.__BANNERS_CACHE__ = {};
-        globalThis.__BANNERS_CACHE__[cacheKey] = { list: active, ts: Date.now() };
-        setHomeBanners(active);
-      })
-      .catch(() => { setHomeBanners([]); });
-    return () => { cancelled = true; };
-  }, [language, bannerPageId]);
-
-  // Mettre à jour la largeur pour l’image responsive des bannières
-  useEffect(() => {
-    let ticking = false;
-    const update = () => {
-      setBannerViewWidth(window.innerWidth);
-      ticking = false;
-    };
-    const onResize = () => {
-      if (!ticking) {
-        requestAnimationFrame(update);
-        ticking = true;
-      }
-    };
-    update();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  // Rotation automatique des bannières (toutes les 5 s)
-  useEffect(() => {
-    const n = homeBanners.length;
-    if (n <= 1) return;
-    const t = setInterval(() => {
-      setBannerIndex((i) => (i + 1) % n);
-    }, 5000);
-    return () => clearInterval(t);
-  }, [homeBanners.length]);
-
-  // Réinitialiser l’index si la liste change
-  useEffect(() => {
-    if (homeBanners.length > 0 && bannerIndex >= homeBanners.length) setBannerIndex(0);
-  }, [homeBanners.length, bannerIndex]);
-
-  // Statistiques : enregistrer une impression quand une bannière est affichée (changement de slide ou au chargement)
-  useEffect(() => {
-    if (homeBanners.length === 0) return;
-    const banner = homeBanners[bannerIndex];
-    const id = banner != null ? (banner._id ?? banner.id) : null;
-    if (id != null) apiService.recordBannerImpression(String(id));
-  }, [bannerIndex, homeBanners]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -2518,10 +2431,6 @@ function App() {
       : (promo.description || ''),
   [language]);
 
-  const handleBannerClick = useCallback((id) => {
-    apiService.recordBannerClick(id);
-  }, []);
-
   const addToCart = useCallback((item) => {
     setCart(prev => [...prev, { ...item, id: Date.now(), quantity: 1 }]);
   }, []);
@@ -2649,14 +2558,14 @@ function App() {
             {/* Main with page transitions + ErrorBoundary pour isoler les erreurs de page */}
             <main className={`flex-1 p-2 sm:p-3 md:p-4 overflow-y-auto overflow-x-hidden ${!isOnline ? 'pt-[calc(7rem+env(safe-area-inset-top,0px))] sm:pt-[7.5rem] md:pt-[8rem]' : 'pt-[calc(5rem+env(safe-area-inset-top,0px))] sm:pt-[80px] md:pt-[84px]'}`}>
               <BannersCarousel
-                banners={homeBanners}
-                bannerIndex={bannerIndex}
-                setBannerIndex={setBannerIndex}
-                getBannerImageUrl={getBannerImageUrl}
-                bannerViewWidth={bannerViewWidth}
-                backendOrigin={BACKEND_ORIGIN}
+                banners={banners.homeBanners}
+                bannerIndex={banners.bannerIndex}
+                setBannerIndex={banners.setBannerIndex}
+                getBannerImageUrl={banners.getBannerImageUrl}
+                bannerViewWidth={banners.bannerViewWidth}
+                backendOrigin={banners.backendOrigin}
                 t={t}
-                onBannerClick={handleBannerClick}
+                onBannerClick={banners.handleBannerClick}
               />
 
               <ErrorBoundary t={t} onRetry onGoHome={() => setPage('home')}>
