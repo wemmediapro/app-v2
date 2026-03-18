@@ -1,6 +1,10 @@
 # Exemple de configuration nginx pour déporter le streaming (vidéo/audio)
 # et alléger le serveur Node. À adapter selon votre hébergement.
 #
+# RECOMMANDÉ EN PROD (audit CTO) : pour 1000–2000 users, faire servir
+# /uploads/ par Nginx (sendfile, Range, cache) au lieu de Node pour éviter
+# saturation CPU/RAM. Node ne gère que l'API (port 3000).
+#
 # Objectif : nginx sert les fichiers sous /uploads (Range, cache) ;
 # Node ne gère que l'API (port 3000). Pour ~2000 connexions, le streaming
 # ne passe plus par Node.
@@ -17,14 +21,17 @@ upstream node_api {
     keepalive 64;
 }
 
-# Servir les médias (streaming) directement par nginx avec support Range
+# Servir les médias (streaming) directement par nginx — sendfile pour décharger Node (audit CTO)
+# En prod : faire servir /uploads/ par Nginx pour éviter saturation CPU/RAM sous forte charge.
 server {
     listen 80;
     server_name stream.domaine.com;   # ou le même domaine avec /uploads
 
     root /chemin/vers/app3/backend/public;
+    sendfile on;
     location /uploads/ {
         alias /chemin/vers/app3/backend/public/uploads/;
+        sendfile on;
         # Support HTTP Range pour le streaming
         add_header Accept-Ranges bytes;
         add_header Cache-Control "public, max-age=86400, stale-while-revalidate=3600";

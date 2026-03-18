@@ -247,7 +247,11 @@
       "beverage": "Bebida",
       "wine": "Vino",
       "cocktail": "Cóctel",
-      "other": "Otro"
+      "other": "Otro",
+      "entrées": "Entrantes",
+      "plats": "Platos principales",
+      "desserts": "Postres",
+      "boissons": "Bebidas"
     }
   },
   "shop": {

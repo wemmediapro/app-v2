@@ -47,9 +47,9 @@ module.exports = {
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000,
     max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 10000,
-    // Stream (vidéo/audio) : limite par IP pour protéger sous forte charge, tout en autorisant beaucoup de connexions
+    // Stream (vidéo/audio) : 1200 req/min/IP pour éviter 429 en lecture longue (audit CTO)
     streamWindowMs: parseInt(process.env.RATE_LIMIT_STREAM_WINDOW_MS, 10) || 60 * 1000,
-    streamMax: parseInt(process.env.RATE_LIMIT_STREAM_MAX, 10) || 600,
+    streamMax: parseInt(process.env.RATE_LIMIT_STREAM_MAX, 10) || 1200,
   },
 
   // Upload & médias (chemins absolus)

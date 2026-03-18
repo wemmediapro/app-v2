@@ -253,7 +253,11 @@
       "beverage": "مشروب",
       "wine": "نبيذ",
       "cocktail": "كوكتيل",
-      "other": "آخر"
+      "other": "آخر",
+      "entrées": "مقبلات",
+      "plats": "أطباق رئيسية",
+      "desserts": "حلويات",
+      "boissons": "مشروبات"
     }
   },
   "shop": {

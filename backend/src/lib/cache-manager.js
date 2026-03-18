@@ -14,13 +14,14 @@ class CacheManager {
 
   /**
    * Initialise la connexion Redis
+   * @param {string} [redisUrl] - Optionnel : utilise REDIS_URI, REDIS_URL ou redis://localhost:6379
    */
-  async connect() {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+  async connect(redisUrl) {
+    const url = redisUrl || process.env.REDIS_URI || process.env.REDIS_URL || 'redis://localhost:6379';
     
     try {
       this.client = createClient({
-        url: redisUrl,
+        url: url,
         socket: {
           reconnectStrategy: (retries) => {
             if (retries > 10) {

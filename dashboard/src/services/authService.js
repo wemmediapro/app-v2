@@ -14,40 +14,30 @@ const authApi = axios.create({
 export const authService = {
   login: async (credentials) => {
     const response = await authApi.post('/auth/login', credentials);
-    if (response.data?.token) {
-      localStorage.setItem('adminToken', response.data.token);
-    }
+    // Backend envoie le token en cookie httpOnly ; on ne stocke plus le token en localStorage (sécurité XSS)
     return response;
   },
-  
+
   register: async (userData) => {
     const response = await authApi.post('/auth/register', userData);
     return response;
   },
-  
+
   getProfile: async () => {
-    const token = localStorage.getItem('adminToken');
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const response = await authApi.get('/auth/me', { headers });
+    const response = await authApi.get('/auth/me');
     return response;
   },
-  
+
   updateProfile: async (profileData) => {
-    const token = localStorage.getItem('adminToken');
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const response = await authApi.put('/auth/profile', profileData, { headers });
+    const response = await authApi.put('/auth/profile', profileData);
     return response;
   },
-  
+
   logout: async () => {
     try {
       await authApi.post('/auth/logout');
     } catch (_) {}
     localStorage.removeItem('adminToken');
-    delete authApi.defaults.headers.common['Authorization'];
-    if (typeof axios !== 'undefined') {
-      delete axios.defaults.headers.common['Authorization'];
-    }
   }
 };
 

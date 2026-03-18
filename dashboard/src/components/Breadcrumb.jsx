@@ -44,7 +44,7 @@ export default function Breadcrumb() {
   });
 
   return (
-    <nav aria-label="Fil d'Ariane" className="mb-4 min-w-0 overflow-hidden">
+    <nav aria-label="Fil d'Ariane" className="mb-6 min-w-0 overflow-hidden">
       <ol className="flex flex-wrap items-center gap-1 text-sm text-gray-600">
         {isDashboardHome ? (
           <li>

@@ -765,6 +765,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                           alt={(item.translations?.[language]?.title) ?? item.title}
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           loading="lazy"
+                          decoding="async"
                           onError={(e) => {
                             e.target.style.display = 'none';
                             e.target.nextElementSibling?.classList.remove('hidden');

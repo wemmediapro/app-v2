@@ -34,7 +34,8 @@
     "userDeactivated": "Utilisateur désactivé",
     "accessDenied": "Accès refusé",
     "retry": "Réessayer",
-    "advancedFilters": "Filtres avancés"
+    "advancedFilters": "Filtres avancés",
+    "movies": "Films & Séries"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -328,7 +329,14 @@
   },
   "movies": {
     "title": "Films & Séries",
+    "subtitle": "Gérez le catalogue",
     "addMovie": "Ajouter un contenu",
+    "total": "Total",
+    "films": "Films",
+    "series": "Séries",
+    "filmLabel": "Film",
+    "seriesLabel": "Série",
+    "all": "Tous",
     "titleField": "Titre",
     "type": "Type",
     "description": "Description",
@@ -361,7 +369,9 @@
     "editEpisode": "Modifier l'épisode",
     "addEpisodeHint": "Cliquez sur \"Ajouter un épisode\" pour commencer",
     "saveChanges": "Enregistrer les modifications",
-    "views": "vues"
+    "views": "vues",
+    "noContent": "Aucun contenu trouvé",
+    "noContentHint": "Ajustez les filtres ou ajoutez un film / une série"
   },
   "magazine": {
     "title": "Magazine",
@@ -1062,6 +1072,7 @@
     "engagement": "Engagement",
     "performanceLabel": "Performance",
     "recentAlerts": "Alertes récentes",
+    "clearAlerts": "Vider",
     "noConnectionsData": "Aucune donnée de connexions disponible",
     "totalConnections": "Connexions totales",
     "activeConnections": "Connexions actives",
@@ -1128,7 +1139,20 @@
     "viewHourlyOnly": "Pic horaire",
     "modules": "Modules",
     "allModules": "Tous",
-    "selectAtLeastOneModule": "Sélectionnez au moins un module pour afficher les statistiques."
+    "selectAtLeastOneModule": "Sélectionnez au moins un module pour afficher les statistiques.",
+    "realOverview": "Vue d'ensemble (données réelles)",
+    "loading": "Chargement…",
+    "totalUsers": "Utilisateurs",
+    "activeUsers": "Utilisateurs actifs",
+    "totalContent": "Contenu total",
+    "items": "éléments",
+    "activeConnections": "Connexions actives",
+    "uptime": "Disponibilité",
+    "stationsCount": "Stations",
+    "moviesCount": "Films & séries",
+    "viewersCount": "Spectateurs",
+    "articlesCount": "Articles",
+    "realData": "Données réelles"
   },
   "filters": {
     "country": "Pays",

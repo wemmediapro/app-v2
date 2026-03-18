@@ -121,24 +121,16 @@ const corsOptions = {
   credentials: true,
 };
 app.use(cors(corsOptions));
-app.use(morgan('combined'));
+// En prod : format court + pas de log health/uploads (réduit I/O et bruit — audit CTO)
+app.use(morgan(config.env === 'production' ? 'short' : 'combined', {
+  skip: (req) => req.path === '/api/health' || req.path?.startsWith('/uploads/'),
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(require('./src/middleware/language'));
 
 // Rate limiting — protège l’API pour 1000+ connexions (exclusions: stream, upload, health)
-const limiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: config.rateLimit.max,
-  message: { success: false, message: 'Trop de requêtes. Veuillez patienter quelques minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => {
-    const p = req.path || '';
-    return p === '/api/health' || p.startsWith('/api/stream') || p.startsWith('/api/upload') || p.startsWith('/api/media-library');
-  },
-});
-app.use('/api/', limiter);
+// Limiter API (store Redis ou mémoire) — monté dans setupAfterDb()
 
 // En-tête Date sur toutes les réponses API (pour synchro heure serveur radio / WebTV)
 app.use('/api', (req, res, next) => {
@@ -160,8 +152,8 @@ app.use('/api', (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     return next();
   }
-  // Pas de cache navigateur pour les listes : modifs (ex. vidéo dans « Modifier le contenu ») visibles sans redémarrer le backend
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  // Cache court (60 s) pour listes publiques — réduit la charge MongoDB sous 1000+ users (audit CTO)
+  res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
   next();
 });
 
@@ -204,6 +196,53 @@ app.use('/public', express.static(config.paths.public));
 
 // Base de données (config centralisée)
 const dbManager = require('./src/lib/database');
+const { createRedisStore } = require('./src/lib/rateLimitRedisStore');
+const connectionCounters = require('./src/lib/connectionCounters');
+const cacheManager = require('./src/lib/cache-manager');
+
+/** Monte le rate limit API (store Redis en cluster, sinon mémoire), connecte le cache listes, puis les routes */
+async function setupAfterDb() {
+  const redisStore = await createRedisStore(config.redis && config.redis.uri, 'rl:api:');
+  if (redisStore) redisStore.init({ windowMs: config.rateLimit.windowMs });
+  if (config.redis && config.redis.uri) {
+    const cacheConnected = await cacheManager.connect(config.redis.uri);
+    if (cacheConnected) console.log('✅ Cache listes (Redis) actif — TTL 60s');
+  }
+  // req.path est relatif au mount /api/ → '/health', '/time', etc.
+  const skipApiLimit = (req) => {
+    const p = (req.path || '').toLowerCase();
+    if (p === '/health' || p === '/time') return true; // santé / horloge : pas de limite (monitoring, k6)
+    if (p.startsWith('/stream') || p.startsWith('/upload') || p.startsWith('/media-library')) return true;
+    return false;
+  };
+  const apiLimitMax = process.env.RATE_LIMIT_LOAD_TEST === '1' ? 1000000 : config.rateLimit.max;
+  const apiLimiter = rateLimit({
+    windowMs: config.rateLimit.windowMs,
+    max: apiLimitMax,
+    message: { success: false, message: 'Trop de requêtes. Veuillez patienter quelques minutes.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: redisStore || undefined,
+    skip: skipApiLimit,
+  });
+  app.use('/api/', apiLimiter);
+  if (redisStore) console.log('✅ Rate limit API : store Redis actif');
+  const { mountRoutes } = require('./src/routes');
+  mountRoutes(app, { dbManager, connectionCounters });
+
+  // SPA fallback et 404 après les routes API (sinon /api/health etc. sont captés par le catch-all)
+  const publicIndex = path.join(config.paths.public, 'index.html');
+  app.get('/', (req, res) => {
+    res.sendFile(publicIndex);
+  });
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
+    res.sendFile(publicIndex);
+  });
+  app.use('*', (req, res) => {
+    res.status(404).json({ message: 'Route not found' });
+  });
+}
 
 function startServer() {
   const PORT = config.port;
@@ -222,23 +261,19 @@ function startServer() {
   });
 }
 
-dbManager.connect(config.mongodb.uri).then((connected) => {
+dbManager.connect(config.mongodb.uri).then(async (connected) => {
   if (connected) {
     console.log('✅ MongoDB connecté — Radio, WebTV, Films, etc. reliés à la base.');
   } else {
     console.log('⚠️  MongoDB non connecté. Démarrez MongoDB (docker run -d -p 27017:27017 mongo) puis redémarrez le backend.');
     console.log('   MONGODB_URI utilisé:', config.mongodb.uri);
   }
+  await setupAfterDb();
   startServer();
 });
 
-// Montage de toutes les routes API (ergonomie centralisée)
-const { mountRoutes } = require('./src/routes');
-mountRoutes(app, { dbManager });
-
 // Socket.io : authentification par JWT (évite accès anonyme aux rooms / send-message)
 const { verifyToken } = require('./src/middleware/auth');
-const connectionCounters = require('./src/lib/connectionCounters');
 const mongoose = require('mongoose');
 const LocalServerConfig = require('./src/models/LocalServerConfig');
 
@@ -302,21 +337,6 @@ app.use((err, req, res, next) => {
     message: err.message || 'Erreur serveur',
     ...(config.env === 'development' && { stack: err.stack }),
   });
-});
-
-// SPA fallback (dashboard React)
-const publicIndex = path.join(config.paths.public, 'index.html');
-app.get('/', (req, res) => {
-  res.sendFile(publicIndex);
-});
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
-  res.sendFile(publicIndex);
-});
-
-// 404 handler (API / autres requêtes non gérées)
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
 });
 
 // Démarrage après tentative de connexion MongoDB (voir plus haut)

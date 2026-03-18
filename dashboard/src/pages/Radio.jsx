@@ -2404,7 +2404,7 @@ const Radio = () => {
   }
 
   return (
-    <div className="flex h-[calc(100vh-120px)] gap-6">
+    <div className="flex h-[calc(100vh-120px)] gap-6 w-full min-w-0">
       {/* Sidebar Navigation */}
       <div className="w-64 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
         {/* Header */}

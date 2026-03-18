@@ -147,7 +147,7 @@ const Movies = () => {
   const fetchMovies = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getMovies();
+      const response = await apiService.getMovies('limit=100&page=1');
       const data = Array.isArray(response.data) ? response.data : (response.data?.data || []);
       setMovies(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -624,35 +624,35 @@ const Movies = () => {
   const hasActiveFilters = countryFilter !== 'all' || destinationFilter !== 'all';
 
   return (
-    <div className="space-y-5 max-w-[1400px]">
-      {/* En-tête compact */}
+    <div className="space-y-7 pb-8 w-full">
+      {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800 tracking-tight">{t('common.movies') || 'Films & Séries'}</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Gérez le catalogue</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('movies.title')}</h1>
+          <p className="text-sm text-slate-500 mt-1">{t('movies.subtitle')}</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowAddModal(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-indigo-700 transition-colors shrink-0"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-indigo-700 transition-colors shrink-0"
         >
           <Plus size={18} />
           {t('movies.addMovie')}
         </motion.button>
       </div>
 
-      {/* Barre recherche + filtres type unifiée */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+      {/* Barre recherche + filtres type */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
           <div className="relative flex-1 min-w-0">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder={t('common.search') || 'Rechercher...'}
+              placeholder={t('common.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50/80 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-colors"
+              className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors"
             />
           </div>
           <div className="flex rounded-xl border border-slate-200 bg-slate-50/80 p-1 gap-0.5 shrink-0">
@@ -662,7 +662,7 @@ const Movies = () => {
                 filter === 'all' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/80' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Tous
+              {t('movies.all')}
             </button>
             <button
               onClick={() => setFilter('movie')}
@@ -671,7 +671,7 @@ const Movies = () => {
               }`}
             >
               <Film size={16} />
-              Films
+              {t('movies.films')}
             </button>
             <button
               onClick={() => setFilter('series')}
@@ -680,29 +680,29 @@ const Movies = () => {
               }`}
             >
               <Tv size={16} />
-              Séries
+              {t('movies.series')}
             </button>
           </div>
         </div>
 
         {/* Filtres avancés repliables */}
-        <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden">
+        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
           <button
             type="button"
             onClick={() => setFiltersExpanded((v) => !v)}
-            className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50/80 transition-colors"
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
           >
             <span className="flex items-center gap-2">
-              <SlidersHorizontal size={16} className="text-slate-400" />
-              Filtres avancés
+              <SlidersHorizontal size={16} className="text-slate-500 shrink-0" />
+              {t('common.advancedFilters')}
               {hasActiveFilters && (
                 <span className="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-xs font-medium">actifs</span>
               )}
             </span>
-            <ChevronDown size={18} className={`text-slate-400 transition-transform ${filtersExpanded ? 'rotate-180' : ''}`} />
+            <ChevronDown size={18} className={`text-slate-400 shrink-0 transition-transform ${filtersExpanded ? 'rotate-180' : ''}`} />
           </button>
           {filtersExpanded && (
-            <div className="px-4 pb-4 pt-0 border-t border-slate-100">
+            <div className="px-4 pb-4 pt-3 border-t border-slate-100">
               <FilterBar
                 countryFilter={countryFilter}
                 setCountryFilter={setCountryFilter}
@@ -714,47 +714,48 @@ const Movies = () => {
         </div>
       </div>
 
-      {/* Stats en ligne fine */}
-      <div className="flex flex-wrap gap-3">
-        <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
-            <Clapperboard size={18} className="text-slate-600" />
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="flex items-center gap-4 px-5 py-4 rounded-xl bg-white border border-slate-200 shadow-sm">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
+            <Clapperboard size={20} className="text-slate-600" />
           </div>
-          <div>
-            <p className="text-xs font-medium text-slate-500">Total</p>
-            <p className="text-lg font-semibold text-slate-800 tabular-nums">{movies.length}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50">
-            <Film size={18} className="text-indigo-600" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-slate-500">Films</p>
-            <p className="text-lg font-semibold text-slate-800 tabular-nums">{movies.filter(m => m.type === 'movie').length}</p>
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{t('movies.total')}</p>
+            <p className="text-xl font-bold text-slate-900 tabular-nums mt-0.5">{movies.length}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
-            <Tv size={18} className="text-violet-600" />
+        <div className="flex items-center gap-4 px-5 py-4 rounded-xl bg-white border border-slate-200 shadow-sm">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50">
+            <Film size={20} className="text-indigo-600" />
           </div>
-          <div>
-            <p className="text-xs font-medium text-slate-500">Séries</p>
-            <p className="text-lg font-semibold text-slate-800 tabular-nums">{movies.filter(m => m.type === 'series').length}</p>
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{t('movies.films')}</p>
+            <p className="text-xl font-bold text-slate-900 tabular-nums mt-0.5">{movies.filter(m => m.type === 'movie').length}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 px-5 py-4 rounded-xl bg-white border border-slate-200 shadow-sm">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50">
+            <Tv size={20} className="text-violet-600" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{t('movies.series')}</p>
+            <p className="text-xl font-bold text-slate-900 tabular-nums mt-0.5">{movies.filter(m => m.type === 'series').length}</p>
           </div>
         </div>
       </div>
 
-      {/* Grille de cartes — plus fine */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {/* Grille de cartes */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-5">
         {filteredMovies.map((movie) => (
           <motion.div
             key={movie._id || movie.id}
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="group bg-white rounded-xl border border-slate-200/80 overflow-hidden hover:border-slate-300 hover:shadow-md transition-all duration-200 flex flex-col"
+            transition={{ duration: 0.2 }}
+            className="group bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 hover:shadow-lg transition-all duration-200 flex flex-col"
           >
-            <div className="poster-netflix aspect-[2/3] max-h-40 sm:max-h-44 bg-gradient-to-br from-slate-200 to-slate-300 relative overflow-hidden shrink-0">
+            <div className="poster-netflix aspect-[2/3] max-h-44 sm:max-h-48 bg-gradient-to-br from-slate-200 to-slate-300 relative overflow-hidden shrink-0">
               {movie.poster ? (
                 <img
                   src={getImageSrc(movie.poster)}
@@ -772,77 +773,78 @@ const Movies = () => {
                 <Clapperboard size={32} className="text-slate-400" />
               </div>
               {movie.rating ? (
-                <div className="absolute top-1.5 right-1.5 bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded flex items-center gap-0.5 z-10">
-                  <span className="text-[10px] text-amber-400">★</span>
-                  <span className="text-[10px] font-medium text-white">{movie.rating}</span>
+                <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-0.5 z-10">
+                  <span className="text-xs text-amber-400">★</span>
+                  <span className="text-xs font-medium text-white">{movie.rating}</span>
                 </div>
               ) : null}
               {movie.year ? (
-                <div className="absolute top-1.5 left-1.5 bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded z-10">
-                  <span className="text-[10px] font-medium text-white">{movie.year}</span>
+                <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-md z-10">
+                  <span className="text-xs font-medium text-white">{movie.year}</span>
                 </div>
               ) : null}
             </div>
-            <div className="p-2.5 flex-1 flex flex-col min-h-0">
-              <div className="flex items-start justify-between gap-1.5 mb-1">
-                <h3 className="font-medium text-slate-800 text-sm leading-tight line-clamp-2 flex-1 min-w-0">{movie.title}</h3>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
+            <div className="p-4 flex-1 flex flex-col min-h-0">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <h3 className="font-semibold text-slate-900 text-sm leading-snug line-clamp-2 flex-1 min-w-0">{movie.title}</h3>
+                <span className={`text-xs px-2 py-0.5 rounded-md shrink-0 font-medium ${
                   movie.type === 'movie' ? 'bg-indigo-50 text-indigo-700' : 'bg-violet-50 text-violet-700'
                 }`}>
-                  {movie.type === 'movie' ? 'Film' : 'Série'}
+                  {movie.type === 'movie' ? t('movies.filmLabel') : t('movies.seriesLabel')}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 line-clamp-2 mb-1.5 leading-relaxed">{movie.description}</p>
+              {movie.description ? (
+                <p className="text-xs text-slate-500 line-clamp-2 mb-3 leading-relaxed">{movie.description}</p>
+              ) : (
+                <div className="mb-3 min-h-[2rem]" />
+              )}
               {movie.countries && movie.countries.length > 0 ? (
-                <div className="flex items-center gap-1 mb-1.5 flex-wrap">
-                  <MapPin size={10} className="text-slate-400 shrink-0" />
+                <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                  <MapPin size={12} className="text-slate-400 shrink-0" />
                   {movie.countries.slice(0, 3).map((countryName) => {
                     const country = availableCountries.find(c => c.name === countryName);
                     return country ? (
-                      <span key={countryName} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px]">
+                      <span key={countryName} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">
                         {country.name}
                       </span>
                     ) : null;
                   })}
                   {movie.countries.length > 3 ? (
-                    <span className="text-[10px] text-slate-400">+{movie.countries.length - 3}</span>
+                    <span className="text-xs text-slate-400">+{movie.countries.length - 3}</span>
                   ) : null}
                 </div>
               ) : null}
-              <div className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5 text-[11px] text-slate-400 mt-auto">
-                <span className="flex items-center gap-0.5">
+              <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-xs text-slate-400 mt-auto">
+                <span className="flex items-center gap-1">
                   <Eye size={12} className="text-slate-400 shrink-0" aria-hidden />
-                  {(movie.viewCount ?? 0).toLocaleString()} {t('movies.views') || 'vues'}
+                  {(movie.viewCount ?? 0).toLocaleString()} {t('movies.views')}
                 </span>
-                {movie.genre ? <span> · {movie.genre}</span> : null}
+                {movie.genre ? <span>· {movie.genre}</span> : null}
                 {formatDurationDisplay(movie.duration) ? (
-                  <span>{movie.genre ? ' · ' : ''}{formatDurationDisplay(movie.duration)}</span>
+                  <span>· {formatDurationDisplay(movie.duration)}</span>
                 ) : null}
                 {movie.episodes != null ? (
-                  <span>
-                    {movie.genre || formatDurationDisplay(movie.duration) ? ' · ' : ''}
-                    {Array.isArray(movie.episodes) ? movie.episodes.length : movie.episodes} ép.
-                  </span>
+                  <span>· {Array.isArray(movie.episodes) ? movie.episodes.length : movie.episodes} ép.</span>
                 ) : null}
               </div>
-              <div className="flex items-center gap-1 mt-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => openEditModal(movie)}
-                  className="flex-1 flex items-center justify-center gap-1 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-xs font-medium"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-xs font-medium"
                   title={t('common.edit')}
                 >
                   <Edit size={14} />
-                  Modifier
+                  {t('common.edit')}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDeleteMovie(movie)}
-                  className="flex-1 flex items-center justify-center gap-1 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs font-medium"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs font-medium"
                   title={t('common.delete')}
                 >
                   <Trash2 size={14} />
-                  Supprimer
+                  {t('common.delete')}
                 </button>
               </div>
             </div>
@@ -853,8 +855,8 @@ const Movies = () => {
             <div className="rounded-2xl bg-slate-100 p-6 mb-4">
               <Clapperboard size={40} className="text-slate-400" />
             </div>
-            <p className="text-slate-600 font-medium">Aucun contenu trouvé</p>
-            <p className="text-sm text-slate-500 mt-1">Ajustez les filtres ou ajoutez un film / une série</p>
+            <p className="text-slate-600 font-medium">{t('movies.noContent')}</p>
+            <p className="text-sm text-slate-500 mt-1">{t('movies.noContentHint')}</p>
           </div>
         )}
       </div>

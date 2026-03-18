@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Radio, Clapperboard, Tv, BookOpen, Image, Megaphone, Calendar, TrendingUp, BarChart3, Clock, SlidersHorizontal, LayoutGrid } from 'lucide-react';
+import { Radio, Clapperboard, Tv, BookOpen, Image, Megaphone, Calendar, TrendingUp, BarChart3, Clock, SlidersHorizontal, LayoutGrid, Users, Activity, Server } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from 'recharts';
+import { apiService } from '../services/apiService';
 
 const PERIODS = [
   { value: 1, labelKey: 'statisticsPage.period24h' },
@@ -241,6 +242,36 @@ const Statistics = () => {
   const [dateRangeEnd, setDateRangeEnd] = useState(() => formatDateInput(defaultRangeEnd));
   const [viewMode, setViewMode] = useState('full');
   const [selectedModules, setSelectedModules] = useState(() => ({ ...DEFAULT_MODULES }));
+  const [realOverview, setRealOverview] = useState(null);
+  const [realContent, setRealContent] = useState(null);
+  const [realConnections, setRealConnections] = useState(null);
+  const [realLoading, setRealLoading] = useState(true);
+  const [realError, setRealError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setRealLoading(true);
+      setRealError(null);
+      try {
+        const [overview, content, connections] = await Promise.all([
+          apiService.getAnalyticsOverview(),
+          apiService.getAnalyticsContent(),
+          apiService.getAnalyticsConnections(),
+        ]);
+        if (!cancelled) {
+          setRealOverview(overview?.data ?? overview);
+          setRealContent(content?.data ?? content);
+          setRealConnections(connections?.data ?? connections);
+        }
+      } catch (e) {
+        if (!cancelled) setRealError(e?.message || 'Erreur chargement analytics');
+      } finally {
+        if (!cancelled) setRealLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const viewModeConfig = useMemo(() => VIEW_MODES.find((m) => m.value === viewMode) || VIEW_MODES[0], [viewMode]);
 
@@ -283,6 +314,19 @@ const Statistics = () => {
 
   const formatDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) : '—');
 
+  const realCounts = useMemo(() => {
+    const c = realContent?.contentTypes || [];
+    const byType = (type) => c.find((x) => x.type === type)?.count ?? 0;
+    return {
+      radio: byType('Stations radio'),
+      videos: byType('Films & séries'),
+      webtv: Number(realContent?.totalViewers) || 0,
+      magazine: byType('Articles magazine'),
+      banners: null,
+      ads: null,
+    };
+  }, [realContent]);
+
   const moduleLabels = {
     radio: t('statisticsPage.radio') || 'Radio',
     videos: t('statisticsPage.videos') || 'Vidéos',
@@ -293,11 +337,73 @@ const Statistics = () => {
   };
 
   return (
-    <div className="min-w-0 max-w-6xl mx-auto space-y-6 pb-8">
+    <div className="min-w-0 w-full space-y-6 pb-8">
       <header>
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t('statisticsPage.title') || 'Statistiques d\'usage'}</h1>
         <p className="mt-1 text-sm text-gray-500 max-w-xl">{t('statisticsPage.subtitle') || 'Chiffres et courbes par module avec filtres de période.'}</p>
       </header>
+
+      {/* Vue d'ensemble (données réelles API) */}
+      <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-4">
+        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
+          <Activity size={16} aria-hidden />
+          {t('statisticsPage.realOverview') || 'Vue d\'ensemble (données réelles)'}
+        </h2>
+        {realLoading && (
+          <p className="text-sm text-gray-500 py-4">{t('statisticsPage.loading') || 'Chargement…'}</p>
+        )}
+        {realError && (
+          <p className="text-sm text-amber-600 py-2">{realError}</p>
+        )}
+        {!realLoading && !realError && (realOverview || realConnections) && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {realOverview?.summary && (
+              <>
+                <KpiCard
+                  label={t('statisticsPage.totalUsers') || 'Utilisateurs'}
+                  value={realOverview.summary.totalUsers ?? '—'}
+                  icon={Users}
+                  iconBg="bg-blue-50"
+                  iconColor="text-blue-600"
+                />
+                <KpiCard
+                  label={t('statisticsPage.activeUsers') || 'Utilisateurs actifs'}
+                  value={realOverview.summary.activeUsers ?? '—'}
+                  icon={Activity}
+                  iconBg="bg-emerald-50"
+                  iconColor="text-emerald-600"
+                />
+                <KpiCard
+                  label={t('statisticsPage.totalContent') || 'Contenu total'}
+                  value={realOverview.summary.totalContent ?? '—'}
+                  subValue={t('statisticsPage.items') || 'éléments'}
+                  icon={LayoutGrid}
+                  iconBg="bg-violet-50"
+                  iconColor="text-violet-600"
+                />
+              </>
+            )}
+            {realConnections && (
+              <KpiCard
+                label={t('statisticsPage.activeConnections') || 'Connexions actives'}
+                value={realConnections.activeConnections ?? realConnections.totalConnections ?? '—'}
+                icon={Activity}
+                iconBg="bg-cyan-50"
+                iconColor="text-cyan-600"
+              />
+            )}
+            {realOverview?.summary?.systemUptime != null && (
+              <KpiCard
+                label={t('statisticsPage.uptime') || 'Disponibilité'}
+                value={`${Math.round(realOverview.summary.systemUptime)}%`}
+                icon={Server}
+                iconBg="bg-gray-100"
+                iconColor="text-gray-600"
+              />
+            )}
+          </div>
+        )}
+      </section>
 
       {/* Barre de filtres */}
       <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-4 space-y-4">
@@ -423,7 +529,7 @@ const Statistics = () => {
         </div>
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <KpiCard label={t('statisticsPage.totalPlays') || 'Total écoutes'} value={kpis.radio.total.toLocaleString()} icon={BarChart3} iconBg="bg-blue-50" iconColor="text-blue-600" />
+            <KpiCard label={t('statisticsPage.stationsCount') || 'Stations'} value={(realCounts.radio ?? kpis.radio.total).toLocaleString()} subValue={realCounts.radio != null ? t('statisticsPage.realData') : null} icon={BarChart3} iconBg="bg-blue-50" iconColor="text-blue-600" />
             <KpiCard label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'} value={kpis.radio.avgPerDay.toLocaleString()} icon={BarChart3} iconBg="bg-blue-50" iconColor="text-blue-600" />
             <KpiCard label={t('statisticsPage.peakDay') || 'Pic jour'} value={kpis.radio.peak} subValue={formatDate(kpis.radio.peakDate)} icon={TrendingUp} iconBg="bg-blue-50" iconColor="text-blue-600" />
             <KpiCard label={t('statisticsPage.peakHour') || 'Pic horaire'} value={hourlyPeaks.radio.peakHourLabel} subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.radio.peakHourValue}`} icon={Clock} iconBg="bg-blue-50" iconColor="text-blue-600" />
@@ -454,7 +560,7 @@ const Statistics = () => {
         </div>
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <KpiCard label={t('statisticsPage.totalViews') || 'Total vues'} value={kpis.videos.total.toLocaleString()} icon={BarChart3} iconBg="bg-purple-50" iconColor="text-purple-600" />
+            <KpiCard label={t('statisticsPage.moviesCount') || 'Films & séries'} value={(realCounts.videos ?? kpis.videos.total).toLocaleString()} subValue={realCounts.videos != null ? t('statisticsPage.realData') : null} icon={BarChart3} iconBg="bg-purple-50" iconColor="text-purple-600" />
             <KpiCard label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'} value={kpis.videos.avgPerDay.toLocaleString()} icon={BarChart3} iconBg="bg-purple-50" iconColor="text-purple-600" />
             <KpiCard label={t('statisticsPage.peakDay') || 'Pic jour'} value={kpis.videos.peak} subValue={formatDate(kpis.videos.peakDate)} icon={TrendingUp} iconBg="bg-purple-50" iconColor="text-purple-600" />
             <KpiCard label={t('statisticsPage.peakHour') || 'Pic horaire'} value={hourlyPeaks.videos.peakHourLabel} subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.videos.peakHourValue}`} icon={Clock} iconBg="bg-purple-50" iconColor="text-purple-600" />
@@ -485,7 +591,7 @@ const Statistics = () => {
         </div>
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <KpiCard label={t('statisticsPage.totalViews') || 'Total vues'} value={kpis.webtv.total.toLocaleString()} icon={BarChart3} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
+            <KpiCard label={t('statisticsPage.viewersCount') || 'Spectateurs'} value={(realCounts.webtv ?? kpis.webtv.total).toLocaleString()} subValue={realCounts.webtv != null ? t('statisticsPage.realData') : null} icon={BarChart3} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
             <KpiCard label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'} value={kpis.webtv.avgPerDay.toLocaleString()} icon={BarChart3} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
             <KpiCard label={t('statisticsPage.peakDay') || 'Pic jour'} value={kpis.webtv.peak} subValue={formatDate(kpis.webtv.peakDate)} icon={TrendingUp} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
             <KpiCard label={t('statisticsPage.peakHour') || 'Pic horaire'} value={hourlyPeaks.webtv.peakHourLabel} subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.webtv.peakHourValue}`} icon={Clock} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
@@ -516,7 +622,7 @@ const Statistics = () => {
         </div>
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <KpiCard label={t('statisticsPage.totalReadings') || 'Total lectures'} value={kpis.magazine.total.toLocaleString()} icon={BarChart3} iconBg="bg-amber-50" iconColor="text-amber-600" />
+            <KpiCard label={t('statisticsPage.articlesCount') || 'Articles'} value={(realCounts.magazine ?? kpis.magazine.total).toLocaleString()} subValue={realCounts.magazine != null ? t('statisticsPage.realData') : null} icon={BarChart3} iconBg="bg-amber-50" iconColor="text-amber-600" />
             <KpiCard label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'} value={kpis.magazine.avgPerDay.toLocaleString()} icon={BarChart3} iconBg="bg-amber-50" iconColor="text-amber-600" />
             <KpiCard label={t('statisticsPage.peakDay') || 'Pic jour'} value={kpis.magazine.peak} subValue={formatDate(kpis.magazine.peakDate)} icon={TrendingUp} iconBg="bg-amber-50" iconColor="text-amber-600" />
             <KpiCard label={t('statisticsPage.peakHour') || 'Pic horaire'} value={hourlyPeaks.magazine.peakHourLabel} subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.magazine.peakHourValue}`} icon={Clock} iconBg="bg-amber-50" iconColor="text-amber-600" />

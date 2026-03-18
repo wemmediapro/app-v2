@@ -45,7 +45,11 @@ function normalizeNotificationBody(body) {
 }
 
 // GET /api/notifications — liste publique pour l'app passagers (notifications envoyées, pas d'auth)
-// En cas d'erreur (DB déconnectée, etc.) on renvoie [] pour éviter un 500 côté client
+// Ne renvoie jamais 500 : en cas d'erreur (DB déconnectée, etc.) on renvoie toujours [].
+function sendEmptyNotifications(res) {
+  if (!res.headersSent) res.json([]);
+}
+
 router.get('/', async (req, res) => {
   try {
     const limitParam = req.query.limit != null ? req.query.limit : 50;
@@ -54,7 +58,7 @@ router.get('/', async (req, res) => {
     const lang = typeof langParam === 'string' ? langParam.trim().toLowerCase() : 'fr';
 
     if (mongoose.connection.readyState !== 1) {
-      return res.json([]);
+      return sendEmptyNotifications(res);
     }
     const now = new Date();
     const notifications = await Notification.find({
@@ -92,11 +96,10 @@ router.get('/', async (req, res) => {
         createdAt: n.createdAt
       };
     });
-    return res.json(list);
+    if (!res.headersSent) res.json(list);
   } catch (error) {
     console.error('Get notifications error:', error);
-    // Ne pas renvoyer 500 : l'app peut afficher une liste vide
-    return res.json([]);
+    sendEmptyNotifications(res);
   }
 });
 

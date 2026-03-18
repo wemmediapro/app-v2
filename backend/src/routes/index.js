@@ -1,10 +1,10 @@
 /**
  * Point d’entrée des routes API : monte toutes les routes sur l’app Express.
  * @param {import('express').Application} app
- * @param {{ dbManager: { isConnected: () => boolean } }} deps - dépendances (ex: dbManager pour /api/health)
+ * @param {{ dbManager: { isConnected: () => boolean }, connectionCounters?: { getTotalCount: () => number } }} deps
  */
 function mountRoutes(app, deps = {}) {
-  const { dbManager } = deps;
+  const { dbManager, connectionCounters } = deps;
 
   // Bibliothèque média (deux préfixes pour compatibilité)
   const mediaLibraryRouter = require('./media-library');
@@ -35,7 +35,7 @@ function mountRoutes(app, deps = {}) {
   app.use('/api/notifications', require('./notifications'));
   app.use('/api/export', require('./export'));
 
-  // Health check (n'expose pas l'environnement en production)
+  // Health check enrichi (connexions Socket, mémoire) — monitoring / alerte (audit CTO)
   const configModule = require('../config');
   app.get('/api/health', (req, res) => {
     const dbConnected = dbManager && typeof dbManager.isConnected === 'function' && dbManager.isConnected();
@@ -45,6 +45,8 @@ function mountRoutes(app, deps = {}) {
       uptime: process.uptime(),
       mongodb: dbManager && typeof dbManager.isConnected === 'function' ? (dbConnected ? 'connected' : 'disconnected') : 'unknown',
       offlineMode: !dbConnected,
+      connections: connectionCounters && typeof connectionCounters.getTotalCount === 'function' ? connectionCounters.getTotalCount() : undefined,
+      memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
     };
     if (dbConnected && dbManager.getStats) {
       const stats = dbManager.getStats();

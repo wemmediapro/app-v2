@@ -11,6 +11,7 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const config = require('../config');
 const Movie = require('../models/Movie');
 const moviesFallback = require('../lib/movies-fallback');
+const cacheManager = require('../lib/cache-manager');
 const { fetchPosterUrlFromGoogle } = require('../lib/google-poster-search');
 const { buildPosterPrompt, DALLE3_POSTER_OPTIONS } = require('../lib/openai-poster-config');
 
@@ -194,19 +195,61 @@ router.post('/:id/generate-poster', authMiddleware, adminMiddleware, async (req,
   }
 });
 
-// @route   GET /api/movies — ?lang= pour contenu localisé
+// @route   GET /api/movies — ?lang= pour contenu localisé, ?limit=&page= pour pagination (défaut 20, max 100)
+// Cache Redis 60s pour listes publiques (sans Authorization) — audit CTO
+const LIST_CACHE_TTL = 60;
 router.get('/', async (req, res) => {
   try {
-    const { lang } = req.query;
-    if (useMongo()) {
-      const movies = await Movie.find({ isActive: true }).lean().sort({ createdAt: -1 });
-      return res.json(movies.map(doc => localizeMovie(doc, lang)));
+    const { lang, limit: limitParam, page: pageParam } = req.query;
+    const limit = Math.min(Math.max(parseInt(limitParam, 10) || 20, 1), 100);
+    const page = Math.max(1, parseInt(pageParam, 10) || 1);
+    const skip = (page - 1) * limit;
+    const langNorm = (lang && String(lang).trim()) || '';
+
+    if (!req.get('Authorization')) {
+      const cacheKey = `list:movies:${langNorm}:${page}:${limit}`;
+      const cached = await cacheManager.get(cacheKey);
+      if (cached) return res.json(cached);
     }
-    const list = moviesFallback.getAll();
-    res.json(list.map(m => formatFallbackMovie(m, lang)));
+
+    let body;
+    if (useMongo()) {
+      const [movies, total] = await Promise.all([
+        Movie.find({ isActive: true }).lean().sort({ createdAt: -1 }).skip(skip).limit(limit),
+        Movie.countDocuments({ isActive: true }),
+      ]);
+      body = {
+        data: movies.map(doc => localizeMovie(doc, lang)),
+        total,
+        page,
+        limit,
+      };
+    } else {
+      const list = moviesFallback.getAll();
+      const total = list.length;
+      const paginated = list.slice(skip, skip + limit);
+      body = {
+        data: paginated.map(m => formatFallbackMovie(m, lang)),
+        total,
+        page,
+        limit,
+      };
+    }
+    if (!req.get('Authorization')) {
+      const cacheKey = `list:movies:${langNorm}:${page}:${limit}`;
+      await cacheManager.set(cacheKey, body, LIST_CACHE_TTL);
+    }
+    res.json(body);
   } catch (error) {
     console.error('Get movies error:', error);
-    res.json([]);
+    // 503 + données vides pour permettre retry côté front (audit CTO — fallback sous charge)
+    res.status(503).json({
+      data: [],
+      total: 0,
+      page: 1,
+      limit: 20,
+      message: 'Service temporairement indisponible. Réessayez dans un instant.',
+    });
   }
 });
 

@@ -1,5 +1,6 @@
 const express = require('express');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { feedbackValidation } = require('../middleware/validation');
 const Feedback = require('../models/Feedback');
 
 const router = express.Router();
@@ -7,10 +8,14 @@ const router = express.Router();
 // @route   POST /api/feedback
 // @desc    Submit feedback
 // @access  Private
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, feedbackValidation, async (req, res) => {
   try {
+    const { type, category, title, description } = req.body;
     const feedback = new Feedback({
-      ...req.body,
+      type,
+      category,
+      title,
+      description,
       user: req.user.id
     });
     

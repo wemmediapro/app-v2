@@ -15,7 +15,7 @@ const Header = ({ user, onLogout, onMenuClick, showHamburger = false }) => {
       animate={{ y: 0, opacity: 1 }}
       className="sticky top-0 bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-200 z-10 w-full"
     >
-      <div className="mx-auto max-w-[1600px] w-full px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1440px] w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 h-14 sm:h-16">
           {/* Gauche : hamburger + recherche */}
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">

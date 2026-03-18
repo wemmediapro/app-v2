@@ -6,6 +6,7 @@ const { articleValidation } = require('../middleware/validation');
 const Article = require('../models/Article');
 const { safeRegexSearch } = require('../utils/regex-escape');
 const magazineFallback = require('../lib/magazine-fallback');
+const cacheManager = require('../lib/cache-manager');
 
 // Localise le contenu depuis la base uniquement (aucun appel de traduction en ligne).
 // Langues : fr (champs principaux), en, es, it, de, ar (translations[code]). Si une traduction manque, on garde le français.
@@ -29,23 +30,46 @@ function localizeArticle(article, lang) {
   }
 }
 
+// Cache Redis 60s pour listes publiques (sans Authorization) — audit CTO
+const LIST_CACHE_TTL = 60;
+
 // @route   GET /api/magazine
 // @desc    Get magazine articles (DB or demo). Query: lang=fr|en|es|it|de|ar pour le contenu multilingue. Si withTranslations=1 et admin, retourne les articles avec le champ translations (pour l’édition).
 // @access  Public (avec optionalAuth pour withTranslations)
 router.get('/', optionalAuth, async (req, res) => {
   try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const skip = (page - 1) * limit;
+    const { category, featured, search, lang: langQuery, all, withTranslations } = req.query;
+    const lang = (langQuery && String(langQuery).trim().toLowerCase()) || '';
+
+    if (!req.get('Authorization')) {
+      const cacheKey = `list:magazine:${lang}:${page}:${limit}:${category || ''}:${featured || ''}:${search || ''}:${all || ''}`;
+      const cached = await cacheManager.get(cacheKey);
+      if (cached) return res.json(cached);
+    }
+
     if (mongoose.connection.readyState !== 1) {
-      const lang = (req.query.lang && String(req.query.lang).trim().toLowerCase()) || null;
-      const data = magazineFallback.getAll(lang);
-      return res.json({ data: Array.isArray(data) ? data : [] });
+      const raw = magazineFallback.getAll(lang || null);
+      const list = Array.isArray(raw) ? raw : [];
+      const total = list.length;
+      const data = list.slice(skip, skip + limit);
+      const body = { data, total, page, limit };
+      if (!req.get('Authorization')) {
+        const cacheKey = `list:magazine:${lang}:${page}:${limit}:${category || ''}:${featured || ''}:${search || ''}:${all || ''}`;
+        await cacheManager.set(cacheKey, body, LIST_CACHE_TTL);
+      }
+      return res.json(body);
     }
     if (typeof Article.find !== 'function') {
-      const lang = (req.query.lang && String(req.query.lang).trim().toLowerCase()) || null;
-      const data = magazineFallback.getAll(lang);
-      return res.json({ data: Array.isArray(data) ? data : [] });
+      const raw = magazineFallback.getAll(lang || null);
+      const list = Array.isArray(raw) ? raw : [];
+      const total = list.length;
+      const data = list.slice(skip, skip + limit);
+      return res.json({ data, total, page, limit });
     }
-    const { category, featured, search, lang: langQuery, all, withTranslations } = req.query;
-    const lang = (langQuery && String(langQuery).trim().toLowerCase()) || null;
+
     const query = { isActive: { $ne: false } };
     if (!all) query.$or = [{ isPublished: true }, { status: 'published' }];
     if (category && String(category).trim() && category !== 'all') query.category = String(category).trim();
@@ -54,17 +78,29 @@ router.get('/', optionalAuth, async (req, res) => {
       const safe = safeRegexSearch(search);
       if (safe) query.$and = [{ $or: [{ title: { $regex: safe, $options: 'i' } }, { excerpt: { $regex: safe, $options: 'i' } }, { content: { $regex: safe, $options: 'i' } }] }];
     }
-    const list = await Article.find(query).sort({ publishedAt: -1, createdAt: -1 }).lean();
+    const [list, total] = await Promise.all([
+      Article.find(query).sort({ publishedAt: -1, createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Article.countDocuments(query),
+    ]);
     const isAdminWithTranslations = withTranslations === '1' && req.user && req.user.role === 'admin';
     const data = isAdminWithTranslations
       ? list.map(a => ({ ...a, readTime: a.readingTime ?? 0 }))
       : list.map(a => localizeArticle(a, lang));
-    return res.json({ data: Array.isArray(data) ? data : [] });
+    const body = { data: Array.isArray(data) ? data : [], total, page, limit };
+    if (!req.get('Authorization')) {
+      const cacheKey = `list:magazine:${lang}:${page}:${limit}:${category || ''}:${featured || ''}:${search || ''}:${all || ''}`;
+      await cacheManager.set(cacheKey, body, LIST_CACHE_TTL);
+    }
+    return res.json(body);
   } catch (error) {
     console.error('Get magazine articles error:', error);
-    res.status(500).json({
-      message: 'Erreur serveur lors du chargement des articles',
+    // 503 + données vides pour retry côté front (audit CTO — fallback sous charge)
+    res.status(503).json({
+      message: 'Service temporairement indisponible. Réessayez dans un instant.',
       data: [],
+      total: 0,
+      page: 1,
+      limit: 20,
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

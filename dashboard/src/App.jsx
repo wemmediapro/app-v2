@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 
 // Contexts
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -37,34 +36,31 @@ import { authService } from './services/authService';
 import { useIsMobileView } from './hooks/useIsMobileView';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('adminToken'));
-  const [user, setUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem('adminUser');
-      return stored ? JSON.parse(stored) : { firstName: 'Admin', lastName: 'Demo', email: 'admin@gnv.com', role: 'admin' };
-    } catch {
-      return { firstName: 'Admin', lastName: 'Demo', email: 'admin@gnv.com', role: 'admin' };
-    }
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Auth par cookie httpOnly : vérifier la session au chargement (pas de lecture du token en JS)
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setIsAuthenticated(true);
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-      setIsAuthenticated(false);
-    }
-    setLoading(false);
+    authService.getProfile()
+      .then((res) => {
+        if (res.data?.role === 'admin') {
+          setUser(res.data);
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      })
+      .catch(() => {
+        setUser(null);
+        setIsAuthenticated(false);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleLogin = (token, userData) => {
-    localStorage.setItem('adminToken', token);
-    if (userData) localStorage.setItem('adminUser', JSON.stringify(userData));
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    setUser(userData || user);
+  const handleLogin = (_token, userData) => {
+    setUser(userData || null);
     setIsAuthenticated(true);
   };
 
@@ -110,9 +106,10 @@ function AppRoutes({ user, onLogout, onLogin, isAuthenticated }) {
           <Sidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isMobileView={isMobileView} />
           <div className={isMobileView ? 'min-w-0' : 'pl-64 min-w-0'}>
             <Header user={user} onLogout={onLogout} onMenuClick={() => setSidebarOpen(true)} showHamburger={isMobileView} />
-            <main className="p-4 sm:p-6 min-w-0 overflow-x-auto">
-              <Breadcrumb />
-              <Routes>
+            <main className="p-4 sm:p-6 lg:p-8 min-w-0 overflow-x-auto">
+              <div className="max-w-[1440px] mx-auto w-full">
+                <Breadcrumb />
+                <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/statistics" element={<Statistics />} />
@@ -133,7 +130,8 @@ function AppRoutes({ user, onLogout, onLogin, isAuthenticated }) {
                 <Route path="/connexions" element={<Connexions />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/settings/connection" element={<Connexions />} />
-              </Routes>
+                </Routes>
+              </div>
             </main>
           </div>
         </div>

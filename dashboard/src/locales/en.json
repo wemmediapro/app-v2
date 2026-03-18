@@ -34,7 +34,8 @@
     "userDeactivated": "User deactivated",
     "accessDenied": "Access denied",
     "retry": "Retry",
-    "advancedFilters": "Advanced filters"
+    "advancedFilters": "Advanced filters",
+    "movies": "Movies & Series"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -328,7 +329,14 @@
   },
   "movies": {
     "title": "Movies & Series",
+    "subtitle": "Manage the catalog",
     "addMovie": "Add content",
+    "total": "Total",
+    "films": "Films",
+    "series": "Series",
+    "filmLabel": "Film",
+    "seriesLabel": "Series",
+    "all": "All",
     "titleField": "Title",
     "type": "Type",
     "description": "Description",
@@ -361,7 +369,9 @@
     "editEpisode": "Edit episode",
     "addEpisodeHint": "Click \"Add episode\" to get started",
     "saveChanges": "Save changes",
-    "views": "views"
+    "views": "views",
+    "noContent": "No content found",
+    "noContentHint": "Adjust filters or add a film / series"
   },
   "magazine": {
     "title": "Magazine",
@@ -1062,6 +1072,7 @@
     "engagement": "Engagement",
     "performanceLabel": "Performance",
     "recentAlerts": "Recent alerts",
+    "clearAlerts": "Clear",
     "noConnectionsData": "No connections data available",
     "totalConnections": "Total connections",
     "activeConnections": "Active connections",
@@ -1128,7 +1139,20 @@
     "viewHourlyOnly": "Peak by hour only",
     "modules": "Modules",
     "allModules": "All",
-    "selectAtLeastOneModule": "Select at least one module to display statistics."
+    "selectAtLeastOneModule": "Select at least one module to display statistics.",
+    "realOverview": "Overview (real data)",
+    "loading": "Loading…",
+    "totalUsers": "Users",
+    "activeUsers": "Active users",
+    "totalContent": "Total content",
+    "items": "items",
+    "activeConnections": "Active connections",
+    "uptime": "Uptime",
+    "stationsCount": "Stations",
+    "moviesCount": "Movies & series",
+    "viewersCount": "Viewers",
+    "articlesCount": "Articles",
+    "realData": "Real data"
   },
   "filters": {
     "country": "Country",

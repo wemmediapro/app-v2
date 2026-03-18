@@ -39,14 +39,14 @@ const MoviePlayer = memo(forwardRef(function MoviePlayer({
     },
   }), []);
 
-  // 1) Attacher la source uniquement quand streamUrl change (jamais sur play/pause ni sur changement de startTime après pause)
+  // 1) Attacher la source quand streamUrl change
   useEffect(() => {
     const el = videoRef.current;
     if (!el || !streamUrl) return;
 
     cleanupRef.current?.();
     loadedUrlRef.current = null;
-    loadedUrlRef.current = streamUrl;
+
     const initialStartTime = startTime > 0 ? startTime : undefined;
     cleanupRef.current = attachVideoSource(el, streamUrl, {
       startTime: initialStartTime,
@@ -69,7 +69,7 @@ const MoviePlayer = memo(forwardRef(function MoviePlayer({
       cleanupRef.current = null;
       loadedUrlRef.current = null;
     };
-  }, [streamUrl]); // Pas startTime : éviter de recharger la vidéo au pause (sauvegarde position → startTime changeait → effect relançait load())
+  }, [streamUrl]);
 
   // 2) Play / Pause sans toucher à la source
   useEffect(() => {

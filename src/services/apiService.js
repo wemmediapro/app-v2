@@ -212,7 +212,9 @@ api.interceptors.response.use(
       const serverMsg = error.response?.data?.message || error.response?.data?.error;
       const detail = serverMsg ? ` — ${serverMsg}` : '';
       error.userMessage = `Erreur serveur (${error.response.status}) sur ${url}${detail}`;
-      if (import.meta.env.DEV) {
+      // Ne pas polluer la console pour GET /api/notifications (backend souvent arrêté en dev)
+      const isNotificationsList = /\/api\/notifications(\?|$)/.test(url || '') && (error.config?.method || 'get').toLowerCase() === 'get';
+      if (import.meta.env.DEV && !isNotificationsList) {
         console.error('[API 5xx]', url, error.response?.data || error.message);
       }
       return Promise.reject(error);

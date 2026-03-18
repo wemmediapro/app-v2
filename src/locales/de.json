@@ -247,7 +247,11 @@
       "beverage": "Getränk",
       "wine": "Wein",
       "cocktail": "Cocktail",
-      "other": "Sonstige"
+      "other": "Sonstige",
+      "entrées": "Vorspeisen",
+      "plats": "Hauptgerichte",
+      "desserts": "Nachtische",
+      "boissons": "Getränke"
     }
   },
   "shop": {

@@ -102,7 +102,7 @@ const Bibliotheque = () => {
   ];
 
   return (
-    <div className="space-y-6 pb-8 max-w-[1400px]">
+    <div className="space-y-6 pb-8 w-full">
       {/* En-tête */}
       <header className="space-y-1">
         <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight flex items-center gap-2.5">

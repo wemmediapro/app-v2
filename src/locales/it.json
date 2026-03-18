@@ -247,7 +247,11 @@
       "beverage": "Bevanda",
       "wine": "Vino",
       "cocktail": "Cocktail",
-      "other": "Altro"
+      "other": "Altro",
+      "entrées": "Antipasti",
+      "plats": "Piatti principali",
+      "desserts": "Dolci",
+      "boissons": "Bevande"
     }
   },
   "shop": {

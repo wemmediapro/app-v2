@@ -5,10 +5,15 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-dom/client', 'react-router-dom'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    // Une seule instance de React pour éviter "Invalid hook call" / useState null (useShop, etc.)
+    dedupe: ['react', 'react-dom'],
   },
   plugins: [
     react(),
@@ -53,13 +58,13 @@ export default defineConfig({
               cacheableResponse: { statuses: [200] },
             },
           },
-          // Cache des médias (vidéo, audio, images) — CacheFirst après 1er chargement, 14 jours
+          // Cache des médias (vidéo MP4, HLS playlist+segments, audio, images) — CacheFirst, 14 jours (offline 1000+ users)
           {
-            urlPattern: /\/uploads\/(videos|audio|images)\/.*/i,
+            urlPattern: /\/uploads\/(videos|videos_hls|audio|images)\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'gnv-offline-media',
-              expiration: { maxEntries: 120, maxAgeSeconds: 14 * 24 * 60 * 60 },
+              expiration: { maxEntries: 180, maxAgeSeconds: 14 * 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200, 206] },
             },
           },
@@ -69,13 +74,14 @@ export default defineConfig({
   ],
   build: {
     assetsDir: 'assets',
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 500,
     reportCompressedSize: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
             if (id.includes('react-dom') || id.includes('react/')) return 'react-vendor';
+            if (id.includes('react-router-dom')) return 'react-router';
             if (id.includes('framer-motion')) return 'framer-motion';
             if (id.includes('lucide-react')) return 'lucide-react';
             if (id.includes('socket.io-client')) return 'socket.io';

@@ -179,7 +179,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-w-0 max-w-6xl mx-auto space-y-8 pb-8">
+    <div className="min-w-0 w-full space-y-8 pb-8">
       {/* En-tête de page */}
       <header className="pt-1">
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t('dashboard.title')}</h1>
@@ -392,7 +392,16 @@ const Dashboard = () => {
 
                   {analyticsData.alerts && analyticsData.alerts.length > 0 && (
                     <div className="bg-white rounded-xl border border-gray-200/80 p-5 shadow-sm">
-                      <h3 className="text-base font-semibold text-gray-900 mb-4">{t('analytics.recentAlerts') || 'Alertes récentes'}</h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-base font-semibold text-gray-900">{t('analytics.recentAlerts') || 'Alertes récentes'}</h3>
+                        <button
+                          type="button"
+                          onClick={() => setAnalyticsData((prev) => (prev ? { ...prev, alerts: [] } : null))}
+                          className="text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          {t('analytics.clearAlerts') || 'Vider'}
+                        </button>
+                      </div>
                       <div className="space-y-3">
                         {analyticsData.alerts.map((alert, index) => (
                           <div

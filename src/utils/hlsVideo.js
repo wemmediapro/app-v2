@@ -10,22 +10,16 @@ export function isHlsSupported() {
   return Hls.isSupported();
 }
 
-/** Configuration HLS optimisée pour VOD : lecture fluide, bon buffering, résilience aux erreurs. */
+/** Configuration HLS optimisée pour VOD. */
 const HLS_VOD_CONFIG = {
-  // Worker décode les segments dans un thread séparé (moins de blocage UI)
   enableWorker: true,
-  // Buffer devant le curseur : 30 s cible, 60 s max → lecture fluide même sur réseau instable
   maxBufferLength: 30,
   maxMaxBufferLength: 60,
-  maxBufferSize: 60 * 1000 * 1000, // 60 Mo
+  maxBufferSize: 60 * 1000 * 1000,
   maxBufferHole: 0.5,
-  // Réduire le buffer derrière le curseur pour limiter l’usage mémoire (évite dépassement 150 Mo Chrome)
   backBufferLength: 30,
-  // Réessayer en cas d’erreur d’append (réseau / segment corrompu)
   appendErrorMaxRetry: 3,
-  // Désactiver le mode basse latence (contenu VOD, pas live)
   lowLatencyMode: false,
-  // Délais max avant de considérer un chargement en échec
   maxLoadingDelay: 4,
   maxStarvationDelay: 4,
 };
@@ -35,7 +29,7 @@ const HLS_VOD_CONFIG = {
  * @param {HTMLVideoElement} videoElement
  * @param {string} url - URL MP4 (ou vidéo)
  * @param {{ onCanPlay?: () => void, onError?: () => void, startTime?: number }} options
- * @returns {() => void} - Cleanup (à appeler au démontage ou avant changement de source)
+ * @returns {() => void} - Cleanup à appeler au démontage
  */
 export function attachVideoSource(videoElement, url, { onCanPlay, onError, startTime } = {}) {
   if (!videoElement || !url) return () => {};
@@ -54,7 +48,7 @@ export function attachVideoSource(videoElement, url, { onCanPlay, onError, start
     } catch (_) {}
   };
 
-  const cleanup = () => {
+  const doCleanup = () => {
     if (videoElement._hlsInstance) {
       videoElement._hlsInstance.destroy();
       videoElement._hlsInstance = null;
@@ -86,7 +80,6 @@ export function attachVideoSource(videoElement, url, { onCanPlay, onError, start
     const hls = new Hls(hlsConfig);
     videoElement._hlsInstance = hls;
 
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {});
     hls.on(Hls.Events.ERROR, (event, data) => {
       if (!data.fatal) return;
       hls.destroy();
@@ -107,5 +100,5 @@ export function attachVideoSource(videoElement, url, { onCanPlay, onError, start
     tryNative();
   }
 
-  return cleanup;
+  return doCleanup;
 }

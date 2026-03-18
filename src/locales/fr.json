@@ -26,6 +26,8 @@
     "stop": "Arrêter",
     "loading": "Chargement...",
     "error": "Erreur",
+    "errorLoading": "Erreur de chargement",
+    "retry": "Réessayer",
     "noResults": "Aucun résultat",
     "gnvInfo": "Infos GNV",
     "reset": "Réinitialiser",
@@ -44,7 +46,9 @@
     "fullscreenUnsupported": "Le plein écran n'est pas disponible sur votre navigateur. Pour une expérience plein écran sur téléphone : menu du navigateur (⋮) → « Ajouter à l'écran d'accueil ».",
     "offlineBanner": "Pas de connexion – contenu en cache",
     "clearSearchAndFilters": "Vider la recherche et les filtres",
-    "noFavoritesYet": "Aucun favori pour le moment"
+    "noFavoritesYet": "Aucun favori pour le moment",
+    "addToFavorites": "Ajouter aux favoris",
+    "removeFromFavorites": "Retirer des favoris"
   },
   "conditions": {
     "title": "Conditions d'utilisation",
@@ -114,7 +118,8 @@
       "histoire": "Histoire",
       "horreur": "Horreur",
       "mystere": "Mystère",
-      "thriller": "Thriller"
+      "thriller": "Thriller",
+      "science-fiction": "Science-fiction"
     },
     "yearLabel": "Année",
     "minRatingLabel": "Note minimale",
@@ -173,6 +178,7 @@
   "webtv": {
     "title": "WebTV",
     "titlePage": "GNV WebTV",
+    "filterByCategory": "Filtrer par catégorie",
     "subtitle": "Regardez vos chaînes en direct et consultez le programme à bord.",
     "live": "En direct",
     "viewers": "spectateurs",
@@ -255,7 +261,11 @@
       "beverage": "Boisson",
       "wine": "Vin",
       "cocktail": "Cocktail",
-      "other": "Autre"
+      "other": "Autre",
+      "entrées": "Entrées",
+      "plats": "Plats",
+      "desserts": "Desserts",
+      "boissons": "Boissons"
     }
   },
   "feedback": {

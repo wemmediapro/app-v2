@@ -44,7 +44,9 @@ export const LanguageProvider = ({ children }) => {
     }
     
     if (value === undefined) {
-      console.warn(`Translation missing for key: ${key} in language: ${language}`);
+      if (import.meta.env.DEV) {
+        console.warn(`Translation missing for key: ${key} in language: ${language}`);
+      }
       return key;
     }
     
@@ -59,13 +61,11 @@ export const LanguageProvider = ({ children }) => {
   }, [language]);
 
   const changeLanguage = useCallback((lang) => {
-    console.log('changeLanguage called with:', lang);
     if (translations[lang]) {
       setLanguage(lang);
-      console.log('Language changed to:', lang);
-      // Forcer un re-render en mettant à jour le localStorage
       localStorage.setItem('language', lang);
-    } else {
+      if (import.meta.env.DEV) console.log('Language changed to:', lang);
+    } else if (import.meta.env.DEV) {
       console.error('Language not found:', lang);
     }
   }, []);
