@@ -61,16 +61,15 @@ function csrfProtection(req, res, next) {
   if (EXEMPT_PATH_PATTERNS.some((re) => re.test(path))) return next();
   const cookieToken = req.cookies[COOKIE_NAME];
   const headerToken = req.get(HEADER_NAME) || req.body?._csrf;
-  if (!cookieToken || !headerToken || cookieToken.length !== headerToken.length) {
-    return res.status(403).json({ success: false, message: 'Invalid CSRF token', code: 'CSRF_INVALID' });
-  }
+  let tokensMatch = false;
   try {
-    const bufA = Buffer.from(cookieToken, 'utf8');
-    const bufB = Buffer.from(headerToken, 'utf8');
-    if (bufA.length !== bufB.length || !crypto.timingSafeEqual(bufA, bufB)) {
-      return res.status(403).json({ success: false, message: 'Invalid CSRF token', code: 'CSRF_INVALID' });
-    }
-  } catch (err) {
+    tokensMatch = !!(cookieToken && headerToken &&
+      crypto.timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken)));
+  } catch {
+    tokensMatch = false;
+  }
+
+  if (!tokensMatch) {
     return res.status(403).json({ success: false, message: 'Invalid CSRF token', code: 'CSRF_INVALID' });
   }
   next();

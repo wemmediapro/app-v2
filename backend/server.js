@@ -8,35 +8,29 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 // -------------------------
 // Startup security checks
 // -------------------------
+function isInsecureValue(v) {
+  if (!v) return true;
+  const low = String(v).trim().toLowerCase();
+  return ['', 'changeme', 'password', 'default'].includes(low);
+}
+
 function assertProductionSecrets() {
   if (process.env.NODE_ENV !== 'production') return;
-
-  const forbiddenDefaults = new Set(['', 'changeme', 'password', 'default']);
   const checks = [
-    { key: 'MONGO_INITDB_ROOT_PASSWORD', name: 'MongoDB root password' },
-    { key: 'REDIS_PASSWORD', name: 'Redis password' },
-    { key: 'MONGO_ROOT_PASSWORD', name: 'MongoDB root password (alternate)' },
-    { key: 'ADMIN_PASSWORD', name: 'ADMIN_PASSWORD' },
-    { key: 'JWT_SECRET', name: 'JWT_SECRET' }
+    { name: 'MONGO_INITDB_ROOT_PASSWORD', value: process.env.MONGO_INITDB_ROOT_PASSWORD },
+    { name: 'REDIS_PASSWORD', value: process.env.REDIS_PASSWORD || process.env.REDIS_URL_PASSWORD },
+    { name: 'MONGO_ROOT_PASSWORD', value: process.env.MONGO_ROOT_PASSWORD },
+    { name: 'ADMIN_PASSWORD', value: process.env.ADMIN_PASSWORD },
   ];
 
-  const errors = [];
-  for (const c of checks) {
-    const val = process.env[c.key];
-    if (!val || forbiddenDefaults.has(String(val).trim())) {
-      errors.push(`${c.name} (${c.key}) is missing or using an insecure default.`);
-    }
-  }
-
-  if (errors.length > 0) {
-    console.error('CRITICAL: insecure environment configuration detected:');
-    for (const e of errors) console.error(' -', e);
-    console.error('Aborting startup. Set secure env vars before running in production.');
+  const insecure = checks.filter(c => isInsecureValue(c.value));
+  if (insecure.length) {
+    console.error('Startup aborté : variables d\'environnement critiques manquantes ou non sécurisées :', insecure.map(i => i.name).join(', '));
     process.exit(1);
   }
 }
 
-// Appel immédiat
+// Appeler assertProductionSecrets() juste après la lecture des env
 assertProductionSecrets();
 
 const { validateSecurityConfig } = require('./src/lib/security-config');
