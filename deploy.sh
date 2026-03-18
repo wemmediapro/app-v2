@@ -11,7 +11,8 @@ set -e  # Arrêter en cas d'erreur
 echo "🚀 Démarrage du déploiement..."
 
 # Configuration - MODIFIEZ CES VARIABLES SELON VOTRE CONFIGURATION
-REPO_URL="https://github.com/wemmediapro/app-v2.git"
+# Pour l'authentification Git, utilisez GITHUB_TOKEN (env) ou une URL sans token en lecture publique
+REPO_URL="${REPO_URL:-https://github.com/wemmediapro/app-v2.git}"
 BRANCH="main"
 BACKEND_DIR="backend"
 

@@ -36,14 +36,25 @@ function csrfCookie(req, res, next) {
 /** Chemins exemptés (login/register avant que le client n'ait le cookie) */
 const EXEMPT_PATHS = ['/auth/login', '/auth/register', '/auth/refresh'];
 
+/** Patterns exemptés : tracking public (impressions, clics, listeners) — pas d’auth, pas de CSRF */
+const EXEMPT_PATH_PATTERNS = [
+  /^\/banners\/[^/]+\/impression$/,
+  /^\/banners\/[^/]+\/click$/,
+  /^\/ads\/[^/]+\/impression$/,
+  /^\/radio\/[^/]+\/listeners$/,
+];
+
 /**
  * Middleware : vérifie le token CSRF sur les méthodes non safe.
  * À monter sur les routes API qui modifient des données.
  */
 function csrfProtection(req, res, next) {
   if (SAFE_METHODS.has(req.method)) return next();
-  const path = (req.path || '').replace(/^\/api\/?/, '/') || '/';
+  // originalUrl = path + query ; path peut être relatif au mount (/api) selon Express
+  const raw = (req.originalUrl || req.url || req.path || '').split('?')[0];
+  const path = raw.replace(/^\/api\/?/, '/') || '/';
   if (EXEMPT_PATHS.some((p) => path === p || path.startsWith(p + '/'))) return next();
+  if (EXEMPT_PATH_PATTERNS.some((re) => re.test(path))) return next();
   const cookieToken = req.cookies[COOKIE_NAME];
   const headerToken = req.get(HEADER_NAME) || req.body?._csrf;
   if (!cookieToken || !headerToken || cookieToken !== headerToken) {

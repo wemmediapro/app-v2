@@ -70,7 +70,7 @@ if [ -d ".git" ]; then
     echo "Repository déjà cloné, mise à jour..."
     git pull origin main
 else
-    git clone -b main https://github.com/wemmediapro/app-v2.git .
+    git clone -b main "${REPO_URL:-https://github.com/wemmediapro/app-v2.git}" .
 fi
 
 # Aller dans le dossier backend
