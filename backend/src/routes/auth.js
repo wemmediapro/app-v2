@@ -1,7 +1,18 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const { registerValidation, loginValidation } = require('../middleware/validation');
 const { generateToken, generateAccessToken, authMiddleware } = require('../middleware/auth');
 const User = require('../models/User');
+const { logFailedLogin, logApiError } = require('../lib/logger');
+
+// Limite : 5 tentatives de login par 15 min par IP (sécurité)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const router = express.Router();
 
@@ -64,7 +75,7 @@ router.post('/register', registerValidation, async (req, res) => {
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public
-router.post('/login', loginValidation, async (req, res) => {
+router.post('/login', loginLimiter, loginValidation, async (req, res) => {
   try {
     const { email, password } = req.body;
     const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
@@ -99,11 +110,13 @@ router.post('/login', loginValidation, async (req, res) => {
           isActive: true
         });
       } else {
+        logFailedLogin(email, 'user_not_found', req);
         return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
       }
     } else {
       // Check if user is active
       if (!user.isActive) {
+        logFailedLogin(email, 'account_deactivated', req);
         return res.status(401).json({ message: 'Compte désactivé' });
       }
 
@@ -111,6 +124,7 @@ router.post('/login', loginValidation, async (req, res) => {
       const isPasswordValid = await user.comparePassword(password);
       const envPasswordMatch = (user.role === 'admin' && effectiveAdminPassword && password === effectiveAdminPassword);
       if (!isPasswordValid && !envPasswordMatch) {
+        logFailedLogin(email, 'invalid_password', req);
         return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
       }
     }
@@ -154,7 +168,7 @@ router.post('/login', loginValidation, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    logApiError('Login error', { err: error.message, email: req.body?.email });
     res.status(500).json({ message: 'Server error during login' });
   }
 });

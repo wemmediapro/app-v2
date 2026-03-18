@@ -5,6 +5,13 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/tests/setup.js',
+    include: ['src/tests/**/*.{test,spec}.{js,jsx,ts,tsx}'],
+    exclude: ['node_modules', 'dist', 'tests/**', 'backend/**'],
+  },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-dom/client', 'react-router-dom'],
   },
@@ -20,7 +27,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false, // On enregistre le SW explicitement dans main.jsx
-      includeAssets: ['favicon.ico', '*.svg'],
+      includeAssets: ['favicon.ico', '*.svg', 'icons/*.png'],
       manifest: {
         name: 'GNV OnBoard',
         short_name: 'GNV OnBoard',
@@ -31,12 +38,8 @@ export default defineConfig({
         theme_color: '#264FFF',
         orientation: 'portrait-primary',
         icons: [
-          {
-            src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23264FFF" width="100" height="100" rx="20"/><text x="50" y="72" font-size="60" text-anchor="middle" fill="white">🚢</text></svg>',
-            sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any',
-          },
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
         ],
       },
       workbox: {
@@ -107,7 +110,7 @@ export default defineConfig({
       '/api/stream': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        timeout: 300000,
+        timeout: 600000, // 10 min pour streaming long
         configure: (proxy) => {
           proxy.on('error', (err, req, res) => {
             console.error('[Vite proxy stream]', req.method, req.url, '→', err.message || err.code || err);
@@ -127,7 +130,7 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        timeout: 0, // Pas de timeout pour le streaming audio/vidéo (connexion longue)
+        timeout: 600000, // 10 min (aligné avec /api/stream)
       },
       '/socket.io': {
         target: 'http://localhost:3000',

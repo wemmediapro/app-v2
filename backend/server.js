@@ -274,18 +274,21 @@ dbManager.connect(config.mongodb.uri).then(async (connected) => {
 
 // Socket.io : authentification par JWT (évite accès anonyme aux rooms / send-message)
 const { verifyToken } = require('./src/middleware/auth');
+const { logSocketAuthFailed } = require('./src/lib/logger');
 const mongoose = require('mongoose');
 const LocalServerConfig = require('./src/models/LocalServerConfig');
 
 io.use(async (socket, next) => {
   const token = socket.handshake.auth?.token || socket.handshake.query?.token;
   if (!token) {
+    logSocketAuthFailed(socket.id, 'missing_token');
     return next(new Error('Authentication required'));
   }
   try {
     const decoded = verifyToken(token);
     socket.user = decoded;
   } catch (err) {
+    logSocketAuthFailed(socket.id, 'invalid_token');
     return next(new Error('Invalid token'));
   }
   socket._shipId = connectionCounters.getShipId(socket) || null;
@@ -329,9 +332,10 @@ io.on('connection', (socket) => {
   });
 });
 
-// Gestion des erreurs (réponse cohérente)
+// Gestion des erreurs (réponse cohérente) + logging
+const logger = require('./src/lib/logger');
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  logger.error({ err: err.message, stack: err.stack, path: req?.path, method: req?.method });
   res.status(500).json({
     success: false,
     message: err.message || 'Erreur serveur',
