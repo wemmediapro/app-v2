@@ -981,6 +981,7 @@
     "accessTitle": "Access by role",
     "accessSubtitle": "Check the modules accessible for each role. Changes apply to menu display.",
     "accessSaved": "Access saved",
+    "accessSaveError": "Error saving access rights",
     "accessReset": "Access reset to default",
     "resetAccess": "Reset access",
     "module": "Module",

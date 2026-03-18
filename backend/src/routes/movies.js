@@ -8,6 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { paginate } = require('../middleware/pagination');
 const config = require('../config');
 const Movie = require('../models/Movie');
 const moviesFallback = require('../lib/movies-fallback');
@@ -195,15 +196,13 @@ router.post('/:id/generate-poster', authMiddleware, adminMiddleware, async (req,
   }
 });
 
-// @route   GET /api/movies — ?lang= pour contenu localisé, ?limit=&page= pour pagination (défaut 20, max 100)
+// @route   GET /api/movies — ?lang= pour contenu localisé, pagination via middleware (défaut 20, max 100)
 // Cache Redis 60s pour listes publiques (sans Authorization) — audit CTO
 const LIST_CACHE_TTL = 60;
-router.get('/', async (req, res) => {
+router.get('/', paginate, async (req, res) => {
   try {
-    const { lang, limit: limitParam, page: pageParam } = req.query;
-    const limit = Math.min(Math.max(parseInt(limitParam, 10) || 20, 1), 100);
-    const page = Math.max(1, parseInt(pageParam, 10) || 1);
-    const skip = (page - 1) * limit;
+    const { lang } = req.query;
+    const { page, limit, skip } = req.pagination;
     const langNorm = (lang && String(lang).trim()) || '';
 
     if (!req.get('Authorization')) {

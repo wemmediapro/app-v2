@@ -62,7 +62,11 @@ router.get('/decks', async (req, res) => {
     if (mongoose.connection.readyState === 1) {
       const lang = getRequestLang(req);
       const query = {};
-      if (req.query.shipId) query.shipId = Number(req.query.shipId);
+      const shipIdParam = req.query.shipId;
+      if (shipIdParam != null && shipIdParam !== '' && String(shipIdParam) !== 'undefined') {
+        const n = Number(shipIdParam);
+        if (!Number.isNaN(n) && n >= 1) query.shipId = n;
+      }
       const decks = await Shipmap.find(query).lean().sort({ name: 1 });
       return res.json(decks.map((doc) => {
         const localized = localizeDeck(doc, lang);

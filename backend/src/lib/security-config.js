@@ -2,6 +2,9 @@
  * Validation des variables de sécurité au démarrage.
  * En production : throw si manquant ou invalide.
  * À appeler dès le chargement (ex. dans server.js après dotenv).
+ *
+ * CSRF : les exemptions sont dans src/middleware/csrf.js (EXEMPT_PATHS, EXEMPT_PATH_PATTERNS).
+ * Ne doivent figurer que login/register/refresh et tracking public (banners/ads/radio) — aucune route sensible.
  */
 function validateSecurityConfig() {
   const isProduction = process.env.NODE_ENV === 'production';

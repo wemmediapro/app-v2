@@ -47,62 +47,75 @@ function normalizeNotificationBody(body) {
 }
 
 // GET /api/notifications — liste publique pour l'app passagers (notifications envoyées, pas d'auth)
-// Ne renvoie jamais 500 : en cas d'erreur (DB déconnectée, etc.) on renvoie toujours [].
-function sendEmptyNotifications(res) {
-  if (!res.headersSent) res.json([]);
+// Ne renvoie jamais 500 : en cas d'erreur (DB déconnectée, etc.) on renvoie toujours 200 + { data: [], total: 0, ... }.
+function sendEmptyNotifications(res, pagination) {
+  if (res.headersSent) return;
+  const page = (pagination && pagination.page) || 1;
+  const limit = (pagination && pagination.limit) || 20;
+  try {
+    res.json({ data: [], total: 0, page, limit });
+  } catch (e) {
+    console.error('sendEmptyNotifications:', e);
+  }
 }
 
-router.get('/', paginate, async (req, res) => {
-  try {
-    const langParam = req.query.lang != null ? req.query.lang : 'fr';
-    const lang = typeof langParam === 'string' ? langParam.trim().toLowerCase() : 'fr';
-    const { skip, limit } = req.pagination;
+router.get('/', paginate, (req, res) => {
+  const pagination = req.pagination;
+  (async () => {
+    try {
+      const langParam = req.query.lang != null ? req.query.lang : 'fr';
+      const lang = typeof langParam === 'string' ? langParam.trim().toLowerCase() : 'fr';
+      const { skip, limit } = req.pagination;
 
-    if (mongoose.connection.readyState !== 1) {
-      return sendEmptyNotifications(res);
-    }
-    const now = new Date();
-    const query = {
-      isActive: true,
-      $or: [
-        { scheduledAt: null },
-        { scheduledAt: { $lte: now } }
-      ]
-    };
-    const [notifications, total] = await Promise.all([
-      Notification.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-      Notification.countDocuments(query),
-    ]);
-
-    const list = notifications.map((n) => {
-      const fallbackLangs = [lang, 'fr', 'en'].filter((l, i, a) => a.indexOf(l) === i);
-      let title = '';
-      let message = '';
-      for (const l of fallbackLangs) {
-        const t = n.translations && n.translations[l];
-        if (t && (t.title || t.message)) {
-          title = t.title || n.title || '';
-          message = t.message || n.message || '';
-          break;
-        }
+      if (mongoose.connection.readyState !== 1) {
+        return sendEmptyNotifications(res, pagination);
       }
-      if (!title && !message) {
-        title = n.title || '';
-        message = n.message || '';
-      }
-      return {
-        _id: n._id,
-        title,
-        message,
-        type: n.type,
-        createdAt: n.createdAt
+      const now = new Date();
+      const query = {
+        isActive: true,
+        $or: [
+          { scheduledAt: null },
+          { scheduledAt: { $lte: now } }
+        ]
       };
-    });
-    if (!res.headersSent) res.json({ data: list, total, page: req.pagination.page, limit });
-  } catch (error) {
-    console.error('Get notifications error:', error);
-    sendEmptyNotifications(res);
-  }
+      const [notifications, total] = await Promise.all([
+        Notification.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+        Notification.countDocuments(query),
+      ]);
+
+      const list = notifications.map((n) => {
+        const fallbackLangs = [lang, 'fr', 'en'].filter((l, i, a) => a.indexOf(l) === i);
+        let title = '';
+        let message = '';
+        for (const l of fallbackLangs) {
+          const t = n.translations && n.translations[l];
+          if (t && (t.title || t.message)) {
+            title = t.title || n.title || '';
+            message = t.message || n.message || '';
+            break;
+          }
+        }
+        if (!title && !message) {
+          title = n.title || '';
+          message = n.message || '';
+        }
+        return {
+          _id: n._id,
+          title,
+          message,
+          type: n.type,
+          createdAt: n.createdAt
+        };
+      });
+      if (!res.headersSent) res.json({ data: list, total, page: req.pagination.page, limit });
+    } catch (error) {
+      console.error('Get notifications error:', error);
+      sendEmptyNotifications(res, pagination);
+    }
+  })().catch((err) => {
+    console.error('Get notifications unhandled:', err);
+    sendEmptyNotifications(res, pagination);
+  });
 });
 
 // POST /api/notifications — créer une notification (admin), envoi immédiat ou programmé

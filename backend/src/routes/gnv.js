@@ -343,7 +343,7 @@ router.get('/boat-config', async (req, res) => {
     if (mongoose.connection.readyState !== 1) {
       return res.json({
         success: true,
-        data: { shipName: '', shipCapacity: null, shipInfo: '' },
+        data: { shipName: '', shipCapacity: null, shipInfo: '', shipId: 7 },
         timestamp: new Date().toISOString()
       });
     }
@@ -351,7 +351,8 @@ router.get('/boat-config', async (req, res) => {
     const data = {
       shipName: config?.shipName ?? '',
       shipCapacity: config?.shipCapacity != null ? config.shipCapacity : null,
-      shipInfo: config?.shipInfo ?? ''
+      shipInfo: config?.shipInfo ?? '',
+      shipId: config?.shipId != null && config.shipId >= 1 ? config.shipId : 1
     };
     res.json({
       success: true,
@@ -377,7 +378,7 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ success: false, message: 'Base de données indisponible' });
     }
-    const { shipName, shipCapacity, shipInfo } = req.body;
+    const { shipName, shipCapacity, shipInfo, shipId } = req.body;
     const update = {};
     if (shipName !== undefined) {
       update.shipName = typeof shipName === 'string' ? shipName.trim() : '';
@@ -388,6 +389,10 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
     }
     if (shipInfo !== undefined) {
       update.shipInfo = typeof shipInfo === 'string' ? shipInfo.trim() : '';
+    }
+    if (shipId !== undefined) {
+      const id = typeof shipId === 'number' ? shipId : parseInt(shipId, 10);
+      update.shipId = (id >= 1 && !Number.isNaN(id)) ? id : 1;
     }
     if (Object.keys(update).length === 0) {
       return res.status(400).json({ success: false, message: 'Aucune modification fournie' });
@@ -402,7 +407,8 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
       data: {
         shipName: config.shipName ?? '',
         shipCapacity: config.shipCapacity != null ? config.shipCapacity : null,
-        shipInfo: config.shipInfo ?? ''
+        shipInfo: config.shipInfo ?? '',
+        shipId: config.shipId != null && config.shipId >= 1 ? config.shipId : 1
       },
       timestamp: new Date().toISOString()
     });

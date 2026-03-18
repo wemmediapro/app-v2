@@ -94,11 +94,17 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Nonce CSP : un par requête pour autoriser les scripts sans 'unsafe-inline'
+const crypto = require('crypto');
+app.use((_req, res, next) => {
+  res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"], // Improve later
+      scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce || ''}'`],
       imgSrc: ["'self'", "data:", "https:"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       mediaSrc: ["'self'", "blob:"],
@@ -259,14 +265,23 @@ async function setupAfterDb() {
   const { mountRoutes } = require('./src/routes');
   mountRoutes(app, { dbManager, connectionCounters });
 
-  // SPA fallback et 404 après les routes API (sinon /api/health etc. sont captés par le catch-all)
+  // SPA fallback : injecter le nonce CSP dans index.html pour script-src sans 'unsafe-inline'
   const publicIndex = path.join(config.paths.public, 'index.html');
-  app.get('/', (req, res) => {
-    res.sendFile(publicIndex);
-  });
+  const sendIndexWithNonce = (req, res) => {
+    const nonce = res.locals.cspNonce || '';
+    try {
+      let html = fs.readFileSync(publicIndex, 'utf8');
+      html = html.replace(/__CSP_NONCE__/g, nonce);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+    } catch (err) {
+      res.status(500).send('index.html not found');
+    }
+  };
+  app.get('/', sendIndexWithNonce);
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
-    res.sendFile(publicIndex);
+    sendIndexWithNonce(req, res);
   });
   app.use('*', (req, res) => {
     res.status(404).json({ message: 'Route not found' });

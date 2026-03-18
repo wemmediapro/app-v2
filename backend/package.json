@@ -40,7 +40,8 @@
     "convert:videos-hls": "node scripts/convert-videos-to-hls.js",
     "analyze:ui": "node scripts/analyze-ui-ergonomics-openai.js",
     "apply:improvements": "node scripts/apply-improvements-openai.js",
-    "audit:complet": "node scripts/audit-complet-openia.js"
+    "audit:complet": "node scripts/audit-complet-openia.js",
+    "verify:restaurant-images": "node scripts/verify-restaurant-menu-images.js"
   },
   "keywords": [
     "gnv",
@@ -55,7 +56,6 @@
     "@socket.io/redis-adapter": "^8.2.1",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^12.5.0",
     "cheerio": "^1.1.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -78,6 +78,7 @@
     "socket.io": "^4.7.4"
   },
   "devDependencies": {
+    "better-sqlite3": "^12.5.0",
     "jest": "^29.7.0",
     "nodemon": "^3.0.2",
     "supertest": "^6.3.3"

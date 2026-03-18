@@ -12,7 +12,11 @@ const localServerConfigSchema = new mongoose.Schema({
   /** Informations du bateau unique (utilisées dans restaurant, shop, plan du bateau) */
   shipName: { type: String, trim: true, default: '' },
   shipCapacity: { type: Number, min: 0, default: null },
-  shipInfo: { type: String, trim: true, default: '' }
+  shipInfo: { type: String, trim: true, default: '' },
+  /** ID navire GNV pour Shipmap (ex: 7 = GNV Excellent). Public pour l'app. */
+  shipId: { type: Number, min: 1, default: 7 },
+  /** Droits d'accès par rôle (dashboard) : { admin: { moduleId: true }, crew: {...}, passenger: {...} } */
+  accessByRole: { type: mongoose.Schema.Types.Mixed, default: null }
 }, { timestamps: true });
 
 module.exports = mongoose.model('LocalServerConfig', localServerConfigSchema);

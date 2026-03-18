@@ -1,5 +1,6 @@
 /**
  * Handlers Socket.io : autorisation stricte, sanitization messages (XSS), rate limiting par socket.
+ * Sécurité : isRoomAllowed() limite les rooms (prefixes ship/notifications/chat) ; sanitizeContent() strip HTML / limite longueur (XSS).
  * À appeler depuis server.js après io.use(auth).
  */
 const logger = require('../lib/logger');

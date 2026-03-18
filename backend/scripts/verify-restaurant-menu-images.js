@@ -86,6 +86,11 @@ async function main() {
   console.log('');
 
   await mongoose.disconnect();
+  const hasMissing = totalRestoMissing > 0 || totalDishesPathNoFile > 0;
+  if (hasMissing) {
+    console.error('❌ Des images sont référencées en base mais absentes du disque. Corrigez ou exécutez les seeds.');
+    process.exit(1);
+  }
   process.exit(0);
 }
 

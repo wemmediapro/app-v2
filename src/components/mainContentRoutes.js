@@ -1,6 +1,6 @@
 /**
  * Config des routes MainContent — une entrée par page.
- * Utilisé par MainContent.simplified / .performant / .maintainable.
+ * Utilisé par MainContent et MainContent.performant.
  * Ajouter une page = ajouter une entrée ici + lazy() dans MainContent.
  */
 import React, { lazy } from 'react';

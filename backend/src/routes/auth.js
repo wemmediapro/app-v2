@@ -163,6 +163,7 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
         dateOfBirth: user.dateOfBirth,
         preferences: user.preferences,
         allowedModules: user.allowedModules,
+        mustChangePassword: !!user.mustChangePassword,
         userData: user.userData || { favorites: { magazineIds: [], restaurantIds: [], enfantIds: [], watchlist: [], shopItems: [] }, playbackPositions: {} }
       }
     });
@@ -209,7 +210,9 @@ router.get('/me', authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    const json = user.toObject ? user.toObject() : user;
+    json.mustChangePassword = !!user.mustChangePassword;
+    res.json(json);
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -280,6 +283,7 @@ router.put('/change-password', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Mot de passe actuel incorrect' });
     }
     user.password = newPassword.trim();
+    user.mustChangePassword = false;
     await user.save();
     res.json({ message: 'Mot de passe modifié avec succès' });
   } catch (error) {

@@ -3,7 +3,7 @@ import axios from 'axios';
 // En dev : utiliser le proxy Vite (/api → backend 3000). Sinon : .env ou défaut 3000.
 const API_BASE_URL = import.meta.env.DEV
   ? '/api'
-  : (import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:3000/api'));
+  : (import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:3000/api')); // navigateur : fallback window.location.origin, pas de localhost hardcodé
 /** Origine du backend (sans /api) pour streaming vidéo, audio et images. En 100% offline, servir l'app depuis ce même hôte. */
 export const BACKEND_ORIGIN = import.meta.env.DEV ? '' : (API_BASE_URL || '').replace(/\/api\/?$/, '');
 
@@ -254,6 +254,9 @@ export const apiService = {
 
   // Espace Enfant
   getEnfantActivities: (params = '') => api.get(`/enfant/activities?${params}`),
+
+  // Config bateau (public — nom, capacité, shipId pour plan du navire)
+  getBoatConfig: () => api.get('/gnv/boat-config'),
 
   // Shipmap
   getShipmap: () => api.get('/shipmap'),

@@ -123,6 +123,13 @@ export default defineConfig({
         timeout: 120000, // 2 min — uploads lourds (images/vidéos) ; /api/stream et /uploads ont 10 min
         configure: (proxy) => {
           proxy.on('error', (err, req, res) => {
+            // Quand le backend est down (ECONNREFUSED), GET /api/notifications → 200 + liste vide pour éviter 500 en console
+            const isGetNotifications = req.method === 'GET' && /^\/api\/notifications(\?|$)/.test(req.url || '');
+            if (isGetNotifications && res && !res.headersSent) {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ data: [], total: 0, page: 1, limit: 20 }));
+              return;
+            }
             console.error('[Vite proxy]', req.method, req.url, '→', err.message || err.code || err);
           });
         },

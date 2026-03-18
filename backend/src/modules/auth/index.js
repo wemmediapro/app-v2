@@ -3,6 +3,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
+const config = require('../config');
 
 const router = express.Router();
 
@@ -22,7 +23,11 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ error: 'Token d\'accès requis' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret', (err, user) => {
+  const secret = config.jwt?.secret;
+  if (!secret) {
+    return res.status(503).json({ error: 'JWT non configuré (JWT_SECRET manquant)' });
+  }
+  jwt.verify(token, secret, (err, user) => {
     if (err) {
       return res.status(403).json({ error: 'Token invalide' });
     }
@@ -102,15 +107,14 @@ router.post('/login', authLimiter, async (req, res) => {
     }
 
     // Génération du token JWT
+    const secret = config.jwt?.secret;
+    if (!secret) {
+      return res.status(503).json({ error: 'JWT non configuré (JWT_SECRET manquant)' });
+    }
     const token = jwt.sign(
-      { 
-        id: user.id, 
-        email: user.email, 
-        role: user.role,
-        cabinNumber: user.cabinNumber 
-      },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { id: user.id, email: user.email, role: user.role, cabinNumber: user.cabinNumber },
+      secret,
+      { expiresIn: process.env.JWT_EXPIRES_IN || config.jwt?.expiresIn || '7d' }
     );
 
     res.json({
@@ -166,15 +170,14 @@ router.post('/register', async (req, res) => {
     };
 
     // Génération du token
+    const secret = config.jwt?.secret;
+    if (!secret) {
+      return res.status(503).json({ error: 'JWT non configuré (JWT_SECRET manquant)' });
+    }
     const token = jwt.sign(
-      { 
-        id: newUser.id, 
-        email: newUser.email, 
-        role: newUser.role,
-        cabinNumber: newUser.cabinNumber 
-      },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { id: newUser.id, email: newUser.email, role: newUser.role, cabinNumber: newUser.cabinNumber },
+      secret,
+      { expiresIn: process.env.JWT_EXPIRES_IN || config.jwt?.expiresIn || '7d' }
     );
 
     res.status(201).json({

@@ -981,6 +981,7 @@
     "accessTitle": "Accès par rôle",
     "accessSubtitle": "Cochez les modules accessibles pour chaque rôle. Les changements s'appliquent à l'affichage du menu.",
     "accessSaved": "Accès enregistrés",
+    "accessSaveError": "Erreur lors de l'enregistrement des droits",
     "accessReset": "Accès réinitialisés par défaut",
     "resetAccess": "Réinitialiser les accès",
     "module": "Module",

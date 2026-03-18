@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "tunnel": "lt --port 5173 --subdomain gnv-dashboard",
     "expose": "npx -y localtunnel --port 5173 --subdomain gnv-dashboard",
-    "expose:public": "./expose-frontend.sh"
+    "expose:public": "./expose-frontend.sh",
+    "verify-translations": "node scripts/verify-translations.cjs"
   },
   "dependencies": {
     "axios": "^1.6.2",

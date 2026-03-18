@@ -80,8 +80,8 @@ function getDefaultAccess() {
 
 export { getDefaultAccess };
 
-// Droits par rôle : actuellement en localStorage. Pour une vraie gestion multi-utilisateurs, persister en base (API GET/PUT /api/settings/role-access) et charger depuis le serveur.
-function loadAccess() {
+// Fallback localStorage si l'API n'a pas encore de données
+function loadAccessFromStorage() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -97,19 +97,22 @@ function loadAccess() {
   return getDefaultAccess();
 }
 
-function saveAccess(access) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(access));
+function saveAccessToStorage(access) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(access));
+  } catch (_) {}
 }
 
 export function getAccessByRole() {
-  return loadAccess();
+  return loadAccessFromStorage();
 }
 
 const Settings = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { boatConfig, loading: loadingBoat, refreshBoatConfig } = useBoatConfig();
-  const [access, setAccess] = useState(() => loadAccess());
+  const [access, setAccess] = useState(() => getDefaultAccess());
+  const [accessLoading, setAccessLoading] = useState(true);
   const [saved, setSaved] = useState(true);
 
   // Formulaire unique du bateau (nom, capacité, informations)
@@ -154,9 +157,33 @@ const Settings = () => {
     }
   };
 
+  // Charger les droits depuis l'API (MongoDB), fallback localStorage si vide ou erreur
   useEffect(() => {
-    const stored = loadAccess();
-    setAccess(stored);
+    let cancelled = false;
+    setAccessLoading(true);
+    apiService.getAccessSettings()
+      .then((res) => {
+        if (cancelled) return;
+        const data = res?.data?.data ?? res?.data;
+        const defaultAccess = getDefaultAccess();
+        if (data && typeof data === 'object' && (data.admin || data.crew || data.passenger)) {
+          const merged = {
+            admin: { ...defaultAccess.admin, ...(data.admin || {}) },
+            crew: { ...defaultAccess.crew, ...(data.crew || {}) },
+            passenger: { ...defaultAccess.passenger, ...(data.passenger || {}) },
+          };
+          setAccess(merged);
+          saveAccessToStorage(merged);
+        } else {
+          const stored = loadAccessFromStorage();
+          setAccess(stored);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setAccess(loadAccessFromStorage());
+      })
+      .finally(() => { if (!cancelled) setAccessLoading(false); });
+    return () => { cancelled = true; };
   }, []);
 
   const handleToggle = (role, moduleId) => {
@@ -170,17 +197,21 @@ const Settings = () => {
     setSaved(false);
   };
 
-  const handleSave = () => {
-    saveAccess(access);
-    setSaved(true);
-    toast.success(t('settings.accessSaved'));
+  const handleSave = async () => {
+    try {
+      await apiService.updateAccessSettings(access);
+      saveAccessToStorage(access);
+      setSaved(true);
+      toast.success(t('settings.accessSaved'));
+    } catch (err) {
+      toast.error(err?.response?.data?.message || t('settings.accessSaveError'));
+    }
   };
 
   const handleReset = () => {
     const defaultAccess = getDefaultAccess();
     setAccess(defaultAccess);
-    saveAccess(defaultAccess);
-    setSaved(true);
+    setSaved(false);
     toast.success(t('settings.accessReset'));
   };
 

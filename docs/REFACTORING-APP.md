@@ -85,9 +85,10 @@ function App() {
 
 ## Fichiers concernés
 
-- `src/hooks/useBanners.js` (nouveau)
-- `src/hooks/useRadio.js` (nouveau)
-- `src/hooks/useWebtv.js` (nouveau)
-- `src/hooks/useShipmap.js` (nouveau)
-- `src/App.jsx` (allégé, ~400–600 lignes cible)
+- `src/hooks/useBanners.js` ✅ en place
+- `src/hooks/useRadio.js` (à extraire depuis App.jsx — ~650 lignes)
+- `src/hooks/useWebtv.js` (à extraire depuis App.jsx — ~450 lignes)
+- `src/hooks/useShipmap.js` ✅ implémenté (boatConfig shipId, ponts, deckServices)
+- `src/hooks/useChat.js` (optionnel — à extraire depuis App.jsx — ~400 lignes)
+- `src/App.jsx` (allégé progressivement, cible ~400–600 lignes)
 - `src/components/MainContent.jsx` (inchangé, reçoit les mêmes props)

@@ -14,6 +14,7 @@ const RadioStation = require('../models/RadioStation');
 const Movie = require('../models/Movie');
 const EnfantActivity = require('../models/EnfantActivity');
 const Product = require('../models/Product');
+const LocalServerConfig = require('../models/LocalServerConfig');
 
 const router = express.Router();
 
@@ -398,6 +399,51 @@ router.post('/cache/clear', async (req, res) => {
   } catch (error) {
     console.error('Cache clear error:', error);
     res.status(500).json({ message: 'Erreur lors du vidage du cache' });
+  }
+});
+
+// GET /api/admin/settings/access — Droits d'accès par rôle (admin, crew, passenger)
+router.get('/settings/access', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ success: false, message: 'Base de données indisponible' });
+    }
+    const config = await LocalServerConfig.findOne({ id: 'local' }).lean();
+    const access = config?.accessByRole || null;
+    res.json({ success: true, data: access });
+  } catch (error) {
+    console.error('GET settings/access error:', error);
+    res.status(500).json({ success: false, message: 'Erreur lors de la récupération des droits' });
+  }
+});
+
+// PUT /api/admin/settings/access — Enregistrer les droits par rôle en base. Corps : { admin: {...}, crew: {...}, passenger: {...} }
+router.put('/settings/access', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ success: false, message: 'Base de données indisponible' });
+    }
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const { admin, crew, passenger } = body;
+    const accessByRole = {
+      ...(admin != null && typeof admin === 'object' ? { admin } : {}),
+      ...(crew != null && typeof crew === 'object' ? { crew } : {}),
+      ...(passenger != null && typeof passenger === 'object' ? { passenger } : {})
+    };
+    if (Object.keys(accessByRole).length === 0) {
+      return res.status(400).json({ success: false, message: 'Corps invalide : fournir admin, crew et/ou passenger (objets)' });
+    }
+    const config = await LocalServerConfig.findOne({ id: 'local' }).lean();
+    const merged = { ...(config?.accessByRole || {}), ...accessByRole };
+    await LocalServerConfig.findOneAndUpdate(
+      { id: 'local' },
+      { $set: { accessByRole: merged } },
+      { new: true, upsert: true }
+    );
+    res.json({ success: true, message: 'Droits enregistrés' });
+  } catch (error) {
+    console.error('PUT settings/access error:', error);
+    res.status(500).json({ success: false, message: 'Erreur lors de l\'enregistrement des droits' });
   }
 });
 

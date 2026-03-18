@@ -217,6 +217,9 @@ export const apiService = {
   // Limite de connexions du serveur local (où tourne le backend)
   getConnectionLimit: () => api.get('/gnv/connection-limit'),
   updateConnectionLimit: (data) => api.patch('/gnv/connection-limit', data),
+  // Droits d'accès par rôle (persistés en base)
+  getAccessSettings: () => api.get('/admin/settings/access'),
+  updateAccessSettings: (data) => api.put('/admin/settings/access', data),
 
   // Generic GET method
   get: (url) => api.get(url),

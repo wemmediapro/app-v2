@@ -37,6 +37,7 @@ function csrfCookie(req, res, next) {
 const EXEMPT_PATHS = ['/auth/login', '/auth/register', '/auth/refresh'];
 
 /** Patterns exemptés : tracking public (impressions, clics, listeners) — pas d’auth, pas de CSRF */
+/** Exemptions = tracking public only. Do not add write/admin/personal data routes. */
 const EXEMPT_PATH_PATTERNS = [
   /^\/banners\/[^/]+\/impression$/,
   /^\/banners\/[^/]+\/click$/,

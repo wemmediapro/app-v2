@@ -14,6 +14,7 @@ import { useEnfant } from "./hooks/useEnfant";
 import { useNotifications } from "./hooks/useNotifications";
 import { useMoviesState } from "./hooks/useMoviesState";
 import { useBanners } from "./hooks/useBanners";
+import { useShipmap } from "./hooks/useShipmap";
 import LanguageSelector from "./components/LanguageSelector";
 import BottomNav from "./components/BottomNav";
 import AppHeader from "./components/AppHeader";
@@ -247,7 +248,7 @@ function App() {
 
     let newSocket = null;
     let connectTimeout;
-    // En dev : même origine pour passer par le proxy Vite (/socket.io → backend). En prod : VITE_SOCKET_URL ou origine API.
+    // URL Socket.io : dev = même origine (proxy Vite) ; prod = VITE_SOCKET_URL ou dérivé de VITE_API_URL ou window.location.origin (pas de localhost hardcodé côté navigateur).
     const socketUrl = import.meta.env.DEV
       ? ''
       : (import.meta.env.VITE_SOCKET_URL || (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'));
@@ -406,24 +407,20 @@ function App() {
     setSelectedRestaurant,
   } = useRestaurant(language, t, restaurantFavoritesIds);
 
-  // === Plan du navire state (page dédiée à un seul navire) ===
-  const SHIPMAP_SHIP_ID = 7; // GNV Excellent
-  // === GNV Navires (depuis API MongoDB) — déclaré avant shipmapShip qui en dépend ===
-  const [gnvShips, setGnvShips] = useState(gnvShipsList);
-  const [currentShipName, setCurrentShipName] = useState(currentShip.name);
-  const shipmapShip = useMemo(() => {
-    if (gnvShips.length > 0) {
-      const s = gnvShips[0];
-      return { id: s.id, name: s.name, route: s.route || '' };
-    }
-    return { name: 'GNV Excellent', route: 'Gênes - Palerme' };
-  }, [gnvShips]);
-  const [shipmapDecks, setShipmapDecks] = useState([]);
-  const [shipmapLoading, setShipmapLoading] = useState(true);
-  const [selectedDeck, setSelectedDeck] = useState(null);
-  const [shipSearchQuery, setShipSearchQuery] = useState('');
-  const [shipmapDeckTypeFilter, setShipmapDeckTypeFilter] = useState('all'); // all | cabin | service | vehicle | public
-  const [showShipmapAddPlanModal, setShowShipmapAddPlanModal] = useState(false);
+  // === Plan du navire : ID depuis boatConfig (API), puis hook useShipmap ===
+  const [shipmapShipId, setShipmapShipId] = useState(7);
+  useEffect(() => {
+    let cancelled = false;
+    apiService.getBoatConfig().then((res) => {
+      if (cancelled) return;
+      const data = res?.data?.data ?? res?.data ?? {};
+      const id = data.shipId != null && data.shipId >= 1 ? Number(data.shipId) : 7;
+      setShipmapShipId(id);
+    }).catch(() => { if (!cancelled) setShipmapShipId(7); });
+    return () => { cancelled = true; };
+  }, []);
+  const shipmap = useShipmap(language, t, shipmapShipId);
+  const currentShipName = shipmap.currentShipName || currentShip.name;
 
   // === Espace Enfant state ===
   const [enfantFavoritesIds, setEnfantFavoritesIds] = useState([]);
@@ -692,30 +689,6 @@ function App() {
     })();
     return () => { cancelled = true; };
   }, [page, radioStations, currentRadio]);
-
-  // Chargement des navires GNV depuis l'API (MongoDB)
-  useEffect(() => {
-    let cancelled = false;
-    const loadShips = async () => {
-      try {
-        const res = await apiService.getGNVShips();
-        if (cancelled) return;
-        const data = res?.data?.data;
-        if (Array.isArray(data) && data.length > 0) {
-          setGnvShips(data.map((s) => ({
-            id: s.id || s._id,
-            name: s.name,
-            route: s.route || (s.routes?.[0] ? `${s.routes[0].from} - ${s.routes[0].to}` : '')
-          })));
-          setCurrentShipName(data[0].name);
-        }
-      } catch (_) {
-        // Garde la liste statique gnvShipsList déjà en state
-      }
-    };
-    loadShips();
-    return () => { cancelled = true; };
-  }, []);
 
   // === Radio functions ===
   // Initialiser l'élément audio
@@ -1839,86 +1812,6 @@ function App() {
     return () => { cancelled = true; };
   }, []);
 
-  const refetchShipmap = async () => {
-    setShipmapLoading(true);
-    try {
-      const res = await apiService.getShipmapDecks(`shipId=${SHIPMAP_SHIP_ID}&lang=${language}`);
-      const list = Array.isArray(res?.data) ? res.data : res?.data?.decks || [];
-      setShipmapDecks(list);
-      if (list.length > 0) {
-        setSelectedDeck((prev) => {
-          if (!prev || !list.some(d => (d._id || d.id) === prev)) return list[0]._id || list[0].id;
-          return prev;
-        });
-      }
-    } catch (e) {
-      setShipmapDecks([]);
-    } finally {
-      setShipmapLoading(false);
-    }
-  };
-
-  // Chargement du plan du navire (API) — navire Excellence / GNV Excellent (selon langue)
-  useEffect(() => {
-    refetchShipmap();
-  }, [language]);
-
-  const deckTypeToIcon = (type) => {
-    const t = (type || '').toLowerCase();
-    if (t === 'vehicle') return '🚗';
-    if (t === 'cabin') return '🛏️';
-    if (t === 'service') return '🍽️';
-    if (t === 'public') return '☀️';
-    return '📋';
-  };
-
-  const shipDecks = useMemo(() => shipmapDecks.map((d) => ({
-    id: d._id || d.id,
-    name: d.name || '',
-    label: (d.description || '').slice(0, 40),
-    icon: deckTypeToIcon(d.type),
-    type: (d.type || '').toLowerCase(),
-    color: d.type === 'vehicle' ? 'bg-slate-100' : d.type === 'cabin' ? 'bg-blue-100' : d.type === 'service' ? 'bg-teal-100' : 'bg-amber-100'
-  })), [shipmapDecks]);
-  const shipDecksFiltered = useMemo(() => {
-    if (shipmapDeckTypeFilter === 'all') return shipDecks;
-    return shipDecks.filter((d) => d.type === shipmapDeckTypeFilter);
-  }, [shipDecks, shipmapDeckTypeFilter]);
-  const selectedDeckInfo = useMemo(() => shipDecks.find((d) => d.id === selectedDeck), [shipDecks, selectedDeck]);
-
-  useEffect(() => {
-    if (shipDecksFiltered.length > 0 && selectedDeck && !shipDecksFiltered.some((d) => d.id === selectedDeck)) {
-      setSelectedDeck(shipDecksFiltered[0].id);
-    }
-  }, [shipmapDeckTypeFilter, shipDecksFiltered]);
-
-  const deckServices = useMemo(() => {
-    const openLabel = t('shipmap.serviceOpen');
-    const closedLabel = t('shipmap.serviceClosed');
-    const o = {};
-    shipmapDecks.forEach((d) => {
-      const id = d._id || d.id;
-      o[id] = {
-        title: d.name || t('shipmap.deckNumber', { number: id }),
-        summary: d.description || '',
-        services: (d.services || []).map((s) => {
-          const name = typeof s === 'string' ? s : (s?.name ?? '');
-          const icon = typeof s === 'object' && s?.icon ? s.icon : '•';
-          const details = typeof s === 'object' && s?.openingHours ? s.openingHours : '';
-          const isOpen = typeof s === 'object' && s?.isOpen !== undefined ? s.isOpen : true;
-          return { title: name, type: 'Service', icon, status: isOpen ? openLabel : closedLabel, details };
-        }),
-      };
-    });
-    return o;
-  }, [shipmapDecks, t]);
-
-  const deckRooms = useMemo(() => {
-    const o = {};
-    shipmapDecks.filter((d) => d.type === 'cabin').forEach((d) => { o[d._id || d.id] = '—'; });
-    return o;
-  }, [shipmapDecks]);
-
   // === Movies & Series functions ===
   const toggleWatchlist = (movieId) => {
     const key = `watchlist_${favoritesStorageSuffix}`;
@@ -2449,22 +2342,6 @@ function App() {
     }
   }, []);
 
-  const currentDeck = useMemo(() => {
-    if (!selectedDeck) return { title: '', summary: '', services: [] };
-    return deckServices[selectedDeck] || { title: '', summary: '', services: [] };
-  }, [selectedDeck, deckServices]);
-  const filteredDeckServices = useMemo(() => {
-    const services = currentDeck.services || [];
-    if (!shipSearchQuery || !shipSearchQuery.trim()) return services;
-    const query = shipSearchQuery.toLowerCase();
-    return services.filter(
-      (service) =>
-        (service.title && service.title.toLowerCase().includes(query)) ||
-        (service.type && service.type.toLowerCase().includes(query)) ||
-        (service.details && service.details.toLowerCase().includes(query))
-    );
-  }, [currentDeck, shipSearchQuery]);
-
   // === Shop favoris (utilisés par ShopPage, Favorites et raccourcis home) ===
   const isShopFavorite = (productId) => shopFavorites.some(p => p.id === productId);
 
@@ -2657,23 +2534,7 @@ function App() {
                 setSelectedActivity={setSelectedActivity}
                 isEnfantFavorite={isEnfantFavorite}
                 toggleEnfantFavorite={toggleEnfantFavorite}
-                shipmapShip={shipmapShip}
-                shipmapLoading={shipmapLoading}
-                refetchShipmap={refetchShipmap}
-                shipDecks={shipDecks}
-                shipDecksFiltered={shipDecksFiltered}
-                selectedDeck={selectedDeck}
-                setSelectedDeck={setSelectedDeck}
-                shipmapDeckTypeFilter={shipmapDeckTypeFilter}
-                setShipmapDeckTypeFilter={setShipmapDeckTypeFilter}
-                shipSearchQuery={shipSearchQuery}
-                setShipSearchQuery={setShipSearchQuery}
-                deckServices={deckServices}
-                selectedDeckInfo={selectedDeckInfo}
-                filteredDeckServices={filteredDeckServices}
-                deckRooms={deckRooms}
-                showShipmapAddPlanModal={showShipmapAddPlanModal}
-                setShowShipmapAddPlanModal={setShowShipmapAddPlanModal}
+                {...shipmap}
                 notificationsList={notificationsList}
                 notificationsLoading={notificationsLoading}
                 shopFavorites={shopFavorites}
