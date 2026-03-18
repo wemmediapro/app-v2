@@ -104,7 +104,7 @@ function createLimiter(store, options = {}) {
     ...options,
     store: store || undefined,
     standardHeaders: options.standardHeaders !== false,
-    legacyHeaders: options.legacyHeaders !== false,
+    legacyHeaders: options.legacyHeaders === true,
   });
 }
 

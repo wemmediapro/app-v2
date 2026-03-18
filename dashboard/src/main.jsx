@@ -3,17 +3,17 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 
-// Sentry (initialisation conditionnelle pour le dashboard)
+// Sentry (initialisation conditionnelle pour le dashboard — API v8)
 (async function initSentry() {
   try {
     const dsn = import.meta.env.VITE_SENTRY_DSN;
     if (!dsn) return;
     const Sentry = await import('@sentry/react');
-    const { BrowserTracing } = await import('@sentry/tracing');
+    const { browserTracingIntegration } = Sentry;
 
     Sentry.init({
       dsn,
-      integrations: [new BrowserTracing()],
+      integrations: [browserTracingIntegration()],
       tracesSampleRate: parseFloat(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE || '0.02'),
       environment: import.meta.env.MODE || 'development'
     });

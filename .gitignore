@@ -76,6 +76,7 @@ scripts/*.sh
 !scripts/enable-gpg-signing.sh
 docs/AUDIT-*.md
 docs/refactor/
+PR_DRAFT*.md
 docs/testing/
 docs/CHECKLIST-*.md
 docs/STRATEGIE-*.md
