@@ -261,7 +261,12 @@
     "webRadio": "Web radio",
     "programUpdatedToast": "Program updated",
     "programCreatedToast": "Program created",
-    "addTimeSlotTitle": "Add a time slot"
+    "addTimeSlotTitle": "Add a time slot",
+    "repeatingProgram": "Repeating program",
+    "updateButton": "Update",
+    "createButton": "Create",
+    "pleaseEnterTitle": "Please enter a title",
+    "fillRequiredFields": "Please fill all required fields"
   },
   "webtv": {
     "title": "WebTV Management",

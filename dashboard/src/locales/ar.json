@@ -191,7 +191,15 @@
     "audioFileSaved": "تم حفظ ملف الصوت",
     "uploadAudioError": "خطأ في رفع الصوت",
     "programMustHaveAudio": "يجب أن يحتوي البرنامج على ملف صوتي",
-    "durationNotAvailable": "تم اختيار الملف (المدة غير متوفرة، أدخل وقت الانتهاء إن لزم)"
+    "durationNotAvailable": "تم اختيار الملف (المدة غير متوفرة، أدخل وقت الانتهاء إن لزم)",
+    "programUpdatedToast": "تم تحديث البرنامج",
+    "programCreatedToast": "تم إنشاء البرنامج",
+    "addTimeSlotTitle": "إضافة فترة زمنية",
+    "repeatingProgram": "برنامج متكرر",
+    "updateButton": "تحديث",
+    "createButton": "إنشاء",
+    "pleaseEnterTitle": "يرجى إدخال العنوان",
+    "fillRequiredFields": "يرجى ملء جميع الحقول المطلوبة"
   },
   "webtv": {
     "title": "إدارة ويب تي في",

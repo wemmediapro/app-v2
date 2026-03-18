@@ -233,7 +233,15 @@
     "audioFileSaved": "Audio file saved",
     "uploadAudioError": "Audio upload error",
     "programMustHaveAudio": "Program must have an audio file",
-    "durationNotAvailable": "File selected (duration not available, enter end time if needed)"
+    "durationNotAvailable": "File selected (duration not available, enter end time if needed)",
+    "programUpdatedToast": "Programm aktualisiert",
+    "programCreatedToast": "Programm erstellt",
+    "addTimeSlotTitle": "Zeitfenster hinzufügen",
+    "repeatingProgram": "Wiederkehrendes Programm",
+    "updateButton": "Aktualisieren",
+    "createButton": "Erstellen",
+    "pleaseEnterTitle": "Bitte geben Sie einen Titel ein",
+    "fillRequiredFields": "Bitte füllen Sie alle Pflichtfelder aus"
   },
   "webtv": {
     "title": "WebTV Management",

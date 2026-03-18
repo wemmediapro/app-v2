@@ -780,7 +780,7 @@ const Radio = () => {
                             ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-800'
                         }`}>
-                          {program.isActive ? 'Active' : 'Inactive'}
+                          {program.isActive ? t('common.active') : t('common.inactive')}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -2645,7 +2645,7 @@ const Radio = () => {
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
                 <label htmlFor="repeating" className="text-sm text-gray-700">
-                  Repeating program
+                  {t('radio.repeatingProgram')}
                 </label>
               </div>
 
@@ -2658,7 +2658,7 @@ const Radio = () => {
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
                 <label htmlFor="active" className="text-sm text-gray-700">
-                  Active
+                  {t('common.active')}
                 </label>
               </div>
             </div>
@@ -2671,14 +2671,14 @@ const Radio = () => {
                 }}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   if (!newProgram.title.trim()) {
-                    toast.error('Please enter a title');
+                    toast.error(t('radio.pleaseEnterTitle'));
                     return;
                   }
                   if (editingProgram) {
@@ -2709,7 +2709,7 @@ const Radio = () => {
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                {editingProgram ? 'Update' : 'Create'}
+                {editingProgram ? t('radio.updateButton') : t('radio.createButton')}
               </motion.button>
             </div>
           </motion.div>
@@ -2801,14 +2801,14 @@ const Radio = () => {
                 }}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   if (!newTimeSlot.title.trim() || !newTimeSlot.date || !newTimeSlot.startTime) {
-                    toast.error('Please fill all required fields');
+                    toast.error(t('radio.fillRequiredFields'));
                     return;
                   }
                   const endTime = getEndTime(newTimeSlot.startTime, newTimeSlot.duration);

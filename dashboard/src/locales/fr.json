@@ -247,7 +247,15 @@
     "audioFileSaved": "Fichier audio enregistré",
     "uploadAudioError": "Erreur upload audio",
     "programMustHaveAudio": "Le programme doit avoir un fichier audio",
-    "durationNotAvailable": "Fichier sélectionné (durée non disponible, saisissez l'heure de fin si besoin)"
+    "durationNotAvailable": "Fichier sélectionné (durée non disponible, saisissez l'heure de fin si besoin)",
+    "programUpdatedToast": "Programme modifié",
+    "programCreatedToast": "Programme créé",
+    "addTimeSlotTitle": "Ajouter un créneau",
+    "repeatingProgram": "Programme récurrent",
+    "updateButton": "Modifier",
+    "createButton": "Créer",
+    "pleaseEnterTitle": "Veuillez saisir un titre",
+    "fillRequiredFields": "Veuillez remplir tous les champs obligatoires"
   },
   "webtv": {
     "title": "Gestion WebTV",

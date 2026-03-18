@@ -260,7 +260,15 @@
     "loadingMediaLibrary": "Caricamento biblioteca media…",
     "orderTitleHint": "Cambiare l'ordine ricalcola inizio e fine automaticamente",
     "startTimeTitleAuto": "Calcolata: fine del programma precedente. Cambia l'ordine per modificare.",
-    "endTimeTitleAuto": "Calcolata: ora di inizio + durata del titolo"
+    "endTimeTitleAuto": "Calcolata: ora di inizio + durata del titolo",
+    "programUpdatedToast": "Programma aggiornato",
+    "programCreatedToast": "Programma creato",
+    "addTimeSlotTitle": "Aggiungi fascia oraria",
+    "repeatingProgram": "Programma ripetuto",
+    "updateButton": "Aggiorna",
+    "createButton": "Crea",
+    "pleaseEnterTitle": "Inserire un titolo",
+    "fillRequiredFields": "Compilare tutti i campi obbligatori"
   },
   "webtv": {
     "title": "Gestione WebTV",
