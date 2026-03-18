@@ -14,6 +14,20 @@ try {
 }
 const config = require('./src/config');
 const connectionCounters = require('./src/lib/connectionCounters');
+const sentry = require('./src/lib/sentry');
+
+if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
+  sentry.init();
+  process.on('uncaughtException', (err) => {
+    sentry.captureException(err);
+    console.error('uncaughtException:', err);
+    process.exit(1);
+  });
+  process.on('unhandledRejection', (reason, promise) => {
+    sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)));
+    console.error('unhandledRejection:', reason);
+  });
+}
 
 const express = require('express');
 const compression = require('compression');
@@ -237,8 +251,30 @@ app.use('/public', express.static(config.paths.public));
 const dbManager = require('./src/lib/database');
 const cacheManager = require('./src/lib/cache-manager');
 
+/** En production : vérifier que Redis est accessible (obligatoire pour rate limit, Socket.io, cache). */
+async function ensureRedisInProduction() {
+  if (process.env.NODE_ENV !== 'production') return;
+  const uri = config.redis?.uri;
+  if (!uri || typeof uri !== 'string' || !uri.startsWith('redis')) {
+    console.error('CRITICAL: En production REDIS_URI (ou REDIS_URL) doit être défini.');
+    process.exit(1);
+  }
+  const { createClient } = require('redis');
+  const client = createClient({ url: uri });
+  try {
+    await client.connect();
+    await client.ping();
+    await client.quit();
+    console.log('✅ Redis requis en production : vérification OK.');
+  } catch (err) {
+    console.error('CRITICAL: Redis inaccessible en production. Vérifiez REDIS_URI et que Redis est démarré:', err.message);
+    process.exit(1);
+  }
+}
+
 /** Monte le rate limit API (store Redis en cluster, sinon mémoire), connecte le cache listes, puis les routes */
 async function setupAfterDb() {
+  await ensureRedisInProduction();
   const redisStore = await createRedisStore(config.redis && config.redis.uri, 'rl:api:');
   if (redisStore) redisStore.init({ windowMs: config.rateLimit.windowMs });
   if (config.redis && config.redis.uri) {

@@ -99,7 +99,7 @@ export default defineConfig({
     host: '0.0.0.0', // Écoute sur toutes les interfaces
     port: 5173,
     strictPort: true,
-    hmr: false,
+    hmr: true, // Réactivé en dev (désactivé automatiquement en build)
     allowedHosts: ['.ngrok-free.dev', '.ngrok.io', '.ngrok.app', '.trycloudflare.com', 'localhost'],
     cors: true,
     headers: {

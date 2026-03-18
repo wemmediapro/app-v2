@@ -15,16 +15,18 @@ module.exports = {
       instances: process.env.CLUSTER_WORKERS || 'max',
       exec_mode: 'cluster',
       
-      // Variables d'environnement
+      // Variables d'environnement (UV_THREADPOOL_SIZE pour bcrypt/IO parallèles)
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
-        CLUSTER_WORKERS: 'max'
+        CLUSTER_WORKERS: 'max',
+        UV_THREADPOOL_SIZE: '16'
       },
       env_production: {
         NODE_ENV: 'production',
         PORT: 3000,
-        CLUSTER_WORKERS: 'max'
+        CLUSTER_WORKERS: 'max',
+        UV_THREADPOOL_SIZE: '16'
       },
       
       // Gestion mémoire
@@ -69,64 +71,10 @@ module.exports = {
         network: true,
         ports: true
       }
-    },
-    // En production réelle, préférer servir dist/ via Nginx (root /path/to/dist; try_files $uri /index.html;)
-    // plutôt que vite preview qui est destiné aux tests et ajoute un overhead inutile.
-    {
-      name: 'gnv-frontend',
-      script: 'npx',
-      args: 'vite preview --host 0.0.0.0 --port 5173',
-      cwd: './',
-      instances: 1,
-      exec_mode: 'fork',
-      
-      env: {
-        NODE_ENV: 'production'
-      },
-      
-      // Logs
-      error_file: './logs/frontend-error.log',
-      out_file: './logs/frontend-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      
-      // Gestion
-      watch: false,
-      autorestart: true,
-      max_memory_restart: '500M',
-      
-      // Redémarrages
-      min_uptime: '10s',
-      max_restarts: 5,
-      restart_delay: 3000
-    },
-    // Idem : en prod, servir dashboard/dist via Nginx plutôt que vite preview.
-    {
-      name: 'gnv-dashboard',
-      script: 'npx',
-      args: 'vite preview --host 0.0.0.0 --port 5174',
-      cwd: './dashboard',
-      instances: 1,
-      exec_mode: 'fork',
-      
-      env: {
-        NODE_ENV: 'production'
-      },
-      
-      // Logs
-      error_file: './logs/dashboard-error.log',
-      out_file: './logs/dashboard-out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      
-      // Gestion
-      watch: false,
-      autorestart: true,
-      max_memory_restart: '500M',
-      
-      // Redémarrages
-      min_uptime: '10s',
-      max_restarts: 5,
-      restart_delay: 3000
     }
+    // Frontend et dashboard : en production, servis en statique par Nginx (voir nginx.conf).
+    // Build : npm run build (frontend → dist/), cd dashboard && npm run build (dashboard → dashboard/dist/).
+    // Aucune app PM2 pour vite preview.
   ],
   
   deploy: {

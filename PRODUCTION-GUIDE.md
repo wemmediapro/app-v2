@@ -8,8 +8,9 @@ Ce guide explique comment déployer l'application GNV OnBoard en mode **PRODUCTI
 
 - Node.js 18+ installé
 - MongoDB (local ou Atlas)
-- Redis (optionnel mais recommandé pour Socket.io clustering)
+- **Redis** (obligatoire en production : Socket.io, rate limit, cache — le serveur refuse de démarrer sans REDIS_URI/REDIS_URL)
 - PM2 installé globalement (`npm install -g pm2`)
+- Nginx pour servir le frontend et le dashboard en statique (recommandé, voir `nginx.conf`)
 
 ## 🔧 Configuration
 
@@ -26,7 +27,8 @@ cp backend/config.production.env.example backend/config.env
 - **MONGODB_URI** : URL de connexion MongoDB (recommandé: MongoDB Atlas)
 - **JWT_SECRET** : Clé secrète pour JWT (changez-la en production!)
 - **FRONTEND_URL** : URL(s) de votre frontend (séparées par des virgules)
-- **REDIS_URL** : (Optionnel) URL Redis pour Socket.io clustering
+- **REDIS_URI** ou **REDIS_URL** : URL Redis (obligatoire en production)
+- **SENTRY_DSN** : (Optionnel) DSN Sentry pour le monitoring des erreurs
 - **CLUSTER_WORKERS** : Nombre de workers (par défaut: `max` = tous les CPU)
 
 ### 2. Installation des dépendances
@@ -70,8 +72,8 @@ Ce script va :
 npm run build
 cd dashboard && npm run build && cd ..
 
-# 2. Démarrer avec PM2
-pm2 start ecosystem.config.js --env production
+# 2. Démarrer avec PM2 (backend uniquement ; frontend/dashboard servis par Nginx)
+pm2 start ecosystem.production.cjs --env production
 
 # 3. Sauvegarder la configuration
 pm2 save
@@ -91,7 +93,7 @@ L'application utilise le **clustering Node.js** avec PM2 pour répartir la charg
 
 1. **Socket.io** :
    - Configuration optimisée pour les connexions multiples
-   - Support Redis adapter pour clustering (optionnel)
+   - Redis adapter obligatoire en production (clustering)
    - Timeouts et limites configurés
 
 2. **Express** :

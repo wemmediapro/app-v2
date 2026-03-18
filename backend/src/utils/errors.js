@@ -2,11 +2,17 @@
  * Erreurs applicatives et gestionnaire global.
  * - AppError : erreurs opérationnelles (statusCode, code). Utilisation : next(new AppError('Message', 400, 'CODE'))
  * - globalErrorHandler : middleware Express (monté en dernier dans server.js), ne pas exposer stack en prod.
- * Les routes devraient progressivement remplacer res.status(500).json(...) par next(new AppError(...)).
+ * - Sentry : en production si SENTRY_DSN est défini, les erreurs 500 sont envoyées à Sentry.
  */
 const { AppError } = require('../lib/AppError');
 const logger = require('../lib/logger');
 const { redact } = require('../lib/logger');
+let sentry;
+try {
+  sentry = require('../lib/sentry');
+} catch (_) {
+  sentry = { captureException: () => {} };
+}
 
 /**
  * Middleware de gestion d'erreurs global.
@@ -38,7 +44,8 @@ function globalErrorHandler(config = {}) {
       });
     }
 
-    // Erreur non opérationnelle (crash, bug)
+    // Erreur non opérationnelle (crash, bug) — envoi à Sentry si configuré
+    if (sentry && sentry.captureException) sentry.captureException(err);
     logger.error({
       event: 'unhandled_error',
       err: err.message,

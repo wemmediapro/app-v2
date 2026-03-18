@@ -283,7 +283,7 @@ router.post('/audio', authMiddleware, adminMiddleware, audioUpload.single('audio
     return next(err);
   }
   next();
-}, (req, res) => {
+}, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({

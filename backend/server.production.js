@@ -4,10 +4,24 @@
  * avec options Socket.io/Redis adaptées à la prod. À utiliser comme point d’entrée en production
  * (ex. ecosystem.production.cjs) à la place de server.js.
  */
-require('dotenv').config({ path: './config.env' });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, 'config.env') });
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+const sentry = require('./src/lib/sentry');
+if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
+  sentry.init();
+  process.on('uncaughtException', (err) => {
+    sentry.captureException(err);
+    console.error('uncaughtException:', err);
+    process.exit(1);
+  });
+  process.on('unhandledRejection', (reason, promise) => {
+    sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)));
+    console.error('unhandledRejection:', reason);
+  });
+}
 const express = require('express');
 const compression = require('compression');
-const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -57,25 +71,39 @@ const workerId = process.env.INSTANCE_ID || process.pid;
   };
   
   const io = new Server(server, ioOptions);
-  
-  // Configuration Redis Adapter pour Socket.io (optionnel mais recommandé pour clustering)
+
+  // En production : Redis obligatoire (Socket.io adapter, rate limit, cache)
+  const redisUrl = process.env.REDIS_URI || process.env.REDIS_URL;
+  if (isProduction && !redisUrl) {
+    console.error('CRITICAL: En production REDIS_URI ou REDIS_URL doit être défini.');
+    process.exit(1);
+  }
+
   let redisAdapter = null;
-  if (process.env.REDIS_URL) {
+  if (redisUrl) {
     try {
-      const pubClient = createClient({ url: process.env.REDIS_URL });
+      const pubClient = createClient({ url: redisUrl });
       const subClient = pubClient.duplicate();
-      
+
       Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
         io.adapter(createAdapter(pubClient, subClient));
         redisAdapter = { pubClient, subClient };
         console.log('✅ Redis adapter activé pour Socket.io (Worker PID:', process.pid, ')');
       }).catch(err => {
-        console.warn('⚠️  Redis non disponible, utilisation du mode standalone:', err.message);
+        console.warn('⚠️  Redis non disponible:', err.message);
+        if (isProduction) {
+          console.error('CRITICAL: Connexion Redis requise en production. Arrêt.');
+          process.exit(1);
+        }
       });
     } catch (err) {
       console.warn('⚠️  Redis adapter non configuré:', err.message);
+      if (isProduction) {
+        console.error('CRITICAL: Redis requis en production.');
+        process.exit(1);
+      }
     }
-  } else {
+  } else if (!isProduction) {
     console.log('ℹ️  Redis non configuré - Socket.io fonctionne en mode standalone');
   }
   
