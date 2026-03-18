@@ -18,6 +18,9 @@ config.env
 backend/config.env
 backend/config.env.bak
 backend/.env
+dashboard/.env
+dashboard/.env.local
+dashboard/.env.production
 scripts/vps-config.env
 
 # IDE

@@ -147,6 +147,7 @@ function MainContent(props) {
     shopCategories,
     setShopFavorites,
     removeFromShopFavorites,
+    chat,
   } = props;
 
   return (

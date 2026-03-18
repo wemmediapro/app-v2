@@ -1,14 +1,29 @@
+/**
+ * Auth middleware principal (backend/src) — utilisé par src/routes/* et server.js (Socket verifyToken).
+ * Utilise config.jwt.secret (config.env / .env). Pas de fallback secret.
+ *
+ * ⚠️ Double implémentation : backend/middleware/auth.js existe aussi pour backend/routes/* (racine).
+ * Voir en-tête de backend/middleware/auth.js pour le périmètre de chaque fichier.
+ */
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 
 const isProduction = process.env.NODE_ENV === 'production';
+let secretMissingWarned = false;
 
 function getSecret() {
   const secret = config.jwt?.secret;
-  if (isProduction && !secret) {
-    throw new Error('JWT_SECRET must be set in production');
+  if (!secret) {
+    if (isProduction) {
+      throw new Error('JWT_SECRET must be set in production');
+    }
+    if (!secretMissingWarned) {
+      secretMissingWarned = true;
+      console.error('CRITICAL: JWT_SECRET is not set. Set it in backend/config.env or backend/.env. Refusing to use a fallback secret.');
+    }
+    throw new Error('JWT_SECRET must be set in config.env or .env');
   }
-  return secret || 'dev-secret-change-in-production';
+  return secret;
 }
 
 /** Récupère le token depuis le cookie httpOnly (dashboard) ou le header Authorization */

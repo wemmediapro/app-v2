@@ -1,5 +1,11 @@
 # Refactorisation App.jsx — Composant monolithique (~2800 lignes)
 
+## Statut (dernière mise à jour)
+
+- **useBanners** : fait. **useRadio** : fait. **useWebtv** : fait. **useShipmap** : fait. **useChat** : fait.
+- **App.jsx** : allégé (~750 lignes) ; la logique chat est dans `src/hooks/useChat.js`, passée à MainContent via `chat={chat}`.
+- Pour afficher la page Messages : ajouter `page === 'messages'` dans MainContent et un composant qui consomme `props.chat`.
+
 ## Problème
 
 - **Un seul composant** (`App.jsx`) gère :
@@ -89,6 +95,6 @@ function App() {
 - `src/hooks/useRadio.js` (à extraire depuis App.jsx — ~650 lignes)
 - `src/hooks/useWebtv.js` (à extraire depuis App.jsx — ~450 lignes)
 - `src/hooks/useShipmap.js` ✅ implémenté (boatConfig shipId, ponts, deckServices)
-- `src/hooks/useChat.js` (optionnel — à extraire depuis App.jsx — ~400 lignes)
+- `src/hooks/useChat.js` ✅ en place (Socket.io, conversations, messages, typing)
 - `src/App.jsx` (allégé progressivement, cible ~400–600 lignes)
 - `src/components/MainContent.jsx` (inchangé, reçoit les mêmes props)

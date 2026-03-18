@@ -270,7 +270,7 @@ async function setupAfterDb() {
   const { mountRoutes } = require('./src/routes');
   mountRoutes(app, { dbManager, connectionCounters });
 
-  // SPA fallback : injecter le nonce CSP dans index.html pour script-src sans 'unsafe-inline'
+  // SPA fallback : substitution du nonce CSP (index.html doit contenir __CSP_NONCE__ dans les <script nonce="__CSP_NONCE__">)
   const publicIndex = path.join(config.paths.public, 'index.html');
   const sendIndexWithNonce = (req, res) => {
     const nonce = res.locals.cspNonce || '';

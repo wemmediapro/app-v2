@@ -7,10 +7,10 @@ const config = require('../config');
 
 const router = express.Router();
 
-// Rate limiting pour l'authentification
+// Rate limiting pour l'authentification (aligné avec src/routes/auth.js : 5 tentatives, env LOGIN_RATE_LIMIT_MAX)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 tentatives par IP
+  max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX, 10) || 5,
   message: { error: 'Trop de tentatives de connexion, réessayez dans 15 minutes' }
 });
 

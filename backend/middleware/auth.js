@@ -1,7 +1,9 @@
 /**
- * Auth middleware (backend/middleware) — utilisé uniquement par les routes à la racine de backend/ (routes/*.js).
- * JWT contient userId ; vérification via MongoDB User.
- * Pour l’API dashboard (cookie httpOnly, config), utiliser backend/src/middleware/auth.js.
+ * Auth middleware (backend/middleware) — utilisé UNIQUEMENT par backend/routes/*.js (racine).
+ * JWT contient userId ; vérification via MongoDB User ; utilise process.env.JWT_SECRET directement.
+ *
+ * ⚠️ Double implémentation : l’API principale utilise backend/src/middleware/auth.js (src/routes/*, server.js).
+ * Ne pas mélanger les deux : routes sous backend/routes/ → ce fichier ; routes sous backend/src/routes/ → src/middleware/auth.js.
  */
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
