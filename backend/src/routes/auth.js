@@ -1,5 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const { RedisStore } = require('rate-limit-redis');
+const { createClient } = require('redis');
 const bcrypt = require('bcryptjs');
 const { registerValidation, loginValidation, profileValidation } = require('../middleware/validation');
 const { generateToken, generateAccessToken, authMiddleware } = require('../middleware/auth');
@@ -16,12 +18,22 @@ async function getAdminPasswordHash(adminPassword) {
 }
 
 // Limite : 5 tentatives de login par 15 min par IP (brute-force protection, configurable via LOGIN_RATE_LIMIT_MAX)
+// Store Redis si disponible (partagé entre workers en cluster — évite la multiplication de la limite par worker)
+// passOnStoreError: true — si Redis est indisponible, les requêtes passent sans rate-limit (fail open)
+let loginStore;
+const loginRedisUri = process.env.REDIS_URI || process.env.REDIS_URL;
+if (loginRedisUri) {
+  const loginRedisClient = createClient({ url: loginRedisUri });
+  loginRedisClient.connect().catch(err => console.warn('Redis login limiter indisponible, mode fail-open:', err.message));
+  loginStore = new RedisStore({ sendCommand: (...args) => loginRedisClient.sendCommand(args), prefix: 'rl:login:' });
+}
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX, 10) || 5,
   message: { message: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
+  ...(loginStore && { store: loginStore, passOnStoreError: true }),
 });
 
 const router = express.Router();

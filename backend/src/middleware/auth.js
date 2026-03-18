@@ -99,7 +99,7 @@ const authMiddleware = async (req, res, next) => {
     }
     if (user.isActive === false) {
       if (cacheManager.isConnected) {
-        await cacheManager.set(cacheKey, { ...user, invalid: true }, AUTH_USER_CACHE_TTL);
+        await cacheManager.set(cacheKey, { invalid: true, isActive: false }, AUTH_USER_CACHE_TTL);
       }
       return res.status(401).json({ message: 'Account is deactivated.', code: 'ACCOUNT_DEACTIVATED' });
     }
@@ -150,7 +150,9 @@ const optionalAuth = async (req, res, next) => {
   try {
     getSecret();
   } catch (e) {
-    return res.status(503).json({ message: e.message, code: 'JWT_NOT_CONFIGURED' });
+    // Optional auth: if JWT is not configured, simply proceed without user
+    req.user = null;
+    return next();
   }
   try {
     const token = getTokenFromRequest(req);

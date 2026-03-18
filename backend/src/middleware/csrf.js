@@ -58,7 +58,14 @@ function csrfProtection(req, res, next) {
   if (EXEMPT_PATH_PATTERNS.some((re) => re.test(path))) return next();
   const cookieToken = req.cookies[COOKIE_NAME];
   const headerToken = req.get(HEADER_NAME) || req.body?._csrf;
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+  let tokensMatch = false;
+  try {
+    tokensMatch = !!(cookieToken && headerToken &&
+      crypto.timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken)));
+  } catch {
+    tokensMatch = false;
+  }
+  if (!tokensMatch) {
     return res.status(403).json({ success: false, message: 'Invalid CSRF token', code: 'CSRF_INVALID' });
   }
   next();

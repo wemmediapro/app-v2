@@ -217,35 +217,7 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Rate limit strict pour les uploads (évite abus bande passante / stockage)
-const uploadLimiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: parseInt(process.env.RATE_LIMIT_UPLOAD_MAX, 10) || 100,
-  message: { success: false, message: 'Trop d\'uploads. Réessayez plus tard.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/upload', uploadLimiter);
 
-// Rate limit dédié au streaming (vidéo/audio) : limite par IP pour supporter beaucoup de connexions sans abus
-const streamLimiter = rateLimit({
-  windowMs: config.rateLimit.streamWindowMs,
-  max: config.rateLimit.streamMax,
-  message: { success: false, message: 'Trop de requêtes de streaming. Réessayez dans une minute.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/stream', streamLimiter);
-
-// Rate limit bibliothèque média (admin)
-const mediaLibraryLimiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: parseInt(process.env.RATE_LIMIT_MEDIA_LIBRARY_MAX, 10) || 200,
-  message: { success: false, message: 'Trop de requêtes. Réessayez plus tard.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/media-library', mediaLibraryLimiter);
 
 // Fichiers statiques et streaming
 app.use('/uploads', videoStreamMiddleware);
@@ -320,6 +292,44 @@ async function setupAfterDb() {
   } else if (process.env.NODE_ENV === 'production') {
     console.warn('⚠️ Rate limit API : store mémoire (REDIS_URI non configuré). En multi-process la limite n\'est pas partagée.');
   }
+
+  // Rate limiters spécialisés avec store Redis si disponible (partagé entre workers en cluster)
+  const uploadStore = await createRedisStore(config.redis && config.redis.uri, 'rl:upload:');
+  if (uploadStore) uploadStore.init({ windowMs: config.rateLimit.windowMs });
+  const uploadLimiter = rateLimit({
+    windowMs: config.rateLimit.windowMs,
+    max: parseInt(process.env.RATE_LIMIT_UPLOAD_MAX, 10) || 100,
+    message: { success: false, message: 'Trop d\'uploads. Réessayez plus tard.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: uploadStore || undefined,
+  });
+  app.use('/api/upload', uploadLimiter);
+
+  const streamStore = await createRedisStore(config.redis && config.redis.uri, 'rl:stream:');
+  if (streamStore) streamStore.init({ windowMs: config.rateLimit.streamWindowMs });
+  const streamLimiter = rateLimit({
+    windowMs: config.rateLimit.streamWindowMs,
+    max: config.rateLimit.streamMax,
+    message: { success: false, message: 'Trop de requêtes de streaming. Réessayez dans une minute.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: streamStore || undefined,
+  });
+  app.use('/api/stream', streamLimiter);
+
+  const mediaStore = await createRedisStore(config.redis && config.redis.uri, 'rl:media:');
+  if (mediaStore) mediaStore.init({ windowMs: config.rateLimit.windowMs });
+  const mediaLibraryLimiter = rateLimit({
+    windowMs: config.rateLimit.windowMs,
+    max: parseInt(process.env.RATE_LIMIT_MEDIA_LIBRARY_MAX, 10) || 200,
+    message: { success: false, message: 'Trop de requêtes. Réessayez plus tard.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: mediaStore || undefined,
+  });
+  app.use('/api/media-library', mediaLibraryLimiter);
+
   mountRoutes(app, { dbManager, connectionCounters });
 
   // SPA fallback : index.html en cache mémoire, seule la substitution du nonce CSP à la volée (évite fs.readFileSync à chaque requête)
