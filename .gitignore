@@ -16,7 +16,9 @@ build/
 .env.*.local
 config.env
 backend/config.env
+backend/config.env.bak
 backend/.env
+scripts/vps-config.env
 
 # IDE
 .vscode/

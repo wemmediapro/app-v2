@@ -12,6 +12,7 @@ try {
   process.exit(1);
 }
 const config = require('./src/config');
+const connectionCounters = require('./src/lib/connectionCounters');
 
 const express = require('express');
 const cors = require('cors');
@@ -22,6 +23,11 @@ const cookieParser = require('cookie-parser');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cluster = require('cluster');
+const mongoose = require('mongoose');
+
+const { verifyToken } = require('./src/middleware/auth');
+const { logSocketAuthFailed, redact } = require('./src/lib/logger');
+const LocalServerConfig = require('./src/models/LocalServerConfig');
 
 const app = express();
 
@@ -146,7 +152,7 @@ app.use(morgan(config.env === 'production' ? 'short' : 'combined', {
 }));
 // Identifiant de requête pour le log d'erreurs et les réponses (requestId)
 app.use((req, res, next) => {
-  req.id = req.get('x-request-id') || require('crypto').randomBytes(8).toString('hex');
+  req.id = req.get('x-request-id') || crypto.randomBytes(8).toString('hex');
   next();
 });
 app.use(express.json({ limit: '10mb' }));
@@ -221,7 +227,6 @@ app.use('/public', express.static(config.paths.public));
 // Base de données (config centralisée)
 const dbManager = require('./src/lib/database');
 const { createRedisStore } = require('./src/lib/rateLimitRedisStore');
-const connectionCounters = require('./src/lib/connectionCounters');
 const cacheManager = require('./src/lib/cache-manager');
 
 /** Monte le rate limit API (store Redis en cluster, sinon mémoire), connecte le cache listes, puis les routes */
@@ -321,11 +326,6 @@ dbManager.connect(config.mongodb.uri).then(async (connected) => {
 });
 
 // Socket.io : authentification par JWT (évite accès anonyme aux rooms / send-message)
-const { verifyToken } = require('./src/middleware/auth');
-const { logSocketAuthFailed, redact } = require('./src/lib/logger');
-const mongoose = require('mongoose');
-const LocalServerConfig = require('./src/models/LocalServerConfig');
-
 io.use(async (socket, next) => {
   const token = socket.handshake.auth?.token || socket.handshake.query?.token;
   if (!token) {
@@ -360,6 +360,21 @@ io.use(async (socket, next) => {
 // Socket.io : handlers (autorisation rooms, sanitization, logging)
 const { attachSocketHandlers } = require('./src/socket/handlers');
 attachSocketHandlers(io, connectionCounters);
+
+// Graceful shutdown (PM2 restart, Docker stop, etc.)
+function gracefulShutdown(signal) {
+  console.log(`🛑 Signal ${signal} reçu. Arrêt gracieux...`);
+  server.close(() => {
+    console.log('✅ Serveur HTTP fermé');
+    Promise.resolve(dbManager.disconnect?.()).then(() => process.exit(0)).catch(() => process.exit(0));
+  });
+  setTimeout(() => {
+    console.error('❌ Timeout graceful shutdown — arrêt forcé');
+    process.exit(1);
+  }, 30000);
+}
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
 
 // Démarrage après tentative de connexion MongoDB (voir plus haut)
 module.exports = { app, io };
