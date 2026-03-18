@@ -1,6 +1,6 @@
 /**
- * Config PM2 (alias possible : ecosystem.cjs). En prod préférer ecosystem.production.cjs.
- * Clustering : script server.js + exec_mode cluster → backend/cluster.js non utilisé (code mort).
+ * Config PM2 (fichier unique : ecosystem.config.js supprimé, doublon).
+ * En prod utiliser ecosystem.production.cjs. Clustering : script server.js + exec_mode cluster → backend/cluster.js non utilisé.
  */
 module.exports = {
   apps: [

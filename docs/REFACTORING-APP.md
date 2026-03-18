@@ -5,6 +5,7 @@
 - **useBanners** : fait. **useRadio** : fait. **useWebtv** : fait. **useShipmap** : fait. **useChat** : fait.
 - **App.jsx** : allégé (~750 lignes) ; la logique chat est dans `src/hooks/useChat.js`, passée à MainContent via `chat={chat}`.
 - Pour afficher la page Messages : ajouter `page === 'messages'` dans MainContent et un composant qui consomme `props.chat`.
+- Cible optionnelle : réduire encore vers 400–600 lignes en extrayant d’autres blocs (favoris, conditions, etc.) dans des hooks ou composants dédiés.
 
 ## Problème
 

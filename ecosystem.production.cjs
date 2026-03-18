@@ -129,14 +129,13 @@ module.exports = {
     }
   ],
   
-  // Deploy (Q4 : remplacer les placeholders par les vraies valeurs avant utilisation)
   deploy: {
     production: {
-      user: 'deploy',                    // Remplacer par l'utilisateur serveur
-      host: ['votre-serveur.com'],       // Remplacer par l'hôte réel
+      user: process.env.DEPLOY_USER || 'deploy',
+      host: (process.env.DEPLOY_HOST || 'votre-serveur.com').split(',').map((h) => h.trim()),
       ref: 'origin/main',
-      repo: 'git@github.com:votre-repo/gnv-app.git', // Remplacer par le repo réel
-      path: '/var/www/gnv-app',           // Remplacer par le chemin de déploiement
+      repo: 'git@github.com:wemmediapro/app-v2.git',
+      path: process.env.DEPLOY_PATH || '/var/www/app-v2',
       'post-deploy': 'npm install --production && npm run build && pm2 reload ecosystem.production.cjs --env production',
       'pre-setup': 'apt-get update && apt-get install -y git'
     }

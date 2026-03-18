@@ -1,5 +1,5 @@
 # CI/CD pour GNV OnBoard — app, dashboard, backend (build, tests, audit)
-# Q1 : ne pas utiliser continue-on-error: true sur les steps test/audit pour que les échecs fassent échouer le job.
+# Q1/Q7 : Aucun step n'utilise continue-on-error: true — les échecs (tests, audit, build) font échouer le job.
 # Q2 : npm ci (déterministe) partout, pas npm install.
 name: CI
 

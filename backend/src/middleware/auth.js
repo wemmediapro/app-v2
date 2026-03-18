@@ -58,6 +58,11 @@ const verifyToken = (token) => {
 
 const authMiddleware = async (req, res, next) => {
   try {
+    getSecret();
+  } catch (e) {
+    return res.status(503).json({ message: e.message, code: 'JWT_NOT_CONFIGURED' });
+  }
+  try {
     const token = getTokenFromRequest(req);
     if (!token) {
       return res.status(401).json({ message: 'Access denied. No token provided.' });
@@ -143,6 +148,11 @@ const requireRole = (...roles) => {
 
 const optionalAuth = async (req, res, next) => {
   try {
+    getSecret();
+  } catch (e) {
+    return res.status(503).json({ message: e.message, code: 'JWT_NOT_CONFIGURED' });
+  }
+  try {
     const token = getTokenFromRequest(req);
     if (token) {
       try {
@@ -190,8 +200,17 @@ const optionalAuth = async (req, res, next) => {
 
 const authenticateToken = authMiddleware;
 
+/** Compatibilité legacy : generateToken(userId) ou generateToken({ id, userId }). */
+function generateTokenCompat(payloadOrId) {
+  const payload = typeof payloadOrId === 'object' && payloadOrId !== null
+    ? payloadOrId
+    : { id: payloadOrId, userId: payloadOrId };
+  return generateToken(payload);
+}
+
 module.exports = {
   generateToken,
+  generateTokenCompat,
   generateAccessToken,
   verifyToken,
   getTokenFromRequest,

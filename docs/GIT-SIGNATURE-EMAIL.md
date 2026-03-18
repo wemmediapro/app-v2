@@ -1,5 +1,7 @@
 # Signature des commits (GPG/SSH) et email Git
 
+Pour **activer la signature GPG des commits** (recommandé pour la traçabilité), suivre les sections 2 ou 3 ci-dessous.
+
 ## 1. Email Git valide
 
 Pour que les commits affichent un email cohérent (et évitent l’avertissement « configured automatically based on your username and hostname ») :
