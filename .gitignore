@@ -9,6 +9,7 @@ dist/
 build/
 .vite/
 *.log
+cleanup-report.json
 
 # Environment variables
 .env
@@ -72,6 +73,7 @@ test-results/
 # Scripts et docs dev / Cursor (ne pas réintroduire)
 *.sh
 scripts/*.sh
+!scripts/enable-gpg-signing.sh
 docs/AUDIT-*.md
 docs/refactor/
 docs/testing/

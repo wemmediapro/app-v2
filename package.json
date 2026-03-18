@@ -17,6 +17,9 @@
   },
   "scripts": {
     "analyze": "node scripts/analyze-and-sync.cjs --sync-db",
+    "cleanup:report": "node scripts/cleanup-unused-files.cjs --report cleanup-report.json",
+    "cleanup:dry-run": "node scripts/cleanup-unused-files.cjs",
+    "cleanup:delete": "node scripts/cleanup-unused-files.cjs --delete",
     "verify": "node scripts/verify-backend.cjs http://localhost:3000",
     "verify:tablet": "node scripts/verify-tablet-categories.cjs http://localhost:5173",
     "dev": "vite",

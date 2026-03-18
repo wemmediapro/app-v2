@@ -20,6 +20,12 @@ if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
     console.error('unhandledRejection:', reason);
   });
 }
+
+// [SEC] RATE_LIMIT_LOAD_TEST : en production, ne jamais l'honorer
+if (process.env.NODE_ENV === 'production' && process.env.RATE_LIMIT_LOAD_TEST) {
+  console.warn('⚠️ RATE_LIMIT_LOAD_TEST est défini en production — ignoré.');
+  delete process.env.RATE_LIMIT_LOAD_TEST;
+}
 const express = require('express');
 const compression = require('compression');
 const cors = require('cors');
@@ -31,6 +37,9 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const { createAdapter } = require('@socket.io/redis-adapter');
 const { createClient } = require('redis');
+const dbManager = require('./src/lib/database');
+const connectionCounters = require('./src/lib/connectionCounters');
+const { mountRoutes } = require('./src/routes');
 
 // Configuration du clustering
 // Note: PM2 gère le clustering, donc on utilise directement le code du worker
@@ -179,9 +188,7 @@ const workerId = process.env.INSTANCE_ID || process.pid;
     console.log('🎭 MODE DÉMO ACTIVÉ - Utilisation de données de démonstration uniquement');
   } else {
     // Database connection avec gestion améliorée
-    const dbManager = require('./src/lib/database');
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/gnv_onboard';
-    
     dbManager.connect(mongoUri).then(connected => {
       if (connected) {
         console.log(`✅ MongoDB connected (Worker PID: ${process.pid})`);
@@ -191,36 +198,9 @@ const workerId = process.env.INSTANCE_ID || process.pid;
     });
   }
   
-  // Routes
-  app.use('/api/auth', require('./src/routes/auth'));
-  app.use('/api/users', require('./src/routes/users'));
-  app.use('/api/restaurants', require('./src/routes/restaurants'));
-  app.use('/api/movies', require('./src/routes/movies'));
-  app.use('/api/radio', require('./src/routes/radio'));
-  app.use('/api/magazine', require('./src/routes/magazine'));
-  app.use('/api/messages', require('./src/routes/messages'));
-  app.use('/api/shop', require('./src/routes/shop'));
-  app.use('/api/feedback', require('./src/routes/feedback'));
-  app.use('/api/admin', require('./src/routes/admin'));
-  app.use('/api/analytics', require('./src/routes/analytics'));
-  app.use('/api/gnv', require('./src/routes/gnv'));
-  
-  // Health check amélioré
-  app.get('/api/health', (req, res) => {
-    res.json({ 
-      status: 'OK', 
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      environment: process.env.NODE_ENV || 'development',
-      worker: workerId,
-      pid: process.pid,
-      memory: {
-        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
-      }
-    });
-  });
-  
+  // Routes (source unique : backend/src/routes/index.js)
+  mountRoutes(app, { dbManager, connectionCounters });
+
   // Socket.io optimisé pour production (rate limit par socket = protection flood)
   const { checkSocketRateLimit, checkSendMessageRateLimit, clearSocketRateLimit } = require('./src/socket/handlers');
   let connectionCount = 0;

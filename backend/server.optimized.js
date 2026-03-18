@@ -1,6 +1,7 @@
 /**
- * Serveur optimisé pour 2000+ connexions simultanées
- * Utilise clustering PM2, Redis adapter pour Socket.io, et optimisations avancées
+ * Serveur optimisé pour 2000+ connexions simultanées (LEGACY — non utilisé par PM2).
+ * En production, PM2 utilise backend/server.production.js (voir ecosystem.production.cjs).
+ * Ce fichier repose sur database-optimized / connection-manager ; conservé pour référence ou migration future.
  */
 
 require('dotenv').config({ path: './config.env' });

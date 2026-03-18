@@ -4,7 +4,9 @@ Pour **activer la signature GPG des commits** (recommandé pour la traçabilité
 
 ## 1. Email Git valide
 
-Pour que les commits affichent un email cohérent (et évitent l’avertissement « configured automatically based on your username and hostname ») :
+Pour que les commits affichent un email cohérent (et évitent l’avertissement « configured automatically based on your username and hostname »).
+
+**Ne pas utiliser une adresse IP locale** (ex. `ahmed@192.168.11.107`) comme `user.email` : cela expose une IP privée dans l’historique Git. Utiliser une adresse email valide (ex. `vous@domaine.com` ou l’email no-reply GitHub).
 
 ```bash
 # Global (tous les dépôts)
@@ -78,3 +80,25 @@ Sur GitHub : Settings → SSH and GPG keys → Signing keys → Add (ajouter la 
 - Après un commit signé : `git log -1 --show-signature`
 - Pour corriger l’auteur du dernier commit :  
   `git commit --amend --reset-author --no-edit`
+
+---
+
+## 4. Application dans ce dépôt
+
+Pour **activer la signature des commits** uniquement dans ce projet (sans toucher à la config globale) :
+
+1. Avoir configuré une clé GPG (section 2) ou SSH (section 3) **avant**.
+2. Exécuter le script fourni (config locale du dépôt) :
+
+```bash
+./scripts/enable-gpg-signing.sh
+```
+
+Ce script définit pour ce dépôt :
+
+- `commit.gpgsign true` — tous les futurs commits seront signés.
+- Optionnel : `user.signingkey` si la variable d'environnement `GPG_SIGNING_KEY_ID` est définie (ex. `export GPG_SIGNING_KEY_ID=3AA5C34371567BD2` puis relancer le script).
+
+Sans `GPG_SIGNING_KEY_ID`, seule l'option « signer les commits » est activée ; la clé utilisée reste celle de votre config Git globale (`user.signingkey`).
+
+**Vérification** : après un nouveau commit, `git log -1 --show-signature` doit afficher `Good signature` (GPG) ou l'équivalent pour SSH.

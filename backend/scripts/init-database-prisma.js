@@ -1,6 +1,8 @@
 /**
- * Script d'initialisation de la base de données avec Prisma
- * 
+ * Script d'initialisation de la base de données avec Prisma (hors API).
+ * Prisma n'est pas utilisé par les routes Express : l'API repose sur Mongoose (MongoDB).
+ * Ce script est le seul point d'usage de Prisma dans le projet (seed/init).
+ *
  * Usage: node scripts/init-database-prisma.js
  * ou: npm run init-db-prisma
  */

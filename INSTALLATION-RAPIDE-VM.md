@@ -125,7 +125,7 @@ Créer les dossiers et lancer :
 
 ```bash
 mkdir -p logs backend/public/uploads/{videos,images,audio,temp}
-pm2 start ecosystem.config.cjs --env production
+pm2 start ecosystem.production.cjs --env production
 pm2 save && pm2 startup
 cd backend && npm run init-db && cd ..
 ```

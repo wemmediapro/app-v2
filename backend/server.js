@@ -29,6 +29,12 @@ if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
   });
 }
 
+// [SEC] RATE_LIMIT_LOAD_TEST : en production, ne jamais l'honorer (éviter relâchement rate limit par erreur)
+if (process.env.NODE_ENV === 'production' && process.env.RATE_LIMIT_LOAD_TEST) {
+  console.warn('⚠️ RATE_LIMIT_LOAD_TEST est défini en production — ignoré (rate limit inchangé).');
+  delete process.env.RATE_LIMIT_LOAD_TEST;
+}
+
 const express = require('express');
 const compression = require('compression');
 const cors = require('cors');

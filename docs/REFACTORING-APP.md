@@ -1,11 +1,12 @@
-# Refactorisation App.jsx — Composant monolithique (~2800 lignes)
+# Refactorisation App.jsx — Composant monolithique (ex ~2800 lignes)
 
 ## Statut (dernière mise à jour)
 
 - **useBanners** : fait. **useRadio** : fait. **useWebtv** : fait. **useShipmap** : fait. **useChat** : fait. **useOnline** : fait (ARCH-2).
-- **App.jsx** : allégé ; `isOnline = useOnline()` selon structure cible, logique chat dans `src/hooks/useChat.js`, passée à MainContent via `chat={chat}`.
+- **App.jsx** : allégé ; `isOnline = useOnline()`, logique chat dans `src/hooks/useChat.js`, passée à MainContent via `chat={chat}`.
+- **Taille actuelle** : ~742 lignes (vs ~2800 à l’origine). Cible optionnelle : 400–600 lignes.
+- **Risque de maintenance** : moyen — le fichier reste le point d’orchestration principal ; toute évolution (favoris, conditions, nouvelles pages) doit encore toucher App.jsx. Réduire en extrayant d’autres blocs (favoris, conditions, parsing de routes) dans des hooks ou composants dédiés diminuerait ce risque.
 - Pour afficher la page Messages : ajouter `page === 'messages'` dans MainContent et un composant qui consomme `props.chat`.
-- Cible optionnelle : réduire encore vers 400–600 lignes en extrayant d’autres blocs (favoris, conditions, etc.) dans des hooks ou composants dédiés.
 
 ## Problème
 

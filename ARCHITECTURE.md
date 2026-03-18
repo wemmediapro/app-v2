@@ -619,7 +619,7 @@ graph TB
 - ✅ **Cyclic** - cyclic.json
 - ✅ **Vercel** - vercel.json
 - ✅ **Docker** - Docker Compose pour MongoDB et Redis uniquement (pas de conteneur app) ; déploiement app = PM2 sur l’OS
-- ✅ **PM2** - ecosystem.config.cjs
+- ✅ **PM2** - ecosystem.production.cjs
 
 ---
 

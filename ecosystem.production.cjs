@@ -9,9 +9,11 @@ module.exports = {
   apps: [
     {
       name: 'gnv-backend',
-      script: './backend/server.js',
+      script: './backend/server.production.js',
+      // En production : server.production.js (Redis obligatoire, Sentry, mountRoutes, pas de cluster Node — PM2 gère les workers).
+      // server.js = point d'entrée dev (npm run dev). server.optimized.js = ancienne variante, non utilisée par PM2.
       
-      // Clustering : PM2 lance N processus server.js (exec_mode: 'cluster'). backend/cluster.js n'est pas utilisé (code mort en prod PM2).
+      // Clustering : PM2 lance N processus server.production.js (exec_mode: 'cluster'). backend/cluster.js n'est pas utilisé (code mort en prod PM2).
       instances: process.env.CLUSTER_WORKERS || 'max',
       exec_mode: 'cluster',
       
@@ -50,7 +52,7 @@ module.exports = {
       watch: false,              // Pas de watch en production
       ignore_watch: ['node_modules', 'logs', '*.log', 'uploads'],
       
-      // Gestion des processus (graceful shutdown 30s dans server.js → 35s pour laisser finir)
+      // Gestion des processus (graceful shutdown 30s dans server.production.js → 35s pour laisser finir)
       kill_timeout: 35000,       // 5s de marge au-dessus du timeout interne
       wait_ready: true,          // Attend le signal 'ready'
       listen_timeout: 10000,     // Timeout pour écoute

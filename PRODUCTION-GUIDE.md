@@ -177,7 +177,7 @@ CLUSTER_WORKERS=max
 CLUSTER_WORKERS=4
 ```
 
-Dans `ecosystem.config.js`, vous pouvez aussi modifier :
+Dans `ecosystem.production.cjs`, vous pouvez aussi modifier :
 
 ```javascript
 instances: 4, // Nombre fixe de workers
@@ -221,7 +221,7 @@ Pour gérer plus de 2000 connexions :
 ### Performance dégradée
 
 1. Vérifiez la mémoire : `pm2 monit`
-2. Augmentez `max_memory_restart` dans `ecosystem.config.js`
+2. Augmentez `max_memory_restart` dans `ecosystem.production.cjs`
 3. Vérifiez les connexions MongoDB
 4. Considérez utiliser Redis pour Socket.io
 

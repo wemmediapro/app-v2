@@ -447,7 +447,7 @@ npm install --production
 npm run build
 
 # 7. Démarrage avec PM2
-pm2 start ecosystem.config.cjs
+pm2 start ecosystem.production.cjs
 pm2 save
 pm2 startup
 

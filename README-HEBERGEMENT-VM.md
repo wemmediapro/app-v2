@@ -23,7 +23,7 @@ Export du **02/03/2026** : dernière version de l'application prête à être d�
    - `npm install` à la racine, dans `backend/` et `dashboard/`
    - `npm run build` à la racine et dans `dashboard/`
    - Restaurer la base : `mongorestore --uri="mongodb://localhost:27017" --db=gnv_onboard --drop dump-mongodb/gnv_onboard`
-   - `pm2 start ecosystem.config.cjs --env production`
+   - `pm2 start ecosystem.production.cjs --env production`
    - Configurer Nginx (voir `docs/` ou `INSTALLATION-RAPIDE-VM.md`)
 
 ### Option 2 : Déploiement avec scripts (depuis votre machine)
