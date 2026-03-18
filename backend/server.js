@@ -16,6 +16,7 @@ const config = require('./src/config');
 const connectionCounters = require('./src/lib/connectionCounters');
 
 const express = require('express');
+const compression = require('compression');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -98,6 +99,8 @@ if (config.redis && config.redis.uri) {
 
 // Middleware
 app.set('trust proxy', 1);
+// [PERF-2] Compression gzip des réponses (JSON, HTML, etc.)
+app.use(compression());
 
 // Redirect HTTP to HTTPS in production (when behind a proxy that sets x-forwarded-proto)
 if (process.env.NODE_ENV === 'production') {
@@ -258,7 +261,8 @@ async function setupAfterDb() {
     } catch (e) { /* ignore */ }
     return false;
   };
-  const apiLimitMax = process.env.RATE_LIMIT_LOAD_TEST === '1' ? 1000000 : config.rateLimit.max;
+  // [SEC-6] RATE_LIMIT_LOAD_TEST ignoré en production (réservé aux tests de charge en dev)
+  const apiLimitMax = process.env.NODE_ENV !== 'production' && process.env.RATE_LIMIT_LOAD_TEST === '1' ? 1000000 : config.rateLimit.max;
   const apiLimiter = rateLimit({
     windowMs: config.rateLimit.windowMs,
     max: apiLimitMax,
@@ -342,7 +346,8 @@ dbManager.connect(config.mongodb.uri).then(async (connected) => {
 
 // Socket.io : authentification par JWT (évite accès anonyme aux rooms / send-message)
 io.use(async (socket, next) => {
-  const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+  // [SEC-5] Token uniquement via auth (pas via query pour éviter exposition dans logs/URLs)
+  const token = socket.handshake.auth?.token;
   if (!token) {
     logSocketAuthFailed(socket.id, 'missing_token');
     return next(new Error('Authentication required'));

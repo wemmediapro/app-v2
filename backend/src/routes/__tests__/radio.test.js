@@ -4,10 +4,30 @@
  */
 process.env.JWT_SECRET = 'test-jwt-secret-at-least-32-chars!!';
 
+jest.mock('../../lib/cache-manager', () => ({ isConnected: false, get: jest.fn(), set: jest.fn() }));
+
+const mockFindByIdChain = (userDoc) => {
+  const chain = {
+    lean: jest.fn().mockResolvedValue(userDoc),
+    then(resolve, reject) { return Promise.resolve(userDoc).then(resolve, reject); },
+  };
+  return {
+    select: jest.fn().mockReturnValue(chain),
+    then(resolve, reject) { return Promise.resolve(userDoc).then(resolve, reject); },
+  };
+};
+
+jest.mock('../../models/User', () => {
+  const MockUser = jest.fn();
+  MockUser.findById = jest.fn();
+  return MockUser;
+});
+
 const request = require('supertest');
 const express = require('express');
 const radioRouter = require('../radio');
 const { generateToken } = require('../../middleware/auth');
+const User = require('../../models/User');
 
 const app = express();
 app.use(express.json());
@@ -106,6 +126,8 @@ describe('API Radio', () => {
   describe('Admin requis (403 si token user non-admin)', () => {
     it('POST /api/radio retourne 403 avec token user (non admin)', async () => {
       const token = generateToken({ id: 'u1', email: 'user@test.com', role: 'user' });
+      const fakeUser = { _id: 'u1', email: 'user@test.com', role: 'user', isActive: true };
+      User.findById.mockReturnValue(mockFindByIdChain(fakeUser));
       await request(app)
         .post('/api/radio')
         .set('Authorization', `Bearer ${token}`)

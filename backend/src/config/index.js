@@ -38,13 +38,16 @@ module.exports = {
   })(),
 
   // CORS : origines autorisées (+ tunnels type Cloudflare pour accès distant)
+  // [SEC-3] Origines localhost uniquement en dehors de la production
   cors: {
     origins: [
       ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',').map(s => s.trim()).filter(Boolean) : []),
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'http://localhost:5175',
-      'http://localhost:3000',
+      ...(process.env.NODE_ENV !== 'production' ? [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:5175',
+        'http://localhost:3000',
+      ] : []),
     ].filter((v, i, a) => a.indexOf(v) === i),
     // Tunnels (trycloudflare, ngrok) : en production désactivés sauf si ALLOW_TUNNEL_ORIGINS=true
     allowTunnelOrigins: process.env.NODE_ENV !== 'production' || process.env.ALLOW_TUNNEL_ORIGINS === 'true',

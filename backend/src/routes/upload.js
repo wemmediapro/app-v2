@@ -13,6 +13,25 @@ const { encodeToHls } = require('../services/hlsEncode');
 const { optimizeImage, optimizeImageBuffer } = require('../services/imageOptimization');
 
 const router = express.Router();
+
+// [SEC-2] Validation magic-bytes (file-type)
+const ALLOWED_VIDEO_MIMES = new Set(['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/mpeg']);
+const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+const ALLOWED_AUDIO_MIMES = new Set(['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/x-wav']);
+
+async function validateFileTypeFromPath(filePath, allowedMimes) {
+  const { fileTypeFromFile } = await import('file-type');
+  const type = await fileTypeFromFile(filePath);
+  if (!type || !allowedMimes.has(type.mime)) return { valid: false, detected: type?.mime };
+  return { valid: true };
+}
+
+async function validateFileTypeFromBuffer(buffer, allowedMimes) {
+  const { fileTypeFromBuffer } = await import('file-type');
+  const type = await fileTypeFromBuffer(buffer);
+  if (!type || !allowedMimes.has(type.mime)) return { valid: false, detected: type?.mime };
+  return { valid: true };
+}
 const { temp: UPLOAD_DIR, videos: VIDEOS_DIR, images: IMAGES_DIR, audio: AUDIO_DIR, public: PUBLIC_DIR } = config.paths;
 
 // S'assurer que les dossiers existent
@@ -131,6 +150,14 @@ router.post('/video', authMiddleware, adminMiddleware, videoUpload.single('video
         message: 'Aucun fichier vidéo fourni. Utilisez le champ "video".'
       });
     }
+    const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_VIDEO_MIMES);
+    if (!valid) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+      return res.status(400).json({
+        success: false,
+        message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez MP4, WebM, OGG ou MOV.',
+      });
+    }
 
     const inputPath = req.file.path;
     const port = process.env.PORT || 3000;
@@ -198,6 +225,14 @@ router.post('/image', authMiddleware, adminMiddleware, imageUpload.single('image
         message: 'Aucune image fournie. Utilisez le champ "image".'
       });
     }
+    const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_IMAGE_MIMES);
+    if (!valid) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+      return res.status(400).json({
+        success: false,
+        message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez JPEG, PNG, GIF ou WebP.',
+      });
+    }
     let filePath = req.file.path;
     let filename = req.file.filename;
     try {
@@ -254,6 +289,14 @@ router.post('/audio', authMiddleware, adminMiddleware, audioUpload.single('audio
       return res.status(400).json({
         success: false,
         message: 'Aucun fichier audio fourni. Utilisez le champ "audio".'
+      });
+    }
+    const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_AUDIO_MIMES);
+    if (!valid) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+      return res.status(400).json({
+        success: false,
+        message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez MP3, WAV ou OGG.',
       });
     }
     const port = process.env.PORT || 3000;
@@ -449,6 +492,13 @@ router.post('/image-from-base64', async (req, res) => {
     const buffer = Buffer.from(base64, 'base64');
     if (buffer.length > 5 * 1024 * 1024) {
       return res.status(413).json({ success: false, message: 'Image trop volumineuse (max 5 Mo).' });
+    }
+    const { valid } = await validateFileTypeFromBuffer(buffer, ALLOWED_IMAGE_MIMES);
+    if (!valid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez JPEG, PNG, GIF ou WebP.',
+      });
     }
     let finalBuffer = buffer;
     try {

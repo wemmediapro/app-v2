@@ -1,10 +1,19 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
-const { registerValidation, loginValidation } = require('../middleware/validation');
+const { registerValidation, loginValidation, profileValidation } = require('../middleware/validation');
 const { generateToken, generateAccessToken, authMiddleware } = require('../middleware/auth');
 const User = require('../models/User');
 const { logFailedLogin, logApiError } = require('../lib/logger');
+
+// [SEC-1/PERF-1] Hash bcrypt admin pré-calculé une fois au premier login (évite bcrypt.hash à chaque requête)
+let cachedAdminPasswordHash = null;
+async function getAdminPasswordHash(adminPassword) {
+  if (!adminPassword) return null;
+  if (cachedAdminPasswordHash !== null) return cachedAdminPasswordHash;
+  cachedAdminPasswordHash = await bcrypt.hash(adminPassword, 12);
+  return cachedAdminPasswordHash;
+}
 
 // Limite : 5 tentatives de login par 15 min par IP (brute-force protection, configurable via LOGIN_RATE_LIMIT_MAX)
 const loginLimiter = rateLimit({
@@ -44,16 +53,23 @@ router.post('/register', registerValidation, async (req, res) => {
 
     await user.save();
 
-    // Generate token
+    // [SEC-4] JWT uniquement dans le cookie httpOnly, pas dans le body
     const token = generateToken({
       id: user._id,
       email: user.email,
       role: user.role
     });
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    };
+    res.cookie('adminToken', token, cookieOptions);
 
     res.status(201).json({
       message: 'User registered successfully',
-      token,
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -95,8 +111,8 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
 
     const effectiveAdminEmail = adminEmail;
     const effectiveAdminPassword = adminPassword;
-    // P3 : jamais de comparaison en clair — hash bcrypt du mot de passe env pour comparaison avec l'entrée utilisateur
-    const adminPasswordHash = effectiveAdminPassword ? await bcrypt.hash(effectiveAdminPassword, 12) : null;
+    // P3 : jamais de comparaison en clair — hash bcrypt pré-calculé (SEC-1/PERF-1)
+    const adminPasswordHash = await getAdminPasswordHash(effectiveAdminPassword);
 
     // Find user by email
     let user = await User.findOne({ email: email.trim().toLowerCase() });
@@ -155,9 +171,9 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
     };
     res.cookie('adminToken', token, cookieOptions);
 
+    // [SEC-4] JWT uniquement dans le cookie, pas dans le body
     res.json({
       message: 'Login successful',
-      token,
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -189,8 +205,9 @@ router.post('/logout', (req, res) => {
 });
 
 // @route   POST /api/auth/refresh
-// @desc    Renvoie un nouveau token (cookie + body) pour prolonger la session
+// @desc    Renvoie un nouveau token dans le cookie httpOnly pour prolonger la session
 // @access  Private (token valide requis)
+// [SEC-4] JWT uniquement dans le cookie, pas dans le body
 router.post('/refresh', authMiddleware, (req, res) => {
   const newToken = generateToken({
     id: req.user.id,
@@ -205,7 +222,7 @@ router.post('/refresh', authMiddleware, (req, res) => {
     path: '/',
   };
   res.cookie('adminToken', newToken, cookieOptions);
-  res.json({ token: newToken, message: 'Token refreshed' });
+  res.json({ message: 'Token refreshed' });
 });
 
 // @route   GET /api/auth/me
@@ -229,7 +246,8 @@ router.get('/me', authMiddleware, async (req, res) => {
 // @route   PUT /api/auth/profile
 // @desc    Update user profile
 // @access  Private
-router.put('/profile', authMiddleware, async (req, res) => {
+// [Q1] Validation des champs (longueurs, format téléphone, date ISO, etc.)
+router.put('/profile', authMiddleware, profileValidation, async (req, res) => {
   try {
     const { firstName, lastName, phone, cabinNumber, country, dateOfBirth, preferences } = req.body;
     
@@ -333,13 +351,17 @@ router.put('/user-data', authMiddleware, async (req, res) => {
     if (!user.userData || typeof user.userData !== 'object') {
       user.userData = {};
     }
+    // [Q2] Limiter chaque tableau de favoris à 500 éléments max
+    const FAVORITES_MAX = 500;
+    const cap = (arr) => (Array.isArray(arr) ? arr.slice(0, FAVORITES_MAX) : []);
     if (favorites !== undefined) {
+      const prev = user.userData.favorites || {};
       user.userData.favorites = {
-        magazineIds: Array.isArray(favorites.magazineIds) ? favorites.magazineIds : (user.userData.favorites && user.userData.favorites.magazineIds) || [],
-        restaurantIds: Array.isArray(favorites.restaurantIds) ? favorites.restaurantIds : (user.userData.favorites && user.userData.favorites.restaurantIds) || [],
-        enfantIds: Array.isArray(favorites.enfantIds) ? favorites.enfantIds : (user.userData.favorites && user.userData.favorites.enfantIds) || [],
-        watchlist: Array.isArray(favorites.watchlist) ? favorites.watchlist : (user.userData.favorites && user.userData.favorites.watchlist) || [],
-        shopItems: Array.isArray(favorites.shopItems) ? favorites.shopItems : (user.userData.favorites && user.userData.favorites.shopItems) || []
+        magazineIds: cap(Array.isArray(favorites.magazineIds) ? favorites.magazineIds : prev.magazineIds),
+        restaurantIds: cap(Array.isArray(favorites.restaurantIds) ? favorites.restaurantIds : prev.restaurantIds),
+        enfantIds: cap(Array.isArray(favorites.enfantIds) ? favorites.enfantIds : prev.enfantIds),
+        watchlist: cap(Array.isArray(favorites.watchlist) ? favorites.watchlist : prev.watchlist),
+        shopItems: cap(Array.isArray(favorites.shopItems) ? favorites.shopItems : prev.shopItems)
       };
     }
     if (playbackPositions !== undefined && typeof playbackPositions === 'object' && playbackPositions !== null) {

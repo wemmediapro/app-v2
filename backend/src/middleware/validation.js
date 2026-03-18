@@ -95,6 +95,43 @@ const loginValidation = [
   handleValidationErrors
 ];
 
+/** [Q1] Validation PUT /api/auth/profile — champs optionnels, formats contrôlés */
+const profileValidation = [
+  body('firstName')
+    .optional()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('First name cannot exceed 50 characters'),
+  body('lastName')
+    .optional()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('Last name cannot exceed 50 characters'),
+  body('phone')
+    .optional()
+    .matches(/^[+]?[\d\s\-\(\)]+$/)
+    .withMessage('Please provide a valid phone number'),
+  body('cabinNumber')
+    .optional()
+    .trim()
+    .isLength({ max: 30 })
+    .withMessage('Cabin number cannot exceed 30 characters'),
+  body('country')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Country cannot exceed 100 characters'),
+  body('dateOfBirth')
+    .optional()
+    .isISO8601()
+    .withMessage('Invalid date of birth (ISO 8601 expected)'),
+  body('preferences')
+    .optional()
+    .isObject()
+    .withMessage('Preferences must be an object'),
+  handleValidationErrors
+];
+
 const feedbackValidation = [
   body('type')
     .isIn(['complaint', 'suggestion', 'compliment', 'technical'])
@@ -174,6 +211,7 @@ const productUpdateValidation = [
 module.exports = {
   registerValidation,
   loginValidation,
+  profileValidation,
   feedbackValidation,
   handleValidationErrors,
   validatePagination,

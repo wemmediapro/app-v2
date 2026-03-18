@@ -21,6 +21,7 @@ import { useShipmap } from "./hooks/useShipmap";
 import { useRadio } from "./hooks/useRadio";
 import { useWebtv } from "./hooks/useWebtv";
 import { useChat } from "./hooks/useChat";
+import { useOnline } from "./hooks/useOnline";
 import LanguageSelector from "./components/LanguageSelector";
 import BottomNav from "./components/BottomNav";
 import AppHeader from "./components/AppHeader";
@@ -57,18 +58,9 @@ function App() {
     }
   });
 
-  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+  // [ARCH-2] useOnline selon docs/REFACTORING-APP.md
+  const isOnline = useOnline();
   const videoPositionOnFullscreenExitRef = useRef(null);
-  useEffect(() => {
-    const onOnline = () => setIsOnline(true);
-    const onOffline = () => setIsOnline(false);
-    window.addEventListener('online', onOnline);
-    window.addEventListener('offline', onOffline);
-    return () => {
-      window.removeEventListener('online', onOnline);
-      window.removeEventListener('offline', onOffline);
-    };
-  }, []);
 
   // === Navigation (React Router + état page) — deep linking et historique
   const location = useLocation();

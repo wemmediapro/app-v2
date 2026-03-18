@@ -26,6 +26,20 @@ jest.mock('../../models/User', () => {
 });
 
 jest.mock('../../lib/logger', () => ({ logFailedLogin: jest.fn(), logApiError: jest.fn() }));
+jest.mock('../../lib/cache-manager', () => ({ isConnected: false, get: jest.fn(), set: jest.fn() }));
+
+/** Chaîne Mongoose findById().select().lean() ou findById().select() / findById() pour les routes */
+function mockFindByIdChain(userDoc) {
+  const doc = { ...userDoc, toObject: function () { return { ...this }; }, save: mockSave };
+  const chain = {
+    lean: jest.fn().mockResolvedValue(doc),
+    then(resolve, reject) { return Promise.resolve(doc).then(resolve, reject); },
+  };
+  return {
+    select: jest.fn().mockReturnValue(chain),
+    then(resolve, reject) { return Promise.resolve(doc).then(resolve, reject); },
+  };
+}
 
 const request = require('supertest');
 const express = require('express');
@@ -53,7 +67,7 @@ describe('API Auth', () => {
       expect(res.body).toHaveProperty('message');
     });
 
-    it('retourne 201 et user + token quand inscription OK', async () => {
+    it('retourne 201 et user + cookie adminToken (SEC-4: pas de token dans le body)', async () => {
       User.findOne.mockResolvedValue(null);
       const res = await request(app)
         .post('/api/auth/register')
@@ -64,7 +78,9 @@ describe('API Auth', () => {
           password: 'password123',
         })
         .expect(201);
-      expect(res.body).toHaveProperty('token');
+      expect(res.body).not.toHaveProperty('token');
+      expect(res.headers['set-cookie']).toBeDefined();
+      expect(res.headers['set-cookie'].some((c) => c.startsWith('adminToken='))).toBe(true);
       expect(res.body).toHaveProperty('user');
       expect(res.body.user.email).toBe('new@test.com');
     });
@@ -100,7 +116,7 @@ describe('API Auth', () => {
         .expect(401);
     });
 
-    it('retourne 200 + token quand login OK', async () => {
+    it('retourne 200 + cookie adminToken (SEC-4: pas de token dans le body)', async () => {
       const fakeUser = {
         _id: '507f1f77bcf86cd799439011',
         email: 'user@test.com',
@@ -116,7 +132,9 @@ describe('API Auth', () => {
         .post('/api/auth/login')
         .send({ email: 'user@test.com', password: 'validpass' })
         .expect(200);
-      expect(res.body).toHaveProperty('token');
+      expect(res.body).not.toHaveProperty('token');
+      expect(res.headers['set-cookie']).toBeDefined();
+      expect(res.headers['set-cookie'].some((c) => c.startsWith('adminToken='))).toBe(true);
       expect(res.body).toHaveProperty('user');
     });
   });
@@ -143,11 +161,9 @@ describe('API Auth', () => {
         firstName: 'U',
         lastName: 'T',
         role: 'user',
-        toObject() { return this; },
+        mustChangePassword: false,
       };
-      User.findById.mockReturnValue({
-        select: jest.fn().mockResolvedValue(fakeUser),
-      });
+      User.findById.mockReturnValue(mockFindByIdChain(fakeUser));
       const res = await request(app)
         .get('/api/auth/me')
         .set('Authorization', `Bearer ${token}`)
@@ -173,13 +189,17 @@ describe('API Auth', () => {
         .expect(401);
     });
 
-    it('retourne 200 + nouveau token avec token valide', async () => {
+    it('retourne 200 + cookie adminToken (SEC-4: pas de token dans le body)', async () => {
       const token = generateToken({ id: '507f1f77bcf86cd799439011', email: 'u@test.com', role: 'user' });
+      const fakeUser = { _id: '507f1f77bcf86cd799439011', email: 'u@test.com', role: 'user', isActive: true };
+      User.findById.mockReturnValue(mockFindByIdChain(fakeUser));
       const res = await request(app)
         .post('/api/auth/refresh')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(res.body).toHaveProperty('token');
+      expect(res.body).not.toHaveProperty('token');
+      expect(res.headers['set-cookie']).toBeDefined();
+      expect(res.headers['set-cookie'].some((c) => c.startsWith('adminToken='))).toBe(true);
       expect(res.body).toHaveProperty('message');
     });
   });
@@ -204,9 +224,8 @@ describe('API Auth', () => {
         country: '',
         dateOfBirth: null,
         preferences: {},
-        save: mockSave,
       };
-      User.findById.mockResolvedValue(savedUser);
+      User.findById.mockReturnValue(mockFindByIdChain(savedUser));
       const res = await request(app)
         .put('/api/auth/profile')
         .set('Authorization', `Bearer ${token}`)

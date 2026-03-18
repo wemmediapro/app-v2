@@ -2,10 +2,11 @@
  * Serveur de production (PM2 / déploiement).
  * Rôle : même stack que server.js mais sans clustering Node (le clustering est géré par PM2),
  * avec options Socket.io/Redis adaptées à la prod. À utiliser comme point d’entrée en production
- * (ex. ecosystem.config.cjs) à la place de server.js.
+ * (ex. ecosystem.production.cjs) à la place de server.js.
  */
 require('dotenv').config({ path: './config.env' });
 const express = require('express');
+const compression = require('compression');
 const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -25,11 +26,16 @@ const workerId = process.env.INSTANCE_ID || process.pid;
 // Code du worker (PM2 gère le clustering)
   const app = express();
   const server = createServer(app);
-  
+
+  // [PERF-2] Compression gzip des réponses
+  app.use(compression());
+
   // Configuration Socket.io optimisée pour production
+  // [SEC-3] En production, pas d'origine localhost par défaut
+  const corsOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : (isProduction ? [] : ['http://localhost:5173', 'http://localhost:3001']);
   const ioOptions = {
     cors: {
-      origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : ["http://localhost:5173", "http://localhost:3001"],
+      origin: corsOrigins.length ? corsOrigins : (isProduction ? [] : ['http://localhost:5173', 'http://localhost:3001']),
       methods: ["GET", "POST"],
       credentials: true
     },
@@ -79,8 +85,10 @@ const workerId = process.env.INSTANCE_ID || process.pid;
     crossOriginEmbedderPolicy: false
   }));
   
+  // [SEC-3] En production, pas d'origine localhost par défaut
+  const appCorsOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : (isProduction ? [] : ['http://localhost:5173', 'http://localhost:3001']);
   app.use(cors({
-    origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : ["http://localhost:5173", "http://localhost:3001"],
+    origin: appCorsOrigins.length ? appCorsOrigins : (isProduction ? [] : ['http://localhost:5173', 'http://localhost:3001']),
     credentials: true,
     optionsSuccessStatus: 200
   }));
@@ -166,7 +174,6 @@ const workerId = process.env.INSTANCE_ID || process.pid;
   app.use('/api/shop', require('./src/routes/shop'));
   app.use('/api/feedback', require('./src/routes/feedback'));
   app.use('/api/admin', require('./src/routes/admin'));
-  app.use('/api/demo', require('./src/routes/demo'));
   app.use('/api/analytics', require('./src/routes/analytics'));
   app.use('/api/gnv', require('./src/routes/gnv'));
   
@@ -255,8 +262,8 @@ const workerId = process.env.INSTANCE_ID || process.pid;
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
   
-  // 404 handler
-  app.use('*', (req, res) => {
+  // 404 handler (catch-all : pas de path pour compat Express 5 / path-to-regexp)
+  app.use((req, res) => {
     res.status(404).json({ message: 'Route not found' });
   });
   
@@ -300,4 +307,3 @@ const workerId = process.env.INSTANCE_ID || process.pid;
   });
   
   module.exports = { app, io };
-}

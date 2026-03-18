@@ -2,8 +2,8 @@
 
 ## Statut (dernière mise à jour)
 
-- **useBanners** : fait. **useRadio** : fait. **useWebtv** : fait. **useShipmap** : fait. **useChat** : fait.
-- **App.jsx** : allégé (~750 lignes) ; la logique chat est dans `src/hooks/useChat.js`, passée à MainContent via `chat={chat}`.
+- **useBanners** : fait. **useRadio** : fait. **useWebtv** : fait. **useShipmap** : fait. **useChat** : fait. **useOnline** : fait (ARCH-2).
+- **App.jsx** : allégé ; `isOnline = useOnline()` selon structure cible, logique chat dans `src/hooks/useChat.js`, passée à MainContent via `chat={chat}`.
 - Pour afficher la page Messages : ajouter `page === 'messages'` dans MainContent et un composant qui consomme `props.chat`.
 - Cible optionnelle : réduire encore vers 400–600 lignes en extrayant d’autres blocs (favoris, conditions, etc.) dans des hooks ou composants dédiés.
 
@@ -39,7 +39,7 @@ function App() {
   const { t, language } = useLanguage();
   const [conditionsAccepted, setConditionsAccepted] = useState(...);
   const [page, setPage] = useState(...);
-  const isOnline = useOnline();
+  const isOnline = useOnline(); // hook dédié (src/hooks/useOnline.js)
 
   const radio = useRadio(language, isAnyVideoPlaying);
   const webtv = useWebtv(language, page);
