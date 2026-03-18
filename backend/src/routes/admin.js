@@ -61,6 +61,9 @@ router.get('/databases', async (req, res) => {
   }
 });
 
+const DASHBOARD_CACHE_KEY = 'admin:dashboard:stats';
+const DASHBOARD_CACHE_TTL = 60; // S7 : cache 60s pour éviter 15+ requêtes MongoDB à chaque chargement /dashboard
+
 // @route   GET /api/admin/dashboard
 // @desc    Get dashboard statistics
 // @access  Private (Admin)
@@ -72,6 +75,11 @@ router.get('/dashboard', async (req, res) => {
         charts: { feedbackByStatus: [], usersByRole: [] },
         recent: { users: [], feedback: [] }
       });
+    }
+
+    if (cacheManager.isConnected) {
+      const cached = await cacheManager.get(DASHBOARD_CACHE_KEY);
+      if (cached) return res.json(cached);
     }
 
     // Get statistics (toutes les valeurs depuis la base de données)
@@ -127,7 +135,7 @@ router.get('/dashboard', async (req, res) => {
       }
     ]);
 
-    res.json({
+    const payload = {
       statistics: {
         totalUsers,
         activeUsers,
@@ -149,7 +157,9 @@ router.get('/dashboard', async (req, res) => {
         users: recentUsers,
         feedback: recentFeedback
       }
-    });
+    };
+    if (cacheManager.isConnected) await cacheManager.set(DASHBOARD_CACHE_KEY, payload, DASHBOARD_CACHE_TTL);
+    res.json(payload);
   } catch (error) {
     console.error('Dashboard error:', error);
     res.status(500).json({ message: 'Server error' });

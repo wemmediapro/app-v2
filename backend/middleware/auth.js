@@ -1,8 +1,8 @@
 /**
- * Wrapper de compatibilité : délègue à backend/src/middleware/auth.js (seule implémentation).
- * JWT_SECRET est géré uniquement dans src/middleware/auth.js via getSecret() (P1 : pas d'accès direct sans guard).
+ * Wrapper de compatibilité (Q6 : une seule implémentation auth = src/middleware/auth.js).
+ * Ce fichier délègue tout à src/middleware/auth.js. Les routes backend/routes/* utilisent ce wrapper.
+ * JWT_SECRET géré uniquement dans src/middleware/auth.js via getSecret() (P1).
  * C2 : guard explicite avant toute utilisation JWT — throw si JWT_SECRET absent.
- * Utilisé par backend/routes/*.js si ces routes sont montées.
  */
 const srcAuth = require('../src/middleware/auth');
 const config = require('../src/config');

@@ -1,3 +1,7 @@
+/**
+ * Config PM2 (alias possible : ecosystem.cjs). En prod préférer ecosystem.production.cjs.
+ * Clustering : script server.js + exec_mode cluster → backend/cluster.js non utilisé (code mort).
+ */
 module.exports = {
   apps: [
     {
@@ -13,31 +17,24 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3000
       },
-      // Optimisations pour la production - 2000 connexions
-      max_memory_restart: '2G', // Plus de mémoire pour gérer plus de connexions
+      max_memory_restart: '2G',
+      autorestart: true,
       min_uptime: '10s',
       max_restarts: 10,
       restart_delay: 4000,
-      // Optimisations Node.js
-      node_args: '--max-old-space-size=2048', // 2GB heap par worker
-      // Kill timeout pour arrêt propre
-      kill_timeout: 10000,
-      // Logs
+      node_args: '--max-old-space-size=2048',
+      kill_timeout: 35000, // Graceful shutdown 30s dans server.js → marge 35s
+      wait_ready: true,
+      listen_timeout: 10000,
+      instance_var: 'INSTANCE_ID',
       error_file: './logs/backend-error.log',
       out_file: './logs/backend-out.log',
       log_file: './logs/backend-combined.log',
       time: true,
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
-      // Monitoring
       watch: false,
-      ignore_watch: ['node_modules', 'logs', '*.log'],
-      // Graceful shutdown
-      kill_timeout: 5000,
-      wait_ready: true,
-      listen_timeout: 10000,
-      // Variables d'environnement
-      instance_var: 'INSTANCE_ID'
+      ignore_watch: ['node_modules', 'logs', '*.log']
     },
     {
       name: 'gnv-frontend',

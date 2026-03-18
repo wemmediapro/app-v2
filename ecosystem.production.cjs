@@ -11,7 +11,7 @@ module.exports = {
       name: 'gnv-backend',
       script: './backend/server.js',
       
-      // Clustering - PM2 gère le scaling (server.js uniquement ; cluster.js non utilisé)
+      // Clustering : PM2 lance N processus server.js (exec_mode: 'cluster'). backend/cluster.js n'est pas utilisé (code mort en prod PM2).
       instances: process.env.CLUSTER_WORKERS || 'max',
       exec_mode: 'cluster',
       
@@ -31,6 +31,7 @@ module.exports = {
       max_memory_restart: '1G',  // Redémarre si > 1GB par instance
       
       // Gestion des redémarrages
+      autorestart: true,
       min_uptime: '10s',         // Temps minimum avant considérer stable
       max_restarts: 10,          // Max redémarrages en 1 minute
       restart_delay: 4000,       // Délai entre redémarrages
@@ -53,15 +54,8 @@ module.exports = {
       listen_timeout: 10000,     // Timeout pour écoute
       instance_var: 'INSTANCE_ID',
       
-      // Optimisations Node.js
-      node_args: [
-        '--max-old-space-size=1024',  // 1GB heap par instance
-        '--optimize-for-size',
-        '--gc-interval=100'
-      ],
-      
-      // Variables spécifiques au clustering
-      autorestart: true,
+      // Optimisations Node.js (S9 : pas --optimize-for-size ni --gc-interval, contre-productifs en prod)
+      node_args: ['--max-old-space-size=1024'],
       
       // Source maps (désactivé en production)
       source_map_support: false,
@@ -135,14 +129,14 @@ module.exports = {
     }
   ],
   
-  // Configuration globale PM2
+  // Deploy (Q4 : remplacer les placeholders par les vraies valeurs avant utilisation)
   deploy: {
     production: {
-      user: 'deploy',
-      host: ['votre-serveur.com'],
+      user: 'deploy',                    // Remplacer par l'utilisateur serveur
+      host: ['votre-serveur.com'],       // Remplacer par l'hôte réel
       ref: 'origin/main',
-      repo: 'git@github.com:votre-repo/gnv-app.git',
-      path: '/var/www/gnv-app',
+      repo: 'git@github.com:votre-repo/gnv-app.git', // Remplacer par le repo réel
+      path: '/var/www/gnv-app',           // Remplacer par le chemin de déploiement
       'post-deploy': 'npm install --production && npm run build && pm2 reload ecosystem.production.cjs --env production',
       'pre-setup': 'apt-get update && apt-get install -y git'
     }

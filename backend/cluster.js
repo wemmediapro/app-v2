@@ -1,7 +1,11 @@
 /**
  * Point d'entrée cluster (module cluster Node.js).
  * Usage : NODE_ENV=production node cluster.js (ou npm run start:cluster).
- * En prod avec PM2 : ecosystem utilise server.js + exec_mode: 'cluster' → ce fichier n'est pas utilisé.
+ *
+ * En prod avec PM2 (ecosystem.production.cjs) : script = server.js + exec_mode: 'cluster'
+ * → PM2 lance directement N workers server.js. Ce fichier n'est jamais exécuté (code mort).
+ * Utiliser cluster.js uniquement si vous lancez le backend sans PM2 en mode cluster.
+ *
  * En dev : node server.js ou npm run dev (un seul processus).
  * Anti crash-loop : max 5 redémarrages en 60s par worker, puis backoff exponentiel.
  */

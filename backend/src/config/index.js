@@ -55,10 +55,10 @@ module.exports = {
     uri: process.env.REDIS_URI || process.env.REDIS_URL || 'redis://localhost:6379',
   },
 
-  // Rate limit (éviter 429 en dev : plus de requêtes autorisées par fenêtre)
+  // Rate limit (S1 : 2000 par défaut au lieu de 10000 pour limiter les abus)
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000,
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 10000,
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 2000,
     // Stream (vidéo/audio) : 1200 req/min/IP pour éviter 429 en lecture longue (audit CTO)
     streamWindowMs: parseInt(process.env.RATE_LIMIT_STREAM_WINDOW_MS, 10) || 60 * 1000,
     streamMax: parseInt(process.env.RATE_LIMIT_STREAM_MAX, 10) || 1200,
