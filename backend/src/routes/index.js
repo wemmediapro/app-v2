@@ -19,6 +19,7 @@ function mountRoutes(app, deps = {}) {
   app.use('/api/radio', require('./radio'));
   app.use('/api/magazine', require('./magazine'));
   app.use('/api/messages', require('./messages'));
+  app.use('/api/sync', require('./sync'));
   app.use('/api/shop', require('./shop'));
   app.use('/api/feedback', require('./feedback'));
   app.use('/api/admin', require('./admin'));

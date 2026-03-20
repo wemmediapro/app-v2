@@ -1,0 +1,120 @@
+# Tests de charge — léger sur push main (k6, 100 VUs) ; manuel pour profil complet (1500 VUs).
+name: Load tests
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Profil de charge (ci = 100 VUs court, full = 1500 VUs ~8 min)
+        type: choice
+        options: [ci, full]
+        default: full
+      run_artillery:
+        description: Lancer aussi Artillery (long en full)
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+
+      - name: Installer k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Dépendances backend
+        working-directory: backend
+        run: npm ci
+
+      - name: Dépendances racine (Artillery)
+        run: npm ci
+
+      - name: Préparer sorties
+        run: mkdir -p tests/load/out
+
+      - name: Démarrer le backend
+        working-directory: backend
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017/gnv_load_ci
+          NODE_ENV: development
+          JWT_SECRET: ci-load-test-jwt-secret-at-least-32-chars-long
+          RATE_LIMIT_LOAD_TEST: '1'
+          MAX_CONNECTIONS_PER_IP: '5000'
+          PORT: '3000'
+        run: |
+          node server.js &
+          echo $! > /tmp/gnv-backend.pid
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:3000/api/health > /dev/null; then
+              echo "Backend prêt"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Timeout en attendant /api/health"
+          exit 1
+
+      - name: Profil effectif
+        id: profile
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "value=ci" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${{ inputs.profile }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: k6
+        env:
+          API_URL: http://127.0.0.1:3000
+          LOAD_PROFILE: ${{ steps.profile.outputs.value }}
+        run: |
+          k6 run --summary-export=tests/load/out/k6-summary.json tests/load/gnv-1500-connections.js
+
+      - name: Artillery (optionnel)
+        if: ${{ github.event_name != 'push' && inputs.run_artillery == true }}
+        run: |
+          npx artillery run -e ${{ steps.profile.outputs.value }} \
+            --output tests/load/out/artillery-report.json \
+            tests/load/gnv-1500-connections.yaml
+          npx artillery report tests/load/out/artillery-report.json \
+            --output tests/load/out/artillery-report.html
+
+      - name: Arrêter le backend
+        if: always()
+        run: |
+          if [ -f /tmp/gnv-backend.pid ]; then
+            kill "$(cat /tmp/gnv-backend.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload artifacts (JSON + HTML)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: load-test-results-${{ steps.profile.outputs.value }}-${{ github.run_id }}
+          path: |
+            tests/load/out/k6-summary.json
+            tests/load/out/artillery-report.json
+            tests/load/out/artillery-report.html
+          if-no-files-found: warn

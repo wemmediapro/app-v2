@@ -8,6 +8,7 @@
     "dompurify": "^3.3.3",
     "framer-motion": "^11.0.0",
     "hls.js": "^1.6.15",
+    "idb": "^8.0.3",
     "lucide-react": "^0.378.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -42,7 +43,12 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:mobile": "playwright test --project=mobile-chrome",
-    "test:load": "k6 run tests/load/k6-load.js"
+    "test:load": "k6 run tests/load/k6-load.js",
+    "test:load:k6": "k6 run tests/load/gnv-1500-connections.js",
+    "test:load:k6:ci": "k6 run --env LOAD_PROFILE=ci tests/load/gnv-1500-connections.js",
+    "test:load:artillery": "artillery run -e full tests/load/gnv-1500-connections.yaml",
+    "test:load:artillery:ci": "artillery run -e ci tests/load/gnv-1500-connections.yaml",
+    "test:load:report": "node scripts/load-test-report.cjs"
   },
   "overrides": {
     "serialize-javascript": "^7.0.3"
@@ -53,6 +59,7 @@
     "@testing-library/react": "^16.0.1",
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/coverage-v8": "^4.1.0",
+    "artillery": "^2.0.30",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.1.0",
     "jsdom": "^25.0.1",

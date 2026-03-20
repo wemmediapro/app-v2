@@ -5,6 +5,7 @@
  * Protection flood globale : max SOCKET_RATE_LIMIT_MAX événements par socket par fenêtre (ex. 1h) pour join-room + send-message.
  */
 const logger = require('../lib/logger');
+const connectionManager = require('../lib/connection-manager');
 const { hasAllowedPrefix, isRoomAuthorizedForUser } = require('./roomUtils');
 const MAX_MESSAGE_LENGTH = 5000;
 
@@ -70,7 +71,14 @@ function sanitizeContent(str) {
 
 /** Applique les handlers sur une instance io déjà authentifiée. */
 function attachSocketHandlers(io, connectionCounters) {
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
+    const allowed = await connectionManager.addConnection(socket);
+    if (!allowed) {
+      logger.warn({ event: 'socket_connection_rejected', socketId: socket.id, reason: 'connection_manager_limit' });
+      socket.disconnect(true);
+      return;
+    }
+
     const user = socket.user;
     if (user) {
       socket.userId = user.id || user._id;
@@ -78,7 +86,7 @@ function attachSocketHandlers(io, connectionCounters) {
     }
 
     const shipId = socket._shipId || (connectionCounters && connectionCounters.getShipId(socket));
-    if (connectionCounters) connectionCounters.increment();
+    if (connectionCounters) await connectionCounters.increment();
 
     logger.info({
       event: 'socket_connect',
@@ -132,6 +140,7 @@ function attachSocketHandlers(io, connectionCounters) {
 
     socket.on('disconnect', () => {
       clearSocketRateLimit(socket.id);
+      connectionManager.removeConnection(socket.id);
       if (connectionCounters) connectionCounters.decrement();
       logger.info({ event: 'socket_disconnect', socketId: socket.id });
     });

@@ -30,7 +30,7 @@ Tests : `src/__tests__/security.test.js` (section CSRF).
 ## Scripts d’initialisation DB
 
 - **`npm run init-db`** (`init-database.js`) : chemin **recommandé** (Mongoose, cohérent avec l’API).
-- **`npm run init-db-prisma`** : script **legacy** — voir [README déploiement](../../docs/DEPLOYMENT.md#initialisation-de-la-base-de-données) ; en production, `ADMIN_EMAIL` / `ADMIN_PASSWORD` requis dans `config.env`.
+- **`npm run init-db-prisma`** : script **legacy** — voir [README déploiement](../../docs/DEPLOYMENT.md#initialisation-de-la-base-de-données). En **production**, `ADMIN_EMAIL` / `ADMIN_PASSWORD` requis. En **dev uniquement**, si `ADMIN_EMAIL` est absent, repli **`admin@gnv.com`** avec `console.warn` (démo locale, documenté dans `DEPLOYMENT.md` — jamais utilisé quand `NODE_ENV=production`).
 
 ## Guide validateurs (détail)
 

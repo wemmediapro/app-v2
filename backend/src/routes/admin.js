@@ -26,11 +26,64 @@ const Movie = require('../models/Movie');
 const EnfantActivity = require('../models/EnfantActivity');
 const Product = require('../models/Product');
 const LocalServerConfig = require('../models/LocalServerConfig');
+const redisConnectionManager = require('../lib/redis-connection-manager');
+const connectionManager = require('../lib/connection-manager');
+const memoryMonitor = require('../lib/memory-monitor');
 
 const router = express.Router();
 
 // Toutes les routes admin exigent auth + rôle admin
 router.use(authMiddleware, adminMiddleware);
+
+// @route   GET /api/admin/connections-stats
+// @desc    Stats connexions Socket.io (Redis cross-worker + vue locale du worker)
+// @access  Private (Admin)
+router.get('/connections-stats', async (req, res) => {
+  try {
+    const redisStats = await redisConnectionManager.getStatsGlobal();
+    res.json({
+      success: true,
+      data: {
+        redis: redisStats,
+        workerLocal: connectionManager.getStats(),
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('GET /api/admin/connections-stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la lecture des statistiques de connexions',
+      error: error.message,
+    });
+  }
+});
+
+// @route   GET /api/admin/memory-stats
+// @desc    Instantané heap / RSS + seuils d’alerte (worker courant)
+// @access  Private (Admin)
+router.get('/memory-stats', (req, res) => {
+  try {
+    const snapshot = memoryMonitor.getSnapshot();
+    res.json({
+      success: true,
+      data: {
+        snapshot,
+        thresholds: memoryMonitor.getThresholds(),
+        gcExposed: typeof global.gc === 'function',
+        intervalMs: memoryMonitor.intervalMs,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('GET /api/admin/memory-stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la lecture des statistiques mémoire',
+      error: error.message,
+    });
+  }
+});
 
 /** Formate une taille en octets en chaîne lisible (Ko, Mo, Go) */
 function formatBytes(bytes) {

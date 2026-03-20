@@ -2,9 +2,15 @@
  * Hook Chat : Socket.io, conversations, messages, typing.
  * Conforme à docs/REFACTORING-APP.md. Logique extraite de App.jsx.
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { io } from 'socket.io-client';
 import { apiService } from '../services/apiService';
+import {
+  enqueue,
+  flushPendingQueue,
+  setOfflineFlushHandler,
+  parseReceiverFromChatRoom,
+} from '../services/offlineQueue';
 
 /** Extrait l’id utilisateur du JWT (payload) — aligné sur le backend (champ id). */
 function getUserIdFromToken() {
@@ -35,7 +41,11 @@ function peerChatRoom(selectedChat) {
   return chatDmRoomName(myId, peerId);
 }
 
-export function useChat() {
+/**
+ * @param {{ refreshOfflineQueueCount?: () => void | Promise<void> }} options
+ */
+export function useChat(options = {}) {
+  const { refreshOfflineQueueCount } = options;
   const [selectedChat, setSelectedChat] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const [chatSearchQuery, setChatSearchQuery] = useState('');
@@ -65,6 +75,25 @@ export function useChat() {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const conversationMenuRefs = useRef({});
+
+  useLayoutEffect(() => {
+    setOfflineFlushHandler(async (item) => {
+      const myId = getUserIdFromToken();
+      if (!myId) throw new Error('Utilisateur non authentifié');
+      const receiver = parseReceiverFromChatRoom(item.room, myId);
+      if (!receiver) throw new Error('Room invalide');
+      await apiService.sendMessage({
+        receiver,
+        content: item.content,
+        type: 'text',
+        clientSyncId: item.id,
+      });
+      if (socket?.connected && item.room) {
+        socket.emit('send-message', { room: item.room, content: item.content, text: item.content });
+      }
+    });
+    return () => setOfflineFlushHandler(null);
+  }, [socket]);
 
   // Socket.io connection
   useEffect(() => {
@@ -277,6 +306,9 @@ export function useChat() {
 
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || !selectedChat) return;
+    const dmRoom = peerChatRoom(selectedChat);
+    if (!dmRoom) return;
+
     const newMsg = {
       id: Date.now(),
       chatId: selectedChat,
@@ -288,9 +320,34 @@ export function useChat() {
       attachments: [],
       reactions: []
     };
+
+    const online = typeof navigator === 'undefined' ? true : navigator.onLine;
+
+    if (!online) {
+      try {
+        await enqueue({
+          room: dmRoom,
+          content: newMsg.content,
+        });
+        await refreshOfflineQueueCount?.();
+      } catch (e) {
+        console.error('Impossible d\'enregistrer le message hors ligne:', e);
+      }
+      setChatMessages(prev => [...prev, newMsg]);
+      setNewMessage('');
+      setIsTyping(false);
+      return;
+    }
+
+    try {
+      await flushPendingQueue();
+    } catch (e) {
+      console.warn('Flush file hors ligne (non bloquant):', e);
+    }
+    await refreshOfflineQueueCount?.();
+
     setChatMessages(prev => [...prev, newMsg]);
     setNewMessage('');
-    const dmRoom = peerChatRoom(selectedChat);
     if (socket?.connected && dmRoom) {
       socket.emit('send-message', { room: dmRoom, content: newMsg.content, text: newMsg.content });
     }
@@ -298,13 +355,19 @@ export function useChat() {
       await apiService.sendMessage({ receiver: selectedChat, content: newMsg.content, type: 'text' });
     } catch (error) {
       console.error('Erreur lors de l\'envoi du message:', error);
+      try {
+        await enqueue({ room: dmRoom, content: newMsg.content });
+        await refreshOfflineQueueCount?.();
+      } catch (qerr) {
+        console.error('Impossible de mettre en file après échec réseau:', qerr);
+      }
     }
     setIsTyping(false);
     const tr = peerChatRoom(selectedChat);
     if (socket?.connected && tr) {
       socket.emit('typing', { room: tr, userId: 0, isTyping: false });
     }
-  }, [newMessage, selectedChat, socket]);
+  }, [newMessage, selectedChat, socket, refreshOfflineQueueCount]);
 
   const handleTyping = useCallback((e) => {
     setNewMessage(e.target.value);

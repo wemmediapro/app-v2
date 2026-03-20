@@ -40,7 +40,10 @@ Vue d’ensemble pour passer en **production** : prérequis, build, process mana
 
 - Marqué **LEGACY** dans l’en-tête du fichier.
 - En **production** : `ADMIN_EMAIL` et `ADMIN_PASSWORD` **obligatoires** dans `config.env` (sinon le script quitte).
-- En **développement** : si `ADMIN_EMAIL` / `ADMIN_PASSWORD` absents, repli démo avec **avertissements console** (à ne pas utiliser tel quel).
+- En **développement** (`NODE_ENV !== 'production'`) : si les variables sont absentes, repli **documenté** avec **avertissements** :
+  - email : **`admin@gnv.com`** (uniquement pour démo locale — acceptable en dev à condition d’accepter le warning) ;
+  - mot de passe : **`admin123`** (faible, à remplacer via `ADMIN_PASSWORD` dès que possible).
+- Ce repli **n’existe pas en prod** : toujours définir `ADMIN_EMAIL` / `ADMIN_PASSWORD` sur les serveurs déployés.
 
 ## Variables d’environnement (rappel)
 

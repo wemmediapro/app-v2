@@ -204,11 +204,12 @@ router.post(
     body('content').trim().notEmpty().withMessage('Content is required').isLength({ max: 1000 }).withMessage('Content too long'),
     body('type').optional().isIn(['text', 'image', 'file']),
     body('attachments').optional().isArray(),
+    body('clientSyncId').optional().isString().isLength({ min: 1, max: 128 }).withMessage('clientSyncId invalide'),
   ],
   handleValidationErrors,
   async (req, res) => {
   try {
-    const { receiver, content, type = 'text', attachments = [] } = req.body;
+    const { receiver, content, type = 'text', attachments = [], clientSyncId } = req.body;
 
     // Check if receiver exists
     const receiverUser = await User.findById(receiver);
@@ -216,15 +217,49 @@ router.post(
       return res.status(404).json({ message: 'Receiver not found' });
     }
 
+    if (clientSyncId) {
+      const existing = await Message.findOne({
+        sender: req.user.id,
+        clientSyncId: String(clientSyncId).trim(),
+      })
+        .populate('sender', 'firstName lastName avatar')
+        .populate('receiver', 'firstName lastName avatar');
+      if (existing) {
+        return res.status(200).json({
+          message: 'Message already synced',
+          data: existing,
+        });
+      }
+    }
+
     const message = new Message({
       sender: req.user.id,
       receiver,
       content,
       type,
-      attachments
+      attachments,
+      ...(clientSyncId ? { clientSyncId: String(clientSyncId).trim() } : {}),
     });
 
-    await message.save();
+    try {
+      await message.save();
+    } catch (saveErr) {
+      if (saveErr && saveErr.code === 11000 && clientSyncId) {
+        const again = await Message.findOne({
+          sender: req.user.id,
+          clientSyncId: String(clientSyncId).trim(),
+        })
+          .populate('sender', 'firstName lastName avatar')
+          .populate('receiver', 'firstName lastName avatar');
+        if (again) {
+          return res.status(200).json({
+            message: 'Message already synced',
+            data: again,
+          });
+        }
+      }
+      throw saveErr;
+    }
 
     const populatedMessage = await Message.findById(message._id)
       .populate('sender', 'firstName lastName avatar')

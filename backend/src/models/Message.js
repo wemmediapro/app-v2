@@ -34,7 +34,12 @@ const messageSchema = new mongoose.Schema({
     mimetype: String,
     size: Number,
     url: String
-  }]
+  }],
+  /** Id client (ex. id file hors ligne) — idempotence batch sync, pas de doublon côté serveur */
+  clientSyncId: {
+    type: String,
+    maxlength: 128,
+  },
 }, {
   timestamps: true
 });
@@ -42,6 +47,7 @@ const messageSchema = new mongoose.Schema({
 // Index for efficient queries
 messageSchema.index({ sender: 1, receiver: 1, createdAt: -1 });
 messageSchema.index({ receiver: 1, isRead: 1 });
+messageSchema.index({ sender: 1, clientSyncId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Message', messageSchema);
 

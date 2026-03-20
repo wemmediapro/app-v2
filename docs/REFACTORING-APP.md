@@ -40,7 +40,7 @@ function App() {
   const { t, language } = useLanguage();
   const [conditionsAccepted, setConditionsAccepted] = useState(...);
   const [page, setPage] = useState(...);
-  const isOnline = useOnline(); // hook dédié (src/hooks/useOnline.js)
+  const { isOnline, syncFeedback } = useOnline(); // connectivité + feedback sync hors ligne (src/hooks/useOnline.js)
 
   const radio = useRadio(language, isAnyVideoPlaying);
   const webtv = useWebtv(language, page);

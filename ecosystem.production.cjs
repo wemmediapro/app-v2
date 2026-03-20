@@ -21,13 +21,16 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3000,
         CLUSTER_WORKERS: 'max',
-        UV_THREADPOOL_SIZE: '16'
+        UV_THREADPOOL_SIZE: '16',
+        // Heap max + GC explicite pour memory-monitor.forceGC() (alertes ≥90 %)
+        NODE_OPTIONS: '--max-old-space-size=1024 --expose-gc',
       },
       env_production: {
         NODE_ENV: 'production',
         PORT: 3000,
         CLUSTER_WORKERS: 'max',
-        UV_THREADPOOL_SIZE: '16'
+        UV_THREADPOOL_SIZE: '16',
+        NODE_OPTIONS: '--max-old-space-size=1024 --expose-gc',
       },
       
       // Gestion mémoire
@@ -39,12 +42,12 @@ module.exports = {
       max_restarts: 10,          // Max redémarrages en 1 minute
       restart_delay: 4000,       // Délai entre redémarrages
       
-      // Logs
+      // Logs (timestamps explicites sur chaque ligne PM2)
       error_file: './logs/backend-error.log',
       out_file: './logs/backend-out.log',
       log_file: './logs/backend-combined.log',
       time: true,
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      log_date_format: 'YYYY-MM-DDTHH:mm:ss.SSSZ',
       merge_logs: true,
       
       // Monitoring
@@ -56,9 +59,6 @@ module.exports = {
       wait_ready: true,          // Attend le signal 'ready'
       listen_timeout: 10000,     // Timeout pour écoute
       instance_var: 'INSTANCE_ID',
-      
-      // Optimisations Node.js (S9 : pas --optimize-for-size ni --gc-interval, contre-productifs en prod)
-      node_args: ['--max-old-space-size=1024'],
       
       // Source maps (désactivé en production)
       source_map_support: false,

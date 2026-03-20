@@ -1,0 +1,84 @@
+# Artillery — profil proche du scénario k6 `gnv-1500-connections.js`
+#
+# Usage (depuis la racine du repo) :
+#   npm run test:load:artillery
+#   npx artillery run -e ci tests/load/gnv-1500-connections.yaml
+#   npx artillery run -e full tests/load/gnv-1500-connections.yaml
+#
+# JWT optionnel pour /api/messages :
+#   LOAD_TEST_JWT=eyJ... npx artillery run -e full tests/load/gnv-1500-connections.yaml
+#
+# Socket.io « complet » (WebSocket + auth) : voir tests/load/gnv-1500-connections.js (k6).
+
+config:
+  target: "http://localhost:3000"
+  processor: "./artillery-processor.cjs"
+  variables:
+    gnvLoopIterations: 100
+
+  environments:
+    ci:
+      target: "http://localhost:3000"
+      variables:
+        gnvLoopIterations: 8
+      phases:
+        - duration: 30
+          arrivalRate: 4
+        - duration: 60
+          arrivalRate: 4
+        - duration: 15
+          arrivalRate: 0
+    full:
+      target: "http://localhost:3000"
+      variables:
+        gnvLoopIterations: 100
+      phases:
+        - duration: 120
+          arrivalCount: 1500
+        - duration: 300
+          arrivalRate: 0
+
+  phases:
+    - duration: 120
+      arrivalCount: 1500
+    - duration: 300
+      arrivalRate: 0
+
+scenarios:
+  - name: gnv-http-and-engineio-smoke
+    flow:
+      - get:
+          url: "/api/movies?limit=20&page=1"
+          expect:
+            - statusCode:
+                - 200
+                - 304
+      - get:
+          url: "/api/restaurants?lang=fr"
+          expect:
+            - statusCode:
+                - 200
+                - 304
+      - get:
+          url: "/socket.io/?EIO=4&transport=polling"
+          expect:
+            - statusCode:
+                - 200
+                - 400
+      - get:
+          url: "/api/messages"
+          beforeRequest: addAuthIfAny
+          expect:
+            - statusCode:
+                - 200
+                - 304
+                - 401
+      - loop:
+          - get:
+              url: "/api/movies?limit=10&page=1"
+              expect:
+                - statusCode:
+                    - 200
+                    - 304
+          - think: 3
+        count: "{{ gnvLoopIterations }}"

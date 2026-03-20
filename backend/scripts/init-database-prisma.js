@@ -8,6 +8,8 @@
  * - En production : ne lancez ce script que si vous savez pourquoi (schéma Prisma / tests).
  * - L’admin et les comptes de test doivent être pilotés par **ADMIN_EMAIL** et **ADMIN_PASSWORD**
  *   dans `config.env` — aucun identifiant par défaut n’est acceptable en prod.
+ * - **Dev uniquement** : si `ADMIN_EMAIL` est absent, repli **`admin@gnv.com`** avec `console.warn`
+ *   (acceptable pour démo locale ; documenté dans `docs/DEPLOYMENT.md` — ne pas s’y fier hors dev).
  *
  * Usage: node scripts/init-database-prisma.js
  * ou: npm run init-db-prisma
@@ -19,7 +21,17 @@ const bcrypt = require('bcryptjs');
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-/** Email admin : obligatoire en prod ; en dev seulement, repli documenté (démo locale). */
+/**
+ * Résout l’email admin pour ce script Prisma (legacy).
+ *
+ * - **Production** : `ADMIN_EMAIL` obligatoire → sinon arrêt du processus.
+ * - **Développement** : si `ADMIN_EMAIL` est vide, repli **`admin@gnv.com`** après `console.warn`.
+ *   C’est volontaire et **acceptable uniquement en dev** (machine locale / CI de test) pour éviter
+ *   un échec silencieux ; en prod ce chemin n’est jamais pris. Préférez toujours définir
+ *   `ADMIN_EMAIL` dans `config.env` même en dev pour coller à votre environnement.
+ *
+ * @see docs/DEPLOYMENT.md — section « Script Prisma »
+ */
 function resolveAdminEmail() {
   const fromEnv = (process.env.ADMIN_EMAIL || '').trim();
   if (fromEnv) return fromEnv;
@@ -27,11 +39,14 @@ function resolveAdminEmail() {
     console.error('CRITICAL: ADMIN_EMAIL doit être défini dans config.env (init-database-prisma interdit sans email en production).');
     process.exit(1);
   }
-  console.warn('⚠️  DEV: ADMIN_EMAIL absent — repli démo local uniquement (jamais en prod).');
+  console.warn('⚠️  DEV: ADMIN_EMAIL absent — repli démo local admin@gnv.com (documenté ; jamais en prod).');
   return 'admin@gnv.com';
 }
 
-/** Mot de passe admin : obligatoire en prod. */
+/**
+ * Mot de passe admin pour ce script. En prod : `ADMIN_PASSWORD` obligatoire.
+ * En dev : repli **`admin123`** avec `console.warn` si absent (même logique que l’email — voir `resolveAdminEmail`).
+ */
 function resolveAdminPasswordPlain() {
   const p = process.env.ADMIN_PASSWORD;
   if (p && String(p).length > 0) return p;

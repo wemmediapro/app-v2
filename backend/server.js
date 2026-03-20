@@ -49,7 +49,8 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 
 const { verifyToken } = require('./src/middleware/auth');
-const { logSocketAuthFailed } = require('./src/lib/logger');
+const logger = require('./src/lib/logger');
+const { logSocketAuthFailed } = logger;
 const LocalServerConfig = require('./src/models/LocalServerConfig');
 const { csrfCookie, csrfProtection } = require('./src/middleware/csrf');
 const { videoStreamMiddleware, audioStreamMiddleware } = require('./src/routes/stream');
@@ -57,6 +58,11 @@ const { createRedisStore } = require('./src/lib/rateLimitRedisStore');
 const { mountRoutes } = require('./src/routes');
 const { globalErrorHandler } = require('./src/utils/errors');
 const { attachSocketHandlers } = require('./src/socket/handlers');
+const connectionManager = require('./src/lib/connection-manager');
+const redisConnectionManager = require('./src/lib/redis-connection-manager');
+const memoryMonitor = require('./src/lib/memory-monitor');
+const https = require('https');
+const http = require('http');
 
 const app = express();
 
@@ -289,6 +295,13 @@ async function setupAfterDb() {
     if (cacheConnected) {
       console.log('✅ Cache listes (Redis) actif — TTL 60s');
       connectionCounters.initRedis(cacheManager);
+      await redisConnectionManager.init(cacheManager);
+      try {
+        const globalConnStats = await redisConnectionManager.loadGlobalStatsOnStartup();
+        connectionManager.applyGlobalSnapshotFromRedis(globalConnStats);
+      } catch (e) {
+        console.warn('⚠️  Stats connexions Redis au démarrage:', e.message);
+      }
     }
   }
   const skipApiLimit = (req) => {
@@ -402,6 +415,23 @@ io.use(async (socket, next) => {
     logSocketAuthFailed(socket.id, 'invalid_token');
     return next(new Error('Invalid token'));
   }
+
+  const clientIp = connectionManager.getClientIP(socket);
+  if (redisConnectionManager.isEnabled()) {
+    try {
+      const atLimit = await redisConnectionManager.isIpAtOrOverLimit(
+        clientIp,
+        parseInt(process.env.MAX_CONNECTIONS_PER_IP, 10) || 50
+      );
+      if (atLimit) {
+        logSocketAuthFailed(socket.id, 'ip_limit_global');
+        return next(new Error('Too many connections from this IP'));
+      }
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   socket._shipId = connectionCounters.getShipId(socket) || null;
   try {
     if (mongoose.connection.readyState === 1) {
@@ -423,9 +453,106 @@ io.use(async (socket, next) => {
 // Socket.io : handlers (autorisation rooms, sanitization, logging)
 attachSocketHandlers(io, connectionCounters);
 
+/** Webhook optionnel (Slack, Discord, etc.) pour alertes mémoire — MEMORY_ALERT_WEBHOOK_URL ou SLACK_WEBHOOK_URL */
+const MEMORY_WEBHOOK_THROTTLE_MS = parseInt(process.env.MEMORY_ALERT_WEBHOOK_THROTTLE_MS, 10) || 120_000;
+let lastMemoryWebhookWarning = 0;
+let lastMemoryWebhookCritical = 0;
+
+function postMemoryWebhook(payload) {
+  const url = process.env.MEMORY_ALERT_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL;
+  if (!url || typeof url !== 'string') return Promise.resolve();
+  return new Promise((resolve) => {
+    try {
+      const lib = new URL(url).protocol === 'https:' ? https : http;
+      const text = `[GNV Backend] ${payload.title || 'Memory'}\nheap ${payload.percent}% | used=${payload.heapUsed} | rss=${payload.rss} | ${payload.timestamp}`;
+      const body = JSON.stringify(
+        payload.raw && typeof payload.raw === 'object' ? payload.raw : { text }
+      );
+      const req = lib.request(
+        url,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(body),
+          },
+          timeout: 8000,
+        },
+        (res) => {
+          res.resume();
+          res.on('end', resolve);
+        }
+      );
+      req.on('error', (err) => {
+        logger.warn({ event: 'memory_webhook_error', message: err.message });
+        resolve();
+      });
+      req.on('timeout', () => {
+        req.destroy();
+        resolve();
+      });
+      req.write(body);
+      req.end();
+    } catch (e) {
+      logger.warn({ event: 'memory_webhook_error', message: e.message });
+      resolve();
+    }
+  });
+}
+
+function initMemoryMonitoring() {
+  memoryMonitor.start({
+    intervalMs: parseInt(process.env.MEMORY_MONITOR_INTERVAL_MS, 10) || 30_000,
+  });
+
+  memoryMonitor.on('memory-warning', (snap) => {
+    logger.warn({
+      event: 'memory_pressure_warning',
+      percent: snap.percent,
+      heapUsed: snap.heapUsed,
+      rss: snap.rss,
+    });
+    connectionManager.cleanupForMemoryPressureWarning();
+    const now = Date.now();
+    if (now - lastMemoryWebhookWarning >= MEMORY_WEBHOOK_THROTTLE_MS) {
+      lastMemoryWebhookWarning = now;
+      void postMemoryWebhook({
+        title: 'Avertissement mémoire (≥85 % heap)',
+        ...snap,
+      });
+    }
+  });
+
+  memoryMonitor.on('memory-critical', (snap) => {
+    logger.error({
+      event: 'memory_pressure_critical',
+      percent: snap.percent,
+      heapUsed: snap.heapUsed,
+      rss: snap.rss,
+    });
+    connectionManager.cleanupForMemoryPressure('critical');
+    const gcRan = memoryMonitor.forceGC();
+    logger.warn({ event: 'memory_force_gc', ran: gcRan });
+    const now = Date.now();
+    if (now - lastMemoryWebhookCritical >= MEMORY_WEBHOOK_THROTTLE_MS) {
+      lastMemoryWebhookCritical = now;
+      void postMemoryWebhook({
+        title: 'Critique mémoire (≥90 % heap) — cleanup + GC',
+        ...snap,
+        gcHint: gcRan,
+      });
+    }
+  });
+}
+
+initMemoryMonitoring();
+
 // Graceful shutdown (PM2 restart, Docker stop, etc.)
 function gracefulShutdown(signal) {
   console.log(`🛑 Signal ${signal} reçu. Arrêt gracieux...`);
+  try {
+    memoryMonitor.stop();
+  } catch (_) {}
   server.close(() => {
     console.log('✅ Serveur HTTP fermé');
     Promise.resolve(dbManager.disconnect?.()).then(() => process.exit(0)).catch(() => process.exit(0));

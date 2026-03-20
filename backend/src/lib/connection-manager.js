@@ -1,69 +1,152 @@
 /**
- * Gestionnaire de connexions optimisé pour 2000+ connexions simultanées
- * Gère les connexions Socket.io, MongoDB, Redis et les limites système
+ * Gestionnaire de connexions Socket.io — Map locale (latence &lt; 5 ms) pour lookup,
+ * synchronisation Redis asynchrone pour limites et stats cross-workers (PM2 cluster).
  *
- * Limitation : singleton en mémoire, non partagé entre workers PM2. Les stats (byIP, peak, etc.)
- * et les limites par IP sont locales à chaque processus. Pour des limites cross-workers,
- * utiliser connectionCounters (Redis) côté serveur principal — voir server.js.
+ * @see redis-connection-manager.js — clés gnv:connections:*, limite IP globale (MAX_CONNECTIONS_PER_IP).
  */
 
 const EventEmitter = require('events');
+const redisConnectionManager = require('./redis-connection-manager');
+
+/** Inactivité avant déconnexion (socket) — 3 min pour 1500+ connexions */
+const DEFAULT_INACTIVITY_MS = parseInt(process.env.SOCKET_INACTIVITY_TIMEOUT_MS, 10) || 3 * 60 * 1000;
+/** Sous pression mémoire (memory-warning ~85 %) */
+const AGGRESSIVE_INACTIVITY_MS = parseInt(process.env.SOCKET_INACTIVITY_AGGRESSIVE_MS, 10) || 60 * 1000;
+/** Sous pression critique (~90 %) */
+const CRITICAL_INACTIVITY_MS = parseInt(process.env.SOCKET_INACTIVITY_CRITICAL_MS, 10) || 30 * 1000;
+const CLEANUP_MAX_PER_CYCLE = parseInt(process.env.SOCKET_CLEANUP_MAX_PER_CYCLE, 10) || 50;
 
 class ConnectionManager extends EventEmitter {
   constructor() {
     super();
     this.socketConnections = new Map(); // socketId -> connection info
+    this.defaultInactivityMs = DEFAULT_INACTIVITY_MS;
     this.connectionCount = 0;
-    this.maxConnections = parseInt(process.env.MAX_SOCKET_CONNECTIONS) || 2000;
-    this.maxConnectionsPerIP = parseInt(process.env.MAX_CONNECTIONS_PER_IP) || 50;
-    this.ipConnections = new Map(); // ip -> count
+    this.maxConnections =
+      parseInt(process.env.MAX_SOCKET_CONNECTIONS || process.env.SOCKET_MAX_CONNECTIONS, 10) || 2000;
+    this.maxConnectionsPerIP = parseInt(process.env.MAX_CONNECTIONS_PER_IP, 10) || 50;
+    this.ipConnections = new Map(); // ip -> count (worker local)
     this.connectionStats = {
       total: 0,
       active: 0,
       rejected: 0,
       disconnected: 0,
       peak: 0,
-      byIP: {}
+      byIP: {},
     };
-    
-    // Nettoyage périodique des connexions inactives
+
     this.cleanupInterval = setInterval(() => {
       this.cleanupInactiveConnections();
-    }, 60000); // Toutes les minutes
+    }, 60000);
   }
 
   /**
-   * Enregistre une nouvelle connexion Socket.io
+   * Nettoie les sockets inactifs depuis plus de `idleMs`.
+   * @param {{ idleMs?: number, maxDisconnect?: number }} opts — maxDisconnect plafonne les déconnexions (défaut 50).
    */
-  addConnection(socket) {
-    const ip = this.getClientIP(socket);
-    const ipCount = this.ipConnections.get(ip) || 0;
+  cleanupInactiveConnections(opts = {}) {
+    const idleMs = opts.idleMs != null ? opts.idleMs : this.defaultInactivityMs;
+    const maxDisconnect = Math.min(
+      CLEANUP_MAX_PER_CYCLE,
+      Math.max(1, opts.maxDisconnect != null ? opts.maxDisconnect : CLEANUP_MAX_PER_CYCLE)
+    );
+    const now = Date.now();
+    const entries = [];
 
-    // Vérifier les limites par IP
-    if (ipCount >= this.maxConnectionsPerIP) {
-      this.connectionStats.rejected++;
-      this.emit('connection-rejected', { socket, reason: 'IP limit exceeded', ip });
-      return false;
+    for (const [socketId, conn] of this.socketConnections.entries()) {
+      if (now - conn.lastActivity > idleMs) {
+        entries.push({ socketId, lastActivity: conn.lastActivity });
+      }
     }
 
-    // Vérifier les limites globales
+    entries.sort((a, b) => a.lastActivity - b.lastActivity);
+    const toRemove = entries.slice(0, maxDisconnect).map((e) => e.socketId);
+
+    toRemove.forEach((socketId) => {
+      const conn = this.socketConnections.get(socketId);
+      if (conn && conn.socket) {
+        conn.socket.disconnect(true);
+        this.removeConnection(socketId);
+      }
+    });
+
+    if (toRemove.length > 0) {
+      this.emit('cleanup', { removed: toRemove.length, idleMs, aggressive: idleMs < this.defaultInactivityMs });
+    }
+  }
+
+  /** Appelé quand le moniteur mémoire dépasse 85 % (cleanup plus agressif) ou 90 % (critique). */
+  cleanupForMemoryPressure(level) {
+    if (level === 'critical') {
+      this.cleanupInactiveConnections({ idleMs: CRITICAL_INACTIVITY_MS, maxDisconnect: CLEANUP_MAX_PER_CYCLE });
+    } else {
+      this.cleanupForMemoryPressureWarning();
+    }
+  }
+
+  cleanupForMemoryPressureWarning() {
+    this.cleanupInactiveConnections({ idleMs: AGGRESSIVE_INACTIVITY_MS, maxDisconnect: CLEANUP_MAX_PER_CYCLE });
+  }
+
+  /**
+   * Amorce peak / métadonnées depuis Redis au démarrage (stats globales).
+   * @param {{ active?: number }} stats
+   */
+  applyGlobalSnapshotFromRedis(stats) {
+    if (!stats || typeof stats.active !== 'number') return;
+    if (stats.active > this.connectionStats.peak) {
+      this.connectionStats.peak = stats.active;
+    }
+  }
+
+  /**
+   * Enregistre une nouvelle connexion Socket.io (vérifie Redis avant la Map locale si Redis actif).
+   * @returns {Promise<boolean>}
+   */
+  async addConnection(socket) {
+    const ip = this.getClientIP(socket);
+    const useGlobalIp = redisConnectionManager.isEnabled();
+
+    if (useGlobalIp) {
+      const okGlobal = await redisConnectionManager.addConnectionGlobal(
+        socket.id,
+        ip,
+        this.maxConnectionsPerIP
+      );
+      if (!okGlobal) {
+        this.connectionStats.rejected++;
+        this.emit('connection-rejected', { socket, reason: 'IP limit exceeded (global Redis)', ip });
+        return false;
+      }
+    } else {
+      const ipCount = this.ipConnections.get(ip) || 0;
+      if (ipCount >= this.maxConnectionsPerIP) {
+        this.connectionStats.rejected++;
+        this.emit('connection-rejected', { socket, reason: 'IP limit exceeded', ip });
+        return false;
+      }
+    }
+
     if (this.connectionCount >= this.maxConnections) {
+      if (useGlobalIp) {
+        void redisConnectionManager.removeConnectionGlobal(socket.id).catch(() => {});
+      }
       this.connectionStats.rejected++;
       this.emit('connection-rejected', { socket, reason: 'Global limit exceeded' });
       return false;
     }
 
-    // Enregistrer la connexion
     this.socketConnections.set(socket.id, {
       socket,
       ip,
       connectedAt: Date.now(),
       lastActivity: Date.now(),
-      rooms: new Set()
+      rooms: new Set(),
     });
 
     this.connectionCount++;
-    this.ipConnections.set(ip, ipCount + 1);
+    const ipCountLocal = this.ipConnections.get(ip) || 0;
+    this.ipConnections.set(ip, ipCountLocal + 1);
     this.connectionStats.total++;
     this.connectionStats.active = this.connectionCount;
     this.connectionStats.byIP[ip] = (this.connectionStats.byIP[ip] || 0) + 1;
@@ -77,7 +160,7 @@ class ConnectionManager extends EventEmitter {
   }
 
   /**
-   * Supprime une connexion
+   * Supprime une connexion (Map locale immédiate, Redis en arrière-plan).
    */
   removeConnection(socketId) {
     const connection = this.socketConnections.get(socketId);
@@ -85,7 +168,7 @@ class ConnectionManager extends EventEmitter {
 
     const ip = connection.ip;
     const ipCount = this.ipConnections.get(ip) || 0;
-    
+
     this.socketConnections.delete(socketId);
     this.connectionCount--;
     this.connectionStats.disconnected++;
@@ -99,82 +182,44 @@ class ConnectionManager extends EventEmitter {
       delete this.connectionStats.byIP[ip];
     }
 
+    void redisConnectionManager.removeConnectionGlobal(socketId).catch(() => {});
+
     this.emit('connection-removed', { socketId, ip, total: this.connectionCount });
   }
 
-  /**
-   * Met à jour l'activité d'une connexion
-   */
   updateActivity(socketId) {
-    const connection = this.socketConnections.get(socketId);
-    if (connection) {
-      connection.lastActivity = Date.now();
+    const conn = this.socketConnections.get(socketId);
+    if (conn) {
+      conn.lastActivity = Date.now();
     }
   }
 
-  /**
-   * Ajoute une connexion à une room
-   */
   joinRoom(socketId, room) {
-    const connection = this.socketConnections.get(socketId);
-    if (connection) {
-      connection.rooms.add(room);
+    const conn = this.socketConnections.get(socketId);
+    if (conn) {
+      conn.rooms.add(room);
       this.updateActivity(socketId);
     }
   }
 
-  /**
-   * Retire une connexion d'une room
-   */
   leaveRoom(socketId, room) {
-    const connection = this.socketConnections.get(socketId);
-    if (connection) {
-      connection.rooms.delete(room);
+    const conn = this.socketConnections.get(socketId);
+    if (conn) {
+      conn.rooms.delete(room);
       this.updateActivity(socketId);
     }
   }
 
-  /**
-   * Nettoie les connexions inactives (timeout > 5 minutes)
-   */
-  cleanupInactiveConnections() {
-    const now = Date.now();
-    const timeout = 5 * 60 * 1000; // 5 minutes
-    const toRemove = [];
-
-    for (const [socketId, connection] of this.socketConnections.entries()) {
-      if (now - connection.lastActivity > timeout) {
-        toRemove.push(socketId);
-      }
-    }
-
-    toRemove.forEach(socketId => {
-      const connection = this.socketConnections.get(socketId);
-      if (connection && connection.socket) {
-        connection.socket.disconnect(true);
-        this.removeConnection(socketId);
-      }
-    });
-
-    if (toRemove.length > 0) {
-      this.emit('cleanup', { removed: toRemove.length });
-    }
-  }
-
-  /**
-   * Obtient l'IP du client depuis la socket
-   */
   getClientIP(socket) {
-    return socket.handshake.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-           socket.handshake.headers['x-real-ip'] ||
-           socket.handshake.address ||
-           socket.request.connection.remoteAddress ||
-           'unknown';
+    return (
+      socket.handshake.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+      socket.handshake.headers['x-real-ip'] ||
+      socket.handshake.address ||
+      socket.request?.connection?.remoteAddress ||
+      'unknown'
+    );
   }
 
-  /**
-   * Obtient les statistiques de connexions
-   */
   getStats() {
     return {
       ...this.connectionStats,
@@ -184,14 +229,12 @@ class ConnectionManager extends EventEmitter {
       uniqueIPs: this.ipConnections.size,
       topIPs: Object.entries(this.connectionStats.byIP)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([ip, count]) => ({ ip, count }))
+        .slice(0, 20)
+        .map(([ipp, count]) => ({ ip: ipp, count })),
+      workerLocal: true,
     };
   }
 
-  /**
-   * Réinitialise les statistiques
-   */
   resetStats() {
     this.connectionStats = {
       total: 0,
@@ -199,13 +242,10 @@ class ConnectionManager extends EventEmitter {
       rejected: 0,
       disconnected: 0,
       peak: 0,
-      byIP: {}
+      byIP: {},
     };
   }
 
-  /**
-   * Nettoie toutes les ressources
-   */
   destroy() {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
@@ -216,7 +256,6 @@ class ConnectionManager extends EventEmitter {
   }
 }
 
-// Instance singleton
 const connectionManager = new ConnectionManager();
 
 module.exports = connectionManager;

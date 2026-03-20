@@ -19,6 +19,7 @@ import { useShipmap } from "./hooks/useShipmap";
 import { useRadio } from "./hooks/useRadio";
 import { useWebtv } from "./hooks/useWebtv";
 import { useChat } from "./hooks/useChat";
+import { useOfflineQueue } from "./hooks/useOfflineQueue";
 import { useOnline } from "./hooks/useOnline";
 import BottomNav from "./components/BottomNav";
 import AppHeader from "./components/AppHeader";
@@ -42,8 +43,8 @@ function App() {
     }
   });
 
-  // [ARCH-2] useOnline selon docs/REFACTORING-APP.md
-  const isOnline = useOnline();
+  // [ARCH-2] useOnline selon docs/REFACTORING-APP.md (+ feedback sync hors ligne)
+  const { isOnline, syncFeedback } = useOnline();
   const videoPositionOnFullscreenExitRef = useRef(null);
 
   // === Navigation (React Router + état page) — deep linking et historique
@@ -192,8 +193,26 @@ function App() {
     toggleShuffle
   } = useRadio(language, page, isAnyVideoPlaying);
 
+  const [offlineSentNotice, setOfflineSentNotice] = useState(null);
+  const handleOfflineFlushComplete = useCallback(({ sent }) => {
+    if (sent > 0) setOfflineSentNotice({ sent, at: Date.now() });
+  }, []);
+
+  const offlineQueue = useOfflineQueue({ onFlushComplete: handleOfflineFlushComplete });
+
+  useEffect(() => {
+    if (!offlineSentNotice) return undefined;
+    const t = window.setTimeout(() => setOfflineSentNotice(null), 5000);
+    return () => clearTimeout(t);
+  }, [offlineSentNotice]);
+
+  useEffect(() => {
+    if (syncFeedback?.state !== 'success' || syncFeedback?.source !== 'service-worker') return;
+    void offlineQueue.refreshCount();
+  }, [syncFeedback, offlineQueue.refreshCount]);
+
   // Chat (Socket.io, conversations, messages) — hook useChat
-  const chat = useChat();
+  const chat = useChat({ refreshOfflineQueueCount: offlineQueue.refreshCount });
 
   // === Shop state (favoris dans App pour Favorites + synchro ; promos home chargées à part) ===
   const [shopFavorites, setShopFavorites] = useState([]);
@@ -588,8 +607,61 @@ function App() {
 
             <OfflineBanner isOnline={isOnline} t={t} />
 
+            {offlineQueue.pendingCount > 0 && (
+              <div
+                className="fixed left-0 right-0 z-[98] max-w-[768px] mx-auto flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium shadow-md safe-area-top"
+                style={{
+                  top: !isOnline
+                    ? 'calc(60px + env(safe-area-inset-top, 0px) + 2.5rem)'
+                    : 'calc(60px + env(safe-area-inset-top, 0px))',
+                }}
+                role="status"
+                aria-live="polite"
+              >
+                <span>{t('common.offlineQueuePending', { count: offlineQueue.pendingCount })}</span>
+              </div>
+            )}
+
+            {offlineSentNotice && (
+              <div
+                className="fixed left-2 right-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] z-[100] max-w-md mx-auto rounded-lg px-4 py-3 bg-emerald-600 text-white text-sm font-medium shadow-lg text-center"
+                role="status"
+                aria-live="polite"
+              >
+                {t('common.offlineQueueSent', { count: offlineSentNotice.sent })}
+              </div>
+            )}
+
+            {syncFeedback?.state === 'syncing' && (
+              <div
+                className="fixed left-2 right-2 bottom-[calc(7.5rem+env(safe-area-inset-bottom,0px))] z-[99] max-w-md mx-auto rounded-lg px-4 py-3 bg-sky-600 text-white text-sm font-medium shadow-lg text-center"
+                role="status"
+                aria-live="polite"
+              >
+                {t('common.syncMessagesPending')}
+              </div>
+            )}
+            {syncFeedback?.state === 'success' && syncFeedback.processed > 0 && (
+              <div
+                className="fixed left-2 right-2 bottom-[calc(7.5rem+env(safe-area-inset-bottom,0px))] z-[99] max-w-md mx-auto rounded-lg px-4 py-3 bg-teal-600 text-white text-sm font-medium shadow-lg text-center"
+                role="status"
+                aria-live="polite"
+              >
+                {t('common.syncMessagesSuccess', { count: syncFeedback.processed })}
+              </div>
+            )}
+            {syncFeedback?.state === 'error' && (
+              <div
+                className="fixed left-2 right-2 bottom-[calc(7.5rem+env(safe-area-inset-bottom,0px))] z-[99] max-w-md mx-auto rounded-lg px-4 py-3 bg-rose-600 text-white text-sm font-medium shadow-lg text-center"
+                role="status"
+                aria-live="polite"
+              >
+                {t('common.syncMessagesError')}
+              </div>
+            )}
+
             {/* Main with page transitions + ErrorBoundary pour isoler les erreurs de page */}
-            <main className={`flex-1 p-2 sm:p-3 md:p-4 overflow-y-auto overflow-x-hidden ${!isOnline ? 'pt-[calc(7rem+env(safe-area-inset-top,0px))] sm:pt-[7.5rem] md:pt-[8rem]' : 'pt-[calc(5rem+env(safe-area-inset-top,0px))] sm:pt-[80px] md:pt-[84px]'}`}>
+            <main className={`flex-1 p-2 sm:p-3 md:p-4 overflow-y-auto overflow-x-hidden ${!isOnline || offlineQueue.pendingCount > 0 ? 'pt-[calc(7rem+env(safe-area-inset-top,0px))] sm:pt-[7.5rem] md:pt-[8rem]' : 'pt-[calc(5rem+env(safe-area-inset-top,0px))] sm:pt-[80px] md:pt-[84px]'}`}>
               <BannersCarousel
                 banners={banners.homeBanners}
                 bannerIndex={banners.bannerIndex}
