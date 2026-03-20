@@ -69,7 +69,7 @@ async function createAdminUser() {
       }
     });
 
-    console.log('✅ Utilisateur admin créé:', admin.email);
+    console.log('✅ Utilisateur admin créé (email / mot de passe : config.env — ne pas logger).');
     return admin;
   } catch (error) {
     console.error('❌ Erreur création admin:', error.message);
@@ -316,10 +316,8 @@ async function initDatabase() {
     console.log(`   - ${await prisma.user.count()} utilisateur(s)`);
     console.log(`   - ${await prisma.restaurant.count()} restaurant(s)`);
 
-    console.log('\n🔑 Identifiants de connexion:');
-    console.log('   Admin:');
-    console.log('     Email: admin@gnv.com');
-    console.log('     Password: admin123');
+    console.log('\n🔑 Connexion : définissez ADMIN_EMAIL / ADMIN_PASSWORD dans config.env (aucun secret affiché ici).');
+    console.log('   Compte admin seed : email fixe en base selon le script — changez le mot de passe après premier login.');
 
     await prisma.$disconnect();
     process.exit(0);

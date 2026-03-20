@@ -17,10 +17,14 @@ Document de synthèse pour développeurs : contrôles en place et bonnes pratiqu
 | 9 | Rate limit global API | ✅ | `server.js` : `app.use('/api/', apiLimiter)` avec store Redis en prod ; exclusions documentées (health, stream, admin JWT). |
 | 10 | Documentation | ✅ | Ce fichier + `AUTH-MIDDLEWARE.md` ; lancer `npm run security:audit` dans `backend/`. |
 
+## Guide validateurs (détail)
+
+Voir **[VALIDATION.md](./VALIDATION.md)** — tableau des routes `messages` / `admin`, CSRF, bonnes pratiques.
+
 ## Commandes utiles
 
 ```bash
-cd backend && npm test -- --testPathPattern="security|roomUtils"
+cd backend && npm test -- --testPathPattern="security|roomUtils|validation"
 cd backend && npm run security:audit
 ```
 

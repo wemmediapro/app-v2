@@ -208,6 +208,37 @@ const productUpdateValidation = [
   handleValidationErrors,
 ];
 
+/** PUT /api/admin/users/:id — mise à jour partielle, tous les champs optionnels */
+const adminUserUpdateValidation = [
+  body('firstName').optional({ values: 'falsy' }).trim().notEmpty().isLength({ max: 50 }),
+  body('lastName').optional({ values: 'falsy' }).trim().notEmpty().isLength({ max: 50 }),
+  body('email').optional().isEmail().normalizeEmail(),
+  body('phone')
+    .optional({ values: 'falsy' })
+    .matches(/^[+]?[\d\s\-\(\)]+$/)
+    .withMessage('phone invalide'),
+  body('cabinNumber').optional().trim().isLength({ max: 30 }),
+  body('password').optional().isLength({ min: 8, max: 256 }),
+  body('role').optional().isIn(['passenger', 'crew', 'admin']),
+  body('isActive').optional().isBoolean(),
+  body('allowedModules').optional().custom((v) => v === null || (typeof v === 'object' && !Array.isArray(v))),
+  handleValidationErrors,
+];
+
+/** PUT /api/admin/settings/access — objets de droits par rôle */
+const settingsAccessValidation = [
+  body('admin').optional().isObject(),
+  body('crew').optional().isObject(),
+  body('passenger').optional().isObject(),
+  handleValidationErrors,
+];
+
+/** DELETE /api/admin/users/:id — query ?hard= */
+const adminDeleteUserQueryValidation = [
+  query('hard').optional().isIn(['true', 'false', '1', '0']),
+  handleValidationErrors,
+];
+
 module.exports = {
   registerValidation,
   loginValidation,
@@ -228,6 +259,9 @@ module.exports = {
   bannerValidation,
   productCreateValidation,
   productUpdateValidation,
+  adminUserUpdateValidation,
+  settingsAccessValidation,
+  adminDeleteUserQueryValidation,
 };
 
 

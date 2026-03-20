@@ -1,5 +1,5 @@
 const express = require('express');
-const { body } = require('express-validator');
+const { body, query } = require('express-validator');
 const { authMiddleware } = require('../middleware/auth');
 const {
   createValidatePagination,
@@ -97,7 +97,12 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
 // @route   GET /api/messages/users/search — doit être déclaré AVANT /:userId
 // @desc    Search users for messaging by phone number or email
 // @access  Private
-router.get('/users/search', authMiddleware, async (req, res) => {
+router.get(
+  '/users/search',
+  authMiddleware,
+  [query('q').optional().isString().isLength({ max: 200 })],
+  handleValidationErrors,
+  async (req, res) => {
   try {
     const { q } = req.query;
     const qTrimmed = typeof q === 'string' ? q.trim() : '';
@@ -139,7 +144,8 @@ router.get('/users/search', authMiddleware, async (req, res) => {
     console.error('Search users error:', error);
     res.status(500).json({ message: 'Server error' });
   }
-});
+  }
+);
 
 // @route   GET /api/messages/:userId
 // @desc    Get messages with specific user

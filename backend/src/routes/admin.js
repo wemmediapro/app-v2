@@ -1,7 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
-const { registerValidation, strongPassword } = require('../middleware/validation');
+const {
+  registerValidation,
+  strongPassword,
+  adminUserUpdateValidation,
+  settingsAccessValidation,
+  adminDeleteUserQueryValidation,
+} = require('../middleware/validation');
 const User = require('../models/User');
 const Restaurant = require('../models/Restaurant');
 const Message = require('../models/Message');
@@ -274,7 +280,7 @@ router.post('/users', registerValidation, async (req, res) => {
 // @route   PUT /api/admin/users/:id
 // @desc    Update user
 // @access  Private (Admin)
-router.put('/users/:id', validateMongoId('id'), handleValidationErrors, async (req, res) => {
+router.put('/users/:id', validateMongoId('id'), ...adminUserUpdateValidation, async (req, res) => {
   try {
     const { firstName, lastName, email, phone, cabinNumber, password, role, isActive, allowedModules } = req.body;
 
@@ -327,7 +333,7 @@ router.put('/users/:id', validateMongoId('id'), handleValidationErrors, async (r
 // @route   DELETE /api/admin/users/:id
 // @desc    Deactivate user (soft) or delete permanently (hard=true)
 // @access  Private (Admin)
-router.delete('/users/:id', validateMongoId('id'), handleValidationErrors, async (req, res) => {
+router.delete('/users/:id', validateMongoId('id'), ...adminDeleteUserQueryValidation, async (req, res) => {
   try {
     const hard = req.query.hard === 'true' || req.query.hard === '1';
     const user = await User.findById(req.params.id);
@@ -436,7 +442,7 @@ router.get('/settings/access', async (req, res) => {
 });
 
 // PUT /api/admin/settings/access — Enregistrer les droits par rôle en base. Corps : { admin: {...}, crew: {...}, passenger: {...} }
-router.put('/settings/access', async (req, res) => {
+router.put('/settings/access', ...settingsAccessValidation, async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ success: false, message: 'Base de données indisponible' });
