@@ -51,3 +51,7 @@ Voir les tests : `src/__tests__/security.test.js` (section CSRF).
 ```bash
 cd backend && npm test -- --testPathPattern="validation|security|messages"
 ```
+
+## Déploiement
+
+Pour la checklist production, variables d’environnement et choix **init-db** vs **init-db-prisma** (legacy), voir **[docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md)** (racine du dépôt).

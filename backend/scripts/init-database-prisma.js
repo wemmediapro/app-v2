@@ -3,12 +3,45 @@
  * Prisma n'est pas utilisé par les routes Express : l'API repose sur Mongoose (MongoDB).
  * Ce script est le seul point d'usage de Prisma dans le projet (seed/init).
  *
+ * ⚠️  LEGACY / NON RECOMMANDÉ EN PRODUCTION
+ * - Préférez `npm run init-db` (Mongoose, `init-database.js`) aligné avec l’API.
+ * - En production : ne lancez ce script que si vous savez pourquoi (schéma Prisma / tests).
+ * - L’admin et les comptes de test doivent être pilotés par **ADMIN_EMAIL** et **ADMIN_PASSWORD**
+ *   dans `config.env` — aucun identifiant par défaut n’est acceptable en prod.
+ *
  * Usage: node scripts/init-database-prisma.js
  * ou: npm run init-db-prisma
  */
 
 require('dotenv').config({ path: './config.env' });
+require('dotenv').config({ path: './.env' });
 const bcrypt = require('bcryptjs');
+
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
+/** Email admin : obligatoire en prod ; en dev seulement, repli documenté (démo locale). */
+function resolveAdminEmail() {
+  const fromEnv = (process.env.ADMIN_EMAIL || '').trim();
+  if (fromEnv) return fromEnv;
+  if (IS_PRODUCTION) {
+    console.error('CRITICAL: ADMIN_EMAIL doit être défini dans config.env (init-database-prisma interdit sans email en production).');
+    process.exit(1);
+  }
+  console.warn('⚠️  DEV: ADMIN_EMAIL absent — repli démo local uniquement (jamais en prod).');
+  return 'admin@gnv.com';
+}
+
+/** Mot de passe admin : obligatoire en prod. */
+function resolveAdminPasswordPlain() {
+  const p = process.env.ADMIN_PASSWORD;
+  if (p && String(p).length > 0) return p;
+  if (IS_PRODUCTION) {
+    console.error('CRITICAL: ADMIN_PASSWORD doit être défini dans config.env en production.');
+    process.exit(1);
+  }
+  console.warn('⚠️  DEV: ADMIN_PASSWORD absent — mot de passe de démo faible (changez config.env).');
+  return 'admin123';
+}
 
 // S'assurer que MONGODB_URI est défini
 if (!process.env.MONGODB_URI) {
@@ -33,8 +66,11 @@ async function connectDB() {
 // Fonction pour créer l'utilisateur admin
 async function createAdminUser() {
   try {
+    const adminEmail = resolveAdminEmail();
+    const adminPasswordPlain = resolveAdminPasswordPlain();
+
     const existingAdmin = await prisma.user.findUnique({
-      where: { email: 'admin@gnv.com' }
+      where: { email: adminEmail }
     });
 
     if (existingAdmin) {
@@ -42,13 +78,13 @@ async function createAdminUser() {
       return existingAdmin;
     }
 
-    const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', 12);
+    const hashedPassword = await bcrypt.hash(adminPasswordPlain, 12);
 
     const admin = await prisma.user.create({
       data: {
         firstName: 'Admin',
         lastName: 'GNV',
-        email: 'admin@gnv.com',
+        email: adminEmail,
         password: hashedPassword,
         role: 'admin',
         phone: '+33 1 23 45 67 89',
@@ -301,6 +337,9 @@ async function createRestaurants() {
 async function initDatabase() {
   try {
     console.log('🚀 Initialisation de la base de données avec Prisma...\n');
+    if (IS_PRODUCTION) {
+      console.warn('⚠️  Script Prisma en PRODUCTION : assurez-vous que c’est voulu (souvent préférer npm run init-db).');
+    }
 
     await connectDB();
 
@@ -316,8 +355,8 @@ async function initDatabase() {
     console.log(`   - ${await prisma.user.count()} utilisateur(s)`);
     console.log(`   - ${await prisma.restaurant.count()} restaurant(s)`);
 
-    console.log('\n🔑 Connexion : définissez ADMIN_EMAIL / ADMIN_PASSWORD dans config.env (aucun secret affiché ici).');
-    console.log('   Compte admin seed : email fixe en base selon le script — changez le mot de passe après premier login.');
+    console.log('\n🔑 Connexion : identifiants admin = valeurs ADMIN_EMAIL / ADMIN_PASSWORD dans config.env (non affichées).');
+    console.log('   En production, changez le mot de passe après le premier login.');
 
     await prisma.$disconnect();
     process.exit(0);

@@ -126,6 +126,11 @@ cd ../dashboard && npm run build
 cd backend && npm start
 ```
 
+## 📚 Déploiement & sécurité
+
+- **[Guide de déploiement (vue d’ensemble)](docs/DEPLOYMENT.md)** — checklist, init base, liens Nginx / PM2 / `PRODUCTION-GUIDE.md`
+- **Backend** : [Sécurité](backend/docs/SECURITY.md) · [Validateurs API](backend/docs/VALIDATION.md)
+
 ## 📱 URLs d'accès
 
 - **Frontend** : http://localhost:5173
