@@ -8,6 +8,24 @@ const COOKIE_NAME = 'csrfToken';
 const HEADER_NAME = 'x-csrf-token';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+/**
+ * Comparaison constant-time des tokens CSRF (double-submit).
+ * - N'utilise pas !== / == sur les chaînes (fuite timing).
+ * - Si les longueurs diffèrent, on effectue quand même un timingSafeEqual factice
+ *   pour ne pas exposer la longueur attendue par le temps de réponse.
+ */
+function csrfTokensEqual(cookieToken, headerToken) {
+  if (cookieToken == null || headerToken == null) return false;
+  if (typeof cookieToken !== 'string' || typeof headerToken !== 'string') return false;
+  const bufCookie = Buffer.from(cookieToken, 'utf8');
+  const bufHeader = Buffer.from(headerToken, 'utf8');
+  if (bufCookie.length !== bufHeader.length) {
+    crypto.timingSafeEqual(Buffer.alloc(32), Buffer.alloc(32));
+    return false;
+  }
+  return crypto.timingSafeEqual(bufCookie, bufHeader);
+}
+
 function getToken() {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -61,12 +79,17 @@ function csrfProtection(req, res, next) {
   if (EXEMPT_PATH_PATTERNS.some((re) => re.test(path))) return next();
   const cookieToken = req.cookies[COOKIE_NAME];
   const headerToken = req.get(HEADER_NAME) || req.body?._csrf;
-  if (!cookieToken || !headerToken ||
-      cookieToken.length !== headerToken.length ||
-      !crypto.timingSafeEqual(Buffer.from(cookieToken, 'utf8'), Buffer.from(headerToken, 'utf8'))) {
+  if (!csrfTokensEqual(cookieToken, headerToken)) {
     return res.status(403).json({ success: false, message: 'Invalid CSRF token', code: 'CSRF_INVALID' });
   }
   next();
 }
 
-module.exports = { csrfCookie, csrfProtection, getToken, COOKIE_NAME, HEADER_NAME };
+module.exports = {
+  csrfCookie,
+  csrfProtection,
+  getToken,
+  csrfTokensEqual,
+  COOKIE_NAME,
+  HEADER_NAME,
+};

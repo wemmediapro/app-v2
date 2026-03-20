@@ -1,12 +1,11 @@
 /**
  * Handlers Socket.io : autorisation stricte, sanitization messages (XSS), rate limiting par socket.
- * Sécurité : isRoomAllowed() limite les rooms (prefixes ship/notifications/chat) ; sanitizeContent() strip HTML / limite longueur (XSS).
+ * Sécurité : roomUtils — préfixe + appartenance (notifications = soi, ship = navire du handshake, chat = paire userId).
  * C6 : rate limit send-message 60 msg/min/socket (flood), compteur nettoyé au disconnect.
  * Protection flood globale : max SOCKET_RATE_LIMIT_MAX événements par socket par fenêtre (ex. 1h) pour join-room + send-message.
  */
 const logger = require('../lib/logger');
-
-const ALLOWED_ROOM_PREFIXES = ['ship:', 'notifications:', 'chat:'];
+const { hasAllowedPrefix, isRoomAuthorizedForUser } = require('./roomUtils');
 const MAX_MESSAGE_LENGTH = 5000;
 
 // C6 : rate limit strict send-message — 60 msg/min/socket (configurable)
@@ -57,9 +56,9 @@ function clearSocketRateLimit(socketId) {
   socketSendMessageCounts.delete(socketId);
 }
 
+/** @deprecated utiliser hasAllowedPrefix (roomUtils) — conservé pour tests / compat */
 function isRoomAllowed(room) {
-  if (typeof room !== 'string' || room.length > 64) return false;
-  return ALLOWED_ROOM_PREFIXES.some((prefix) => room.startsWith(prefix));
+  return hasAllowedPrefix(room);
 }
 
 /** Sanitize contenu (XSS) : strip HTML, limite longueur. En Node sans DOMPurify. */
@@ -91,8 +90,9 @@ function attachSocketHandlers(io, connectionCounters) {
 
     socket.on('join-room', (room, cb) => {
       if (!checkSocketRateLimit(socket)) return;
-      if (!isRoomAllowed(room)) {
-        if (typeof cb === 'function') cb(new Error('Invalid room'));
+      if (!hasAllowedPrefix(room) || !isRoomAuthorizedForUser(socket, room)) {
+        logger.warn({ event: 'socket_join_room_denied', socketId: socket.id, room });
+        if (typeof cb === 'function') cb(new Error('Invalid or forbidden room'));
         return;
       }
       socket.join(room);
@@ -103,8 +103,9 @@ function attachSocketHandlers(io, connectionCounters) {
     socket.on('send-message', (data, cb) => {
       if (!checkSocketRateLimit(socket)) return;
       if (!checkSendMessageRateLimit(socket)) return; // C6 : 60 msg/min/socket
-      if (!data || !isRoomAllowed(data.room)) {
-        if (typeof cb === 'function') cb(new Error('Invalid room'));
+      if (!data || !hasAllowedPrefix(data.room) || !isRoomAuthorizedForUser(socket, data.room)) {
+        logger.warn({ event: 'socket_send_message_denied', socketId: socket.id, room: data?.room });
+        if (typeof cb === 'function') cb(new Error('Invalid or forbidden room'));
         return;
       }
       if (!socket.rooms.has(data.room)) {

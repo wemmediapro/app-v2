@@ -25,9 +25,7 @@ async function resetAdminPassword() {
 
     admin.password = NEW_PASSWORD;
     await admin.save(); // pre('save') hash le mot de passe
-    console.log('✅ Mot de passe admin réinitialisé.');
-    console.log('   Email   : admin@gnv.com');
-    console.log('   Password:', NEW_PASSWORD);
+    console.log('✅ Mot de passe admin réinitialisé (ne pas logger le secret — voir ADMIN_PASSWORD_RESET / config).');
     process.exit(0);
   } catch (err) {
     console.error('❌ Erreur:', err.message);

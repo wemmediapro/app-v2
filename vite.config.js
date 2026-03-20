@@ -1,10 +1,17 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import path from 'path'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+/** Origine du backend Express en dev (proxy Vite). Si le port 3000 est pris par un autre projet, définir DEV_PROXY_TARGET dans .env (ex. http://localhost:3001). */
+const DEFAULT_DEV_PROXY = 'http://localhost:3000'
+
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const proxyTarget = (env.DEV_PROXY_TARGET || DEFAULT_DEV_PROXY).replace(/\/$/, '')
+
+  return {
   test: {
     environment: 'jsdom',
     globals: true,
@@ -23,6 +30,12 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   plugins: [
+    {
+      name: 'gnv-dev-proxy-log',
+      configureServer() {
+        console.log(`[Vite] Proxy /api, /uploads, /socket.io → ${proxyTarget}`)
+      },
+    },
     react(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -108,7 +121,7 @@ export default defineConfig({
     },
     proxy: {
       '/api/stream': {
-        target: 'http://localhost:3000',
+        target: proxyTarget,
         changeOrigin: true,
         timeout: 600000, // 10 min pour streaming long
         configure: (proxy) => {
@@ -118,7 +131,7 @@ export default defineConfig({
         },
       },
       '/api': {
-        target: 'http://localhost:3000',
+        target: proxyTarget,
         changeOrigin: true,
         timeout: 120000, // 2 min — uploads lourds (images/vidéos) ; /api/stream et /uploads ont 10 min
         configure: (proxy) => {
@@ -135,12 +148,12 @@ export default defineConfig({
         },
       },
       '/uploads': {
-        target: 'http://localhost:3000',
+        target: proxyTarget,
         changeOrigin: true,
         timeout: 600000, // 10 min (aligné avec /api/stream)
       },
       '/socket.io': {
-        target: 'http://localhost:3000',
+        target: proxyTarget,
         changeOrigin: true,
         ws: true,
       },
@@ -150,4 +163,5 @@ export default defineConfig({
     allowedHosts: ['travelstream.fr'],
   },
   base: '/', // Assure que les chemins sont relatifs
+  }
 })

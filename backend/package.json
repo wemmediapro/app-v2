@@ -43,7 +43,8 @@
     "analyze:ui": "node scripts/analyze-ui-ergonomics-openai.js",
     "apply:improvements": "node scripts/apply-improvements-openai.js",
     "audit:complet": "node scripts/audit-complet-openia.js",
-    "verify:restaurant-images": "node scripts/verify-restaurant-menu-images.js"
+    "verify:restaurant-images": "node scripts/verify-restaurant-menu-images.js",
+    "security:audit": "node scripts/security-audit.js"
   },
   "keywords": [
     "gnv",

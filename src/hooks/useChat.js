@@ -6,6 +6,35 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { apiService } from '../services/apiService';
 
+/** Extrait l’id utilisateur du JWT (payload) — aligné sur le backend (champ id). */
+function getUserIdFromToken() {
+  try {
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64));
+    return payload.id || payload.userId || payload._id || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Room Socket.io canonique pour une conversation 1-1 (même format que backend/src/socket/roomUtils.js). */
+function chatDmRoomName(userIdA, userIdB) {
+  const a = String(userIdA);
+  const b = String(userIdB);
+  return a < b ? `chat:${a}_${b}` : `chat:${b}_${a}`;
+}
+
+function peerChatRoom(selectedChat) {
+  const peerId = typeof selectedChat === 'string' ? selectedChat : selectedChat?.id;
+  const myId = getUserIdFromToken();
+  if (!peerId || !myId) return null;
+  return chatDmRoomName(myId, peerId);
+}
+
 export function useChat() {
   const [selectedChat, setSelectedChat] = useState(null);
   const [newMessage, setNewMessage] = useState('');
@@ -64,7 +93,10 @@ export function useChat() {
       newSocket.on('connect', () => {
         clearTimeout(connectTimeout);
         setSocket(newSocket);
-        newSocket.emit('join-room', selectedChat?.id ? `room-${selectedChat.id}` : 'general');
+        const myId = getUserIdFromToken();
+        if (myId) {
+          newSocket.emit('join-room', `notifications:${myId}`);
+        }
       });
       newSocket.on('connect_error', () => {
         clearTimeout(connectTimeout);
@@ -103,9 +135,13 @@ export function useChat() {
 
   useEffect(() => {
     if (!socket?.connected) return;
-    const room = selectedChat?.id ? `room-${selectedChat.id}` : 'general';
-    socket.emit('join-room', room);
-  }, [socket, selectedChat?.id]);
+    const myId = getUserIdFromToken();
+    if (!myId) return;
+    socket.emit('join-room', `notifications:${myId}`);
+    if (selectedChat) {
+      socket.emit('join-room', chatDmRoomName(myId, selectedChat));
+    }
+  }, [socket, selectedChat]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -254,8 +290,9 @@ export function useChat() {
     };
     setChatMessages(prev => [...prev, newMsg]);
     setNewMessage('');
-    if (socket?.connected) {
-      socket.emit('send-message', { room: `room-${typeof selectedChat === 'string' ? selectedChat : (selectedChat?.id ?? 'general')}`, message: newMsg });
+    const dmRoom = peerChatRoom(selectedChat);
+    if (socket?.connected && dmRoom) {
+      socket.emit('send-message', { room: dmRoom, content: newMsg.content, text: newMsg.content });
     }
     try {
       await apiService.sendMessage({ receiver: selectedChat, content: newMsg.content, type: 'text' });
@@ -263,8 +300,9 @@ export function useChat() {
       console.error('Erreur lors de l\'envoi du message:', error);
     }
     setIsTyping(false);
-    if (socket?.connected && selectedChat) {
-      socket.emit('typing', { room: `room-${typeof selectedChat === 'string' ? selectedChat : (selectedChat?.id ?? 'general')}`, userId: 0, isTyping: false });
+    const tr = peerChatRoom(selectedChat);
+    if (socket?.connected && tr) {
+      socket.emit('typing', { room: tr, userId: 0, isTyping: false });
     }
   }, [newMessage, selectedChat, socket]);
 
@@ -272,15 +310,17 @@ export function useChat() {
     setNewMessage(e.target.value);
     if (!isTyping && e.target.value.trim()) {
       setIsTyping(true);
-      if (socket?.connected && selectedChat) {
-        socket.emit('typing', { room: `room-${typeof selectedChat === 'string' ? selectedChat : (selectedChat?.id ?? 'general')}`, userId: 0, isTyping: true });
+      const tr = peerChatRoom(selectedChat);
+      if (socket?.connected && tr) {
+        socket.emit('typing', { room: tr, userId: 0, isTyping: true });
       }
     }
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
-      if (socket?.connected && selectedChat) {
-        socket.emit('typing', { room: `room-${typeof selectedChat === 'string' ? selectedChat : (selectedChat?.id ?? 'general')}`, userId: 0, isTyping: false });
+      const tr = peerChatRoom(selectedChat);
+      if (socket?.connected && tr) {
+        socket.emit('typing', { room: tr, userId: 0, isTyping: false });
       }
     }, 1000);
   }, [isTyping, selectedChat, socket]);
@@ -293,8 +333,9 @@ export function useChat() {
       const attachment = { type: file.type.startsWith('image/') ? 'image' : 'file', url: reader.result, name: file.name, size: file.size };
       const newMsg = { id: Date.now(), chatId: selectedChat, senderId: 0, content: '', timestamp: new Date().toISOString(), isRead: false, type: attachment.type, attachments: [attachment], reactions: [] };
       setChatMessages(prev => [...prev, newMsg]);
-      if (socket?.connected) {
-        socket.emit('send-message', { room: `room-${typeof selectedChat === 'string' ? selectedChat : (selectedChat?.id ?? 'general')}`, message: newMsg });
+      const dmRoom = peerChatRoom(selectedChat);
+      if (socket?.connected && dmRoom) {
+        socket.emit('send-message', { room: dmRoom, content: newMsg.content || '📎', text: newMsg.content || '📎' });
       }
     };
     reader.readAsDataURL(file);
@@ -346,8 +387,9 @@ export function useChat() {
     setChatMessages(prev => [...prev, newMsg]);
     setVoiceRecording(null);
     setIsRecordingVoice(false);
-    if (socket?.connected) {
-      socket.emit('send-message', { room: `room-${typeof selectedChat === 'string' ? selectedChat : (selectedChat?.id ?? 'general')}`, message: newMsg });
+    const dmRoom = peerChatRoom(selectedChat);
+    if (socket?.connected && dmRoom) {
+      socket.emit('send-message', { room: dmRoom, content: newMsg.content, text: newMsg.content });
     }
   }, [voiceRecording, selectedChat, socket]);
 

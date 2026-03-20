@@ -1,6 +1,29 @@
+const crypto = require('crypto');
 const pino = require('pino');
 
 const isProduction = process.env.NODE_ENV === 'production';
+
+/**
+ * Hachage SHA-256 tronqué pour les logs : corrélation possible sans email en clair (anti-énumération).
+ */
+function hashEmailForLog(email) {
+  const normalized =
+    email == null || String(email).trim() === ''
+      ? 'unknown'
+      : String(email).trim().toLowerCase();
+  return crypto.createHash('sha256').update(normalized, 'utf8').digest('hex').slice(0, 16);
+}
+
+/**
+ * Masque un email pour affichage (debug / messages utilisateur), pas pour les logs d’audit structurés.
+ */
+function redactEmail(email) {
+  if (!email || typeof email !== 'string' || email.length < 5) return '***';
+  const [local = '', domain] = email.split('@');
+  const redactedLocal = local.slice(0, 2) + '*'.repeat(Math.max(0, local.length - 2));
+  const redactedDomain = domain ? '*'.repeat(domain.length) : '***';
+  return `${redactedLocal}@${redactedDomain}`;
+}
 
 // Masquer les champs sensibles dans les logs (OWASP Logging)
 const SENSITIVE_KEYS = /password|token|secret|authorization|cookie|csrf|jwt|adminToken/i;
@@ -24,11 +47,11 @@ const logger = pino({
   },
 });
 
-/** Log tentative de connexion échouée (sécurité) */
+/** Log tentative de connexion échouée (sécurité — pas d’email en clair) */
 function logFailedLogin(email, reason, req = null) {
   logger.warn({
     event: 'auth_failed_login',
-    email: email || '(missing)',
+    emailHash: hashEmailForLog(email),
     reason,
     ip: req?.ip || req?.socket?.remoteAddress,
     path: req?.path,
@@ -50,3 +73,5 @@ module.exports.logFailedLogin = logFailedLogin;
 module.exports.logApiError = logApiError;
 module.exports.logSocketAuthFailed = logSocketAuthFailed;
 module.exports.redact = redact;
+module.exports.hashEmailForLog = hashEmailForLog;
+module.exports.redactEmail = redactEmail;

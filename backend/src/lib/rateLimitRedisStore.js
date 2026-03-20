@@ -30,11 +30,13 @@ class RedisStore {
 
   /**
    * Incrémente le compteur pour une clé. En cas d'erreur Redis (déconnexion, timeout),
-   * retourne un résultat "fail open" pour ne pas bloquer toutes les requêtes API (500).
+   * retourne un résultat "fail open" pour ne pas bloquer l'API.
+   * express-rate-limit v7 exige totalHits >= 1 (validation positiveHits) — jamais 0.
    */
   async increment(key) {
+    const resetTime = new Date(Date.now() + this.windowMs);
     if (!this.client) {
-      return { totalHits: 0, resetTime: new Date(Date.now() + this.windowMs) };
+      return { totalHits: 1, resetTime };
     }
     try {
       const k = this.prefixKey(key);
@@ -44,11 +46,11 @@ class RedisStore {
         await this.client.pExpire(k, this.windowMs);
         ttlMs = this.windowMs;
       }
-      const resetTime = new Date(Date.now() + ttlMs);
-      return { totalHits, resetTime };
+      const rt = new Date(Date.now() + ttlMs);
+      return { totalHits, resetTime: rt };
     } catch (err) {
       console.warn('Rate limit Redis increment:', err.message);
-      return { totalHits: 0, resetTime: new Date(Date.now() + this.windowMs) };
+      return { totalHits: 1, resetTime };
     }
   }
 

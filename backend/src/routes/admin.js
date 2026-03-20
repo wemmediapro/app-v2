@@ -8,7 +8,12 @@ const Message = require('../models/Message');
 const Feedback = require('../models/Feedback');
 const Article = require('../models/Article');
 const cacheManager = require('../lib/cache-manager');
-const { safeRegexSearch } = require('../utils/regex-escape');
+const {
+  validatePagination,
+  validateMongoId,
+  sanitizeSearchString,
+  handleValidationErrors,
+} = require('../middleware/validateInput');
 const WebTVChannel = require('../models/WebTVChannel');
 const RadioStation = require('../models/RadioStation');
 const Movie = require('../models/Movie');
@@ -169,18 +174,19 @@ router.get('/dashboard', async (req, res) => {
 // @route   GET /api/admin/users
 // @desc    Get all users
 // @access  Private (Admin)
-router.get('/users', async (req, res) => {
+router.get('/users', validatePagination, handleValidationErrors, async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       return res.json({ users: [], totalPages: 0, currentPage: 1, total: 0 });
     }
 
-    const { page = 1, limit = 20, search, role, status } = req.query;
+    const { page, limit, skip } = req.pagination;
+    const { search, role, status } = req.query;
 
     let query = {};
 
     if (search) {
-      const safe = safeRegexSearch(search);
+      const safe = sanitizeSearchString(search);
       if (safe) {
         query.$or = [
           { firstName: { $regex: safe, $options: 'i' } },
@@ -197,8 +203,8 @@ router.get('/users', async (req, res) => {
     const users = await User.find(query)
       .select('-password')
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .limit(limit)
+      .skip(skip);
 
     const total = await User.countDocuments(query);
 
@@ -268,7 +274,7 @@ router.post('/users', registerValidation, async (req, res) => {
 // @route   PUT /api/admin/users/:id
 // @desc    Update user
 // @access  Private (Admin)
-router.put('/users/:id', async (req, res) => {
+router.put('/users/:id', validateMongoId('id'), handleValidationErrors, async (req, res) => {
   try {
     const { firstName, lastName, email, phone, cabinNumber, password, role, isActive, allowedModules } = req.body;
 
@@ -321,7 +327,7 @@ router.put('/users/:id', async (req, res) => {
 // @route   DELETE /api/admin/users/:id
 // @desc    Deactivate user (soft) or delete permanently (hard=true)
 // @access  Private (Admin)
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', validateMongoId('id'), handleValidationErrors, async (req, res) => {
   try {
     const hard = req.query.hard === 'true' || req.query.hard === '1';
     const user = await User.findById(req.params.id);
@@ -364,13 +370,14 @@ router.get('/conversations/unread-count', async (req, res) => {
 });
 
 // @route   GET /api/admin/conversations
-// @desc    Get all conversations (Admin)
+// @desc    Get all conversations (Admin), pagination via req.pagination (max limit 100, page max 10000)
 // @access  Private (Admin)
-router.get('/conversations', async (req, res) => {
+router.get('/conversations', validatePagination, handleValidationErrors, async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       return res.json([]);
     }
+    const { skip, limit } = req.pagination;
     const messages = await Message.find().sort({ createdAt: -1 }).limit(500)
       .populate('sender', 'firstName lastName email avatar cabinNumber')
       .populate('receiver', 'firstName lastName email avatar cabinNumber');
@@ -389,7 +396,8 @@ router.get('/conversations', async (req, res) => {
         });
       }
     }
-    res.json(conversations);
+    const pageSlice = conversations.slice(skip, skip + limit);
+    res.json(pageSlice);
   } catch (error) {
     console.error('Get conversations error:', error);
     res.status(500).json({ message: 'Server error' });

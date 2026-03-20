@@ -36,7 +36,10 @@ async function connectDB() {
   try {
     const dbLabel = process.env.DATABASE_URL ? 'DATABASE_URL (ancienne base)' : 'MONGODB_URI (local)';
     console.log('📌 Base utilisée:', dbLabel);
-    console.log('   URI:', MONGODB_URI.replace(/:[^:@]+@/, ':***@'));
+    // Ne jamais logger l’URI complète en CI / prod — même masquée, éviter fuite de host (INIT_DB_VERBOSE=1 pour debug local)
+    if (process.env.INIT_DB_VERBOSE === '1') {
+      console.log('   URI (verbose):', MONGODB_URI.replace(/:[^:@]+@/, ':***@'));
+    }
     await mongoose.connect(MONGODB_URI);
     console.log('✅ Connecté à MongoDB');
   } catch (error) {
@@ -85,7 +88,7 @@ async function createAdminUser() {
       isActive: true
     });
 
-    console.log('✅ Utilisateur admin créé. Définissez ADMIN_EMAIL/ADMIN_PASSWORD dans config.env pour la connexion.');
+    console.log('✅ Compte admin créé. Définissez ADMIN_EMAIL et ADMIN_PASSWORD dans config.env pour la connexion en production.');
     return admin;
   } catch (error) {
     console.error('❌ Erreur création admin:', error.message);
@@ -140,17 +143,20 @@ async function createTestUsers() {
     ];
 
     const createdUsers = [];
+    let createdCount = 0;
+    let skippedCount = 0;
     for (const userData of users) {
       const existing = await User.findOne({ email: userData.email });
       if (!existing) {
         const user = await User.create(userData);
         createdUsers.push(user);
-        console.log(`✅ Utilisateur créé: ${user.email}`);
+        createdCount += 1;
       } else {
-        console.log(`ℹ️  Utilisateur existe déjà: ${userData.email}`);
         createdUsers.push(existing);
+        skippedCount += 1;
       }
     }
+    console.log(`✅ Utilisateurs de test : ${createdCount} créé(s), ${skippedCount} déjà présent(s).`);
 
     return createdUsers;
   } catch (error) {
@@ -923,14 +929,16 @@ async function initDatabase() {
     console.log(`   - ${await Banner.countDocuments()} bannière(s)`);
     console.log(`   - ${await Deck.countDocuments()} pont(s)`);
 
-    console.log('\n🔑 Identifiants de connexion:');
-    console.log('   Admin:');
-    console.log('     Email: admin@gnv.com');
-    console.log('     Password: admin123');
-    console.log('\n   Utilisateurs de test:');
-    console.log('     Email: jean.dupont@example.com / Password: user1234');
-    console.log('     Email: maria.rossi@example.com / Password: user1234');
-    console.log('     Email: john.smith@example.com / Password: user1234');
+    console.log('\n✅ Base de données initialisée avec succès!');
+    console.log('');
+    console.log('🔐 Identifiants:');
+    console.log('   - Définissez ADMIN_EMAIL et ADMIN_PASSWORD dans config.env');
+    console.log('   - Les utilisateurs de test ont été créés');
+    console.log('');
+    console.log('📝 Prochaines étapes:');
+    console.log('   1. Démarrez le backend: npm run dev');
+    console.log('   2. Connectez-vous avec vos identifiants admin');
+    console.log('   3. Consultez la documentation: docs/GETTING_STARTED.md');
 
     process.exit(0);
   } catch (error) {

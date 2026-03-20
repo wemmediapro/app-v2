@@ -8,8 +8,15 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const Notification = require('../models/Notification');
-const { paginate } = require('../middleware/pagination');
-const { validateMongoId } = require('../middleware/validation');
+const {
+  validatePagination,
+  createValidatePagination,
+  validateMongoId,
+  handleValidationErrors,
+} = require('../middleware/validateInput');
+
+/** Dashboard admin : liste complète, défaut 100 entrées (plafonné par validatePagination à 100 max) */
+const validateNotificationsAdminPagination = createValidatePagination({ defaultLimit: 100 });
 
 const VALID_TYPES = ['restaurant', 'boarding', 'info', 'alert', 'other'];
 
@@ -59,7 +66,7 @@ function sendEmptyNotifications(res, pagination) {
   }
 }
 
-router.get('/', paginate, (req, res) => {
+router.get('/', validatePagination, handleValidationErrors, (req, res) => {
   const pagination = req.pagination;
   (async () => {
     try {
@@ -165,15 +172,15 @@ function resolveTitleMessage(n, preferLang = 'fr') {
   return { title, message };
 }
 
-router.get('/all', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/all', authMiddleware, adminMiddleware, validateNotificationsAdminPagination, handleValidationErrors, async (req, res) => {
   try {
-    const { limit = 100 } = req.query;
+    const { limit } = req.pagination;
     if (mongoose.connection.readyState !== 1) {
       return res.json([]);
     }
     const notifications = await Notification.find()
       .sort({ createdAt: -1 })
-      .limit(Math.min(parseInt(limit, 10) || 100, 200))
+      .limit(limit)
       .lean();
 
     const now = new Date();
@@ -195,17 +202,13 @@ router.get('/all', authMiddleware, adminMiddleware, async (req, res) => {
 });
 
 // DELETE /api/notifications/:id — supprimer une notification (admin)
-router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, adminMiddleware, validateMongoId('id'), handleValidationErrors, async (req, res) => {
   try {
-    const idStr = (req.params.id || '').trim();
-    if (!idStr || !mongoose.Types.ObjectId.isValid(idStr)) {
-      return res.status(400).json({ message: 'ID invalide' });
-    }
+    const idStr = req.params.id;
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ message: 'Database unavailable' });
     }
-    const objectId = new mongoose.Types.ObjectId(idStr);
-    const deleted = await Notification.findByIdAndDelete(objectId);
+    const deleted = await Notification.findByIdAndDelete(idStr);
     if (!deleted) {
       return res.status(404).json({ message: 'Notification introuvable' });
     }

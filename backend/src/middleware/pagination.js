@@ -3,7 +3,8 @@
  * Défaut : page=1, limit=20. Max limit=100.
  * Après le middleware : req.pagination = { page, limit, skip }.
  *
- * Routes utilisant ce middleware : users (GET /), notifications (GET /).
+ * Préférer `validatePagination` depuis `validateInput.js` (plafonds page/limit alignés).
+ * Encore utilisé par : movies (GET /), etc.
  * Équivalent manuel ou validatePagination : movies (GET /), shop (GET / avec validatePagination).
  */
 function paginate(req, res, next) {
