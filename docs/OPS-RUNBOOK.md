@@ -11,7 +11,7 @@ Ce document **aligne une checklist type audit** avec l’état du dépôt et dé
 | **CI/CD**                            | Workflows GitHub : [`.github/workflows/tests.yml`](../.github/workflows/tests.yml), déploiement staging/prod, CodeQL, sécurité, charge | Vérifier que les secrets / environnements GitHub sont renseignés et que les branches déclenchent bien les bons jobs.                                                                                                                                                                                                                   |
 | **Alerting / uptime**                | [`.github/workflows/monitoring-ping.yml`](../.github/workflows/monitoring-ping.yml) — GET `/api/v1/health/ready` toutes les 15 min     | Configurer les **variables** dépôt : `STAGING_PUBLIC_URL`, `PRODUCTION_PUBLIC_URL`, et `MONITORING_PING_PRODUCTION=true` pour activer la prod. Le JSON inclut `mongodb`, **`redis`** (`connected` / `disconnected` / `skipped`) et `ready` : en **production**, Redis doit répondre au `PING` sinon **503** (en dev, Redis optionnel). |
 | **Logs**                             | **Pino** structuré (`backend/src/lib/logger.js`), niveau `LOG_LEVEL` ; champs `event` + erreurs via `logRouteError`                    | Les logs sortent sur **stdout** : centraliser via le fournisseur de la VM (journald, Docker logging driver, agent Datadog/Vector/Fluent Bit). Voir [Champs structurés](#champs-structurés-event-erreurs-http-reqid) ci-dessous.                                                                                                        |
-| **Sauvegardes**                      | Pas de cron dans le repo (dépend de MongoDB hébergé)                                                                                   | Voir [Procédure sauvegarde](#procédure-de-sauvegarde-phase-1-checklist) + Mongo ci-dessous.                                                                                                                                                                                                                                            |
+| **Sauvegardes**                      | Script `backend/scripts/mongodb-backup.sh` (mongodump + répertoire daté)                                                               | Planifier en cron / CI ; copie hors site. Voir [Procédure sauvegarde](#procédure-de-sauvegarde-phase-1-checklist) + Mongo ci-dessous.                                                                                                                                                                                                  |
 | **PRA / reprise**                    | Ce document                                                                                                                            | Maintenir contacts, procédures de restauration testées au moins une fois par trimestre.                                                                                                                                                                                                                                                |
 
 ## Activation rapide — variables à ne pas oublier
@@ -58,11 +58,19 @@ Ce document **aligne une checklist type audit** avec l’état du dépôt et dé
 
 ### Instance MongoDB auto-hébergée
 
-Exemple de stratégie (à adapter : chemins, auth, réseau) :
+Script fourni dans le dépôt (depuis la racine du repo ou `backend/`) :
 
 ```bash
-# Quotidien via cron (utilisateur dédié, répertoire sécurisé)
-0 2 * * * mongodump --uri="$MONGODB_URI" --out=/var/backups/mongodb/$(date +\%Y\%m\%d) && find /var/backups/mongodb -maxdepth 1 -type d -mtime +14 -exec rm -rf {} \;
+export MONGODB_URI="mongodb://user:pass@host:27017/dbname"
+# optionnel : BACKUP_ROOT=/var/backups/mongodb
+bash backend/scripts/mongodb-backup.sh
+```
+
+Exemple cron (utilisateur dédié, répertoire sécurisé) :
+
+```bash
+# Quotidien : même logique que le script (adapter le chemin du repo)
+0 2 * * * cd /chemin/vers/app/backend && MONGODB_URI="..." BACKUP_ROOT=/var/backups/mongodb bash scripts/mongodb-backup.sh && find /var/backups/mongodb -maxdepth 1 -type d -mtime +14 -exec rm -rf {} \;
 ```
 
 - Copier les dumps vers un **stockage hors site** (S3, autre région).

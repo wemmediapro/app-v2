@@ -9,6 +9,7 @@ const magazineFallback = require('../lib/magazine-fallback');
 const cacheManager = require('../lib/cache-manager');
 const { logRouteError } = require('../lib/route-logger');
 const logger = require('../lib/logger');
+const { sanitizeArticlePayload } = require('../lib/sanitize-article-html');
 
 // Localise le contenu depuis la base uniquement (aucun appel de traduction en ligne).
 // Langues : fr (champs principaux), en, es, it, de, ar (translations[code]). Si une traduction manque, on garde le français.
@@ -151,7 +152,7 @@ router.post('/', authMiddleware, adminMiddleware, articleValidation, async (req,
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
-    const body = req.body || {};
+    const body = sanitizeArticlePayload(req.body || {});
     const payload = {
       title: body.title,
       excerpt: body.excerpt || '',
@@ -235,7 +236,7 @@ router.put('/:id', authMiddleware, adminMiddleware, articleValidation, async (re
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'Identifiant article invalide' });
     }
-    const raw = req.body || {};
+    const raw = sanitizeArticlePayload(req.body || {});
     const body = {
       title: raw.title,
       excerpt: raw.excerpt ?? '',

@@ -3,6 +3,10 @@
  */
 process.env.JWT_SECRET = 'test-jwt-secret-at-least-32-chars!!';
 
+jest.mock('isomorphic-dompurify', () => ({
+  sanitize: (input) => String(input ?? ''),
+}));
+
 const mockDelPattern = jest.fn().mockResolvedValue(0);
 
 jest.mock('../../../src/lib/cache-manager', () => ({

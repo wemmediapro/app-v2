@@ -73,6 +73,7 @@ test-results/
 *.sh
 scripts/*.sh
 !scripts/enable-gpg-signing.sh
+!backend/scripts/mongodb-backup.sh
 docs/AUDIT-*.md
 !docs/AUDIT-LOGGING-POLICY.md
 docs/refactor/

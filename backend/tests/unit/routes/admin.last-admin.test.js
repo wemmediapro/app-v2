@@ -17,6 +17,7 @@ jest.mock('../../../src/services/auditService', () => ({
 
 jest.mock('../../../src/models/User', () => ({
   findById: jest.fn(),
+  findOne: jest.fn(),
   countDocuments: jest.fn(),
   findByIdAndDelete: jest.fn(),
 }));
@@ -118,6 +119,109 @@ describe('Admin — dernier administrateur', () => {
     expect(User.countDocuments).toHaveBeenCalledWith({
       role: 'admin',
       _id: { $ne: expect.anything() },
+    });
+  });
+
+  describe('PUT /api/admin/users/:id', () => {
+    beforeEach(() => {
+      User.findOne.mockResolvedValue(null);
+      User.findById.mockImplementation((id) => {
+        const idStr = String(id);
+        const base = {
+          phone: '',
+          cabinNumber: '',
+          allowedModules: null,
+          twoFactorEnabled: false,
+          save: jest.fn().mockResolvedValue(undefined),
+        };
+        if (idStr === ACTOR_ID) {
+          return makeThenableDoc({
+            ...base,
+            _id: idStr,
+            firstName: 'Act',
+            lastName: 'Or',
+            email: 'actor@test.com',
+            role: 'admin',
+            isActive: true,
+          });
+        }
+        return makeThenableDoc({
+          ...base,
+          _id: idStr,
+          firstName: 'Tar',
+          lastName: 'Get',
+          email: 'target@test.com',
+          role: 'admin',
+          isActive: true,
+        });
+      });
+    });
+
+    it('retourne 400 SELF_DEACTIVATE si isActive false sur le compte connecté', async () => {
+      const app = express();
+      app.use(express.json());
+      app.use('/api/admin', adminRouter);
+
+      const token = generateToken({
+        id: ACTOR_ID,
+        email: 'actor@test.com',
+        role: 'admin',
+      });
+
+      const res = await request(app)
+        .put(`/api/admin/users/${ACTOR_ID}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ isActive: false });
+
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('SELF_DEACTIVATE');
+    });
+
+    it('retourne 400 SELF_DEMOTE si retrait du rôle admin sur soi-même', async () => {
+      const app = express();
+      app.use(express.json());
+      app.use('/api/admin', adminRouter);
+
+      const token = generateToken({
+        id: ACTOR_ID,
+        email: 'actor@test.com',
+        role: 'admin',
+      });
+
+      const res = await request(app)
+        .put(`/api/admin/users/${ACTOR_ID}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ role: 'crew' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('SELF_DEMOTE');
+    });
+
+    it('retourne 400 LAST_ADMIN si désactivation du seul autre admin actif', async () => {
+      const app = express();
+      app.use(express.json());
+      app.use('/api/admin', adminRouter);
+
+      const token = generateToken({
+        id: ACTOR_ID,
+        email: 'actor@test.com',
+        role: 'admin',
+      });
+
+      User.countDocuments.mockResolvedValue(0);
+
+      const res = await request(app)
+        .put(`/api/admin/users/${TARGET_ID}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ isActive: false });
+
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('LAST_ADMIN');
+      expect(User.countDocuments).toHaveBeenCalledWith({
+        role: 'admin',
+        _id: { $ne: expect.anything() },
+        isActive: true,
+      });
     });
   });
 });

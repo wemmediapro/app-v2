@@ -37,6 +37,7 @@ import { apiService } from '../services/apiService';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
+import { sanitizeArticleContent } from '../utils/sanitize';
 
 /** URL d’image : chemins relatifs préfixés par l’origine pour le proxy. Optionnellement ajoute un cache-bust pour forcer le rechargement. */
 function getImageSrc(url, cacheBust) {
@@ -1892,7 +1893,7 @@ const Magazine = () => {
                       {newArticle.content ? (
                         <div
                           className="article-preview-content"
-                          dangerouslySetInnerHTML={{ __html: newArticle.content }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeArticleContent(newArticle.content) }}
                         />
                       ) : (
                         <p className="text-gray-500">Le contenu de l'article apparaîtra ici...</p>
@@ -2626,7 +2627,7 @@ const Magazine = () => {
                       {editingArticle.content ? (
                         <div
                           className="article-preview-content"
-                          dangerouslySetInnerHTML={{ __html: editingArticle.content }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeArticleContent(editingArticle.content) }}
                         />
                       ) : (
                         <p className="text-gray-500">Le contenu apparaîtra ici...</p>

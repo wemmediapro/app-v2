@@ -10,6 +10,12 @@ function resolveApiBaseUrl() {
 
 export const API_BASE_URL = resolveApiBaseUrl();
 
+function readCookie(name) {
+  const escaped = name.replace(/[$()*+.?[\\\]^{|}]/g, '\\$&');
+  const m = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
 // Create axios instance — withCredentials pour envoyer le cookie httpOnly (auth admin)
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -17,7 +23,20 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Pas d’intercepteur request : le cookie authToken (httpOnly) est envoyé automatiquement par le navigateur
+const MUTATING = new Set(['post', 'put', 'patch', 'delete']);
+api.interceptors.request.use((config) => {
+  const method = (config.method || 'get').toLowerCase();
+  if (MUTATING.has(method)) {
+    const csrf = readCookie('csrfToken');
+    if (csrf) {
+      config.headers = config.headers || {};
+      if (!config.headers['X-CSRF-Token'] && !config.headers['x-csrf-token']) {
+        config.headers['X-CSRF-Token'] = csrf;
+      }
+    }
+  }
+  return config;
+});
 
 // Response interceptor
 api.interceptors.response.use(

@@ -1,13 +1,8 @@
 /**
- * Sanitization HTML pour affichage sûr (ex. contenu magazine) — prévention XSS.
- * Nécessite la dépendance : npm install dompurify
+ * Prévisualisation HTML magazine (dashboard) — même politique que l’app passager (pas d’iframe).
  */
 import DOMPurify from 'dompurify';
 
-/**
- * Sanitize HTML for safe use with dangerouslySetInnerHTML (e.g. magazine article content).
- * Allows safe tags/attributes; strips scripts, event handlers, and javascript: URLs.
- */
 export function sanitizeArticleContent(html) {
   if (typeof html !== 'string') return '';
   const trimmed = html.trim();

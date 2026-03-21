@@ -461,6 +461,37 @@ router.put('/users/:id', validateMongoId('id'), ...adminUserUpdateValidation, as
       return res.status(404).json({ message: 'User not found' });
     }
 
+    const isSelf = String(user._id) === String(req.user._id);
+    if (isSelf && isActive === false) {
+      return res.status(400).json({
+        message: 'Vous ne pouvez pas désactiver votre propre compte.',
+        code: 'SELF_DEACTIVATE',
+      });
+    }
+    if (isSelf && role !== undefined && role !== 'admin' && user.role === 'admin') {
+      return res.status(400).json({
+        message: 'Vous ne pouvez pas retirer le rôle administrateur à votre propre compte.',
+        code: 'SELF_DEMOTE',
+      });
+    }
+
+    const targetIsAdmin = user.role === 'admin';
+    const willDemoteFromAdmin = role !== undefined && role !== 'admin';
+    const willDeactivate = isActive === false;
+    if (!isSelf && targetIsAdmin && (willDemoteFromAdmin || willDeactivate)) {
+      const otherActiveAdmins = await User.countDocuments({
+        role: 'admin',
+        _id: { $ne: user._id },
+        isActive: true,
+      });
+      if (otherActiveAdmins < 1) {
+        return res.status(400).json({
+          message: 'Impossible de retirer le dernier administrateur actif.',
+          code: 'LAST_ADMIN',
+        });
+      }
+    }
+
     const before = {
       firstName: user.firstName,
       lastName: user.lastName,
