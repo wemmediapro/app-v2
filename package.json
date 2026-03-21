@@ -10,7 +10,7 @@
     "hls.js": "^1.6.15",
     "idb": "^8.0.3",
     "lucide-react": "^0.378.0",
-    "react": "18.3.1",
+    "react": "19.2.4",
     "react-dom": "18.3.1",
     "react-router-dom": "^6.30.3",
     "socket.io-client": "^4.8.1",
