@@ -113,7 +113,7 @@ jobs:
           exit 1
 
       - name: Cache Playwright (navigateurs)
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
