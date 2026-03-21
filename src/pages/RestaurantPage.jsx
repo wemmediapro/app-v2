@@ -122,9 +122,12 @@ export default function RestaurantPage(props) {
           </button>
         </div>
 
-        {/* Catégories — liste déroulante mobile, boutons desktop */}
-        <div className="md:hidden w-full">
+        {/* Catégories — liste déroulante (visible tous breakpoints pour cohérence + E2E) */}
+        <div className="w-full md:max-w-md">
           <select
+            name="category"
+            data-testid="restaurant-category-filter"
+            aria-label={t('restaurants.title')}
             value={selectedRestaurantCategory}
             onChange={(e) => setSelectedRestaurantCategory(e.target.value)}
             className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-white border border-slate-200/80 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300"
@@ -404,11 +407,17 @@ export default function RestaurantPage(props) {
               <h2 className="text-lg font-semibold text-slate-900">{t('restaurants.gnvSelection')}</h2>
               <div className="space-y-3">
                 {restaurantsLoading ? (
-                  <div className="rounded-2xl bg-white border border-slate-200 p-6 text-center">
+                  <div
+                    className="rounded-2xl bg-white border border-slate-200 p-6 text-center"
+                    data-testid="restaurant-list-loading"
+                  >
                     <p className="text-slate-500">{t('common.loading') || 'Chargement...'}</p>
                   </div>
                 ) : filteredRestaurants.length === 0 ? (
-                  <div className="rounded-2xl bg-white border border-slate-200 p-6 text-center text-slate-500">
+                  <div
+                    className="rounded-2xl bg-white border border-slate-200 p-6 text-center text-slate-500"
+                    data-testid="restaurant-list-empty"
+                  >
                     <Utensils size={40} className="mx-auto mb-2 opacity-50" />
                     <p className="font-medium">{t('restaurants.noRestaurantsToShow')}</p>
                     <p className="text-sm mt-1">{t('restaurants.checkFiltersHint')}</p>
@@ -418,6 +427,7 @@ export default function RestaurantPage(props) {
                     {filteredRestaurants.map((restaurant) => (
                       <motion.div
                         key={restaurant.id}
+                        data-testid="restaurant-card"
                         whileHover={{ scale: 1.01 }}
                         className="w-full rounded-2xl bg-white shadow border border-slate-200 overflow-hidden"
                       >

@@ -112,7 +112,8 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       assetsDir: 'assets',
-      chunkSizeWarningLimit: 500,
+      // hls.js reste ~520 ko minifié dans son chunk async ; éviter un faux positif sur la limite par défaut (500).
+      chunkSizeWarningLimit: 600,
       reportCompressedSize: true,
       rollupOptions: {
         output: {

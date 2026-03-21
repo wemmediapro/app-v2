@@ -1,14 +1,10 @@
 /**
  * Attache une source vidéo à un élément <video> : tente HLS en premier (si disponible), sinon MP4 natif.
+ * hls.js est importé dynamiquement pour ne pas alourdir le bundle initial (~520 ko minifié).
  * Convention : /uploads/videos/foo.mp4 → /uploads/videos_hls/foo/playlist.m3u8
  */
 
-import Hls from 'hls.js';
 import { getHlsUrlFromVideoUrl } from '../services/apiService';
-
-export function isHlsSupported() {
-  return Hls.isSupported();
-}
 
 /** Configuration HLS optimisée pour VOD. */
 const HLS_VOD_CONFIG = {
@@ -37,6 +33,8 @@ export function attachVideoSource(videoElement, url, { onCanPlay, onError, start
   const hlsUrl = getHlsUrlFromVideoUrl(url);
   const seekTo = typeof startTime === 'number' && startTime > 0 ? startTime : null;
 
+  let cancelled = false;
+
   const applyStartTime = () => {
     if (seekTo == null) return;
     try {
@@ -48,16 +46,8 @@ export function attachVideoSource(videoElement, url, { onCanPlay, onError, start
     } catch (_) {}
   };
 
-  const doCleanup = () => {
-    if (videoElement._hlsInstance) {
-      videoElement._hlsInstance.destroy();
-      videoElement._hlsInstance = null;
-    }
-    videoElement.removeAttribute('src');
-    videoElement.load();
-  };
-
   const tryNative = () => {
+    if (cancelled) return;
     if (videoElement._hlsInstance) {
       videoElement._hlsInstance.destroy();
       videoElement._hlsInstance = null;
@@ -72,33 +62,56 @@ export function attachVideoSource(videoElement, url, { onCanPlay, onError, start
     if (onError) videoElement.addEventListener('error', onError, { once: true });
   };
 
-  if (hlsUrl && isHlsSupported()) {
-    const hlsConfig = { ...HLS_VOD_CONFIG };
-    if (typeof seekTo === 'number' && seekTo > 0) {
-      hlsConfig.startPosition = seekTo;
-    }
-    const hls = new Hls(hlsConfig);
-    videoElement._hlsInstance = hls;
-
-    hls.on(Hls.Events.ERROR, (event, data) => {
-      if (!data.fatal) return;
-      hls.destroy();
+  const doCleanup = () => {
+    cancelled = true;
+    if (videoElement._hlsInstance) {
+      videoElement._hlsInstance.destroy();
       videoElement._hlsInstance = null;
-      tryNative();
-    });
-
-    hls.loadSource(hlsUrl);
-    hls.attachMedia(videoElement);
-
-    if (seekTo != null) {
-      videoElement.addEventListener('loadedmetadata', applyStartTime, { once: true });
-      videoElement.addEventListener('canplay', applyStartTime, { once: true });
     }
-    if (onCanPlay) videoElement.addEventListener('canplay', onCanPlay, { once: true });
-    if (onError) videoElement.addEventListener('error', onError, { once: true });
-  } else {
+    videoElement.removeAttribute('src');
+    videoElement.load();
+  };
+
+  if (!hlsUrl) {
     tryNative();
+    return doCleanup;
   }
+
+  import('hls.js')
+    .then((mod) => {
+      if (cancelled) return;
+      const Hls = mod.default;
+      if (!Hls.isSupported()) {
+        tryNative();
+        return;
+      }
+      const hlsConfig = { ...HLS_VOD_CONFIG };
+      if (typeof seekTo === 'number' && seekTo > 0) {
+        hlsConfig.startPosition = seekTo;
+      }
+      const hls = new Hls(hlsConfig);
+      videoElement._hlsInstance = hls;
+
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (!data.fatal) return;
+        hls.destroy();
+        videoElement._hlsInstance = null;
+        tryNative();
+      });
+
+      hls.loadSource(hlsUrl);
+      hls.attachMedia(videoElement);
+
+      if (seekTo != null) {
+        videoElement.addEventListener('loadedmetadata', applyStartTime, { once: true });
+        videoElement.addEventListener('canplay', applyStartTime, { once: true });
+      }
+      if (onCanPlay) videoElement.addEventListener('canplay', onCanPlay, { once: true });
+      if (onError) videoElement.addEventListener('error', onError, { once: true });
+    })
+    .catch(() => {
+      if (!cancelled) tryNative();
+    });
 
   return doCleanup;
 }

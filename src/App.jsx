@@ -1,6 +1,6 @@
 /**
  * Point d’entrée principal de l’app passagers.
- * Logique Radio/WebTV extraite dans src/hooks/useRadio.js et src/hooks/useWebtv.js.
+ * Domaines : useRadioLogic/useWebtv, useMoviesLogic, useMagazineLogic, useRestaurantsLogic, useShopLogic, useEnfantLogic, useChatLogic.
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,16 +9,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { apiService, getPosterUrl } from './services/apiService';
 import { getPlaybackStorageKey } from './hooks/useMoviePlayback';
 import { useLanguage } from './contexts/LanguageContext';
-import { useMagazine } from './hooks/useMagazine';
-import { useRestaurant } from './hooks/useRestaurant';
-import { useEnfant } from './hooks/useEnfant';
+import { useMagazineLogic } from './hooks/useMagazineLogic';
+import { useRestaurantsLogic } from './hooks/useRestaurantsLogic';
+import { useShopLogic } from './hooks/useShopLogic';
+import { useEnfantLogic } from './hooks/useEnfantLogic';
 import { useNotifications } from './hooks/useNotifications';
-import { useMoviesState } from './hooks/useMoviesState';
+import { useMoviesLogic } from './hooks/useMoviesLogic';
 import { useBanners } from './hooks/useBanners';
 import { useShipmap } from './hooks/useShipmap';
-import { useRadio } from './hooks/useRadio';
+import { useRadioLogic } from './hooks/useRadioLogic';
 import { useWebtv } from './hooks/useWebtv';
-import { useChat } from './hooks/useChat';
+import { useChatLogic } from './hooks/useChatLogic';
 import { useOfflineQueue } from './hooks/useOfflineQueue';
 import { useOnline } from './hooks/useOnline';
 import BottomNav from './components/BottomNav';
@@ -99,12 +100,21 @@ function App() {
   // Bannières d'accueil (hook useBanners)
   const banners = useBanners(page, language);
 
-  // === Movies & Series (liste + chargement dans useMoviesState ; watchlist reste ici pour sync favoris) ===
-  const { moviesAndSeries, moviesLoading, movieToOpenFromFavorites, setMovieToOpenFromFavorites } =
-    useMoviesState(language);
-  const [watchlist, setWatchlist] = useState([]);
+  const favoritesStorageSuffix = 'guest';
 
-  // === Magazine (état + chargement dans useMagazine ; favoris restent dans App pour la page Favorites) ===
+  // === Films / séries + watchlist (useMoviesLogic) ===
+  const {
+    moviesAndSeries,
+    moviesLoading,
+    movieToOpenFromFavorites,
+    setMovieToOpenFromFavorites,
+    watchlist,
+    setWatchlist,
+    toggleWatchlist,
+    myWatchlist,
+  } = useMoviesLogic(language, favoritesStorageSuffix);
+
+  // === Magazine + favoris (useMagazineLogic) ===
   const {
     magazineArticles,
     selectedArticle,
@@ -121,8 +131,12 @@ function App() {
     filteredArticles,
     featuredArticles,
     breakingNews,
-  } = useMagazine(language, t);
-  const [magazineFavoritesIds, setMagazineFavoritesIds] = useState([]);
+    magazineFavoritesIds,
+    setMagazineFavoritesIds,
+    isMagazineFavorite,
+    toggleMagazineFavorite,
+    magazineFavoritesArticles,
+  } = useMagazineLogic(language, t, favoritesStorageSuffix);
 
   // === Notifications (hook dédié) ===
   const { notificationsList, notificationsLoading, notificationsUnreadCount } = useNotifications(page, language);
@@ -207,7 +221,7 @@ function App() {
     toggleRepeat,
     isShuffle,
     toggleShuffle,
-  } = useRadio(language, page, isAnyVideoPlaying);
+  } = useRadioLogic(language, page, isAnyVideoPlaying);
 
   const [offlineSentNotice, setOfflineSentNotice] = useState(null);
   const handleOfflineFlushComplete = useCallback(({ sent }) => {
@@ -227,16 +241,21 @@ function App() {
     void offlineQueue.refreshCount();
   }, [syncFeedback, offlineQueue.refreshCount]);
 
-  // Chat (Socket.io, conversations, messages) — hook useChat
-  const chat = useChat({ refreshOfflineQueueCount: offlineQueue.refreshCount });
+  // Chat (Socket.io, conversations, messages) — useChatLogic
+  const chat = useChatLogic({ refreshOfflineQueueCount: offlineQueue.refreshCount });
 
-  // === Shop state (favoris dans App pour Favorites + synchro ; promos home chargées à part) ===
-  const [shopFavorites, setShopFavorites] = useState([]);
-  const [homeShopPromotions, setHomeShopPromotions] = useState([]);
+  // === Boutique : favoris, catégories, promos accueil (useShopLogic) ===
+  const {
+    shopFavorites,
+    setShopFavorites,
+    homeShopPromotions,
+    shopCategories,
+    isShopFavorite,
+    toggleShopFavorite,
+    removeFromShopFavorites,
+  } = useShopLogic(t, favoritesStorageSuffix);
 
-  // === Restaurant (état + chargement dans useRestaurant ; cart + favoris restent dans App) ===
-  const [cart, setCart] = useState([]);
-  const [restaurantFavoritesIds, setRestaurantFavoritesIds] = useState([]);
+  // === Restaurants + panier + favoris (useRestaurantsLogic) ===
   const {
     restaurants,
     restaurantsLoading,
@@ -249,7 +268,17 @@ function App() {
     allPromotions,
     selectedRestaurant,
     setSelectedRestaurant,
-  } = useRestaurant(language, t, restaurantFavoritesIds);
+    restaurantFavoritesIds,
+    setRestaurantFavoritesIds,
+    cart,
+    setCart,
+    addToCart,
+    removeFromCart,
+    updateCartQuantity,
+    isRestaurantFavorite,
+    toggleRestaurantFavorite,
+    restaurantFavoritesList,
+  } = useRestaurantsLogic(language, t, favoritesStorageSuffix);
 
   // === Plan du navire : ID depuis boatConfig (API), puis hook useShipmap ===
   const [shipmapShipId, setShipmapShipId] = useState(7);
@@ -273,8 +302,7 @@ function App() {
   const shipmap = useShipmap(language, t, shipmapShipId);
   const currentShipName = shipmap.currentShipName || currentShip.name;
 
-  // === Espace Enfant state ===
-  const [enfantFavoritesIds, setEnfantFavoritesIds] = useState([]);
+  // === Espace enfant + favoris (useEnfantLogic) ===
   const {
     enfantActivities,
     enfantLoading,
@@ -287,7 +315,12 @@ function App() {
     enfantHighlights,
     selectedActivity,
     setSelectedActivity,
-  } = useEnfant(language, t, enfantFavoritesIds);
+    enfantFavoritesIds,
+    setEnfantFavoritesIds,
+    isEnfantFavorite,
+    toggleEnfantFavorite,
+    enfantFavoritesActivities,
+  } = useEnfantLogic(language, t, favoritesStorageSuffix);
 
   // Recalculer les titres de pages quand la langue change
   const pageTitles = useMemo(
@@ -311,35 +344,10 @@ function App() {
     [language, t]
   );
 
-  // Clé de stockage des favoris : par profil connecté ou "guest"
-  const favoritesStorageSuffix = 'guest';
-
   // Charger les favoris (et positions de lecture) : depuis le serveur si connecté, sinon localStorage
   useEffect(() => {
     const suffix = favoritesStorageSuffix;
-    const readLocal = (baseKey, fallbackKey) => {
-      try {
-        const key = `${baseKey}_${suffix}`;
-        let raw = localStorage.getItem(key);
-        if (suffix === 'guest' && fallbackKey && (!raw || raw === '[]')) {
-          const legacy = localStorage.getItem(fallbackKey);
-          if (legacy) raw = legacy;
-        }
-        return raw ? JSON.parse(raw) : [];
-      } catch (_) {
-        return [];
-      }
-    };
-
     if (suffix === 'guest') {
-      setMagazineFavoritesIds(readLocal('magazineFavorites', 'magazineFavorites'));
-      setRestaurantFavoritesIds(readLocal('restaurantFavorites', 'restaurantFavorites'));
-      setEnfantFavoritesIds(readLocal('enfantFavorites', 'enfantFavorites'));
-      setWatchlist(readLocal('watchlist', null));
-      try {
-        const shopRaw = readLocal('shopFavorites', null);
-        setShopFavorites(Array.isArray(shopRaw) ? shopRaw : []);
-      } catch (_) {}
       return;
     }
 
@@ -414,21 +422,7 @@ function App() {
       })
       .catch(() => {
         if (cancelled) return;
-        // Ne pas écraser l'état si on a déjà reçu les données du serveur (getProfile ou login)
-        // Pour les utilisateurs connectés : ne pas utiliser le cache navigateur pour les favoris (source = profil serveur uniquement)
         if (userDataLoadedFromServerRef.current) return;
-        if (suffix !== 'guest') {
-          // Utilisateur connecté : ne pas charger les favoris depuis le cache
-          return;
-        }
-        setMagazineFavoritesIds(readLocal('magazineFavorites', null));
-        setRestaurantFavoritesIds(readLocal('restaurantFavorites', null));
-        setEnfantFavoritesIds(readLocal('enfantFavorites', null));
-        setWatchlist(readLocal('watchlist', null));
-        try {
-          const shopRaw = readLocal('shopFavorites', null);
-          setShopFavorites(Array.isArray(shopRaw) ? shopRaw : []);
-        } catch (_) {}
       });
     return () => {
       cancelled = true;
@@ -484,72 +478,6 @@ function App() {
     } catch (_) {}
   }, [favoritesStorageSuffix]);
 
-  // Récupérer le programme du jour depuis la base de données quand une chaîne est sélectionnée (avec cache du timeline)
-  const shopCategories = useMemo(
-    () => [
-      { id: 'all', name: t('shop.categories.all'), icon: '🛍️' },
-      { id: 'souvenirs', name: t('shop.categories.souvenirs'), icon: '🎁' },
-      { id: 'dutyfree', name: t('shop.categories.dutyfree'), icon: '🍷' },
-      { id: 'fashion', name: t('shop.categories.fashion'), icon: '👕' },
-      { id: 'electronics', name: t('shop.categories.electronics'), icon: '📱' },
-      { id: 'food', name: t('shop.categories.food'), icon: '🍯' },
-    ],
-    [t]
-  );
-
-  // Promos boutique pour la page d’accueil uniquement (page Shop charge les siennes via useShop)
-  useEffect(() => {
-    let cancelled = false;
-    apiService
-      .getPromotions()
-      .then((response) => {
-        if (cancelled) return;
-        const data = response?.data;
-        const list = Array.isArray(data) ? data : data?.promotions || data?.data || [];
-        setHomeShopPromotions((list || []).filter((p) => p.isActive !== false));
-      })
-      .catch(() => {
-        if (!cancelled) setHomeShopPromotions([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // === Movies & Series functions ===
-  const toggleWatchlist = (movieId) => {
-    const key = `watchlist_${favoritesStorageSuffix}`;
-    setWatchlist((prev) => {
-      const next = prev.includes(movieId) ? prev.filter((id) => id !== movieId) : [...prev, movieId];
-      if (favoritesStorageSuffix === 'guest')
-        try {
-          localStorage.setItem(key, JSON.stringify(next));
-        } catch (_) {}
-      return next;
-    });
-  };
-
-  // === Restaurant functions ===
-  const isRestaurantFavorite = (restaurantId) =>
-    restaurantFavoritesIds.some((id) => String(id) === String(restaurantId));
-  const toggleRestaurantFavorite = (restaurantId) => {
-    const key = `restaurantFavorites_${favoritesStorageSuffix}`;
-    setRestaurantFavoritesIds((prev) => {
-      const next = prev.some((id) => String(id) === String(restaurantId))
-        ? prev.filter((id) => String(id) !== String(restaurantId))
-        : [...prev, String(restaurantId)];
-      if (favoritesStorageSuffix === 'guest')
-        try {
-          localStorage.setItem(key, JSON.stringify(next));
-        } catch (_) {}
-      return next;
-    });
-  };
-  const restaurantFavoritesList = useMemo(
-    () => restaurants.filter((r) => restaurantFavoritesIds.some((id) => String(id) === String(r.id))),
-    [restaurants, restaurantFavoritesIds]
-  );
-
   /** Promos : 1 resto + 1 boutique, sélection déterministe (évite re-renders et sauts visuels). */
   const homePromosCombined = useMemo(() => {
     const restAll = (allPromotions || []).map((p) => ({
@@ -581,101 +509,6 @@ function App() {
         ? promo.translations[language].description
         : promo.description || '',
     [language]
-  );
-
-  const addToCart = useCallback((item) => {
-    setCart((prev) => [...prev, { ...item, id: Date.now(), quantity: 1 }]);
-  }, []);
-
-  const removeFromCart = useCallback((itemId) => {
-    setCart((prev) => prev.filter((item) => item.id !== itemId));
-  }, []);
-
-  const updateCartQuantity = useCallback((itemId, quantity) => {
-    if (quantity <= 0) {
-      setCart((prev) => prev.filter((item) => item.id !== itemId));
-    } else {
-      setCart((prev) => prev.map((item) => (item.id === itemId ? { ...item, quantity } : item)));
-    }
-  }, []);
-
-  // === Shop favoris (utilisés par ShopPage, Favorites et raccourcis home) ===
-  const isShopFavorite = (productId) => shopFavorites.some((p) => p.id === productId);
-
-  const toggleShopFavorite = (product) => {
-    const key = `shopFavorites_${favoritesStorageSuffix}`;
-    setShopFavorites((prev) => {
-      const next = prev.some((p) => p.id === product.id)
-        ? prev.filter((p) => p.id !== product.id)
-        : [...prev, { ...product }];
-      if (favoritesStorageSuffix === 'guest')
-        try {
-          localStorage.setItem(key, JSON.stringify(next));
-        } catch (_) {}
-      return next;
-    });
-  };
-
-  const removeFromShopFavorites = (productId) => {
-    const key = `shopFavorites_${favoritesStorageSuffix}`;
-    setShopFavorites((prev) => {
-      const next = prev.filter((p) => p.id !== productId);
-      if (favoritesStorageSuffix === 'guest')
-        try {
-          localStorage.setItem(key, JSON.stringify(next));
-        } catch (_) {}
-      return next;
-    });
-  };
-
-  const isMagazineFavorite = (articleId) => magazineFavoritesIds.some((id) => String(id) === String(articleId));
-  const toggleMagazineFavorite = (article) => {
-    const id = article?.id ?? article?._id;
-    if (!id) return;
-    const key = `magazineFavorites_${favoritesStorageSuffix}`;
-    setMagazineFavoritesIds((prev) => {
-      const next = prev.some((i) => String(i) === String(id))
-        ? prev.filter((i) => String(i) !== String(id))
-        : [...prev, id];
-      if (favoritesStorageSuffix === 'guest')
-        try {
-          localStorage.setItem(key, JSON.stringify(next));
-        } catch (_) {}
-      return next;
-    });
-  };
-
-  const isEnfantFavorite = (activityId) => enfantFavoritesIds.some((id) => String(id) === String(activityId));
-  const toggleEnfantFavorite = (activity) => {
-    const id = activity?.id ?? activity?._id;
-    if (!id) return;
-    const key = `enfantFavorites_${favoritesStorageSuffix}`;
-    setEnfantFavoritesIds((prev) => {
-      const next = prev.some((i) => String(i) === String(id))
-        ? prev.filter((i) => String(i) !== String(id))
-        : [...prev, id];
-      if (favoritesStorageSuffix === 'guest')
-        try {
-          localStorage.setItem(key, JSON.stringify(next));
-        } catch (_) {}
-      return next;
-    });
-  };
-
-  // Favoris films (watchlist) — mémoïsés pour limiter les re-renders de MainContent/FavoritesPage
-  const myWatchlist = useMemo(
-    () => moviesAndSeries.filter((item) => watchlist.includes(item.id)),
-    [moviesAndSeries, watchlist]
-  );
-
-  const magazineFavoritesArticles = useMemo(
-    () => magazineArticles.filter((a) => magazineFavoritesIds.some((id) => String(id) === String(a.id ?? a._id))),
-    [magazineArticles, magazineFavoritesIds]
-  );
-
-  const enfantFavoritesActivities = useMemo(
-    () => enfantActivities.filter((a) => enfantFavoritesIds.some((id) => String(id) === String(a.id))),
-    [enfantActivities, enfantFavoritesIds]
   );
 
   useEffect(() => {

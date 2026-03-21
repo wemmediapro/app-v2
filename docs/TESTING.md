@@ -4,11 +4,11 @@ Ce document regroupe **comment** lancer et étendre les tests du dépôt. Le dé
 
 ## Vue d’ensemble
 
-| Couche | Outil | Emplacement |
-|--------|-------|-------------|
-| Backend API & libs | Jest | `backend/tests/`, `backend/src/**/__tests__/` |
-| Frontend (unitaire) | Vitest | racine — `npm test` |
-| Parcours E2E | Playwright | `tests/*.spec.js`, `playwright.config.js` |
+| Couche                  | Outil         | Emplacement                                                           |
+| ----------------------- | ------------- | --------------------------------------------------------------------- |
+| Backend API & libs      | Jest          | `backend/tests/`, `backend/src/**/__tests__/`                         |
+| Frontend (unitaire)     | Vitest        | racine — `npm test`                                                   |
+| Parcours E2E            | Playwright    | `tests/*.spec.js`, `playwright.config.js`                             |
 | Charge HTTP / WebSocket | k6, Artillery | `tests/load/`, voir [`tests/load/README.md`](../tests/load/README.md) |
 
 ## Prérequis
@@ -59,13 +59,14 @@ Le workflow GitHub Actions (`.github/workflows/tests.yml`) exécute en général
 
 ## Exemples concrets dans le dépôt (copier / s’inspirer)
 
-| Type | Fichiers |
-|------|----------|
-| **Route API + supertest** | `backend/tests/unit/routes/auth.extended.test.js`, `messages.routes.test.js`, `restaurants.routes.test.js`, `critical.routes.test.js` |
-| **Middleware** | `backend/tests/unit/middleware/authMiddleware.flow.test.js`, `validateInput.unit.test.js`, `errorHandler.test.js` |
-| **Sécurité / credentials** | `backend/tests/unit/routes/auth.security-credentials.test.js`, `backend/src/__tests__/security.test.js` |
-| **Fixtures** | `backend/tests/fixtures/` (users, restaurants, messages, feedback) — voir [backend/tests/README.md](../backend/tests/README.md) |
-| **E2E Playwright** | `tests/*.spec.js` (ex. `navigation.spec.js`, `dashboard-auth.spec.js`, `magazine.spec.js`, `offline.spec.js`) |
-| **Charge** | `tests/load/gnv-1500-connections.js`, [tests/load/README.md](../tests/load/README.md) |
+| Type                       | Fichiers                                                                                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Route API + supertest**  | `backend/tests/unit/routes/auth.extended.test.js`, `messages.routes.test.js`, `restaurants.routes.test.js`, `critical.routes.test.js`        |
+| **Middleware**             | `backend/tests/unit/middleware/authMiddleware.flow.test.js`, `validateInput.unit.test.js`, `errorHandler.test.js`                            |
+| **Sécurité / credentials** | `backend/tests/unit/routes/auth.security-credentials.test.js`, `backend/src/__tests__/security.test.js`                                      |
+| **Fixtures**               | `backend/tests/fixtures/` (users, restaurants, messages, feedback) — voir [backend/tests/README.md](../backend/tests/README.md)              |
+| **E2E Playwright**         | `tests/*.spec.js` (ex. `navigation.spec.js`, `critical-paths.spec.js`, `dashboard-auth.spec.js`, `magazine.spec.js`, `offline.spec.js`)      |
+| **E2E dashboard + admin**  | Variables `PLAYWRIGHT_DASHBOARD_URL`, `PLAYWRIGHT_ADMIN_EMAIL`, `PLAYWRIGHT_ADMIN_PASSWORD` — voir en-tête de `tests/critical-paths.spec.js` |
+| **Charge**                 | `tests/load/gnv-1500-connections.js`, [tests/load/README.md](../tests/load/README.md)                                                        |
 
 Pour ajouter un test : dupliquer une suite proche du module modifié, mocker Mongoose si la persistance n’est pas nécessaire, puis `cd backend && npm test -- --testPathPattern=nomDuFichier`.
