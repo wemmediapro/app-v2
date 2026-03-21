@@ -29,11 +29,13 @@ const LocalServerConfig = require('../models/LocalServerConfig');
 const redisConnectionManager = require('../lib/redis-connection-manager');
 const connectionManager = require('../lib/connection-manager');
 const memoryMonitor = require('../lib/memory-monitor');
+const auditService = require('../services/auditService');
+const { auditContext } = require('../middleware/auditLog');
 
 const router = express.Router();
 
-// Toutes les routes admin exigent auth + rôle admin
-router.use(authMiddleware, adminMiddleware);
+// Toutes les routes admin exigent auth + rôle admin + contexte audit
+router.use(authMiddleware, adminMiddleware, auditContext);
 
 // @route   GET /api/admin/connections-stats
 // @desc    Stats connexions Socket.io (Redis cross-worker + vue locale du worker)
@@ -309,6 +311,16 @@ router.post('/users', registerValidation, async (req, res) => {
 
     await user.save();
 
+    await auditService.logAction({
+      userId: req.user._id,
+      action: 'create-user',
+      resource: 'user',
+      resourceId: user._id,
+      changes: { after: { email: user.email, role: user.role } },
+      ipAddress: req.auditContext?.ipAddress,
+      userAgent: req.auditContext?.userAgent,
+    });
+
     res.status(201).json({
       message: 'Utilisateur créé avec succès',
       user: {
@@ -342,6 +354,14 @@ router.put('/users/:id', validateMongoId('id'), ...adminUserUpdateValidation, as
       return res.status(404).json({ message: 'User not found' });
     }
 
+    const before = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+    };
+
     if (email !== undefined) {
       const normalized = email.trim().toLowerCase();
       const existing = await User.findOne({ email: normalized });
@@ -370,6 +390,24 @@ router.put('/users/:id', validateMongoId('id'), ...adminUserUpdateValidation, as
     await user.save();
 
     const updated = await User.findById(user._id).select('-password');
+    const after = {
+      firstName: updated.firstName,
+      lastName: updated.lastName,
+      email: updated.email,
+      role: updated.role,
+      isActive: updated.isActive,
+    };
+
+    await auditService.logAction({
+      userId: req.user._id,
+      action: 'update-user',
+      resource: 'user',
+      resourceId: user._id,
+      changes: { before, after },
+      ipAddress: req.auditContext?.ipAddress,
+      userAgent: req.auditContext?.userAgent,
+    });
+
     res.json({
       message: 'User updated successfully',
       user: updated
@@ -397,11 +435,31 @@ router.delete('/users/:id', validateMongoId('id'), ...adminDeleteUserQueryValida
 
     if (hard) {
       await User.findByIdAndDelete(req.params.id);
+      await auditService.logAction({
+        userId: req.user._id,
+        action: 'delete-user',
+        resource: 'user',
+        resourceId: user._id,
+        changes: { before: { email: user.email, role: user.role } },
+        ipAddress: req.auditContext?.ipAddress,
+        userAgent: req.auditContext?.userAgent,
+        metadata: { hard: true },
+      });
       return res.json({ message: 'User deleted permanently' });
     }
 
     user.isActive = false;
     await user.save();
+    await auditService.logAction({
+      userId: req.user._id,
+      action: 'delete-user',
+      resource: 'user',
+      resourceId: user._id,
+      changes: { before: { isActive: true }, after: { isActive: false } },
+      ipAddress: req.auditContext?.ipAddress,
+      userAgent: req.auditContext?.userAgent,
+      metadata: { hard: false, deactivated: true },
+    });
     res.json({ message: 'User deactivated successfully' });
   } catch (error) {
     console.error('Delete user error:', error);
@@ -476,6 +534,73 @@ router.post('/cache/clear', async (req, res) => {
   } catch (error) {
     console.error('Cache clear error:', error);
     res.status(500).json({ message: 'Erreur lors du vidage du cache' });
+  }
+});
+
+// ─── Audit logs (admin only) ───────────────────────────────────────────────────
+
+// @route   GET /api/admin/audit-logs
+// @desc    Liste des logs d'audit avec filtres (userId, action, days)
+// @access  Private (Admin)
+router.get('/audit-logs', async (req, res) => {
+  try {
+    const { userId, action, resource, days = 30, page = 1, limit = 50 } = req.query;
+    const result = await auditService.getAdminLogs({
+      adminId: userId,
+      action,
+      resource,
+      days: parseInt(days, 10),
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+    });
+    res.json(result);
+  } catch (error) {
+    console.error('GET audit-logs error:', error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des logs', error: error.message });
+  }
+});
+
+// @route   GET /api/admin/audit-logs/export
+// @desc    Export des logs en CSV ou JSON
+// @access  Private (Admin)
+router.get('/audit-logs/export', async (req, res) => {
+  try {
+    const format = (req.query.format || 'json').toLowerCase() === 'csv' ? 'csv' : 'json';
+    const { userId, action, resource, days = 30 } = req.query;
+    const { content, contentType } = await auditService.exportLogs(format, {
+      adminId: userId,
+      action,
+      resource,
+      days: parseInt(days, 10),
+    });
+    const ext = format === 'csv' ? 'csv' : 'json';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="audit-logs-${Date.now()}.${ext}"`);
+    res.send(content);
+  } catch (error) {
+    console.error('GET audit-logs/export error:', error);
+    res.status(500).json({ message: 'Erreur lors de l\'export des logs', error: error.message });
+  }
+});
+
+// @route   GET /api/admin/audit-logs/user/:userId
+// @desc    Logs d'audit pour un utilisateur ciblé (ressource)
+// @access  Private (Admin)
+router.get('/audit-logs/user/:userId', validateMongoId('userId'), handleValidationErrors, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { days = 30, page = 1, limit = 50 } = req.query;
+    const result = await auditService.getAdminLogs({
+      resource: 'user',
+      resourceId: userId,
+      days: parseInt(days, 10),
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+    });
+    res.json(result);
+  } catch (error) {
+    console.error('GET audit-logs/user/:userId error:', error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des logs', error: error.message });
   }
 });
 

@@ -84,6 +84,103 @@ describe('authMiddleware (flux)', () => {
     );
   });
 
+  it('401 INVALID_TOKEN_TYPE si JWT typ 2fa_challenge', async () => {
+    const secret = process.env.JWT_SECRET;
+    const challenge = jwt.sign(
+      { typ: '2fa_challenge', id: '507f1f77bcf86cd799439011', sub: '507f1f77bcf86cd799439011' },
+      secret,
+      { expiresIn: '5m' }
+    );
+    const req = {
+      originalUrl: '/api/users',
+      cookies: {},
+      header: (n) => (n === 'Authorization' ? `Bearer ${challenge}` : ''),
+    };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const next = jest.fn();
+    await authMiddleware(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'INVALID_TOKEN_TYPE' })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('401 MFA_REQUIRED pour admin avec 2FA sans claim mfa (hors routes exemptées)', async () => {
+    User.findById.mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue({
+          _id: '507f1f77bcf86cd799439011',
+          email: 'a@test.com',
+          role: 'admin',
+          twoFactorEnabled: true,
+          isActive: true,
+        }),
+      }),
+    });
+    const token = generateToken({ id: '507f1f77bcf86cd799439011', email: 'a@test.com', role: 'admin' });
+    const req = {
+      originalUrl: '/api/users',
+      url: '/api/users',
+      cookies: {},
+      header(n) {
+        if (n === 'Authorization') return `Bearer ${token}`;
+        return '';
+      },
+      get(name) {
+        return this.header(name);
+      },
+    };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const next = jest.fn();
+    await authMiddleware(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'MFA_REQUIRED' }));
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('next si admin 2FA avec en-tête X-2FA-Token TOTP valide', async () => {
+    const speakeasy = require('speakeasy');
+    const sec = speakeasy.generateSecret({ length: 20 });
+    const totp = speakeasy.totp({ secret: sec.base32, encoding: 'base32' });
+    User.findById.mockImplementation(() => ({
+      select(sel) {
+        const s = String(sel);
+        if (s.includes('twoFactorSecret')) {
+          return {
+            lean: jest.fn().mockResolvedValue({ twoFactorSecret: sec.base32 }),
+          };
+        }
+        return {
+          lean: jest.fn().mockResolvedValue({
+            _id: '507f1f77bcf86cd799439011',
+            email: 'a@test.com',
+            role: 'admin',
+            twoFactorEnabled: true,
+            isActive: true,
+          }),
+        };
+      },
+    }));
+    const token = generateToken({ id: '507f1f77bcf86cd799439011', email: 'a@test.com', role: 'admin' });
+    const req = {
+      originalUrl: '/api/users',
+      cookies: {},
+      header(n) {
+        if (n === 'Authorization') return `Bearer ${token}`;
+        return '';
+      },
+      get(name) {
+        if (name === 'X-2FA-Token' || name === 'x-2fa-token') return totp;
+        return this.header(name);
+      },
+    };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const next = jest.fn();
+    await authMiddleware(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
   it('next + req.user après lookup Mongo', async () => {
     cacheManager.isConnected = false;
     User.findById.mockReturnValue({

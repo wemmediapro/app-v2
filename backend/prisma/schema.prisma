@@ -20,6 +20,8 @@ model User {
   role         String   @default("passenger") // passenger, crew, admin
   preferences  UserPreferences?
   isActive     Boolean  @default(true)
+  /** true si créé avec mot de passe temporaire (init) — forcer changement au 1er login (API Mongoose). */
+  mustChangePassword Boolean @default(false)
   lastLogin    DateTime?
   avatar       String?
   createdAt    DateTime @default(now())

@@ -1,6 +1,13 @@
 # GNV OnBoard Application
 
+[![Tests](https://github.com/wemmediapro/app-v2/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/wemmediapro/app-v2/actions/workflows/tests.yml)
+[![Load tests](https://github.com/wemmediapro/app-v2/actions/workflows/load-test.yml/badge.svg?branch=main)](https://github.com/wemmediapro/app-v2/actions/workflows/load-test.yml)
+[![Security](https://github.com/wemmediapro/app-v2/actions/workflows/security.yml/badge.svg)](https://github.com/wemmediapro/app-v2/actions/workflows/security.yml)
+[![Codecov](https://codecov.io/gh/wemmediapro/app-v2/branch/main/graph/badge.svg)](https://codecov.io/gh/wemmediapro/app-v2)
+
 Application complète pour la gestion des services à bord du navire GNV Excelsior.
+
+> **CI/CD** : voir [docs/GITHUB_CI_CD.md](docs/GITHUB_CI_CD.md) (secrets, protections de branche, Codecov).
 
 ## 🚢 Fonctionnalités
 
@@ -58,7 +65,7 @@ Application complète pour la gestion des services à bord du navire GNV Excelsi
 ## 🚀 Installation
 
 ### Prérequis
-- Node.js 18+
+- Node.js 22+ (aligné avec GitHub Actions)
 - MongoDB (local ou Atlas)
 - npm ou yarn
 

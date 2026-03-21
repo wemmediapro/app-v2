@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const User = require('../models/User');
 const cacheManager = require('../lib/cache-manager');
+const authService = require('../services/authService');
 
 const AUTH_USER_CACHE_TTL = 60; // 1 min
 const AUTH_USER_CACHE_PREFIX = 'auth:user:';
@@ -56,6 +57,48 @@ const verifyToken = (token) => {
   return jwt.verify(token, getSecret());
 };
 
+const TWO_FACTOR_CHALLENGE_TTL = process.env.TWO_FACTOR_CHALLENGE_EXPIRES_IN || '5m';
+
+/** JWT court : étape intermédiaire après mot de passe OK, avant saisie TOTP. */
+function generateTwoFactorChallengeToken(userId, email) {
+  return jwt.sign(
+    {
+      typ: '2fa_challenge',
+      id: String(userId),
+      sub: String(userId),
+      email: email || undefined,
+    },
+    getSecret(),
+    { expiresIn: TWO_FACTOR_CHALLENGE_TTL }
+  );
+}
+
+function verifyTwoFactorChallengeToken(token) {
+  const d = jwt.verify(token, getSecret());
+  if (d.typ !== '2fa_challenge') {
+    const e = new Error('Invalid challenge type');
+    e.name = 'JsonWebTokenError';
+    throw e;
+  }
+  return d;
+}
+
+/** Routes /api/auth/* où un admin avec 2FA peut utiliser un JWT sans claim `mfa`. */
+function isMfaExemptApiPath(req) {
+  const raw = (req.originalUrl || req.url || '').split('?')[0];
+  const path = raw.replace(/^\/api\/?/, '/') || '/';
+  const exempt = new Set([
+    '/auth/login',
+    '/auth/logout',
+    '/auth/2fa/complete-login',
+    '/auth/me',
+    '/auth/2fa/setup',
+    '/auth/2fa/verify',
+  ]);
+  if (exempt.has(path)) return true;
+  return false;
+}
+
 const authMiddleware = async (req, res, next) => {
   try {
     getSecret();
@@ -68,6 +111,12 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
     const decoded = verifyToken(token);
+    if (decoded.typ === '2fa_challenge') {
+      return res.status(401).json({
+        message: 'Token de challenge 2FA non utilisable pour cette ressource.',
+        code: 'INVALID_TOKEN_TYPE',
+      });
+    }
     if (cacheManager.isConnected) {
       try {
         const blacklisted = await cacheManager.get(`blacklist:${token}`);
@@ -115,6 +164,30 @@ const authMiddleware = async (req, res, next) => {
       await cacheManager.set(cacheKey, user, AUTH_USER_CACHE_TTL);
     }
     req.user = { ...user, id: user._id };
+
+    // Admins avec 2FA activé : JWT doit contenir mfa: true (sauf routes d’onboarding / profil léger)
+    if (user.role === 'admin' && user.twoFactorEnabled && decoded.mfa !== true) {
+      const headerTotp = (req.get('X-2FA-Token') || req.get('x-2fa-token') || '').replace(/\s/g, '');
+      let headerOk = false;
+      if (headerTotp && /^\d{6}$/.test(headerTotp)) {
+        try {
+          const u2 = await User.findById(userId).select('+twoFactorSecret').lean();
+          if (u2 && u2.twoFactorSecret) {
+            headerOk = authService.verifyTOTPToken(u2.twoFactorSecret, headerTotp);
+          }
+        } catch (_) {
+          headerOk = false;
+        }
+      }
+      if (!headerOk && !isMfaExemptApiPath(req)) {
+        return res.status(401).json({
+          message:
+            'Authentification à deux facteurs requise. Reconnectez-vous avec le code TOTP ou envoyez X-2FA-Token (6 chiffres) pour cette requête.',
+          code: 'MFA_REQUIRED',
+        });
+      }
+    }
+
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
@@ -222,11 +295,14 @@ module.exports = {
   generateAccessToken,
   verifyToken,
   getTokenFromRequest,
+  generateTwoFactorChallengeToken,
+  verifyTwoFactorChallengeToken,
+  isMfaExemptApiPath,
   authMiddleware,
   authenticateToken,
   adminMiddleware,
   requireRole,
-  optionalAuth
+  optionalAuth,
 };
 
 

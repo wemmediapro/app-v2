@@ -22,17 +22,30 @@ function validateSecurityConfig() {
       throw new Error('CRITICAL: MONGODB_URI or DATABASE_URL must be set in production.');
     }
 
+    const adminEmail = (process.env.ADMIN_EMAIL || '').trim();
+    if (!adminEmail) {
+      throw new Error('CRITICAL: ADMIN_EMAIL must be set (non-empty) in production.');
+    }
+    if (adminEmail.toLowerCase() === 'admin@gnv.com') {
+      throw new Error(
+        'CRITICAL: ADMIN_EMAIL must not be the default demo address admin@gnv.com in production.'
+      );
+    }
+
     // ADMIN_PASSWORD : obligatoire pour le dashboard
-    if (!process.env.ADMIN_PASSWORD || typeof process.env.ADMIN_PASSWORD !== 'string') {
-      throw new Error('CRITICAL: ADMIN_PASSWORD must be set in production.');
+    const ap = process.env.ADMIN_PASSWORD;
+    if (!ap || typeof ap !== 'string' || !ap.trim()) {
+      throw new Error('CRITICAL: ADMIN_PASSWORD must be set (non-empty) in production.');
     }
   } else {
     // En dev : avertissements seulement
     if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
       console.warn('WARN: JWT_SECRET should be at least 32 characters for production.');
     }
-    if (!process.env.ADMIN_PASSWORD) {
-      console.warn('WARN: ADMIN_PASSWORD not set. Set it in config.env for admin login.');
+    if (!(process.env.ADMIN_EMAIL || '').trim() || !process.env.ADMIN_PASSWORD) {
+      console.warn(
+        'WARN: ADMIN_EMAIL et ADMIN_PASSWORD doivent être définis dans config.env pour le login admin (sinon POST /api/auth/login renverra 500).'
+      );
     }
   }
 }

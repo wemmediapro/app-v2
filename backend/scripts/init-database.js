@@ -14,6 +14,7 @@ require('dotenv').config({ path: path.join(backendRoot, '.env') });
 
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 // Import des modèles
 const User = require('../src/models/User');
@@ -48,20 +49,40 @@ async function connectDB() {
   }
 }
 
-// Fonction pour créer l'utilisateur admin (ADMIN_EMAIL et ADMIN_PASSWORD requis dans config.env)
+/**
+ * Crée l’admin : en production, ADMIN_EMAIL + ADMIN_PASSWORD obligatoires.
+ * En développement, si ADMIN_PASSWORD est absent : mot de passe temporaire aléatoire (32 caractères hex),
+ * affiché une seule fois sur stdout ; `mustChangePassword: true` jusqu’au premier changement via l’API.
+ */
 async function createAdminUser() {
   try {
-    const adminEmail = (process.env.ADMIN_EMAIL || '').trim();
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    if (!adminPassword) {
-      console.error('CRITICAL: ADMIN_PASSWORD must be set in config.env to create admin user. No default password.');
-      if (process.env.NODE_ENV === 'production') throw new Error('ADMIN_PASSWORD required');
+    const isProduction = process.env.NODE_ENV === 'production';
+    const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    let adminPassword = process.env.ADMIN_PASSWORD;
+    let mustChangePassword = false;
+
+    if (!adminEmail) {
+      console.error('CRITICAL: ADMIN_EMAIL must be set in config.env (no default email).');
+      if (isProduction) throw new Error('ADMIN_EMAIL required');
       return null;
     }
-    if (!adminEmail) {
-      console.error('CRITICAL: ADMIN_EMAIL must be set in config.env for admin user.');
-      if (process.env.NODE_ENV === 'production') throw new Error('ADMIN_EMAIL required');
-      return null;
+
+    const pwdSet = typeof adminPassword === 'string' && adminPassword.trim().length > 0;
+    if (!pwdSet) {
+      if (isProduction) {
+        console.error('CRITICAL: ADMIN_PASSWORD must be set in production (no generated password).');
+        throw new Error('ADMIN_PASSWORD required in production');
+      }
+      adminPassword = crypto.randomBytes(16).toString('hex'); // 32 caractères hex
+      mustChangePassword = true;
+      console.log('');
+      console.log('══════════════════════════════════════════════════════════════════════');
+      console.log('🔐 MOT DE PASSE ADMIN TEMPORAIRE — COPIEZ-LE MAINTENANT (affichage unique)');
+      console.log('   Il ne sera plus affiché. Connectez-vous puis changez le mot de passe (obligatoire).');
+      console.log('');
+      console.log(`   ADMIN_TEMP_PASSWORD=${adminPassword}`);
+      console.log('══════════════════════════════════════════════════════════════════════');
+      console.log('');
     }
 
     const existingAdmin = await User.findOne({ email: adminEmail });
@@ -85,10 +106,15 @@ async function createAdminUser() {
           sms: false
         }
       },
-      isActive: true
+      isActive: true,
+      mustChangePassword
     });
 
-    console.log('✅ Compte admin créé. Définissez ADMIN_EMAIL et ADMIN_PASSWORD dans config.env pour la connexion en production.');
+    console.log(
+      mustChangePassword
+        ? '✅ Compte admin créé avec mot de passe temporaire — changez-le au premier login.'
+        : '✅ Compte admin créé (ADMIN_EMAIL / ADMIN_PASSWORD depuis config.env).'
+    );
     return admin;
   } catch (error) {
     console.error('❌ Erreur création admin:', error.message);

@@ -18,6 +18,10 @@ export default defineConfig(({ mode }) => {
     setupFiles: './src/tests/setup.js',
     include: ['src/tests/**/*.{test,spec}.{js,jsx,ts,tsx}'],
     exclude: ['node_modules', 'dist', 'tests/**', 'backend/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov', 'html'],
+    },
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-dom/client', 'react-router-dom'],
@@ -153,6 +157,21 @@ export default defineConfig(({ mode }) => {
         target: proxyTarget,
         changeOrigin: true,
         timeout: 600000, // 10 min (aligné avec /api/stream)
+        configure: (proxy) => {
+          proxy.on('error', (err, req, res) => {
+            console.error('[Vite proxy /uploads]', req.method, req.url, '→', err.message || err.code || err)
+            if (res && !res.headersSent) {
+              res.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8' })
+              res.end(
+                JSON.stringify({
+                  message:
+                    'Backend injoignable pour les médias /uploads. Lancez le serveur backend (souvent port 3000 depuis le dossier backend) ou définissez DEV_PROXY_TARGET dans .env à la racine du front.',
+                  code: 'UPLOADS_PROXY_TARGET_DOWN',
+                })
+              )
+            }
+          })
+        },
       },
       '/socket.io': {
         target: proxyTarget,

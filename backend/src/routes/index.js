@@ -38,6 +38,20 @@ function mountRoutes(app, deps = {}) {
 
   // Health check enrichi (connexions Socket, mémoire) — monitoring / alerte (audit CTO)
   const configModule = require('../config');
+  /**
+   * @swagger
+   * /api/health:
+   *   get:
+   *     summary: Vérification de l'état du serveur
+   *     tags: [Health]
+   *     responses:
+   *       200:
+   *         description: Serveur opérationnel
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Health'
+   */
   app.get('/api/health', async (req, res) => {
     const dbConnected = dbManager && typeof dbManager.isConnected === 'function' && dbManager.isConnected();
     let connections;
@@ -72,7 +86,26 @@ function mountRoutes(app, deps = {}) {
     res.json(payload);
   });
 
-  // Heure serveur pour synchronisation WebTV / direct
+  /**
+   * @swagger
+   * /api/time:
+   *   get:
+   *     summary: Heure serveur pour synchronisation
+   *     tags: [Health]
+   *     responses:
+   *       200:
+   *         description: Heure serveur
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 serverTime:
+   *                   type: string
+   *                   format: date-time
+   *                 unix:
+   *                   type: number
+   */
   app.get('/api/time', (req, res) => {
     const now = new Date();
     res.json({ serverTime: now.toISOString(), unix: now.getTime() });

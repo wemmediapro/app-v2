@@ -141,7 +141,8 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce || ''}'`],
       imgSrc: ["'self'", "data:", "https:"],
-      styleSrc: ["'self'"],
+      // React utilise style={{ … }} (attributs style inline) — sans 'unsafe-inline', l’UI est bloquée par la CSP.
+      styleSrc: ["'self'", "'unsafe-inline'"],
       mediaSrc: ["'self'", "blob:"],
       connectSrc: ["'self'", "ws:", "wss:"],
       fontSrc: ["'self'", "https:", "data:"],
@@ -335,6 +336,21 @@ async function setupAfterDb() {
     console.warn('⚠️ Rate limit API : store mémoire (REDIS_URI non configuré). En multi-process la limite n\'est pas partagée.');
   }
   mountRoutes(app, { dbManager, connectionCounters });
+
+  // Documentation API Swagger/OpenAPI
+  if (process.env.NODE_ENV !== 'production' || process.env.SWAGGER_ENABLED === 'true') {
+    const swaggerUi = require('swagger-ui-express');
+    const swaggerSpec = require('./src/lib/swagger');
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: 'GNV OnBoard API Documentation',
+    }));
+    app.get('/api-docs.json', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.send(swaggerSpec);
+    });
+    console.log('📚 Documentation API disponible sur /api-docs');
+  }
 
   // SPA fallback : index.html en cache mémoire, seule la substitution du nonce CSP à la volée (évite fs.readFileSync à chaque requête)
   const publicIndex = path.join(config.paths.public, 'index.html');

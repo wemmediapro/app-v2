@@ -85,6 +85,34 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  /** Secret TOTP (base32) — jamais exposé en JSON ; select: false */
+  twoFactorSecret: {
+    type: String,
+    default: null,
+    select: false,
+  },
+  /** Secret en attente de confirmation (POST /2fa/verify) */
+  twoFactorPendingSecret: {
+    type: String,
+    default: null,
+    select: false,
+  },
+  twoFactorEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  /** Codes de secours (bcrypt hash chacun) */
+  twoFactorBackupCodes: {
+    type: [String],
+    default: undefined,
+    select: false,
+  },
+  /** Hashes des codes de secours en attente (avant verify) */
+  twoFactorPendingBackupHashes: {
+    type: [String],
+    default: undefined,
+    select: false,
+  },
   avatar: {
     type: String,
     default: null
@@ -134,12 +162,17 @@ userSchema.virtual('fullName').get(function() {
 userSchema.methods.toJSON = function() {
   const user = this.toObject();
   delete user.password;
+  delete user.twoFactorSecret;
+  delete user.twoFactorPendingSecret;
+  delete user.twoFactorBackupCodes;
+  delete user.twoFactorPendingBackupHashes;
   return user;
 };
 
 // Indexes pour performance (queries admin, filtres par cabine/rôle)
 userSchema.index({ cabinNumber: 1 });
 userSchema.index({ role: 1 });
+userSchema.index({ twoFactorEnabled: 1 });
 
 module.exports = mongoose.model('User', userSchema);
 

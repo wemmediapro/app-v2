@@ -2,10 +2,30 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const { registerValidation, loginValidation, profileValidation } = require('../middleware/validation');
-const { generateToken, generateAccessToken, verifyToken, authMiddleware, adminMiddleware } = require('../middleware/auth');
+const {
+  generateToken,
+  verifyToken,
+  getTokenFromRequest,
+  authMiddleware,
+  adminMiddleware,
+  generateTwoFactorChallengeToken,
+  verifyTwoFactorChallengeToken,
+} = require('../middleware/auth');
 const User = require('../models/User');
 const cacheManager = require('../lib/cache-manager');
 const { logFailedLogin, logApiError } = require('../lib/logger');
+const authService = require('../services/authService');
+const auditService = require('../services/auditService');
+const { auditContext } = require('../middleware/auditLog');
+
+async function invalidateAuthUserCache(userId) {
+  if (!userId || !cacheManager.isConnected) return;
+  try {
+    await cacheManager.del(`auth:user:${userId}`);
+  } catch (_) {
+    /* ignore */
+  }
+}
 
 // [SEC-1/PERF-1] Hash bcrypt admin pré-calculé une fois au premier login (évite bcrypt.hash à chaque requête)
 let cachedAdminPasswordHash = null;
@@ -53,10 +73,66 @@ function getCookieOptions(req) {
   };
 }
 
-// @route   POST /api/auth/register
-// @desc    Register a new user (admin only)
-// @access  Private (admin)
-router.post('/register', authMiddleware, adminMiddleware, registerLimiter, registerValidation, async (req, res) => {
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Enregistrer un nouvel utilisateur (admin uniquement)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - firstName
+ *               - lastName
+ *               - email
+ *               - password
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *               phone:
+ *                 type: string
+ *               cabinNumber:
+ *                 type: string
+ *               country:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *     responses:
+ *       201:
+ *         description: Utilisateur créé avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Email déjà utilisé
+ *       401:
+ *         description: Non autorisé (admin requis)
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.post('/register', authMiddleware, adminMiddleware, auditContext, registerLimiter, registerValidation, async (req, res) => {
   try {
     const { firstName, lastName, email, password, phone, cabinNumber, country, dateOfBirth } = req.body;
 
@@ -79,6 +155,16 @@ router.post('/register', authMiddleware, adminMiddleware, registerLimiter, regis
     });
 
     await user.save();
+
+    await auditService.logAction({
+      userId: req.user._id,
+      action: 'create-user',
+      resource: 'user',
+      resourceId: user._id,
+      changes: { after: { email: user.email, role: user.role } },
+      ipAddress: req.auditContext?.ipAddress,
+      userAgent: req.auditContext?.userAgent,
+    });
 
     // [SEC-4] JWT uniquement dans le cookie httpOnly, pas dans le body
     const token = generateToken({
@@ -109,24 +195,79 @@ router.post('/register', authMiddleware, adminMiddleware, registerLimiter, regis
   }
 });
 
-// @route   POST /api/auth/login
-// @desc    Login user
-// @access  Public
-router.post('/login', loginLimiter, loginValidation, async (req, res) => {
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Connexion utilisateur
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Connexion réussie
+ *         headers:
+ *           Set-Cookie:
+ *             description: Cookie d'authentification httpOnly
+ *             schema:
+ *               type: string
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Identifiants invalides
+ *       429:
+ *         description: Trop de tentatives
+ */
+/** Email de démo interdit en production (credential par défaut documenté historiquement). */
+const FORBIDDEN_PROD_ADMIN_EMAIL = 'admin@gnv.com';
+
+router.post('/login', auditContext, loginLimiter, loginValidation, async (req, res) => {
   try {
     const { email, password } = req.body;
     const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
     const adminPassword = process.env.ADMIN_PASSWORD;
     const isProduction = process.env.NODE_ENV === 'production';
 
-    // Aucun fallback sur identifiants admin : exiger ADMIN_EMAIL et ADMIN_PASSWORD (prod et dev)
-    if (!adminEmail || !adminPassword) {
-      const emailMatch = email && email.trim().toLowerCase() === adminEmail;
-      if (emailMatch || !adminEmail) {
-        return res.status(503).json({
-          message: 'Admin login is not configured. Set ADMIN_EMAIL and ADMIN_PASSWORD in config.env (no default credentials).',
-        });
-      }
+    // Obligatoire : aucun identifiant codé en dur — configuration serveur incomplète = 500
+    const adminPasswordOk = typeof adminPassword === 'string' && adminPassword.length > 0;
+    if (!adminEmail || !adminPasswordOk) {
+      logApiError('Auth misconfiguration: ADMIN_EMAIL and ADMIN_PASSWORD required', {
+        hasAdminEmail: !!adminEmail,
+        hasAdminPassword: adminPasswordOk,
+      });
+      return res.status(500).json({
+        message:
+          'Erreur de configuration serveur : définissez ADMIN_EMAIL et ADMIN_PASSWORD dans config.env (aucune valeur par défaut).',
+      });
+    }
+
+    const emailNorm = (email && String(email).trim().toLowerCase()) || '';
+    if (isProduction && emailNorm === FORBIDDEN_PROD_ADMIN_EMAIL) {
+      logFailedLogin(email, 'forbidden_default_admin_email', req);
+      return res.status(403).json({
+        message:
+          'Cet identifiant administrateur n’est pas autorisé en production. Utilisez un email dédié défini dans ADMIN_EMAIL.',
+      });
     }
 
     const effectiveAdminEmail = adminEmail;
@@ -153,12 +294,32 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
         user = adminUser;
       } else {
         logFailedLogin(email, 'user_not_found', req);
+        await auditService.logAction({
+          userId: null,
+          action: 'login',
+          resource: 'auth',
+          status: 'failure',
+          errorMessage: 'user_not_found',
+          ipAddress: req.auditContext?.ipAddress,
+          userAgent: req.auditContext?.userAgent,
+          metadata: { attemptedEmail: email },
+        });
         return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
       }
     } else {
       // Check if user is active
       if (!user.isActive) {
         logFailedLogin(email, 'account_deactivated', req);
+        await auditService.logAction({
+          userId: null,
+          action: 'login',
+          resource: 'auth',
+          status: 'failure',
+          errorMessage: 'account_deactivated',
+          ipAddress: req.auditContext?.ipAddress,
+          userAgent: req.auditContext?.userAgent,
+          metadata: { attemptedEmail: email },
+        });
         return res.status(401).json({ message: 'Compte désactivé' });
       }
 
@@ -167,41 +328,114 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
       const envPasswordMatch = (user.role === 'admin' && adminPasswordHash && await bcrypt.compare(password, adminPasswordHash));
       if (!isPasswordValid && !envPasswordMatch) {
         logFailedLogin(email, 'invalid_password', req);
+        await auditService.logAction({
+          userId: null,
+          action: 'login',
+          resource: 'auth',
+          status: 'failure',
+          errorMessage: 'invalid_password',
+          ipAddress: req.auditContext?.ipAddress,
+          userAgent: req.auditContext?.userAgent,
+          metadata: { attemptedEmail: email },
+        });
         return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
       }
     }
 
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
+    const fresh = await User.findById(user._id).select(
+      'role twoFactorEnabled firstName lastName email phone cabinNumber country dateOfBirth preferences allowedModules mustChangePassword userData'
+    );
+    if (!fresh) {
+      logFailedLogin(email, 'user_not_found', req);
+      return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
+    }
+    user = fresh;
 
-    // Generate token
-    const token = generateToken({
-      id: user._id,
-      email: user.email,
-      role: user.role
-    });
+    if (user.role === 'admin' && user.twoFactorEnabled) {
+      const tfa = (req.body.twoFactorToken || req.header('x-2fa-token') || '').replace(/\s/g, '');
+      if (!tfa) {
+        const twoFactorChallenge = generateTwoFactorChallengeToken(user._id, user.email);
+        return res.status(200).json({
+          requiresTwoFactor: true,
+          twoFactorChallenge,
+          message: 'Code 2FA requis (application d’authentification ou code de secours).',
+        });
+      }
+      const secureUser = await User.findById(user._id).select('+twoFactorSecret +twoFactorBackupCodes');
+      const okTotp =
+        secureUser.twoFactorSecret && authService.verifyTOTPToken(secureUser.twoFactorSecret, tfa);
+      const backupRes = okTotp ? { valid: false } : await authService.validateBackupCode(secureUser, tfa);
+      if (!okTotp && !backupRes.valid) {
+        logFailedLogin(email, 'invalid_2fa', req);
+        await auditService.logAction({
+          userId: user._id,
+          action: 'login',
+          resource: 'auth',
+          status: 'failure',
+          errorMessage: 'invalid_2fa',
+          ipAddress: req.auditContext?.ipAddress,
+          userAgent: req.auditContext?.userAgent,
+          metadata: { attemptedEmail: email },
+        });
+        return res.status(401).json({ message: 'Code 2FA invalide' });
+      }
+      if (backupRes.valid) {
+        secureUser.twoFactorBackupCodes.splice(backupRes.index, 1);
+        await secureUser.save();
+      }
+    }
+
+    const userForLogin = await User.findById(user._id).select(
+      'firstName lastName email role phone cabinNumber country dateOfBirth preferences allowedModules mustChangePassword userData twoFactorEnabled'
+    );
+    userForLogin.lastLogin = new Date();
+    await userForLogin.save();
+
+    const tokenPayload = {
+      id: userForLogin._id,
+      email: userForLogin.email,
+      role: userForLogin.role,
+    };
+    if (userForLogin.role === 'admin' && userForLogin.twoFactorEnabled) {
+      tokenPayload.mfa = true;
+    }
+    const token = generateToken(tokenPayload);
 
     res.cookie('authToken', token, getCookieOptions(req));
 
-    // [SEC-4] JWT uniquement dans le cookie, pas dans le body
+    if (userForLogin.role === 'admin') {
+      await auditService.logAction({
+        userId: userForLogin._id,
+        action: 'login',
+        resource: 'auth',
+        status: 'success',
+        ipAddress: req.auditContext?.ipAddress,
+        userAgent: req.auditContext?.userAgent,
+      });
+    }
+
     res.json({
       message: 'Login successful',
       user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-        phone: user.phone,
-        cabinNumber: user.cabinNumber,
-        country: user.country,
-        dateOfBirth: user.dateOfBirth,
-        preferences: user.preferences,
-        allowedModules: user.allowedModules,
-        mustChangePassword: !!user.mustChangePassword,
-        userData: user.userData || { favorites: { magazineIds: [], restaurantIds: [], enfantIds: [], watchlist: [], shopItems: [] }, playbackPositions: {} }
-      }
+        id: userForLogin._id,
+        firstName: userForLogin.firstName,
+        lastName: userForLogin.lastName,
+        email: userForLogin.email,
+        role: userForLogin.role,
+        phone: userForLogin.phone,
+        cabinNumber: userForLogin.cabinNumber,
+        country: userForLogin.country,
+        dateOfBirth: userForLogin.dateOfBirth,
+        preferences: userForLogin.preferences,
+        allowedModules: userForLogin.allowedModules,
+        mustChangePassword: !!userForLogin.mustChangePassword,
+        twoFactorEnabled: !!userForLogin.twoFactorEnabled,
+        userData:
+          userForLogin.userData || {
+            favorites: { magazineIds: [], restaurantIds: [], enfantIds: [], watchlist: [], shopItems: [] },
+            playbackPositions: {},
+          },
+      },
     });
   } catch (error) {
     logApiError('Login error', { err: error.message, email: req.body?.email });
@@ -229,18 +463,231 @@ router.post('/logout', async (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });
 
+// @route   POST /api/auth/2fa/complete-login
+// @desc    Finalise la connexion admin après mot de passe (challenge JWT + TOTP ou code de secours)
+// @access  Public (challenge signé)
+router.post('/2fa/complete-login', auditContext, loginLimiter, async (req, res) => {
+  try {
+    const { twoFactorChallenge, token } = req.body;
+    if (!twoFactorChallenge || !token) {
+      return res.status(400).json({ message: 'twoFactorChallenge et token requis' });
+    }
+    let decoded;
+    try {
+      decoded = verifyTwoFactorChallengeToken(twoFactorChallenge);
+    } catch (e) {
+      return res.status(401).json({ message: 'Challenge 2FA invalide ou expiré' });
+    }
+    const userId = decoded.sub || decoded.id;
+    const user = await User.findById(userId).select(
+      '+twoFactorSecret +twoFactorBackupCodes role email firstName lastName phone cabinNumber country dateOfBirth preferences allowedModules mustChangePassword userData twoFactorEnabled isActive'
+    );
+    if (!user || !user.isActive) {
+      return res.status(401).json({ message: 'Utilisateur introuvable ou inactif' });
+    }
+    if (user.role !== 'admin' || !user.twoFactorEnabled) {
+      return res.status(400).json({ message: '2FA non actif pour ce compte' });
+    }
+    const tfa = String(token).replace(/\s/g, '');
+    const okTotp = user.twoFactorSecret && authService.verifyTOTPToken(user.twoFactorSecret, tfa);
+    const backupRes = okTotp ? { valid: false } : await authService.validateBackupCode(user, tfa);
+    if (!okTotp && !backupRes.valid) {
+      logFailedLogin(user.email, 'invalid_2fa_challenge', req);
+      await auditService.logAction({
+        userId: user._id,
+        action: 'login',
+        resource: 'auth',
+        status: 'failure',
+        errorMessage: 'invalid_2fa_challenge',
+        ipAddress: req.auditContext?.ipAddress,
+        userAgent: req.auditContext?.userAgent,
+        metadata: { attemptedEmail: user.email },
+      });
+      return res.status(401).json({ message: 'Code 2FA invalide' });
+    }
+    if (backupRes.valid) {
+      user.twoFactorBackupCodes.splice(backupRes.index, 1);
+    }
+    user.lastLogin = new Date();
+    await user.save();
+    await invalidateAuthUserCache(user._id);
+    const authTok = generateToken({
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      mfa: true,
+    });
+    res.cookie('authToken', authTok, getCookieOptions(req));
+
+    await auditService.logAction({
+      userId: user._id,
+      action: 'login',
+      resource: 'auth',
+      status: 'success',
+      ipAddress: req.auditContext?.ipAddress,
+      userAgent: req.auditContext?.userAgent,
+      metadata: { mfa: true },
+    });
+
+    res.json({
+      message: 'Login successful',
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        cabinNumber: user.cabinNumber,
+        country: user.country,
+        dateOfBirth: user.dateOfBirth,
+        preferences: user.preferences,
+        allowedModules: user.allowedModules,
+        mustChangePassword: !!user.mustChangePassword,
+        twoFactorEnabled: true,
+        userData:
+          user.userData || {
+            favorites: { magazineIds: [], restaurantIds: [], enfantIds: [], watchlist: [], shopItems: [] },
+            playbackPositions: {},
+          },
+      },
+    });
+  } catch (error) {
+    logApiError('2fa complete-login', { err: error.message });
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/2fa/setup
+// @desc    Génère secret TOTP + QR + codes de secours (non actif tant que /verify non appelé)
+// @access  Private admin
+router.post('/2fa/setup', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const u = await User.findById(req.user.id).select('+twoFactorPendingSecret +twoFactorPendingBackupHashes email twoFactorEnabled');
+    if (u.twoFactorEnabled) {
+      return res.status(400).json({ message: 'Le 2FA est déjà activé pour ce compte.' });
+    }
+    const secret = authService.generateTOTPSecret(u.email);
+    const backupPlain = authService.generateBackupCodes(10);
+    const backupHashes = await authService.hashBackupCodes(backupPlain);
+    u.twoFactorPendingSecret = secret.base32;
+    u.twoFactorPendingBackupHashes = backupHashes;
+    await u.save();
+    await invalidateAuthUserCache(u._id);
+    const qrCodeDataUrl = await authService.qrCodeDataUrl(secret.otpauth_url);
+    res.json({
+      message:
+        'Scannez le QR avec une application TOTP, puis validez avec POST /api/auth/2fa/verify (body: { token }). Conservez les codes de secours.',
+      qrCodeDataUrl,
+      manualEntryKey: secret.base32,
+      backupCodes: backupPlain,
+    });
+  } catch (error) {
+    logApiError('2fa setup', { err: error.message });
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/2fa/verify
+// @desc    Active le 2FA après validation du premier TOTP
+// @access  Private admin
+router.post('/2fa/verify', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const raw = String(req.body.token || '').replace(/\s/g, '');
+    if (!/^\d{6}$/.test(raw)) {
+      return res.status(400).json({ message: 'Token TOTP à 6 chiffres requis (champ token)' });
+    }
+    const u = await User.findById(req.user.id).select('+twoFactorPendingSecret twoFactorPendingBackupHashes');
+    if (!u.twoFactorPendingSecret) {
+      return res.status(400).json({ message: 'Aucune configuration en cours. Appelez POST /api/auth/2fa/setup.' });
+    }
+    if (!authService.verifyTOTPToken(u.twoFactorPendingSecret, raw)) {
+      return res.status(401).json({ message: 'Code TOTP invalide' });
+    }
+    u.twoFactorSecret = u.twoFactorPendingSecret;
+    u.twoFactorEnabled = true;
+    u.twoFactorBackupCodes = Array.isArray(u.twoFactorPendingBackupHashes) ? [...u.twoFactorPendingBackupHashes] : [];
+    u.twoFactorPendingSecret = null;
+    u.twoFactorPendingBackupHashes = [];
+    await u.save();
+    await invalidateAuthUserCache(u._id);
+    const newTok = generateToken({
+      id: u._id,
+      email: u.email,
+      role: u.role,
+      mfa: true,
+    });
+    res.cookie('authToken', newTok, getCookieOptions(req));
+    res.json({
+      message: '2FA activé. Les codes de secours ont été fournis lors du setup — ils ne seront plus affichés.',
+      twoFactorEnabled: true,
+      backupCodes: [],
+    });
+  } catch (error) {
+    logApiError('2fa verify', { err: error.message });
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/2fa/disable
+// @desc    Désactive le 2FA (mot de passe + TOTP requis ; session pleine MFA requise via JWT ou en-tête)
+// @access  Private admin
+router.post('/2fa/disable', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { password, twoFactorToken } = req.body;
+    if (!password || !twoFactorToken) {
+      return res.status(400).json({ message: 'password et twoFactorToken requis' });
+    }
+    const u = await User.findById(req.user.id).select('+password +twoFactorSecret twoFactorEnabled');
+    if (!u.twoFactorEnabled) {
+      return res.status(400).json({ message: 'Le 2FA n’est pas activé.' });
+    }
+    if (!(await u.comparePassword(password))) {
+      return res.status(401).json({ message: 'Mot de passe incorrect' });
+    }
+    if (!authService.verifyTOTPToken(u.twoFactorSecret, twoFactorToken)) {
+      return res.status(401).json({ message: 'Code 2FA invalide' });
+    }
+    u.twoFactorSecret = null;
+    u.twoFactorEnabled = false;
+    u.twoFactorBackupCodes = [];
+    u.twoFactorPendingSecret = null;
+    u.twoFactorPendingBackupHashes = [];
+    await u.save();
+    await invalidateAuthUserCache(u._id);
+    const newTok = generateToken({
+      id: u._id,
+      email: u.email,
+      role: u.role,
+    });
+    res.cookie('authToken', newTok, getCookieOptions(req));
+    res.json({ message: '2FA désactivé', twoFactorEnabled: false });
+  } catch (error) {
+    logApiError('2fa disable', { err: error.message });
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   POST /api/auth/refresh
 // @desc    Renvoie un nouveau token dans le cookie httpOnly pour prolonger la session
 // @access  Private (token valide requis)
 // [SEC-4] JWT uniquement dans le cookie, pas dans le body
 router.post('/refresh', authMiddleware, (req, res) => {
-  const newToken = generateToken({
-    id: req.user.id,
-    email: req.user.email,
-    role: req.user.role
-  });
-  res.cookie('authToken', newToken, getCookieOptions(req));
-  res.json({ message: 'Token refreshed' });
+  try {
+    const raw = getTokenFromRequest(req);
+    const dec = verifyToken(raw);
+    const payload = {
+      id: req.user.id,
+      email: req.user.email,
+      role: req.user.role,
+    };
+    if (dec.mfa === true) payload.mfa = true;
+    const newToken = generateToken(payload);
+    res.cookie('authToken', newToken, getCookieOptions(req));
+    res.json({ message: 'Token refreshed' });
+  } catch (e) {
+    res.status(401).json({ message: 'Token invalide' });
+  }
 });
 
 // @route   GET /api/auth/me
@@ -254,6 +701,11 @@ router.get('/me', authMiddleware, async (req, res) => {
     }
     const json = user.toObject ? user.toObject() : user;
     json.mustChangePassword = !!user.mustChangePassword;
+    json.twoFactorEnabled = !!user.twoFactorEnabled;
+    delete json.twoFactorSecret;
+    delete json.twoFactorBackupCodes;
+    delete json.twoFactorPendingSecret;
+    delete json.twoFactorPendingBackupHashes;
     res.json(json);
   } catch (error) {
     console.error('Get user error:', error);

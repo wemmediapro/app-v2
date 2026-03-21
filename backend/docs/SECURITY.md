@@ -30,7 +30,7 @@ Tests : `src/__tests__/security.test.js` (section CSRF).
 ## Scripts d’initialisation DB
 
 - **`npm run init-db`** (`init-database.js`) : chemin **recommandé** (Mongoose, cohérent avec l’API).
-- **`npm run init-db-prisma`** : script **legacy** — voir [README déploiement](../../docs/DEPLOYMENT.md#initialisation-de-la-base-de-données). En **production**, `ADMIN_EMAIL` / `ADMIN_PASSWORD` requis. En **dev uniquement**, si `ADMIN_EMAIL` est absent, repli **`admin@gnv.com`** avec `console.warn` (démo locale, documenté dans `DEPLOYMENT.md` — jamais utilisé quand `NODE_ENV=production`).
+- **`npm run init-db-prisma`** : script **legacy** — `ADMIN_EMAIL` **obligatoire** ; en production `ADMIN_PASSWORD` obligatoire ; en dev sans mot de passe, génération d’un mot de passe temporaire affiché une fois (`mustChangePassword` côté Prisma si le schéma l’expose). Voir [SECURITY.md](../../SECURITY.md) à la racine du dépôt.
 
 ## Guide validateurs (détail)
 
@@ -43,13 +43,19 @@ Voir **[docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md)** (checklist, liens vers P
 ## Commandes utiles
 
 ```bash
-cd backend && npm test -- --testPathPattern="security|roomUtils|validation"
+cd backend && npm test -- --testPathPattern="security|roomUtils|validation|auth.security-credentials|audit-logs"
 cd backend && npm run security:audit
+cd backend && npm run audit:security-credentials
 ```
+
+## Audit logging
+
+Toutes les actions admin (login, création/mise à jour/suppression d'utilisateurs) sont tracées dans la collection `auditlogs`. Rétention minimale : 1 an. Voir **[AUDIT-LOGGING-POLICY.md](../../docs/AUDIT-LOGGING-POLICY.md)**.
 
 ## Variables d’environnement sensibles
 
 - Ne jamais committer `config.env` / `.env` avec secrets réels.
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD` obligatoires pour le login ; en prod, `ADMIN_EMAIL` ne peut pas être `admin@gnv.com` (`validateSecurityConfig` + login). Voir [SECURITY.md](../../SECURITY.md) à la racine.
 - `JWT_SECRET` ≥ 32 caractères en production (`auth.js`).
 - Redis obligatoire en production pour rate limit / Socket.io cluster.
 

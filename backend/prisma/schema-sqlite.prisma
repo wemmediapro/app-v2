@@ -20,6 +20,7 @@ model User {
   cabinNumber  String?
   role         String   @default("passenger") // passenger, crew, admin
   isActive     Boolean  @default(true)
+  mustChangePassword Boolean @default(false)
   lastLogin    DateTime?
   avatar       String?
   createdAt    DateTime @default(now())

@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#0E8BFE" />
     <meta name="description" content="Portail des services à bord. Fonctionne hors ligne." />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: http: data: blob:; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' https: http: ws: wss:;">
+    <!-- CSP : en prod, définie par Helmet (backend/server.js). Éviter une 2e politique ici (les navigateurs appliquent toutes les CSP = la plus stricte gagne). -->
     <title>GNV OnBoard App</title>
     <style>
       /* Style de chargement initial */

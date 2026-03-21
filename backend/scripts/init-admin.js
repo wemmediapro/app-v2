@@ -26,7 +26,11 @@ async function initAdmin() {
       return;
     }
 
-    const email = (process.env.ADMIN_EMAIL || '').trim() || 'admin@gnv.local';
+    const email = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    if (!email) {
+      console.error('❌ ADMIN_EMAIL doit être défini dans config.env (aucun email par défaut).');
+      process.exit(1);
+    }
     const randomPassword = crypto.randomBytes(16).toString('hex');
 
     const admin = await User.create({

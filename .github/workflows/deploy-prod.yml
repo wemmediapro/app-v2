@@ -1,0 +1,115 @@
+# Déploiement production — manuel ; exiger reviewers via l’environnement GitHub « production »
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Tapez DEPLOY pour confirmer'
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  validate-input:
+    name: Validation saisie
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "DEPLOY" ]; then
+            echo "::error::Saisissez exactement DEPLOY pour lancer le déploiement."
+            exit 1
+          fi
+
+  pre-deploy-tests:
+    name: Tests avant prod
+    runs-on: ubuntu-latest
+    needs: [validate-input]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci && npm run test:coverage
+      - working-directory: backend
+        run: npm ci && npm run test
+      - run: npm audit --audit-level=moderate
+      - working-directory: backend
+        run: npm audit --audit-level=moderate
+
+  build-artifacts:
+    name: Build frontend + vérif backend
+    runs-on: ubuntu-latest
+    needs: [pre-deploy-tests]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Frontend — build
+        run: npm ci && npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prod-frontend-dist
+          path: dist/
+
+      - name: Backend — syntaxe
+        working-directory: backend
+        run: npm ci && node --check server.js
+
+  deploy-production:
+    name: Déployer en production
+    runs-on: ubuntu-latest
+    needs: [build-artifacts]
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_PUBLIC_URL }}
+    # Configurez sur GitHub : Settings → Environments → production → Required reviewers (2)
+    if: vars.PRODUCTION_DEPLOY_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder déploiement prod
+        run: |
+          echo "PRODUCTION_DEPLOY_ENABLED=true : déployez ici (Heroku, Railway, K8s, etc.)"
+
+  health-check:
+    name: Health check post-déploiement
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: success() && vars.PRODUCTION_DEPLOY_ENABLED == 'true' && vars.PRODUCTION_PUBLIC_URL != ''
+    outputs:
+      ok: ${{ steps.curl.outputs.ok }}
+    steps:
+      - name: GET /api/health
+        id: curl
+        run: |
+          if curl -sfS --max-time 30 "${{ vars.PRODUCTION_PUBLIC_URL }}/api/health" -o /tmp/h.json; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+            cat /tmp/h.json | head -c 800
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+  rollback-notice:
+    name: Échec health — action manuelle rollback
+    runs-on: ubuntu-latest
+    needs: [health-check]
+    if: failure() && vars.PRODUCTION_DEPLOY_ENABLED == 'true'
+    steps:
+      - name: Instructions rollback
+        run: |
+          echo "::error::Health check échoué. Effectuez un rollback (Heroku: heroku releases:rollback, Railway: redeploy previous, etc.)."
+          exit 1

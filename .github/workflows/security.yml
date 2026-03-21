@@ -1,0 +1,87 @@
+# Scans sécurité planifiés + manuel (audit npm, OWASP Dependency-Check, Snyk optionnel)
+name: Security
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # quotidien 06:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  npm-audit:
+    name: npm audit (racine + backend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Audit racine — moderate
+        run: npm audit --audit-level=moderate
+
+      - name: Audit backend — moderate
+        working-directory: backend
+        run: |
+          npm ci
+          npm audit --audit-level=moderate
+
+  owasp-dependency-check:
+    name: OWASP Dependency-Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'GNV OnBoard'
+          path: '.'
+          format: 'HTML'
+          out: 'reports-dependency-check'
+          args: '--exclude "**/node_modules/**"'
+        continue-on-error: true
+
+      - name: Upload rapport OWASP
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-check-report
+          path: reports-dependency-check/
+          if-no-files-found: ignore
+
+  snyk:
+    name: Snyk (optionnel)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+      - working-directory: backend
+        run: npm ci
+
+      - name: Snyk test
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          if [ -z "$SNYK_TOKEN" ]; then
+            echo "SNYK_TOKEN absent — étape ignorée (ajoutez le secret pour activer Snyk)."
+            exit 0
+          fi
+          npm install -g snyk
+          snyk test --severity-threshold=high || true
+          (cd backend && snyk test --severity-threshold=high) || true
+          echo "Snyk exécuté (continue-on-error côté CLI pour ne pas bloquer le cron)."

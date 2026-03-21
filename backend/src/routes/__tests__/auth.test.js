@@ -27,6 +27,7 @@ jest.mock('../../models/User', () => {
 
 jest.mock('../../lib/logger', () => ({ logFailedLogin: jest.fn(), logApiError: jest.fn() }));
 jest.mock('../../lib/cache-manager', () => ({ isConnected: false, get: jest.fn(), set: jest.fn() }));
+jest.mock('../../services/auditService', () => ({ logAction: jest.fn().mockResolvedValue(null) }));
 
 /** Chaîne Mongoose findById().select().lean() ou findById().select() / findById() pour les routes */
 function mockFindByIdChain(userDoc) {
@@ -138,11 +139,15 @@ describe('API Auth', () => {
         firstName: 'User',
         lastName: 'Test',
         role: 'user',
+        twoFactorEnabled: false,
         isActive: true,
         save: mockSave,
         comparePassword: mockComparePassword,
       };
       User.findOne.mockReturnValue(mockFindOneChain(fakeUser));
+      User.findById.mockImplementation(() => ({
+        select: jest.fn().mockResolvedValue({ ...fakeUser }),
+      }));
       const res = await request(app)
         .post('/api/auth/login')
         .send({ email: 'user@test.com', password: 'validpass' })

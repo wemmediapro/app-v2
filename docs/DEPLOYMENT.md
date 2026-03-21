@@ -10,7 +10,8 @@ Vue d’ensemble pour passer en **production** : prérequis, build, process mana
 | VM / installation rapide | [INSTALLATION-RAPIDE-VM.md](../INSTALLATION-RAPIDE-VM.md) |
 | Hébergement VM (résumé) | [README-HEBERGEMENT-VM.md](../README-HEBERGEMENT-VM.md) |
 | Nginx (exemple) | `nginx.conf` à la racine du dépôt |
-| Sécurité backend | [backend/docs/SECURITY.md](../backend/docs/SECURITY.md) |
+| Sécurité (checklist) | [SECURITY.md](../SECURITY.md) |
+| Sécurité backend (détail) | [backend/docs/SECURITY.md](../backend/docs/SECURITY.md) |
 | Validateurs API | [backend/docs/VALIDATION.md](../backend/docs/VALIDATION.md) |
 | Auth JWT | [backend/docs/AUTH-MIDDLEWARE.md](../backend/docs/AUTH-MIDDLEWARE.md) |
 
@@ -27,7 +28,7 @@ Vue d’ensemble pour passer en **production** : prérequis, build, process mana
 - [ ] HTTPS (ex. Let’s Encrypt) + en-têtes sécurisés (voir `nginx.conf`).
 - [ ] Builds front : `npm run build` (racine) et `cd dashboard && npm run build`.
 - [ ] Pas de `RATE_LIMIT_LOAD_TEST=1` en prod (`server.js` ignore en prod, mais à éviter dans les fichiers déployés).
-- [ ] Comptes admin : mots de passe forts ; pas de secrets dans les logs.
+- [ ] Comptes admin : `ADMIN_EMAIL` ≠ `admin@gnv.com`, mots de passe forts ; pas de secrets dans les logs (voir [SECURITY.md](../SECURITY.md)).
 
 ## Initialisation de la base de données
 
@@ -39,11 +40,9 @@ Vue d’ensemble pour passer en **production** : prérequis, build, process mana
 ### Script Prisma (`init-database-prisma.js`)
 
 - Marqué **LEGACY** dans l’en-tête du fichier.
-- En **production** : `ADMIN_EMAIL` et `ADMIN_PASSWORD` **obligatoires** dans `config.env` (sinon le script quitte).
-- En **développement** (`NODE_ENV !== 'production'`) : si les variables sont absentes, repli **documenté** avec **avertissements** :
-  - email : **`admin@gnv.com`** (uniquement pour démo locale — acceptable en dev à condition d’accepter le warning) ;
-  - mot de passe : **`admin123`** (faible, à remplacer via `ADMIN_PASSWORD` dès que possible).
-- Ce repli **n’existe pas en prod** : toujours définir `ADMIN_EMAIL` / `ADMIN_PASSWORD` sur les serveurs déployés.
+- **`ADMIN_EMAIL` obligatoire** dans tous les environnements (aucun email par défaut).
+- En **production** : `ADMIN_PASSWORD` **obligatoire** (sinon le script quitte).
+- En **développement** : si `ADMIN_PASSWORD` est absent, génération d’un mot de passe temporaire **32 caractères hex**, affiché **une fois** sur la console ; en base, `mustChangePassword=true` (aligné avec `init-database.js` / API Mongoose).
 
 ## Variables d’environnement (rappel)
 

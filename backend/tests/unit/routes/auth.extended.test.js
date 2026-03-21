@@ -31,6 +31,9 @@ const mockCacheManager = {
 };
 jest.mock('../../../src/lib/cache-manager', () => mockCacheManager);
 jest.mock('../../../src/lib/logger', () => ({ logFailedLogin: jest.fn(), logApiError: jest.fn() }));
+jest.mock('../../../src/services/auditService', () => ({
+  logAction: jest.fn().mockResolvedValue(null),
+}));
 
 const request = require('supertest');
 const express = require('express');
@@ -108,14 +111,14 @@ describe('API Auth (étendu)', () => {
   });
 
   describe('POST /api/auth/login', () => {
-    it('503 si ADMIN_EMAIL / ADMIN_PASSWORD non configurés', async () => {
+    it('500 si ADMIN_EMAIL / ADMIN_PASSWORD non configurés', async () => {
       process.env.ADMIN_EMAIL = '';
       process.env.ADMIN_PASSWORD = '';
       const res = await request(app)
         .post('/api/auth/login')
         .send({ email: 'x@test.com', password: 'whatever1' });
-      expect(res.status).toBe(503);
-      expect(res.body.message).toMatch(/configured|config/i);
+      expect(res.status).toBe(500);
+      expect(res.body.message).toMatch(/ADMIN_EMAIL|ADMIN_PASSWORD|configuration|config/i);
     });
 
     it('401 si compte désactivé', async () => {
