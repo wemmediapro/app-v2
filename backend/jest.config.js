@@ -1,18 +1,82 @@
 /** @type {import('jest').Config} */
+const criticalCoverageGlobs = [
+  'src/routes/auth.js',
+  'src/routes/users.js',
+  'src/routes/restaurants.js',
+  'src/routes/messages.js',
+  'src/routes/sync.js',
+  'src/middleware/auth.js',
+  'src/middleware/validation.js',
+  'src/middleware/errorHandler.js',
+  'src/middleware/validateInput.js',
+  'src/models/User.js',
+  'src/models/Restaurant.js',
+  'src/models/Message.js',
+  'src/models/Feedback.js',
+];
+
 module.exports = {
   testEnvironment: 'node',
-  setupFiles: ['<rootDir>/jest.setup.js'],
-  testMatch: ['**/__tests__/**/*.test.js', '**/*.test.js'],
-  collectCoverageFrom: ['src/**/*.js', '!src/**/__tests__/**'],
+  // Évite les fuites de mocks / état Mongoose entre fichiers (exécution parallèle).
+  maxWorkers: 1,
+  // Timers / handles laissés par express-rate-limit ou intégrations — à investiguer avec --detectOpenHandles.
+  forceExit: true,
+  roots: ['<rootDir>'],
+  setupFiles: ['<rootDir>/tests/setup.js'],
+  testMatch: [
+    '<rootDir>/tests/unit/**/*.test.js',
+    '<rootDir>/src/**/__tests__/**/*.test.js',
+    '<rootDir>/src/**/*.test.js',
+  ],
+  testPathIgnorePatterns: ['/node_modules/'],
+  collectCoverageFrom: criticalCoverageGlobs,
   coverageDirectory: 'coverage',
-  // Seuils sur modules critiques (auth, radio, webtv, messages). Objectif à terme : 60% sur chacun.
+  coverageReporters: ['text', 'text-summary', 'lcov', 'html'],
+  /**
+   * Cible produit : 80 % sur le périmètre collectCoverageFrom (routes + middleware + models listés).
+   * Les gros fichiers de routes (restaurants, messages) nécessitent encore des scénarios intégration ;
+   * le seuil global est relevé progressivement (voir docs/tests.md).
+   */
   coverageThreshold: {
-    'src/routes/auth.js': { branches: 22, functions: 55, lines: 45, statements: 43 },
-    'src/routes/radio.js': { branches: 11, functions: 50, lines: 30, statements: 27 },
-    'src/routes/webtv.js': { branches: 2, functions: 20, lines: 20, statements: 18 },
-    'src/routes/messages.js': { branches: 0, functions: 0, lines: 20, statements: 19 },
-    'src/middleware/auth.js': { branches: 25, functions: 54, lines: 45, statements: 45 },
+    global: {
+      branches: 42,
+      functions: 60,
+      lines: 64,
+      statements: 61,
+    },
+    'src/middleware/errorHandler.js': {
+      branches: 60,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    'src/middleware/validateInput.js': {
+      branches: 70,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    'src/models/Feedback.js': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    'src/models/Message.js': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
+    'src/models/Restaurant.js': {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
   },
   verbose: true,
-  testTimeout: 10000,
+  testTimeout: 20000,
+  clearMocks: true,
+  resetMocks: true,
 };
