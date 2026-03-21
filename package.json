@@ -110,7 +110,7 @@
     "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
-    "@vitejs/plugin-react": "^5.0.4",
+    "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.0",
     "artillery": "^2.0.30",
     "autoprefixer": "^10.4.21",
@@ -131,7 +131,7 @@
     "prettier": "^3.8.1",
     "rollup-plugin-visualizer": "^7.0.1",
     "typescript": "~5.7.3",
-    "vite": "^7.1.10",
+    "vite": "^8.0.1",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.0",
     "workbox-window": "^7.4.0"
