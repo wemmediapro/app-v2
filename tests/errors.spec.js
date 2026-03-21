@@ -13,7 +13,9 @@ test.describe('Gestion des erreurs', () => {
       return p === '' ? '/' : p;
     });
     const isHome = path === '/' || path === '';
-    const isKnownPage = /^\/(magazine|restaurant|webtv|movies|radio|shop|favorites|enfant|shipmap|notifications)/.test(path);
+    const isKnownPage = /^\/(magazine|restaurant|webtv|movies|radio|shop|favorites|enfant|shipmap|notifications)/.test(
+      path
+    );
     const isUnknownPath = path.includes('unknown');
     expect(isHome || isKnownPage || isUnknownPath).toBeTruthy();
   });

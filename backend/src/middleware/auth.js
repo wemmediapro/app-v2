@@ -26,7 +26,9 @@ function getSecret() {
     }
     if (!secretMissingWarned) {
       secretMissingWarned = true;
-      console.error('CRITICAL: JWT_SECRET is not set. Set it in backend/config.env or backend/.env. Refusing to use a fallback secret.');
+      console.error(
+        'CRITICAL: JWT_SECRET is not set. Set it in backend/config.env or backend/.env. Refusing to use a fallback secret.'
+      );
     }
     throw new Error('JWT_SECRET must be set in config.env or .env');
   }
@@ -69,7 +71,7 @@ function generateTwoFactorChallengeToken(userId, email) {
       email: email || undefined,
     },
     getSecret(),
-    { expiresIn: TWO_FACTOR_CHALLENGE_TTL },
+    { expiresIn: TWO_FACTOR_CHALLENGE_TTL }
   );
 }
 
@@ -95,7 +97,9 @@ function isMfaExemptApiPath(req) {
     '/auth/2fa/setup',
     '/auth/2fa/verify',
   ]);
-  if (exempt.has(path)) {return true;}
+  if (exempt.has(path)) {
+    return true;
+  }
   return false;
 }
 
@@ -123,7 +127,9 @@ const authMiddleware = async (req, res, next) => {
         if (blacklisted) {
           return res.status(401).json({ message: 'Token has been revoked.', code: 'TOKEN_REVOKED' });
         }
-      } catch (_) { /* Redis down, skip check */ }
+      } catch (_) {
+        /* Redis down, skip check */
+      }
     }
     const userId = decoded.id || decoded.userId || decoded._id;
     if (!userId) {
@@ -252,7 +258,9 @@ const optionalAuth = async (req, res, next) => {
                 req.user = null;
                 return next();
               }
-            } catch (_) { /* fall through */ }
+            } catch (_) {
+              /* fall through */
+            }
           }
           const user = await User.findById(userId).select('-password').lean();
           if (user && user.isActive !== false) {
@@ -283,9 +291,8 @@ const authenticateToken = authMiddleware;
 
 /** Compatibilité legacy : generateToken(userId) ou generateToken({ id, userId }). */
 function generateTokenCompat(payloadOrId) {
-  const payload = typeof payloadOrId === 'object' && payloadOrId !== null
-    ? payloadOrId
-    : { id: payloadOrId, userId: payloadOrId };
+  const payload =
+    typeof payloadOrId === 'object' && payloadOrId !== null ? payloadOrId : { id: payloadOrId, userId: payloadOrId };
   return generateToken(payload);
 }
 
@@ -304,6 +311,3 @@ module.exports = {
   requireRole,
   optionalAuth,
 };
-
-
-

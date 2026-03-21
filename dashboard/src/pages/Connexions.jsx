@@ -77,9 +77,7 @@ const Connexions = () => {
             <Wifi className="text-blue-600" />
             {t('connexionsPage.title')}
           </h1>
-          <p className="text-gray-600 mt-2">
-            {t('connexionsPage.description')}
-          </p>
+          <p className="text-gray-600 mt-2">{t('connexionsPage.description')}</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }}

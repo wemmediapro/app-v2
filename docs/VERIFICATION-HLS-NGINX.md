@@ -8,24 +8,24 @@ Ce document confirme que l’application utilise **HLS** côté lecture et que l
 
 ### Frontend (lecture)
 
-| Élément | Fichier | Rôle |
-|--------|---------|------|
-| **hls.js** | `package.json` (dépendance `hls.js`) | Lecture des flux HLS (.m3u8) dans le navigateur |
-| **attachVideoSource** | `src/utils/hlsVideo.js` | Attache la source vidéo : tente HLS en premier, repli sur MP4 natif |
-| **getHlsUrlFromVideoUrl** | `src/services/apiService.js` | Dérive l’URL HLS : `/uploads/videos/foo.mp4` → `/uploads/videos_hls/foo/playlist.m3u8` |
-| **Films / WebTV** | `src/App.jsx` | Utilise `attachVideoSource()` pour les vidéos (Films, WebTV) |
+| Élément                   | Fichier                              | Rôle                                                                                   |
+| ------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------- |
+| **hls.js**                | `package.json` (dépendance `hls.js`) | Lecture des flux HLS (.m3u8) dans le navigateur                                        |
+| **attachVideoSource**     | `src/utils/hlsVideo.js`              | Attache la source vidéo : tente HLS en premier, repli sur MP4 natif                    |
+| **getHlsUrlFromVideoUrl** | `src/services/apiService.js`         | Dérive l’URL HLS : `/uploads/videos/foo.mp4` → `/uploads/videos_hls/foo/playlist.m3u8` |
+| **Films / WebTV**         | `src/App.jsx`                        | Utilise `attachVideoSource()` pour les vidéos (Films, WebTV)                           |
 
 Convention : toute URL vidéo `/uploads/videos/<nom>.mp4` est jouée via l’URL HLS `/uploads/videos_hls/<nom>/playlist.m3u8` si le navigateur supporte HLS (hls.js).
 
 ### Backend (génération HLS)
 
-| Élément | Fichier | Rôle |
-|--------|---------|------|
-| **encodeToHls** | `backend/src/services/hlsEncode.js` | Encode une vidéo en HLS (FFmpeg) : 480p, segments 6 s, `playlist.m3u8` + `segment_*.ts` |
-| **ENABLE_HLS_STATIC** | `backend/config.env` | `true` = après chaque upload vidéo, génération HLS en arrière-plan |
-| **Upload** | `backend/src/routes/upload.js` | Après compression, appelle `encodeToHls()` si `ENABLE_HLS_STATIC=true` |
-| **Chemins** | `backend/src/config/index.js` | `paths.videosHls` = `public/uploads/videos_hls` |
-| **Script batch** | `backend/scripts/convert-videos-to-hls.js` | Conversion en masse des MP4 existants en HLS (`npm run convert:videos-hls`) |
+| Élément               | Fichier                                    | Rôle                                                                                    |
+| --------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |
+| **encodeToHls**       | `backend/src/services/hlsEncode.js`        | Encode une vidéo en HLS (FFmpeg) : 480p, segments 6 s, `playlist.m3u8` + `segment_*.ts` |
+| **ENABLE_HLS_STATIC** | `backend/config.env`                       | `true` = après chaque upload vidéo, génération HLS en arrière-plan                      |
+| **Upload**            | `backend/src/routes/upload.js`             | Après compression, appelle `encodeToHls()` si `ENABLE_HLS_STATIC=true`                  |
+| **Chemins**           | `backend/src/config/index.js`              | `paths.videosHls` = `public/uploads/videos_hls`                                         |
+| **Script batch**      | `backend/scripts/convert-videos-to-hls.js` | Conversion en masse des MP4 existants en HLS (`npm run convert:videos-hls`)             |
 
 Les fichiers HLS sont écrits dans `backend/public/uploads/videos_hls/<basename>/` (playlist.m3u8 + segments .ts).
 
@@ -40,10 +40,10 @@ Les fichiers HLS sont écrits dans `backend/public/uploads/videos_hls/<basename>
 
 ### Fichiers de configuration
 
-| Fichier | Usage |
-|---------|--------|
-| **nginx.conf** | Exemple à copier dans `/etc/nginx/sites-available/gnv-app` ; `location /uploads/` en proxy vers le backend |
-| **nginx-streaming.conf.example** | Exemple avancé : Nginx sert `/uploads/` en statique (alias) avec Range et cache |
+| Fichier                                           | Usage                                                                                                                 |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **nginx.conf**                                    | Exemple à copier dans `/etc/nginx/sites-available/gnv-app` ; `location /uploads/` en proxy vers le backend            |
+| **nginx-streaming.conf.example**                  | Exemple avancé : Nginx sert `/uploads/` en statique (alias) avec Range et cache                                       |
 | **ansible/roles/nginx/templates/gnv-app.conf.j2** | Template Ansible : si `nginx_serve_uploads_static: true`, Nginx sert `uploads/` en alias (donc **videos_hls** inclus) |
 
 ### Comportement actuel
@@ -70,11 +70,11 @@ Les configs Nginx du projet (voir ci‑dessous) incluent ces types dans `locatio
 
 ## 4. Résumé
 
-| Composant | HLS | Nginx |
-|-----------|-----|--------|
-| **Lecture vidéo (frontend)** | Oui (hls.js + fallback MP4) | — |
-| **Génération HLS (backend)** | Oui (FFmpeg, 480p, 6 s) | — |
-| **Livraison des fichiers HLS** | Oui (Node ou Nginx) | Oui si config statique `/uploads/` |
-| **Proxy / reverse proxy** | — | Oui (API, WebSocket, app, dashboard) |
+| Composant                      | HLS                         | Nginx                                |
+| ------------------------------ | --------------------------- | ------------------------------------ |
+| **Lecture vidéo (frontend)**   | Oui (hls.js + fallback MP4) | —                                    |
+| **Génération HLS (backend)**   | Oui (FFmpeg, 480p, 6 s)     | —                                    |
+| **Livraison des fichiers HLS** | Oui (Node ou Nginx)         | Oui si config statique `/uploads/`   |
+| **Proxy / reverse proxy**      | —                           | Oui (API, WebSocket, app, dashboard) |
 
 **Conclusion** : l’application utilise bien **HLS** pour la lecture vidéo (Films, WebTV) et la chaîne est prête pour une livraison des médias (y compris HLS) par **Nginx** en production.

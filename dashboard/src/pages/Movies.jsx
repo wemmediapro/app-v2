@@ -1,7 +1,27 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Clapperboard, Plus, Edit, Trash2, Search, Film, Tv, X, Save, MapPin, Upload, Video, FileVideo, Clock, Play, Languages, ChevronDown, SlidersHorizontal, Eye } from 'lucide-react';
+import {
+  Clapperboard,
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Film,
+  Tv,
+  X,
+  Save,
+  MapPin,
+  Upload,
+  Video,
+  FileVideo,
+  Clock,
+  Play,
+  Languages,
+  ChevronDown,
+  SlidersHorizontal,
+  Eye,
+} from 'lucide-react';
 import FilterBar from '../components/FilterBar';
 import { apiService } from '../services/apiService';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
@@ -90,7 +110,7 @@ const Movies = () => {
     videoFile: null,
     videoPreview: null,
     translations: emptyTranslations(),
-    autoDuration: true
+    autoDuration: true,
   });
   const [showEpisodeModal, setShowEpisodeModal] = useState(false);
   const [editingEpisodeIndex, setEditingEpisodeIndex] = useState(null);
@@ -116,7 +136,7 @@ const Movies = () => {
     isPopular: false,
     countries: [],
     episodes: [],
-    translations: emptyTranslations()
+    translations: emptyTranslations(),
   });
 
   // Pays disponibles
@@ -125,7 +145,7 @@ const Movies = () => {
     { name: 'Tunisie', code: 'TN' },
     { name: 'Algérie', code: 'DZ' },
     { name: 'Italie', code: 'IT' },
-    { name: 'Espagne', code: 'ES' }
+    { name: 'Espagne', code: 'ES' },
   ];
 
   useEffect(() => {
@@ -135,7 +155,8 @@ const Movies = () => {
   useEffect(() => {
     if (!showVideoLibraryPicker) return;
     setMediaLibraryLoading(true);
-    apiService.getMediaLibrary()
+    apiService
+      .getMediaLibrary()
       .then((res) => {
         const list = res.data?.media && Array.isArray(res.data.media) ? res.data.media : [];
         setMediaLibraryVideos(list.filter((m) => m.type === 'video'));
@@ -148,7 +169,7 @@ const Movies = () => {
     try {
       setLoading(true);
       const response = await apiService.getMovies('limit=100&page=1');
-      const data = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
       setMovies(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching movies:', error);
@@ -177,7 +198,10 @@ const Movies = () => {
       shipId: movie.shipId,
       destination: movie.destination || '',
       episodes: [],
-      translations: movie.translations && typeof movie.translations === 'object' ? { ...emptyTranslations(), ...movie.translations } : emptyTranslations()
+      translations:
+        movie.translations && typeof movie.translations === 'object'
+          ? { ...emptyTranslations(), ...movie.translations }
+          : emptyTranslations(),
     });
     setActiveLang('fr');
     setPosterPreview(movie.poster || null);
@@ -190,7 +214,10 @@ const Movies = () => {
             ...ep,
             id: ep.id || `episode_${i}`,
             videoUrl: ep.videoUrl || '',
-            translations: ep.translations && typeof ep.translations === 'object' ? { ...emptyTranslations(), ...ep.translations } : emptyTranslations()
+            translations:
+              ep.translations && typeof ep.translations === 'object'
+                ? { ...emptyTranslations(), ...ep.translations }
+                : emptyTranslations(),
           }))
         : []
     );
@@ -205,12 +232,30 @@ const Movies = () => {
     setVideoFile(null);
     setVideoPreview(null);
     setEpisodes([]);
-    setNewEpisode({ title: '', duration: '', description: '', videoFile: null, videoPreview: null, translations: emptyTranslations(), autoDuration: true });
+    setNewEpisode({
+      title: '',
+      duration: '',
+      description: '',
+      videoFile: null,
+      videoPreview: null,
+      translations: emptyTranslations(),
+      autoDuration: true,
+    });
     setActiveLang('fr');
     setNewMovie({
-      title: '', type: 'movie', genre: '', year: new Date().getFullYear(), duration: '', rating: 0,
-      description: '', poster: '', videoUrl: '', isPopular: false, countries: [], episodes: [],
-      translations: emptyTranslations()
+      title: '',
+      type: 'movie',
+      genre: '',
+      year: new Date().getFullYear(),
+      duration: '',
+      rating: 0,
+      description: '',
+      poster: '',
+      videoUrl: '',
+      isPopular: false,
+      countries: [],
+      episodes: [],
+      translations: emptyTranslations(),
     });
   };
 
@@ -227,16 +272,21 @@ const Movies = () => {
     }
   };
 
-  const filteredMovies = movies.filter(movie => {
-    const matchesSearch = !searchQuery || 
-      (movie.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-       movie.description?.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesFilter = filter === 'all' || 
-                         (filter === 'movie' && movie.type === 'movie') ||
-                         (filter === 'series' && movie.type === 'series');
-    const matchesCountry = countryFilter === 'all' || 
-      (movie.countries && movie.countries.some(country => country.toLowerCase().includes(countryFilter.toLowerCase())));
-    const matchesDestination = destinationFilter === 'all' || 
+  const filteredMovies = movies.filter((movie) => {
+    const matchesSearch =
+      !searchQuery ||
+      movie.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      movie.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter =
+      filter === 'all' ||
+      (filter === 'movie' && movie.type === 'movie') ||
+      (filter === 'series' && movie.type === 'series');
+    const matchesCountry =
+      countryFilter === 'all' ||
+      (movie.countries &&
+        movie.countries.some((country) => country.toLowerCase().includes(countryFilter.toLowerCase())));
+    const matchesDestination =
+      destinationFilter === 'all' ||
       (movie.destination && movie.destination.toLowerCase().includes(destinationFilter.toLowerCase()));
     const matchesShip = true;
     return matchesSearch && matchesFilter && matchesCountry && matchesDestination && matchesShip;
@@ -261,7 +311,7 @@ const Movies = () => {
           posterUrl = up?.image?.path || up?.image?.url || posterUrl;
         } catch (err) {
           console.error('Upload affiche:', err);
-          toast.error(err.response?.data?.message || 'Erreur lors de l\'upload de l\'affiche.');
+          toast.error(err.response?.data?.message || "Erreur lors de l'upload de l'affiche.");
           return;
         }
       } else if (posterPreview && (posterPreview.startsWith('http') || posterPreview.startsWith('/'))) {
@@ -293,23 +343,24 @@ const Movies = () => {
         countries: newMovie.countries,
         shipId: newMovie.shipId,
         destination: newMovie.destination,
-        episodes: newMovie.type === 'series'
-          ? episodes.map((ep, i) => ({
-              title: ep.title,
-              duration: ep.duration || '',
-              description: ep.description || '',
-              videoUrl: String(ep.videoUrl ?? ep.videoPreview ?? '').trim(),
-              order: i,
-              translations: ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined
-            }))
-          : []
+        episodes:
+          newMovie.type === 'series'
+            ? episodes.map((ep, i) => ({
+                title: ep.title,
+                duration: ep.duration || '',
+                description: ep.description || '',
+                videoUrl: String(ep.videoUrl ?? ep.videoPreview ?? '').trim(),
+                order: i,
+                translations: ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined,
+              }))
+            : [],
       };
 
       if (editingMovie) {
         const id = editingMovie._id || editingMovie.id;
         const response = await apiService.updateMovie(id, payload);
         const updated = response.data;
-        setMovies(movies.map((m) => (m._id || m.id) === id ? { ...updated, id: updated._id || updated.id } : m));
+        setMovies(movies.map((m) => ((m._id || m.id) === id ? { ...updated, id: updated._id || updated.id } : m)));
         closeModal();
         toast.success(t('movies.contentUpdated'));
         if (Object.keys(translations).length > 1) toast.success(t('common.contentAddedByLanguage'));
@@ -323,7 +374,10 @@ const Movies = () => {
       }
     } catch (error) {
       console.error(editingMovie ? 'Erreur modification' : 'Erreur ajout:', error);
-      toast.error(error.response?.data?.message || (editingMovie ? 'Erreur lors de la modification' : 'Erreur lors de l\'ajout du contenu'));
+      toast.error(
+        error.response?.data?.message ||
+          (editingMovie ? 'Erreur lors de la modification' : "Erreur lors de l'ajout du contenu")
+      );
     }
   };
 
@@ -331,8 +385,8 @@ const Movies = () => {
     setNewMovie({
       ...newMovie,
       countries: newMovie.countries.includes(countryName)
-        ? newMovie.countries.filter(name => name !== countryName)
-        : [...newMovie.countries, countryName]
+        ? newMovie.countries.filter((name) => name !== countryName)
+        : [...newMovie.countries, countryName],
     });
   };
 
@@ -344,7 +398,7 @@ const Movies = () => {
         toast.error(t('movies.selectImage'));
         return;
       }
-      
+
       // Vérifier la taille (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast.error(t('movies.fileTooLarge5MB'));
@@ -352,7 +406,7 @@ const Movies = () => {
       }
 
       setPosterFile(file);
-      
+
       // Créer une preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -387,12 +441,14 @@ const Movies = () => {
     setVideoPreview(objectUrl);
 
     // Calcul automatique de la durée à partir du fichier
-    getVideoDurationFromFile(file).then((seconds) => {
-      if (seconds > 0) {
-        setNewMovie((prev) => ({ ...prev, duration: formatDurationFromSeconds(seconds) }));
-        toast.success(`Durée détectée : ${formatDurationFromSeconds(seconds)}`);
-      }
-    }).catch(() => {});
+    getVideoDurationFromFile(file)
+      .then((seconds) => {
+        if (seconds > 0) {
+          setNewMovie((prev) => ({ ...prev, duration: formatDurationFromSeconds(seconds) }));
+          toast.success(`Durée détectée : ${formatDurationFromSeconds(seconds)}`);
+        }
+      })
+      .catch(() => {});
 
     try {
       setVideoUploading(true);
@@ -402,11 +458,14 @@ const Movies = () => {
         setNewMovie((prev) => ({ ...prev, videoUrl: result.video.url }));
         toast.success(t('movies.videoCompressedSuccess'));
       } else {
-        throw new Error(result?.message || 'Échec de l\'upload');
+        throw new Error(result?.message || "Échec de l'upload");
       }
     } catch (err) {
       console.error('Upload vidéo:', err);
-      const msg = err.response?.data?.message || err.message || 'Erreur lors de l\'upload. Saisissez un lien direct ci-dessous ou réessayez.';
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        "Erreur lors de l'upload. Saisissez un lien direct ci-dessous ou réessayez.";
       toast.error(msg);
       setNewMovie((prev) => ({ ...prev, videoUrl: '' }));
     } finally {
@@ -436,15 +495,18 @@ const Movies = () => {
     setNewEpisode((prev) => ({ ...prev, videoFile: file, videoPreview: objectUrl }));
 
     // Calcul automatique de la durée pour l'épisode (si option activée)
-    getVideoDurationFromFile(file).then((seconds) => {
-      if (seconds > 0) {
-        setNewEpisode((prev) => {
-          const newDuration = prev.autoDuration !== false ? formatDurationFromSeconds(seconds) : prev.duration;
-          if (prev.autoDuration !== false) toast.success(`Durée épisode : ${formatDurationFromSeconds(seconds)}`, { id: 'ep-duration' });
-          return { ...prev, duration: newDuration };
-        });
-      }
-    }).catch(() => {});
+    getVideoDurationFromFile(file)
+      .then((seconds) => {
+        if (seconds > 0) {
+          setNewEpisode((prev) => {
+            const newDuration = prev.autoDuration !== false ? formatDurationFromSeconds(seconds) : prev.duration;
+            if (prev.autoDuration !== false)
+              toast.success(`Durée épisode : ${formatDurationFromSeconds(seconds)}`, { id: 'ep-duration' });
+            return { ...prev, duration: newDuration };
+          });
+        }
+      })
+      .catch(() => {});
 
     try {
       toast.loading('Compression et upload en cours (480p)...', { id: 'ep-video' });
@@ -467,7 +529,7 @@ const Movies = () => {
     setNewEpisode({
       ...newEpisode,
       videoFile: null,
-      videoPreview: null
+      videoPreview: null,
     });
   };
 
@@ -494,15 +556,17 @@ const Movies = () => {
     if (showVideoLibraryPicker === 'movie') {
       setVideoFile(null);
       setVideoPreview(urlToStore);
-      setNewMovie(prev => ({ ...prev, videoUrl: urlToStore }));
+      setNewMovie((prev) => ({ ...prev, videoUrl: urlToStore }));
     } else if (showVideoLibraryPicker === 'episode') {
-      setNewEpisode(prev => {
+      setNewEpisode((prev) => {
         const next = { ...prev, videoFile: null, videoPreview: urlToStore };
         if (prev.autoDuration !== false && urlToStore) {
-          const fullUrl = urlToStore.startsWith('http') ? urlToStore : `${window.location.origin}${urlToStore.startsWith('/') ? '' : '/'}${urlToStore}`;
+          const fullUrl = urlToStore.startsWith('http')
+            ? urlToStore
+            : `${window.location.origin}${urlToStore.startsWith('/') ? '' : '/'}${urlToStore}`;
           getVideoDurationFromUrl(fullUrl).then((seconds) => {
             if (seconds > 0) {
-              setNewEpisode(p => ({ ...p, duration: formatDurationFromSeconds(seconds) }));
+              setNewEpisode((p) => ({ ...p, duration: formatDurationFromSeconds(seconds) }));
               toast.success(`Durée : ${formatDurationFromSeconds(seconds)}`, { id: 'ep-duration-lib' });
             }
           });
@@ -519,14 +583,18 @@ const Movies = () => {
       toast.error(t('movies.fillEpisodeTitleDuration'));
       return;
     }
-    const videoUrl = (newEpisode.videoPreview && !String(newEpisode.videoPreview).startsWith('blob:'))
-      ? String(newEpisode.videoPreview).trim()
-      : '';
+    const videoUrl =
+      newEpisode.videoPreview && !String(newEpisode.videoPreview).startsWith('blob:')
+        ? String(newEpisode.videoPreview).trim()
+        : '';
     const episode = {
       ...newEpisode,
       id: editingEpisodeIndex !== null ? episodes[editingEpisodeIndex].id : `episode_${Date.now()}`,
       videoUrl,
-      translations: newEpisode.translations && typeof newEpisode.translations === 'object' ? newEpisode.translations : emptyTranslations()
+      translations:
+        newEpisode.translations && typeof newEpisode.translations === 'object'
+          ? newEpisode.translations
+          : emptyTranslations(),
     };
 
     if (editingEpisodeIndex !== null) {
@@ -545,7 +613,7 @@ const Movies = () => {
       videoFile: null,
       videoPreview: null,
       translations: emptyTranslations(),
-      autoDuration: true
+      autoDuration: true,
     });
     setActiveLangEpisode('fr');
     setShowEpisodeModal(false);
@@ -560,8 +628,11 @@ const Movies = () => {
       description: episode.description || '',
       videoFile: null,
       videoPreview: episode.videoUrl || null,
-      translations: episode.translations && typeof episode.translations === 'object' ? { ...emptyTranslations(), ...episode.translations } : emptyTranslations(),
-      autoDuration: newEpisode.autoDuration !== false
+      translations:
+        episode.translations && typeof episode.translations === 'object'
+          ? { ...emptyTranslations(), ...episode.translations }
+          : emptyTranslations(),
+      autoDuration: newEpisode.autoDuration !== false,
     });
     setActiveLangEpisode('fr');
     setEditingEpisodeIndex(index);
@@ -581,7 +652,7 @@ const Movies = () => {
       videoFile: null,
       videoPreview: null,
       translations: emptyTranslations(),
-      autoDuration: true
+      autoDuration: true,
     });
     setActiveLangEpisode('fr');
     setEditingEpisodeIndex(null);
@@ -589,24 +660,27 @@ const Movies = () => {
   };
 
   const handleEpisodeCalculateDuration = () => {
-    const url = newEpisode.videoPreview && !String(newEpisode.videoPreview).startsWith('blob:') ? newEpisode.videoPreview : null;
+    const url =
+      newEpisode.videoPreview && !String(newEpisode.videoPreview).startsWith('blob:') ? newEpisode.videoPreview : null;
     if (!url) {
       toast.error(t('movies.selectVideoFirst'));
       return;
     }
     setEpisodeDurationLoading(true);
-    getVideoDurationFromUrl(url).then((seconds) => {
-      setEpisodeDurationLoading(false);
-      if (seconds > 0) {
-        setNewEpisode((prev) => ({ ...prev, duration: formatDurationFromSeconds(seconds) }));
-        toast.success(`Durée : ${formatDurationFromSeconds(seconds)}`);
-      } else {
-        toast.error(t('movies.cannotReadDuration'));
-      }
-    }).catch(() => {
-      setEpisodeDurationLoading(false);
-      toast.error(t('movies.errorDuration'));
-    });
+    getVideoDurationFromUrl(url)
+      .then((seconds) => {
+        setEpisodeDurationLoading(false);
+        if (seconds > 0) {
+          setNewEpisode((prev) => ({ ...prev, duration: formatDurationFromSeconds(seconds) }));
+          toast.success(`Durée : ${formatDurationFromSeconds(seconds)}`);
+        } else {
+          toast.error(t('movies.cannotReadDuration'));
+        }
+      })
+      .catch(() => {
+        setEpisodeDurationLoading(false);
+        toast.error(t('movies.errorDuration'));
+      });
   };
 
   if (loading) {
@@ -659,7 +733,9 @@ const Movies = () => {
             <button
               onClick={() => setFilter('all')}
               className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                filter === 'all' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/80' : 'text-slate-600 hover:text-slate-900'
+                filter === 'all'
+                  ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {t('movies.all')}
@@ -667,7 +743,9 @@ const Movies = () => {
             <button
               onClick={() => setFilter('movie')}
               className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                filter === 'movie' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/80' : 'text-slate-600 hover:text-slate-900'
+                filter === 'movie'
+                  ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Film size={16} />
@@ -676,7 +754,9 @@ const Movies = () => {
             <button
               onClick={() => setFilter('series')}
               className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                filter === 'series' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/80' : 'text-slate-600 hover:text-slate-900'
+                filter === 'series'
+                  ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Tv size={16} />
@@ -696,10 +776,15 @@ const Movies = () => {
               <SlidersHorizontal size={16} className="text-slate-500 shrink-0" />
               {t('common.advancedFilters')}
               {hasActiveFilters && (
-                <span className="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-xs font-medium">actifs</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-xs font-medium">
+                  actifs
+                </span>
               )}
             </span>
-            <ChevronDown size={18} className={`text-slate-400 shrink-0 transition-transform ${filtersExpanded ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              size={18}
+              className={`text-slate-400 shrink-0 transition-transform ${filtersExpanded ? 'rotate-180' : ''}`}
+            />
           </button>
           {filtersExpanded && (
             <div className="px-4 pb-4 pt-3 border-t border-slate-100">
@@ -731,7 +816,9 @@ const Movies = () => {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{t('movies.films')}</p>
-            <p className="text-xl font-bold text-slate-900 tabular-nums mt-0.5">{movies.filter(m => m.type === 'movie').length}</p>
+            <p className="text-xl font-bold text-slate-900 tabular-nums mt-0.5">
+              {movies.filter((m) => m.type === 'movie').length}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-4 px-5 py-4 rounded-xl bg-white border border-slate-200 shadow-sm">
@@ -740,7 +827,9 @@ const Movies = () => {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{t('movies.series')}</p>
-            <p className="text-xl font-bold text-slate-900 tabular-nums mt-0.5">{movies.filter(m => m.type === 'series').length}</p>
+            <p className="text-xl font-bold text-slate-900 tabular-nums mt-0.5">
+              {movies.filter((m) => m.type === 'series').length}
+            </p>
           </div>
         </div>
       </div>
@@ -786,10 +875,14 @@ const Movies = () => {
             </div>
             <div className="p-4 flex-1 flex flex-col min-h-0">
               <div className="flex items-start justify-between gap-2 mb-2">
-                <h3 className="font-semibold text-slate-900 text-sm leading-snug line-clamp-2 flex-1 min-w-0">{movie.title}</h3>
-                <span className={`text-xs px-2 py-0.5 rounded-md shrink-0 font-medium ${
-                  movie.type === 'movie' ? 'bg-indigo-50 text-indigo-700' : 'bg-violet-50 text-violet-700'
-                }`}>
+                <h3 className="font-semibold text-slate-900 text-sm leading-snug line-clamp-2 flex-1 min-w-0">
+                  {movie.title}
+                </h3>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-md shrink-0 font-medium ${
+                    movie.type === 'movie' ? 'bg-indigo-50 text-indigo-700' : 'bg-violet-50 text-violet-700'
+                  }`}
+                >
                   {movie.type === 'movie' ? t('movies.filmLabel') : t('movies.seriesLabel')}
                 </span>
               </div>
@@ -802,7 +895,7 @@ const Movies = () => {
                 <div className="flex items-center gap-1.5 mb-3 flex-wrap">
                   <MapPin size={12} className="text-slate-400 shrink-0" />
                   {movie.countries.slice(0, 3).map((countryName) => {
-                    const country = availableCountries.find(c => c.name === countryName);
+                    const country = availableCountries.find((c) => c.name === countryName);
                     return country ? (
                       <span key={countryName} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">
                         {country.name}
@@ -820,9 +913,7 @@ const Movies = () => {
                   {(movie.viewCount ?? 0).toLocaleString()} {t('movies.views')}
                 </span>
                 {movie.genre ? <span>· {movie.genre}</span> : null}
-                {formatDurationDisplay(movie.duration) ? (
-                  <span>· {formatDurationDisplay(movie.duration)}</span>
-                ) : null}
+                {formatDurationDisplay(movie.duration) ? <span>· {formatDurationDisplay(movie.duration)}</span> : null}
                 {movie.episodes != null ? (
                   <span>· {Array.isArray(movie.episodes) ? movie.episodes.length : movie.episodes} ép.</span>
                 ) : null}
@@ -884,7 +975,12 @@ const Movies = () => {
                   </p>
                 </div>
               </div>
-              <button type="button" onClick={closeModal} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors" aria-label={t('common.close')}>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                aria-label={t('common.close')}
+              >
                 <X size={22} />
               </button>
             </div>
@@ -949,13 +1045,15 @@ const Movies = () => {
                       <input
                         type="text"
                         value={newMovie.translations?.[activeLang]?.title || ''}
-                        onChange={(e) => setNewMovie({
-                          ...newMovie,
-                          translations: {
-                            ...newMovie.translations,
-                            [activeLang]: { ...newMovie.translations?.[activeLang], title: e.target.value }
-                          }
-                        })}
+                        onChange={(e) =>
+                          setNewMovie({
+                            ...newMovie,
+                            translations: {
+                              ...newMovie.translations,
+                              [activeLang]: { ...newMovie.translations?.[activeLang], title: e.target.value },
+                            },
+                          })
+                        }
                         className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                         placeholder="Title"
                       />
@@ -964,13 +1062,15 @@ const Movies = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                       <textarea
                         value={newMovie.translations?.[activeLang]?.description || ''}
-                        onChange={(e) => setNewMovie({
-                          ...newMovie,
-                          translations: {
-                            ...newMovie.translations,
-                            [activeLang]: { ...newMovie.translations?.[activeLang], description: e.target.value }
-                          }
-                        })}
+                        onChange={(e) =>
+                          setNewMovie({
+                            ...newMovie,
+                            translations: {
+                              ...newMovie.translations,
+                              [activeLang]: { ...newMovie.translations?.[activeLang], description: e.target.value },
+                            },
+                          })
+                        }
                         className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                         rows={4}
                         placeholder="Description"
@@ -983,9 +1083,7 @@ const Movies = () => {
               {/* Genre et Année */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Genre *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Genre *</label>
                   <select
                     value={newMovie.genre}
                     onChange={(e) => setNewMovie({ ...newMovie, genre: e.target.value })}
@@ -1005,13 +1103,13 @@ const Movies = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Année
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Année</label>
                   <input
                     type="number"
                     value={newMovie.year}
-                    onChange={(e) => setNewMovie({ ...newMovie, year: parseInt(e.target.value) || new Date().getFullYear() })}
+                    onChange={(e) =>
+                      setNewMovie({ ...newMovie, year: parseInt(e.target.value) || new Date().getFullYear() })
+                    }
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                     placeholder="2024"
                     min="1900"
@@ -1024,8 +1122,7 @@ const Movies = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    Durée *
-                    <span className="text-xs font-normal text-gray-500">(calculée auto. à l’upload vidéo)</span>
+                    Durée *<span className="text-xs font-normal text-gray-500">(calculée auto. à l’upload vidéo)</span>
                   </label>
                   <input
                     type="text"
@@ -1036,9 +1133,7 @@ const Movies = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Note (0-5)
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Note (0-5)</label>
                   <input
                     type="number"
                     step="0.1"
@@ -1054,19 +1149,13 @@ const Movies = () => {
 
               {/* Upload Poster */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Affiche (Poster)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Affiche (Poster)</label>
                 {posterPreview ? (
                   <div className="relative">
                     <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
                       <div className="flex items-center gap-4">
                         <div className="relative w-24 h-32 rounded-lg overflow-hidden bg-white border border-gray-200">
-                          <img
-                            src={posterPreview}
-                            alt="Poster preview"
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={posterPreview} alt="Poster preview" className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-900">
@@ -1093,25 +1182,16 @@ const Movies = () => {
                       <p className="mb-2 text-sm text-gray-500">
                         <span className="font-semibold">Cliquez pour uploader</span> ou glissez-déposez
                       </p>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, GIF jusqu'à 5MB
-                      </p>
+                      <p className="text-xs text-gray-500">PNG, JPG, GIF jusqu'à 5MB</p>
                     </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePosterUpload}
-                      className="hidden"
-                    />
+                    <input type="file" accept="image/*" onChange={handlePosterUpload} className="hidden" />
                   </label>
                 )}
               </div>
 
               {/* Upload Vidéo */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Vidéo (optionnel)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Vidéo (optionnel)</label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   <motion.button
                     type="button"
@@ -1124,7 +1204,7 @@ const Movies = () => {
                     Choisir depuis la bibliothèque vidéo
                   </motion.button>
                 </div>
-                {(videoPreview || newMovie.videoUrl) ? (
+                {videoPreview || newMovie.videoUrl ? (
                   <div className="relative">
                     <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
                       {videoUploading && (
@@ -1134,21 +1214,44 @@ const Movies = () => {
                             Compression à 480p en cours...
                           </p>
                           <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${videoUploadProgress}%` }} />
+                            <div
+                              className="bg-blue-600 h-2 rounded-full transition-all"
+                              style={{ width: `${videoUploadProgress}%` }}
+                            />
                           </div>
                         </div>
                       )}
                       <div className="flex items-center gap-4">
-                        <div className="relative w-40 h-24 rounded-lg overflow-hidden bg-black border border-gray-200 flex items-center justify-center shrink-0 cursor-pointer group"
-                          onClick={() => (videoPreview || newMovie.videoUrl) && getVideoPreviewUrl(videoPreview || newMovie.videoUrl) && setVideoPlayerModal({ open: true, src: videoPreview || newMovie.videoUrl, title: videoFile?.name || 'Vidéo sélectionnée' })}
+                        <div
+                          className="relative w-40 h-24 rounded-lg overflow-hidden bg-black border border-gray-200 flex items-center justify-center shrink-0 cursor-pointer group"
+                          onClick={() =>
+                            (videoPreview || newMovie.videoUrl) &&
+                            getVideoPreviewUrl(videoPreview || newMovie.videoUrl) &&
+                            setVideoPlayerModal({
+                              open: true,
+                              src: videoPreview || newMovie.videoUrl,
+                              title: videoFile?.name || 'Vidéo sélectionnée',
+                            })
+                          }
                           role="button"
                           tabIndex={0}
-                          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (videoPreview || newMovie.videoUrl) && getVideoPreviewUrl(videoPreview || newMovie.videoUrl) && (e.preventDefault(), setVideoPlayerModal({ open: true, src: videoPreview || newMovie.videoUrl, title: videoFile?.name || 'Vidéo sélectionnée' }))}
+                          onKeyDown={(e) =>
+                            (e.key === 'Enter' || e.key === ' ') &&
+                            (videoPreview || newMovie.videoUrl) &&
+                            getVideoPreviewUrl(videoPreview || newMovie.videoUrl) &&
+                            (e.preventDefault(),
+                            setVideoPlayerModal({
+                              open: true,
+                              src: videoPreview || newMovie.videoUrl,
+                              title: videoFile?.name || 'Vidéo sélectionnée',
+                            }))
+                          }
                           aria-label={t('common.playVideo')}
                         >
                           {videoUploading ? (
                             <Upload size={28} className="text-blue-400 animate-pulse" />
-                          ) : (videoPreview || newMovie.videoUrl) && getVideoPreviewUrl(videoPreview || newMovie.videoUrl) ? (
+                          ) : (videoPreview || newMovie.videoUrl) &&
+                            getVideoPreviewUrl(videoPreview || newMovie.videoUrl) ? (
                             <>
                               <video
                                 src={getVideoPreviewUrl(videoPreview || newMovie.videoUrl)}
@@ -1168,14 +1271,13 @@ const Movies = () => {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900">
-                            {videoFile?.name || 'Vidéo sélectionnée'}
-                          </p>
+                          <p className="text-sm font-medium text-gray-900">{videoFile?.name || 'Vidéo sélectionnée'}</p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {videoFile ? `${(videoFile.size / (1024 * 1024)).toFixed(2)} MB` : ''} {!videoUploading && videoFile && '• Compressé 480p'}
+                            {videoFile ? `${(videoFile.size / (1024 * 1024)).toFixed(2)} MB` : ''}{' '}
+                            {!videoUploading && videoFile && '• Compressé 480p'}
                           </p>
                           <p className="text-xs text-gray-500 truncate" title={videoPreview || newMovie.videoUrl}>
-                            {videoPreview?.startsWith('blob:') ? 'Fichier local' : (videoPreview || newMovie.videoUrl)}
+                            {videoPreview?.startsWith('blob:') ? 'Fichier local' : videoPreview || newMovie.videoUrl}
                           </p>
                         </div>
                         <button
@@ -1196,9 +1298,7 @@ const Movies = () => {
                       <p className="mb-2 text-sm text-gray-500">
                         <span className="font-semibold">Cliquez pour uploader</span> ou glissez-déposez
                       </p>
-                      <p className="text-xs text-gray-500">
-                        MP4, AVI, MOV jusqu'à 1000 Mo (compression 480p)
-                      </p>
+                      <p className="text-xs text-gray-500">MP4, AVI, MOV jusqu'à 1000 Mo (compression 480p)</p>
                     </div>
                     <input
                       type="file"
@@ -1223,9 +1323,7 @@ const Movies = () => {
               {newMovie.type === 'series' && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Épisodes
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700">Épisodes</label>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
@@ -1239,17 +1337,30 @@ const Movies = () => {
                   {episodes.length > 0 ? (
                     <div className="border border-gray-200 rounded-lg p-4 space-y-3 max-h-80 overflow-y-auto">
                       {episodes.map((episode, index) => (
-                        <div
-                          key={episode.id || index}
-                          className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
-                        >
+                        <div key={episode.id || index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
                           {/* Aperçu vidéo de l'épisode (agrandi) + icône play → clic ouvre le player */}
                           <div
                             className="flex-shrink-0 w-52 h-28 rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center relative group cursor-pointer"
-                            onClick={() => episode.videoUrl && setVideoPlayerModal({ open: true, src: episode.videoUrl, title: episode.title || `Épisode ${index + 1}` })}
+                            onClick={() =>
+                              episode.videoUrl &&
+                              setVideoPlayerModal({
+                                open: true,
+                                src: episode.videoUrl,
+                                title: episode.title || `Épisode ${index + 1}`,
+                              })
+                            }
                             role="button"
                             tabIndex={0}
-                            onKeyDown={(e) => episode.videoUrl && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setVideoPlayerModal({ open: true, src: episode.videoUrl, title: episode.title || `Épisode ${index + 1}` }))}
+                            onKeyDown={(e) =>
+                              episode.videoUrl &&
+                              (e.key === 'Enter' || e.key === ' ') &&
+                              (e.preventDefault(),
+                              setVideoPlayerModal({
+                                open: true,
+                                src: episode.videoUrl,
+                                title: episode.title || `Épisode ${index + 1}`,
+                              }))
+                            }
                             aria-label={`Lire ${episode.title || `Épisode ${index + 1}`}`}
                           >
                             {episode.videoUrl ? (
@@ -1261,7 +1372,10 @@ const Movies = () => {
                                   playsInline
                                   preload="metadata"
                                   onMouseEnter={(e) => e.target.play()}
-                                  onMouseLeave={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+                                  onMouseLeave={(e) => {
+                                    e.target.pause();
+                                    e.target.currentTime = 0;
+                                  }}
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-80 group-hover:opacity-0 transition-opacity pointer-events-none">
                                   <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
@@ -1307,18 +1421,14 @@ const Movies = () => {
                     </div>
                   )}
                   {episodes.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      {episodes.length} épisode(s) ajouté(s)
-                    </p>
+                    <p className="text-xs text-gray-500 mt-2">{episodes.length} épisode(s) ajouté(s)</p>
                   )}
                 </div>
               )}
 
               {/* Pays */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Affecter aux pays *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Affecter aux pays *</label>
                 <div className="border border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
                   {availableCountries.length === 0 ? (
                     <p className="text-sm text-gray-500 text-center py-4">Aucun pays disponible</p>
@@ -1341,23 +1451,17 @@ const Movies = () => {
                               {country.code}
                             </span>
                           </div>
-                          {newMovie.countries.includes(country.name) && (
-                            <MapPin size={16} className="text-blue-600" />
-                          )}
+                          {newMovie.countries.includes(country.name) && <MapPin size={16} className="text-blue-600" />}
                         </label>
                       ))}
                     </div>
                   )}
                 </div>
                 {newMovie.countries.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    {newMovie.countries.length} pays sélectionné(s)
-                  </p>
+                  <p className="text-xs text-gray-500 mt-2">{newMovie.countries.length} pays sélectionné(s)</p>
                 )}
                 {newMovie.countries.length === 0 && (
-                  <p className="text-xs text-red-500 mt-1">
-                    Veuillez sélectionner au moins un pays
-                  </p>
+                  <p className="text-xs text-red-500 mt-1">Veuillez sélectionner au moins un pays</p>
                 )}
               </div>
 
@@ -1377,7 +1481,11 @@ const Movies = () => {
             </div>
 
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
-              <button type="button" onClick={closeModal} className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-white hover:border-slate-300 transition-colors">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-white hover:border-slate-300 transition-colors"
+              >
                 Annuler
               </button>
               <motion.button
@@ -1424,9 +1532,7 @@ const Movies = () => {
               {/* Titre et Durée */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Titre de l'épisode *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Titre de l'épisode *</label>
                   <input
                     type="text"
                     value={newEpisode.title}
@@ -1470,17 +1576,17 @@ const Movies = () => {
                       </motion.button>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Remplie à l'upload ou via « Calculer durée » si vidéo depuis la bibliothèque</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Remplie à l'upload ou via « Calculer durée » si vidéo depuis la bibliothèque
+                  </p>
                 </div>
               </div>
 
               {/* Description (français) */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description (français)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description (français)</label>
                 <textarea
-                    value={newEpisode.description}
+                  value={newEpisode.description}
                   onChange={(e) => setNewEpisode({ ...newEpisode, description: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                   rows={3}
@@ -1508,23 +1614,34 @@ const Movies = () => {
                 </div>
                 {activeLangEpisode === 'fr' ? (
                   <div className="space-y-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <p className="text-xs text-slate-600">Le titre et la description ci-dessus sont utilisés pour le français.</p>
-                    <p className="text-xs text-slate-500">Utilisez les onglets pour les autres langues (EN, ES, IT, DE, AR).</p>
+                    <p className="text-xs text-slate-600">
+                      Le titre et la description ci-dessus sont utilisés pour le français.
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Utilisez les onglets pour les autres langues (EN, ES, IT, DE, AR).
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Titre ({LANG_LIST.find(l => l.code === activeLangEpisode)?.label})</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Titre ({LANG_LIST.find((l) => l.code === activeLangEpisode)?.label})
+                      </label>
                       <input
                         type="text"
                         value={newEpisode.translations?.[activeLangEpisode]?.title || ''}
-                        onChange={(e) => setNewEpisode({
-                          ...newEpisode,
-                          translations: {
-                            ...newEpisode.translations,
-                            [activeLangEpisode]: { ...newEpisode.translations?.[activeLangEpisode], title: e.target.value }
-                          }
-                        })}
+                        onChange={(e) =>
+                          setNewEpisode({
+                            ...newEpisode,
+                            translations: {
+                              ...newEpisode.translations,
+                              [activeLangEpisode]: {
+                                ...newEpisode.translations?.[activeLangEpisode],
+                                title: e.target.value,
+                              },
+                            },
+                          })
+                        }
                         className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                         placeholder="Title"
                       />
@@ -1533,13 +1650,18 @@ const Movies = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                       <textarea
                         value={newEpisode.translations?.[activeLangEpisode]?.description || ''}
-                        onChange={(e) => setNewEpisode({
-                          ...newEpisode,
-                          translations: {
-                            ...newEpisode.translations,
-                            [activeLangEpisode]: { ...newEpisode.translations?.[activeLangEpisode], description: e.target.value }
-                          }
-                        })}
+                        onChange={(e) =>
+                          setNewEpisode({
+                            ...newEpisode,
+                            translations: {
+                              ...newEpisode.translations,
+                              [activeLangEpisode]: {
+                                ...newEpisode.translations?.[activeLangEpisode],
+                                description: e.target.value,
+                              },
+                            },
+                          })
+                        }
                         className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                         rows={2}
                         placeholder="Description"
@@ -1551,9 +1673,7 @@ const Movies = () => {
 
               {/* Upload Vidéo Épisode */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Vidéo de l'épisode
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Vidéo de l'épisode</label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   <motion.button
                     type="button"
@@ -1570,11 +1690,28 @@ const Movies = () => {
                   <div className="relative">
                     <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
                       <div className="flex items-center gap-4">
-                        <div className="relative w-40 h-24 rounded-lg overflow-hidden bg-black border border-gray-200 flex items-center justify-center shrink-0 cursor-pointer group"
-                          onClick={() => getVideoPreviewUrl(newEpisode.videoPreview) && setVideoPlayerModal({ open: true, src: newEpisode.videoPreview, title: newEpisode.videoFile?.name || 'Vidéo épisode' })}
+                        <div
+                          className="relative w-40 h-24 rounded-lg overflow-hidden bg-black border border-gray-200 flex items-center justify-center shrink-0 cursor-pointer group"
+                          onClick={() =>
+                            getVideoPreviewUrl(newEpisode.videoPreview) &&
+                            setVideoPlayerModal({
+                              open: true,
+                              src: newEpisode.videoPreview,
+                              title: newEpisode.videoFile?.name || 'Vidéo épisode',
+                            })
+                          }
                           role="button"
                           tabIndex={0}
-                          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && getVideoPreviewUrl(newEpisode.videoPreview) && (e.preventDefault(), setVideoPlayerModal({ open: true, src: newEpisode.videoPreview, title: newEpisode.videoFile?.name || 'Vidéo épisode' }))}
+                          onKeyDown={(e) =>
+                            (e.key === 'Enter' || e.key === ' ') &&
+                            getVideoPreviewUrl(newEpisode.videoPreview) &&
+                            (e.preventDefault(),
+                            setVideoPlayerModal({
+                              open: true,
+                              src: newEpisode.videoPreview,
+                              title: newEpisode.videoFile?.name || 'Vidéo épisode',
+                            }))
+                          }
                           aria-label={t('common.playVideo')}
                         >
                           {getVideoPreviewUrl(newEpisode.videoPreview) ? (
@@ -1601,10 +1738,15 @@ const Movies = () => {
                             {newEpisode.videoFile?.name || 'Vidéo sélectionnée'}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {newEpisode.videoFile ? `${(newEpisode.videoFile.size / (1024 * 1024)).toFixed(2)} MB` : 'Vidéo existante'}
+                            {newEpisode.videoFile
+                              ? `${(newEpisode.videoFile.size / (1024 * 1024)).toFixed(2)} MB`
+                              : 'Vidéo existante'}
                           </p>
                           <p className="text-xs text-gray-600 mt-1 truncate" title={newEpisode.videoPreview}>
-                            URL : {newEpisode.videoPreview.startsWith('blob:') ? 'Fichier local (sera remplacé à l’enregistrement)' : newEpisode.videoPreview}
+                            URL :{' '}
+                            {newEpisode.videoPreview.startsWith('blob:')
+                              ? 'Fichier local (sera remplacé à l’enregistrement)'
+                              : newEpisode.videoPreview}
                           </p>
                         </div>
                         <button
@@ -1624,16 +1766,9 @@ const Movies = () => {
                       <p className="mb-2 text-sm text-gray-500">
                         <span className="font-semibold">Cliquez pour uploader</span> ou glissez-déposez
                       </p>
-                      <p className="text-xs text-gray-500">
-                        MP4, AVI, MOV jusqu'à 100MB
-                      </p>
+                      <p className="text-xs text-gray-500">MP4, AVI, MOV jusqu'à 100MB</p>
                     </div>
-                    <input
-                      type="file"
-                      accept="video/*"
-                      onChange={handleEpisodeVideoUpload}
-                      className="hidden"
-                    />
+                    <input type="file" accept="video/*" onChange={handleEpisodeVideoUpload} className="hidden" />
                   </label>
                 )}
               </div>
@@ -1684,7 +1819,11 @@ const Movies = () => {
               <h3 className="text-lg font-semibold text-gray-900">
                 Choisir une vidéo — {showVideoLibraryPicker === 'movie' ? 'Film' : 'Épisode'}
               </h3>
-              <button type="button" onClick={() => setShowVideoLibraryPicker(null)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setShowVideoLibraryPicker(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -1703,8 +1842,8 @@ const Movies = () => {
                     className="font-semibold text-purple-600 hover:text-purple-700 underline"
                   >
                     Bibliothèque média
-                  </Link>
-                  {' '}pour en ajouter.
+                  </Link>{' '}
+                  pour en ajouter.
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -1721,7 +1860,7 @@ const Movies = () => {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 truncate">{v.name || 'Sans titre'}</p>
                         <p className="text-sm text-gray-500 flex items-center gap-2">
-                          {v.size != null && <span>{Math.round(v.size / 1024 / 1024 * 100) / 100} Mo</span>}
+                          {v.size != null && <span>{Math.round((v.size / 1024 / 1024) * 100) / 100} Mo</span>}
                         </p>
                       </div>
                       <Play size={18} className="text-purple-600 flex-shrink-0" />
@@ -1738,4 +1877,3 @@ const Movies = () => {
 };
 
 export default Movies;
-

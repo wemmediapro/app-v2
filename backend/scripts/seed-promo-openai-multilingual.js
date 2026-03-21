@@ -62,14 +62,16 @@ Règles :
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) {throw new Error('Réponse OpenAI vide');}
+  if (!raw) {
+    throw new Error('Réponse OpenAI vide');
+  }
   const data = JSON.parse(raw);
   const list = data.promotions || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list : [];
 }
 
 function nextPromoId(restaurant) {
-  const existing = (restaurant.promotions || []).map(p => p.id).filter(n => typeof n === 'number');
+  const existing = (restaurant.promotions || []).map((p) => p.id).filter((n) => typeof n === 'number');
   return existing.length ? Math.max(...existing) + 1 : 1;
 }
 
@@ -87,7 +89,9 @@ async function seedPromosMultilingual() {
 
     const restaurants = await Restaurant.find({ isActive: true }).limit(10).lean();
     if (!restaurants.length) {
-      console.log('⚠️  Aucun restaurant actif trouvé. Créez d’abord des restaurants (ex: seed:restaurant-excellence-multilingual).');
+      console.log(
+        '⚠️  Aucun restaurant actif trouvé. Créez d’abord des restaurants (ex: seed:restaurant-excellence-multilingual).'
+      );
       await mongoose.disconnect();
       process.exit(0);
       return;
@@ -135,7 +139,9 @@ async function seedPromosMultilingual() {
               };
             }
           }
-          if (Object.keys(translations).length) {promo.translations = translations;}
+          if (Object.keys(translations).length) {
+            promo.translations = translations;
+          }
 
           doc.promotions = doc.promotions || [];
           doc.promotions.push(promo);
@@ -143,7 +149,9 @@ async function seedPromosMultilingual() {
         }
 
         await doc.save();
-        console.log(`   ✅ ${name}: ${generated.length} promotion(s) ajoutée(s) (${Object.keys(generated[0]?.translations || {}).length} langues)`);
+        console.log(
+          `   ✅ ${name}: ${generated.length} promotion(s) ajoutée(s) (${Object.keys(generated[0]?.translations || {}).length} langues)`
+        );
       } catch (err) {
         console.error(`   ❌ ${name}:`, err.message);
       }
@@ -152,7 +160,9 @@ async function seedPromosMultilingual() {
     console.log('\n✅ Seed promotions multilingues terminé. Total ajouté:', totalAdded);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) {console.error(err.response.data);}
+    if (err.response?.data) {
+      console.error(err.response.data);
+    }
     process.exit(1);
   } finally {
     await mongoose.disconnect();

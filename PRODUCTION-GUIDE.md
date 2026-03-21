@@ -59,6 +59,7 @@ cd ..
 ```
 
 Ce script va :
+
 1. ✅ Vérifier les prérequis
 2. ✅ Installer les dépendances si nécessaire
 3. ✅ Builder les applications frontend
@@ -141,6 +142,7 @@ curl http://localhost:3000/api/health
 ```
 
 Réponse attendue :
+
 ```json
 {
   "status": "OK",
@@ -262,6 +264,7 @@ Pour gérer plus de 2000 connexions :
 ## 🆘 Support
 
 En cas de problème, consultez :
+
 - Les logs PM2 : `pm2 logs`
 - Le health check : `curl http://localhost:3000/api/health`
 - La documentation MongoDB Atlas

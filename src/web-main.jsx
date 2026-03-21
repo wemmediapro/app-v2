@@ -10,5 +10,5 @@ root.render(
     <LanguageProvider>
       <AppWeb />
     </LanguageProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

@@ -18,7 +18,9 @@ function ensureDir() {
 
 function readRestaurants() {
   ensureDir();
-  if (!fs.existsSync(RESTAURANTS_FILE)) {return [];}
+  if (!fs.existsSync(RESTAURANTS_FILE)) {
+    return [];
+  }
   try {
     const raw = fs.readFileSync(RESTAURANTS_FILE, 'utf8');
     const data = JSON.parse(raw);
@@ -30,32 +32,46 @@ function readRestaurants() {
 }
 
 function localizeRestaurant(doc, lang) {
-  if (!doc) {return doc;}
+  if (!doc) {
+    return doc;
+  }
   const normalizedLang = (lang && String(lang).toLowerCase()) || '';
   const out = { ...doc };
   if (normalizedLang && doc.translations && doc.translations[normalizedLang]) {
     const t = doc.translations[normalizedLang];
-    if (t.name) {out.name = t.name;}
-    if (t.description) {out.description = t.description;}
-    if (t.type) {out.type = t.type;}
-    if (t.location) {out.location = t.location;}
-    if (t.openingHours) {out.openingHours = t.openingHours;}
-    if (Array.isArray(t.specialties)) {out.specialties = t.specialties;}
+    if (t.name) {
+      out.name = t.name;
+    }
+    if (t.description) {
+      out.description = t.description;
+    }
+    if (t.type) {
+      out.type = t.type;
+    }
+    if (t.location) {
+      out.location = t.location;
+    }
+    if (t.openingHours) {
+      out.openingHours = t.openingHours;
+    }
+    if (Array.isArray(t.specialties)) {
+      out.specialties = t.specialties;
+    }
     if (Array.isArray(out.menu) && Array.isArray(t.menu)) {
       out.menu = out.menu.map((item, idx) => {
         const tr = t.menu[idx];
         return {
           ...item,
-          name: (tr && tr.name) ? tr.name : item.name,
-          description: (tr && tr.description) ? tr.description : item.description,
+          name: tr && tr.name ? tr.name : item.name,
+          description: tr && tr.description ? tr.description : item.description,
         };
       });
     }
     if (Array.isArray(t.promotions) && Array.isArray(out.promotions) && t.promotions.length === out.promotions.length) {
       out.promotions = out.promotions.map((p, idx) => ({
         ...p,
-        title: (t.promotions[idx] && t.promotions[idx].title) ? t.promotions[idx].title : p.title,
-        description: (t.promotions[idx] && t.promotions[idx].description) ? t.promotions[idx].description : p.description,
+        title: t.promotions[idx] && t.promotions[idx].title ? t.promotions[idx].title : p.title,
+        description: t.promotions[idx] && t.promotions[idx].description ? t.promotions[idx].description : p.description,
       }));
     }
   }
@@ -65,12 +81,12 @@ function localizeRestaurant(doc, lang) {
 module.exports = {
   getAll(lang) {
     return readRestaurants()
-      .filter(r => r.isActive !== false)
-      .map(r => localizeRestaurant(r, lang));
+      .filter((r) => r.isActive !== false)
+      .map((r) => localizeRestaurant(r, lang));
   },
   getById(id, lang) {
     const list = readRestaurants();
-    const r = list.find(x => String(x._id) === String(id));
+    const r = list.find((x) => String(x._id) === String(id));
     return r ? localizeRestaurant(r, lang) : null;
   },
 };

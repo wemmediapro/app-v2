@@ -18,7 +18,9 @@ function ensureDir() {
 
 function readArticles() {
   ensureDir();
-  if (!fs.existsSync(MAGAZINE_FILE)) {return [];}
+  if (!fs.existsSync(MAGAZINE_FILE)) {
+    return [];
+  }
   try {
     const raw = fs.readFileSync(MAGAZINE_FILE, 'utf8');
     const data = JSON.parse(raw);
@@ -30,14 +32,22 @@ function readArticles() {
 }
 
 function localizeArticle(article, lang) {
-  if (!article) {return article;}
+  if (!article) {
+    return article;
+  }
   const out = { ...article, readTime: article.readingTime || 0 };
   const code = (lang && String(lang).trim().toLowerCase()) || null;
   const t = code && article.translations && article.translations[code];
   if (t) {
-    if (t.title) {out.title = t.title;}
-    if (t.excerpt) {out.excerpt = t.excerpt;}
-    if (t.content) {out.content = t.content;}
+    if (t.title) {
+      out.title = t.title;
+    }
+    if (t.excerpt) {
+      out.excerpt = t.excerpt;
+    }
+    if (t.content) {
+      out.content = t.content;
+    }
   }
   delete out.translations;
   return out;
@@ -46,12 +56,12 @@ function localizeArticle(article, lang) {
 module.exports = {
   getAll(lang) {
     return readArticles()
-      .filter(a => a.isActive !== false && (a.isPublished || a.status === 'published'))
-      .map(a => localizeArticle(a, lang));
+      .filter((a) => a.isActive !== false && (a.isPublished || a.status === 'published'))
+      .map((a) => localizeArticle(a, lang));
   },
   getById(id, lang) {
     const articles = readArticles();
-    const article = articles.find(a => String(a._id) === String(id) && a.isActive !== false);
+    const article = articles.find((a) => String(a._id) === String(id) && a.isActive !== false);
     return article ? localizeArticle(article, lang) : null;
   },
 };

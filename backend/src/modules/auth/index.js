@@ -10,11 +10,7 @@
  *
  * ⚠️  NE PAS ajouter de routes ici : elles sont montées par src/routes/index.js.
  */
-const {
-  authMiddleware: authenticateToken,
-  adminMiddleware,
-  requireRole,
-} = require('../../middleware/auth');
+const { authMiddleware: authenticateToken, adminMiddleware, requireRole } = require('../../middleware/auth');
 
 // Middleware d'autorisation admin (rétrocompat)
 const requireAdmin = (req, res, next) => {

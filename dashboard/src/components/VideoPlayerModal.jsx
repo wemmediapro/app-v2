@@ -22,10 +22,7 @@ export default function VideoPlayerModal({ open, onClose, src, title = 'Vidéo' 
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -45,18 +42,9 @@ export default function VideoPlayerModal({ open, onClose, src, title = 'Vidéo' 
         </div>
         <div className="aspect-video bg-black">
           {resolvedSrc ? (
-            <video
-              key={resolvedSrc}
-              src={resolvedSrc}
-              className="w-full h-full"
-              controls
-              autoPlay
-              playsInline
-            />
+            <video key={resolvedSrc} src={resolvedSrc} className="w-full h-full" controls autoPlay playsInline />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-500">
-              Aucune vidéo à lire
-            </div>
+            <div className="w-full h-full flex items-center justify-center text-gray-500">Aucune vidéo à lire</div>
           )}
         </div>
       </motion.div>

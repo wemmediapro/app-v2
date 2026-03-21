@@ -15,6 +15,7 @@ Le proxy accepte **toutes les requêtes** sans vérification du host, puis les r
 ## 🚀 Démarrage
 
 ### Méthode 1: Script automatique
+
 ```bash
 cd dashboard
 ./start-with-proxy.sh
@@ -23,18 +24,21 @@ cd dashboard
 ### Méthode 2: Commandes manuelles
 
 **Terminal 1** - Démarrer Vite:
+
 ```bash
 cd dashboard
 npm run dev
 ```
 
 **Terminal 2** - Démarrer le proxy:
+
 ```bash
 cd dashboard
 node proxy-server.js
 ```
 
 **Terminal 3** - Créer le tunnel:
+
 ```bash
 cd dashboard
 npx cloudflared tunnel --url http://localhost:5174
@@ -56,6 +60,7 @@ npx cloudflared tunnel --url http://localhost:5174
 ## 🛑 Arrêt
 
 Arrêtez tous les processus:
+
 ```bash
 pkill -f "vite"
 pkill -f "proxy-server"
@@ -65,9 +70,3 @@ pkill -f "cloudflared"
 ## 💡 Note
 
 Le tunnel est actuellement actif en arrière-plan. Pour voir l'URL exacte, exécutez la commande cloudflared dans un terminal visible.
-
-
-
-
-
-

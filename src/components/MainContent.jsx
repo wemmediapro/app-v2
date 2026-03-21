@@ -365,12 +365,7 @@ function MainContent(props) {
             </Suspense>
           ) : (
             <Suspense fallback={<LoadingFallback t={t} minHeight="short" />}>
-              <MochaFallbackPage
-                page={page}
-                pageTitle={pageTitles[page]}
-                setPage={setPage}
-                t={t}
-              />
+              <MochaFallbackPage page={page} pageTitle={pageTitles[page]} setPage={setPage} t={t} />
             </Suspense>
           )}
         </AnimatePresence>

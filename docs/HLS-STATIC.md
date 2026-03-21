@@ -1,12 +1,12 @@
 # HLS statique — spécifications
 
-| Spécification | Valeur |
-|---------------|--------|
-| **HLS statique** | Une seule qualité, pas de variantes multiples |
-| **Résolution** | 480p (854×480) |
-| **Segments** | 6 secondes |
-| **Adaptive bitrate** | Non (inutile offline) |
-| **Cache disque** | SSD NVMe recommandé pour `uploads/videos_hls/` |
+| Spécification        | Valeur                                         |
+| -------------------- | ---------------------------------------------- |
+| **HLS statique**     | Une seule qualité, pas de variantes multiples  |
+| **Résolution**       | 480p (854×480)                                 |
+| **Segments**         | 6 secondes                                     |
+| **Adaptive bitrate** | Non (inutile offline)                          |
+| **Cache disque**     | SSD NVMe recommandé pour `uploads/videos_hls/` |
 
 Vidéos servies en **HLS statique** pour un démarrage rapide et un cache disque efficace (SSD NVMe recommandé).
 
@@ -69,21 +69,26 @@ Placer le répertoire **`/var/cache/nginx/gnv_hls`** sur NVMe si vous utilisez c
 Sur le serveur (ou en SSH) :
 
 1. **Chemin réel des HLS** (depuis la racine du backend) :
+
    ```bash
    cd backend
    realpath public/uploads/videos_hls 2>/dev/null || readlink -f public/uploads/videos_hls
    ```
 
 2. **Point de montage et type de disque** :
+
    ```bash
    df -T --output=source,fstype,target "$(realpath backend/public/uploads/videos_hls 2>/dev/null || echo backend/public/uploads/videos_hls)"
    ```
+
    Si le répertoire est un lien symbolique, utiliser le chemin résolu dans `df`.
 
 3. **Vérifier qu’un bloc est bien NVMe** (Linux) :
+
    ```bash
    lsblk -d -o NAME,ROTA,SIZE,MODEL | grep -E 'nvme|NAME'
    ```
+
    `ROTA=0` indique un disque non rotatif (SSD). Les devices `nvme*n*` sont des SSD NVMe.
 
 4. **Optionnel — script de vérification** (à exécuter depuis la racine du projet) :

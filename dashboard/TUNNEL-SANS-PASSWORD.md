@@ -45,9 +45,3 @@ pkill -f simple-http-server
 ## 💡 Note
 
 Cette solution utilise un serveur HTTP intermédiaire qui contourne toutes les restrictions de vérification du host, permettant un accès direct sans mot de passe.
-
-
-
-
-
-

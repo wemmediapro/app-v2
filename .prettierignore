@@ -1,3 +1,6 @@
+# JSON non standard (data URL SVG) — le parseur Prettier échoue
+public/manifest-web.json
+
 node_modules
 dist
 build

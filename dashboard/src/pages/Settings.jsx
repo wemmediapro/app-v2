@@ -2,17 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Fragment } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Shield,
-  UserCog,
-  Lock,
-  Users,
-  Save,
-  RotateCcw,
-  ChevronRight,
-  Ship,
-  Wifi,
-} from 'lucide-react';
+import { Shield, UserCog, Lock, Users, Save, RotateCcw, ChevronRight, Ship, Wifi } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useBoatConfig } from '../contexts/BoatConfigContext';
@@ -71,7 +61,22 @@ function getDefaultAccess() {
   const crew = Object.fromEntries(
     modules.map((id) => [
       id,
-      ['dashboard', 'statistics', 'radio', 'movies', 'webtv', 'bibliotheque', 'magazine', 'restaurants', 'shop', 'shipmap', 'enfant', 'banners', 'messages', 'settings-connection'].includes(id),
+      [
+        'dashboard',
+        'statistics',
+        'radio',
+        'movies',
+        'webtv',
+        'bibliotheque',
+        'magazine',
+        'restaurants',
+        'shop',
+        'shipmap',
+        'enfant',
+        'banners',
+        'messages',
+        'settings-connection',
+      ].includes(id),
     ])
   );
   const passenger = Object.fromEntries(modules.map((id) => [id, false]));
@@ -119,7 +124,7 @@ const Settings = () => {
   const [boatForm, setBoatForm] = useState({
     shipName: '',
     shipCapacity: '',
-    shipInfo: ''
+    shipInfo: '',
   });
   const [savingBoat, setSavingBoat] = useState(false);
 
@@ -128,7 +133,7 @@ const Settings = () => {
       setBoatForm({
         shipName: boatConfig.shipName ?? '',
         shipCapacity: boatConfig.shipCapacity != null ? String(boatConfig.shipCapacity) : '',
-        shipInfo: boatConfig.shipInfo ?? ''
+        shipInfo: boatConfig.shipInfo ?? '',
       });
     }
   }, [loadingBoat, boatConfig.shipName, boatConfig.shipCapacity, boatConfig.shipInfo]);
@@ -146,7 +151,7 @@ const Settings = () => {
       await apiService.updateBoatConfig({
         shipName: shipName || '',
         shipCapacity: capacityNum,
-        shipInfo: (boatForm.shipInfo || '').trim()
+        shipInfo: (boatForm.shipInfo || '').trim(),
       });
       toast.success(t('settings.boatConfigSaved'));
       refreshBoatConfig();
@@ -161,7 +166,8 @@ const Settings = () => {
   useEffect(() => {
     let cancelled = false;
     setAccessLoading(true);
-    apiService.getAccessSettings()
+    apiService
+      .getAccessSettings()
       .then((res) => {
         if (cancelled) return;
         const data = res?.data?.data ?? res?.data;
@@ -182,8 +188,12 @@ const Settings = () => {
       .catch(() => {
         if (!cancelled) setAccess(loadAccessFromStorage());
       })
-      .finally(() => { if (!cancelled) setAccessLoading(false); });
-    return () => { cancelled = true; };
+      .finally(() => {
+        if (!cancelled) setAccessLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleToggle = (role, moduleId) => {
@@ -257,9 +267,7 @@ const Settings = () => {
         <div className="p-6">
           <form onSubmit={handleSaveBoat} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('settings.shipName')}
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.shipName')}</label>
               <input
                 type="text"
                 value={boatForm.shipName}
@@ -269,9 +277,7 @@ const Settings = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('settings.capacity')}
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.capacity')}</label>
               <input
                 type="number"
                 min={0}
@@ -292,9 +298,7 @@ const Settings = () => {
               </button>
             </div>
             <div className="lg:col-span-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('settings.boatInfoLabel')}
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.boatInfoLabel')}</label>
               <textarea
                 value={boatForm.shipInfo}
                 onChange={(e) => setBoatForm((s) => ({ ...s, shipInfo: e.target.value }))}
@@ -329,7 +333,9 @@ const Settings = () => {
                 whileHover={{ y: -2 }}
                 className="rounded-xl border border-gray-200 bg-gray-50/50 p-5 flex flex-col"
               >
-                <div className={`flex h-12 w-12 rounded-lg bg-gradient-to-br ${role.color} items-center justify-center mb-4`}>
+                <div
+                  className={`flex h-12 w-12 rounded-lg bg-gradient-to-br ${role.color} items-center justify-center mb-4`}
+                >
                   <Icon size={24} className="text-white" />
                 </div>
                 <h3 className="font-semibold text-gray-900">{t(role.labelKey)}</h3>
@@ -390,15 +396,9 @@ const Settings = () => {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   {t('settings.module')}
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase w-28">
-                  Admin
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase w-28">
-                  Équipage
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase w-28">
-                  Passager
-                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase w-28">Admin</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase w-28">Équipage</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase w-28">Passager</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -407,15 +407,16 @@ const Settings = () => {
                 return (
                   <Fragment key={groupKey}>
                     <tr>
-                      <td colSpan={4} className="px-4 py-2 bg-gray-100/80 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <td
+                        colSpan={4}
+                        className="px-4 py-2 bg-gray-100/80 text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                      >
                         {t(groupKey)}
                       </td>
                     </tr>
                     {modules.map((mod) => (
                       <tr key={mod.id} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                          {t(mod.labelKey)}
-                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{t(mod.labelKey)}</td>
                         {['admin', 'crew', 'passenger'].map((role) => (
                           <td key={role} className="px-4 py-3 text-center">
                             <label className="inline-flex items-center cursor-pointer">

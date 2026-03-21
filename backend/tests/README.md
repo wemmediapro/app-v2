@@ -2,12 +2,12 @@
 
 ## Structure
 
-| Chemin | Rôle |
-|--------|------|
-| `tests/setup.js` | Variables d’environnement (JWT, admin, rate-limit assoupli) |
-| `tests/fixtures/` | Données réutilisables (users, restaurants, messages, feedback) |
-| `tests/unit/` | Suites unitaires / routes mockées |
-| `src/**/__tests__/` | Tests historiques (middleware, routes, sécurité) |
+| Chemin              | Rôle                                                           |
+| ------------------- | -------------------------------------------------------------- |
+| `tests/setup.js`    | Variables d’environnement (JWT, admin, rate-limit assoupli)    |
+| `tests/fixtures/`   | Données réutilisables (users, restaurants, messages, feedback) |
+| `tests/unit/`       | Suites unitaires / routes mockées                              |
+| `src/**/__tests__/` | Tests historiques (middleware, routes, sécurité)               |
 
 ## Commandes
 

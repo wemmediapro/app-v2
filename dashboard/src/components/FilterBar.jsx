@@ -8,15 +8,10 @@ const DESTINATION_KEYS = {
   'Nador - Gênes': 'nador_genes',
   'Alger - Marseille': 'alger_marseille',
   'Tunis - Marseille': 'tunis_marseille',
-  'Palerme - Tunis': 'palerme_tunis'
+  'Palerme - Tunis': 'palerme_tunis',
 };
 
-const FilterBar = ({
-  countryFilter,
-  setCountryFilter,
-  destinationFilter,
-  setDestinationFilter
-}) => {
+const FilterBar = ({ countryFilter, setCountryFilter, destinationFilter, setDestinationFilter }) => {
   const { t } = useLanguage();
 
   const availableCountries = [
@@ -24,7 +19,7 @@ const FilterBar = ({
     { name: 'Tunisie', code: 'TN' },
     { name: 'Algérie', code: 'DZ' },
     { name: 'Italie', code: 'IT' },
-    { name: 'Espagne', code: 'ES' }
+    { name: 'Espagne', code: 'ES' },
   ];
 
   const availableDestinations = [
@@ -34,7 +29,7 @@ const FilterBar = ({
     'Nador - Gênes',
     'Alger - Marseille',
     'Tunis - Marseille',
-    'Palerme - Tunis'
+    'Palerme - Tunis',
   ];
 
   const hasActiveFilters = countryFilter !== 'all' || destinationFilter !== 'all';
@@ -105,7 +100,3 @@ const FilterBar = ({
 };
 
 export default FilterBar;
-
-
-
-

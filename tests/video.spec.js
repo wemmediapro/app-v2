@@ -19,7 +19,9 @@ test.describe('Contenu vidéo', () => {
     await page.goto('/webtv');
     await acceptConditions(page);
     await expect(page.getByRole('main')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(/webtv|chaîne|channel/i)).toBeVisible({ timeout: 5000 }).catch(() => {});
+    await expect(page.getByText(/webtv|chaîne|channel/i))
+      .toBeVisible({ timeout: 5000 })
+      .catch(() => {});
   });
 
   test('clic sur une chaîne WebTV (si présente) ouvre la vue détail', async ({ page }) => {

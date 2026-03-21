@@ -13,13 +13,7 @@ jest.mock('../../lib/cache-manager', () => ({
   set: jest.fn(),
 }));
 
-const {
-  getTokenFromRequest,
-  adminMiddleware,
-  requireRole,
-  generateToken,
-  verifyToken,
-} = require('../auth');
+const { getTokenFromRequest, adminMiddleware, requireRole, generateToken, verifyToken } = require('../auth');
 
 describe('auth middleware', () => {
   describe('getTokenFromRequest', () => {

@@ -13,17 +13,27 @@ const User = require('../models/User');
 const router = express.Router();
 
 function parseReceiverFromChatRoom(room, myUserId) {
-  if (!room || myUserId == null) {return null;}
+  if (!room || myUserId == null) {
+    return null;
+  }
   const prefix = 'chat:';
   const r = String(room);
-  if (!r.startsWith(prefix)) {return null;}
+  if (!r.startsWith(prefix)) {
+    return null;
+  }
   const rest = r.slice(prefix.length);
   const parts = rest.split('_');
-  if (parts.length !== 2) {return null;}
+  if (parts.length !== 2) {
+    return null;
+  }
   const [a, b] = parts;
   const me = String(myUserId);
-  if (a === me) {return b;}
-  if (b === me) {return a;}
+  if (a === me) {
+    return b;
+  }
+  if (b === me) {
+    return a;
+  }
   return null;
 }
 
@@ -46,20 +56,10 @@ router.post(
   '/offline-queue',
   authMiddleware,
   [
-    body('items')
-      .isArray({ min: 1, max: 100 })
-      .withMessage('items doit être un tableau non vide (max 100)'),
-    body('items.*.id')
-      .isString()
-      .isLength({ min: 1, max: 128 })
-      .withMessage('id client requis'),
+    body('items').isArray({ min: 1, max: 100 }).withMessage('items doit être un tableau non vide (max 100)'),
+    body('items.*.id').isString().isLength({ min: 1, max: 128 }).withMessage('id client requis'),
     body('items.*.room').isString().isLength({ min: 3, max: 200 }),
-    body('items.*.content')
-      .isString()
-      .trim()
-      .notEmpty()
-      .isLength({ max: 1000 })
-      .withMessage('content invalide'),
+    body('items.*.content').isString().trim().notEmpty().isLength({ max: 1000 }).withMessage('content invalide'),
     body('items.*.timestamp').optional().isISO8601(),
     body('items.*.type').optional().isIn(['text', 'image', 'file']),
     body('mergeStrategy').optional().isIn(['server_timestamp', 'prefer_server']),
@@ -82,7 +82,8 @@ router.post(
         const existing = await Message.findOne({
           sender: senderId,
           clientSyncId,
-        }).populate('sender', 'firstName lastName avatar')
+        })
+          .populate('sender', 'firstName lastName avatar')
           .populate('receiver', 'firstName lastName avatar');
 
         if (existing) {
@@ -172,7 +173,7 @@ router.post(
         error: error.message,
       });
     }
-  },
+  }
 );
 
 module.exports = router;

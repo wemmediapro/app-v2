@@ -9,7 +9,10 @@ export default function AppHeader({ page, setPage, t }) {
   return (
     <header
       className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between gap-2 sm:gap-4 px-4 sm:px-5 py-3.5 sm:py-3 text-white shadow-lg rounded-b-2xl min-h-[60px] sm:min-h-[56px] max-w-[768px] mx-auto bg-[#264FFF] safe-area-top"
-      style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}
+      style={{
+        paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+        paddingRight: 'max(1rem, env(safe-area-inset-right))',
+      }}
     >
       <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 min-w-0">
         {page !== 'home' && (

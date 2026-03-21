@@ -9,7 +9,9 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const Ad = require('../models/Ad');
 
 function toResponse(doc) {
-  if (!doc) {return doc;}
+  if (!doc) {
+    return doc;
+  }
   const d = doc.toObject ? doc.toObject() : doc;
   return { ...d, id: (d._id || d.id)?.toString() };
 }
@@ -21,21 +23,24 @@ router.get('/', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
     const ads = await Ad.find().lean().sort({ order: 1, startDate: -1 });
-    return res.json(ads.map(doc => {
-      const raw = doc.skipAfterPercent;
-      const skipAfterPercent = (typeof raw === 'number' || (typeof raw === 'string' && String(raw).trim() !== ''))
-        ? Math.min(100, Math.max(0, Number(raw)))
-        : 0;
-      const rawTrigger = doc.triggerAtPercent;
-      const triggerAtPercent =
-        doc.type === 'midroll' &&
-        rawTrigger !== undefined &&
-        rawTrigger !== null &&
-        Number(rawTrigger) === Number(rawTrigger)
-          ? Math.min(100, Math.max(0, Number(rawTrigger)))
-          : 50;
-      return { ...doc, skipAfterPercent, triggerAtPercent, id: (doc._id || doc.id)?.toString() };
-    }));
+    return res.json(
+      ads.map((doc) => {
+        const raw = doc.skipAfterPercent;
+        const skipAfterPercent =
+          typeof raw === 'number' || (typeof raw === 'string' && String(raw).trim() !== '')
+            ? Math.min(100, Math.max(0, Number(raw)))
+            : 0;
+        const rawTrigger = doc.triggerAtPercent;
+        const triggerAtPercent =
+          doc.type === 'midroll' &&
+          rawTrigger !== undefined &&
+          rawTrigger !== null &&
+          Number(rawTrigger) === Number(rawTrigger)
+            ? Math.min(100, Math.max(0, Number(rawTrigger)))
+            : 50;
+        return { ...doc, skipAfterPercent, triggerAtPercent, id: (doc._id || doc.id)?.toString() };
+      })
+    );
   } catch (error) {
     console.error('Get ads error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -80,9 +85,7 @@ router.get('/next', async (req, res) => {
       return res.json({ videoUrl: null });
     }
     const skipAfterPercent =
-      type === 'midroll' && ad.skipAfterPercent != null
-        ? Math.min(100, Math.max(0, ad.skipAfterPercent))
-        : 0;
+      type === 'midroll' && ad.skipAfterPercent != null ? Math.min(100, Math.max(0, ad.skipAfterPercent)) : 0;
     return res.json({
       id: (ad._id || ad.id)?.toString(),
       videoUrl: ad.videoUrl,
@@ -123,7 +126,9 @@ router.get('/config', async (req, res) => {
   const adsConfig = config.ads || {};
   res.json({
     midrollCuePointsSeconds: [],
-    midrollCuePointsPercent: Array.isArray(adsConfig.midrollCuePointsPercent) ? adsConfig.midrollCuePointsPercent : [50],
+    midrollCuePointsPercent: Array.isArray(adsConfig.midrollCuePointsPercent)
+      ? adsConfig.midrollCuePointsPercent
+      : [50],
   });
 });
 
@@ -133,13 +138,11 @@ router.post('/:id/impression', async (req, res) => {
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
-    const doc = await Ad.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { impressions: 1 } },
-      { new: true },
-    ).lean();
-    if (!doc) {return res.status(404).json({ message: 'Pub non trouvée' });}
-    res.json({ ok: true, impressions: (doc.impressions || 0) });
+    const doc = await Ad.findByIdAndUpdate(req.params.id, { $inc: { impressions: 1 } }, { new: true }).lean();
+    if (!doc) {
+      return res.status(404).json({ message: 'Pub non trouvée' });
+    }
+    res.json({ ok: true, impressions: doc.impressions || 0 });
   } catch (error) {
     console.error('Ad impression error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -153,11 +156,14 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
     const doc = await Ad.findById(req.params.id).lean();
-    if (!doc) {return res.status(404).json({ message: 'Pub non trouvée' });}
+    if (!doc) {
+      return res.status(404).json({ message: 'Pub non trouvée' });
+    }
     const raw = doc.skipAfterPercent;
-    const skipAfterPercent = (typeof raw === 'number' || (typeof raw === 'string' && String(raw).trim() !== ''))
-      ? Math.min(100, Math.max(0, Number(raw)))
-      : 0;
+    const skipAfterPercent =
+      typeof raw === 'number' || (typeof raw === 'string' && String(raw).trim() !== '')
+        ? Math.min(100, Math.max(0, Number(raw)))
+        : 0;
     const rawTrigger = doc.triggerAtPercent;
     const triggerAtPercent =
       doc.type === 'midroll' &&
@@ -181,19 +187,25 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     }
     const body = req.body;
     const videoUrl = body.videoUrl && String(body.videoUrl).trim();
-    if (!videoUrl) {return res.status(400).json({ message: 'videoUrl est requis' });}
+    if (!videoUrl) {
+      return res.status(400).json({ message: 'videoUrl est requis' });
+    }
     const type = body.type === 'midroll' ? 'midroll' : 'preroll';
     const startDate = body.startDate ? new Date(body.startDate) : new Date();
     const endDate = body.endDate ? new Date(body.endDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     const skipAfterPercent =
       type === 'midroll' &&
-      (typeof body.skipAfterPercent === 'number' || (typeof body.skipAfterPercent === 'string' && body.skipAfterPercent !== ''))
+      (typeof body.skipAfterPercent === 'number' ||
+        (typeof body.skipAfterPercent === 'string' && body.skipAfterPercent !== ''))
         ? Math.min(100, Math.max(0, Number(body.skipAfterPercent)))
         : 0;
     const rawTrigger = body.triggerAtPercent ?? body.trigger_at_percent;
     const triggerAtPercent =
       type === 'midroll' &&
-      (rawTrigger !== undefined && rawTrigger !== null && rawTrigger !== '' && !Number.isNaN(Number(rawTrigger)))
+      rawTrigger !== undefined &&
+      rawTrigger !== null &&
+      rawTrigger !== '' &&
+      !Number.isNaN(Number(rawTrigger))
         ? Math.min(100, Math.max(0, Number(rawTrigger)))
         : 50;
     const ad = new Ad({
@@ -227,11 +239,21 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     const updates = { ...req.body };
     delete updates._id;
-    if (updates.videoUrl !== undefined) {updates.videoUrl = String(updates.videoUrl).trim();}
-    if (updates.type !== undefined) {updates.type = updates.type === 'midroll' ? 'midroll' : 'preroll';}
-    if (updates.type === 'preroll') {updates.skipAfterPercent = 0;}
-    if (updates.startDate !== undefined) {updates.startDate = new Date(updates.startDate);}
-    if (updates.endDate !== undefined) {updates.endDate = new Date(updates.endDate);}
+    if (updates.videoUrl !== undefined) {
+      updates.videoUrl = String(updates.videoUrl).trim();
+    }
+    if (updates.type !== undefined) {
+      updates.type = updates.type === 'midroll' ? 'midroll' : 'preroll';
+    }
+    if (updates.type === 'preroll') {
+      updates.skipAfterPercent = 0;
+    }
+    if (updates.startDate !== undefined) {
+      updates.startDate = new Date(updates.startDate);
+    }
+    if (updates.endDate !== undefined) {
+      updates.endDate = new Date(updates.endDate);
+    }
     // Toujours lire triggerAtPercent depuis le body pour la mise à jour (mid-roll)
     const rawTriggerBody = req.body.triggerAtPercent ?? req.body.trigger_at_percent ?? updates.triggerAtPercent;
     let typeIsMidroll = updates.type === 'midroll';
@@ -239,10 +261,15 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     if (updates.type === undefined) {
       docBefore = await Ad.findById(req.params.id).select('type').lean();
       typeIsMidroll = docBefore?.type === 'midroll';
-    } else if (updates.type === 'preroll') {typeIsMidroll = false;}
+    } else if (updates.type === 'preroll') {
+      typeIsMidroll = false;
+    }
     if (typeIsMidroll) {
       updates.triggerAtPercent =
-        rawTriggerBody !== undefined && rawTriggerBody !== null && rawTriggerBody !== '' && !Number.isNaN(Number(rawTriggerBody))
+        rawTriggerBody !== undefined &&
+        rawTriggerBody !== null &&
+        rawTriggerBody !== '' &&
+        !Number.isNaN(Number(rawTriggerBody))
           ? Math.min(100, Math.max(0, Number(rawTriggerBody)))
           : 50;
     } else {
@@ -250,14 +277,16 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     if (updates.skipAfterPercent !== undefined) {
       const raw = updates.skipAfterPercent;
-      const typeIsMidrollSkip = updates.type !== undefined ? updates.type === 'midroll' : (docBefore?.type === 'midroll');
+      const typeIsMidrollSkip = updates.type !== undefined ? updates.type === 'midroll' : docBefore?.type === 'midroll';
       updates.skipAfterPercent =
         typeIsMidrollSkip && (typeof raw === 'number' || (typeof raw === 'string' && raw !== ''))
           ? Math.min(100, Math.max(0, Number(raw)))
           : 0;
     }
     const doc = await Ad.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true }).lean();
-    if (!doc) {return res.status(404).json({ message: 'Pub non trouvée' });}
+    if (!doc) {
+      return res.status(404).json({ message: 'Pub non trouvée' });
+    }
     return res.json({ ...doc, id: doc._id?.toString() });
   } catch (error) {
     console.error('Update ad error:', error);
@@ -272,7 +301,9 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
     const doc = await Ad.findByIdAndDelete(req.params.id);
-    if (!doc) {return res.status(404).json({ message: 'Pub non trouvée' });}
+    if (!doc) {
+      return res.status(404).json({ message: 'Pub non trouvée' });
+    }
     res.json({ message: 'Pub supprimée' });
   } catch (error) {
     console.error('Delete ad error:', error);

@@ -16,9 +16,7 @@ describe('GET /api/restaurants', () => {
   });
 
   it('GET /categories/list retourne la liste des catégories', async () => {
-    const res = await request(app)
-      .get('/api/restaurants/categories/list')
-      .expect(200);
+    const res = await request(app).get('/api/restaurants/categories/list').expect(200);
 
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBeGreaterThan(0);
@@ -31,9 +29,7 @@ describe('GET /api/restaurants', () => {
     origReadyState = mongoose.connection.readyState;
     mongoose.connection.readyState = 0;
 
-    const res = await request(app)
-      .get('/api/restaurants')
-      .expect(200);
+    const res = await request(app).get('/api/restaurants').expect(200);
 
     expect(Array.isArray(res.body)).toBe(true);
     mongoose.connection.readyState = origReadyState;

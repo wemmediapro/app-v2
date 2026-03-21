@@ -31,7 +31,7 @@ router.get('/snapshot', async (req, res) => {
   if (exportKey && exportKey.length > 0) {
     const provided = req.query.key || req.get('X-Export-Key');
     if (provided !== exportKey) {
-      return res.status(403).json({ message: 'Accès refusé. Clé d\'export requise.' });
+      return res.status(403).json({ message: "Accès refusé. Clé d'export requise." });
     }
   }
   try {

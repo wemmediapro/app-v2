@@ -11,9 +11,7 @@ function sleep(ms) {
 }
 
 function countActionable(items) {
-  return items.filter(
-    (i) => i.status === 'pending' || i.status === 'failed' || i.status === 'sending',
-  ).length;
+  return items.filter((i) => i.status === 'pending' || i.status === 'failed' || i.status === 'sending').length;
 }
 
 /**
@@ -55,9 +53,7 @@ export function useOfflineQueue(options = {}) {
         if (typeof onFlushComplete === 'function') {
           onFlushComplete({ sent: totalSent });
         }
-        window.dispatchEvent(
-          new CustomEvent('gnv-offline-flush-complete', { detail: { sent: totalSent } }),
-        );
+        window.dispatchEvent(new CustomEvent('gnv-offline-flush-complete', { detail: { sent: totalSent } }));
       }
     } finally {
       flushingRef.current = false;

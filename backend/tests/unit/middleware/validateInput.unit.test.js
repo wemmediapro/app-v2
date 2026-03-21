@@ -15,9 +15,7 @@ describe('validateInput', () => {
       const next = jest.fn();
       mw(req, res, next);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'INVALID_ID' }),
-      );
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_ID' }));
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -53,5 +51,4 @@ describe('validateInput', () => {
       expect(next).toHaveBeenCalled();
     });
   });
-
 });

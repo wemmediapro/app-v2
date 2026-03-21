@@ -40,7 +40,3 @@ const languageMiddleware = (req, res, next) => {
 };
 
 module.exports = languageMiddleware;
-
-
-
-

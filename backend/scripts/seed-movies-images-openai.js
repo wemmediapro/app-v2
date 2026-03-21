@@ -32,21 +32,29 @@ async function generateAndUploadImage(openai, prompt, filename) {
     prompt,
   });
   const img = response.data?.[0];
-  if (!img?.b64_json) {throw new Error('Pas d’image retournée par OpenAI');}
+  if (!img?.b64_json) {
+    throw new Error('Pas d’image retournée par OpenAI');
+  }
 
   const uploadUrl = `${API_BASE_URL}/api/upload/image-from-base64`;
   const headers = { 'Content-Type': 'application/json' };
-  if (SEED_SECRET) {headers['X-Seed-Secret'] = SEED_SECRET;}
+  if (SEED_SECRET) {
+    headers['X-Seed-Secret'] = SEED_SECRET;
+  }
 
   const res = await fetch(uploadUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify({ base64: img.b64_json, filename }),
   });
-  if (!res.ok) {throw new Error(`Upload échoué (${res.status}): ${await res.text()}`);}
+  if (!res.ok) {
+    throw new Error(`Upload échoué (${res.status}): ${await res.text()}`);
+  }
   const data = await res.json();
   const pathRel = data?.image?.path || (data?.image?.url || '').replace(/^https?:\/\/[^/]+/, '');
-  if (!pathRel) {throw new Error('Réponse upload sans image.path');}
+  if (!pathRel) {
+    throw new Error('Réponse upload sans image.path');
+  }
   return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;
 }
 
@@ -80,10 +88,7 @@ async function main() {
       console.log(`   [${i + 1}/${movies.length}] ${label.slice(0, 50)}...`);
       const prompt = buildPosterPrompt(m);
       const posterPath = await generateAndUploadImage(openai, prompt, filename);
-      await Movie.updateOne(
-        { _id: m._id },
-        { $set: { poster: posterPath, tmdbPosterPath: '' } },
-      );
+      await Movie.updateOne({ _id: m._id }, { $set: { poster: posterPath, tmdbPosterPath: '' } });
       console.log('      ✅ Affiche uploadée et film mis à jour.');
     } catch (err) {
       console.error(`   ❌ ${label.slice(0, 40)}:`, err.message);
@@ -95,4 +100,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

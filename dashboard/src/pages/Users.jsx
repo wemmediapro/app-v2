@@ -2,17 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Fragment } from 'react';
-import {
-  Users as UsersIcon,
-  Search,
-  Edit,
-  Trash2,
-  Mail,
-  Phone,
-  Plus,
-  X,
-  Shield,
-} from 'lucide-react';
+import { Users as UsersIcon, Search, Edit, Trash2, Mail, Phone, Plus, X, Shield } from 'lucide-react';
 import FilterBar from '../components/FilterBar';
 import { apiService } from '../services/apiService';
 import toast from 'react-hot-toast';
@@ -117,9 +107,10 @@ const Users = () => {
   const openEditModal = (user) => {
     setUserToEdit(user);
     const roleDefaults = getDefaultAccess()[user.role || 'passenger'] || getDefaultAccess().admin;
-    const allowedModules = user.allowedModules && typeof user.allowedModules === 'object' && Object.keys(user.allowedModules).length > 0
-      ? { ...roleDefaults, ...user.allowedModules }
-      : { ...roleDefaults };
+    const allowedModules =
+      user.allowedModules && typeof user.allowedModules === 'object' && Object.keys(user.allowedModules).length > 0
+        ? { ...roleDefaults, ...user.allowedModules }
+        : { ...roleDefaults };
     setEditForm({
       firstName: user.firstName || '',
       lastName: user.lastName || '',
@@ -265,7 +256,9 @@ const Users = () => {
     return (
       <div className="rounded-xl bg-amber-50 border border-amber-200 p-6 text-center" role="alert">
         <p className="text-amber-800 font-medium">{t('common.accessDenied') || 'Accès refusé'}</p>
-        <p className="text-sm text-amber-700 mt-1">{t('users.noPermission') || "Vous n'avez pas la permission d'accéder à cette page."}</p>
+        <p className="text-sm text-amber-700 mt-1">
+          {t('users.noPermission') || "Vous n'avez pas la permission d'accéder à cette page."}
+        </p>
       </div>
     );
   }
@@ -419,9 +412,7 @@ const Users = () => {
                           {user.isActive ? t('common.active') : t('common.inactive')}
                         </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.cabinNumber || '-'}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.cabinNumber || '-'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
                       </td>
@@ -739,13 +730,15 @@ const Users = () => {
                                 <input
                                   type="checkbox"
                                   checked={!!editForm.allowedModules?.[mod.id]}
-                                  onChange={() => setEditForm((f) => ({
-                                    ...f,
-                                    allowedModules: {
-                                      ...f.allowedModules,
-                                      [mod.id]: !f.allowedModules?.[mod.id],
-                                    },
-                                  }))}
+                                  onChange={() =>
+                                    setEditForm((f) => ({
+                                      ...f,
+                                      allowedModules: {
+                                        ...f.allowedModules,
+                                        [mod.id]: !f.allowedModules?.[mod.id],
+                                      },
+                                    }))
+                                  }
                                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
                                 <span className="text-sm text-gray-700">{t(mod.labelKey)}</span>
@@ -757,10 +750,12 @@ const Users = () => {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setEditForm((f) => ({
-                        ...f,
-                        allowedModules: { ...getDefaultAccess()[f.role] || getDefaultAccess().admin },
-                      }))}
+                      onClick={() =>
+                        setEditForm((f) => ({
+                          ...f,
+                          allowedModules: { ...(getDefaultAccess()[f.role] || getDefaultAccess().admin) },
+                        }))
+                      }
                       className="mt-2 text-xs text-blue-600 hover:text-blue-800"
                     >
                       {t('users.applyRoleDefaults')}

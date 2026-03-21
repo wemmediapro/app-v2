@@ -3,7 +3,7 @@
  * Conservé en fichier externe pour permettre une CSP stricte sans 'unsafe-inline'.
  */
 (function () {
-  console.log('🚀 Démarrage de l\'application GNV');
+  console.log("🚀 Démarrage de l'application GNV");
   console.log('📍 URL:', window.location.href);
   console.log('🌐 User Agent:', navigator.userAgent);
 

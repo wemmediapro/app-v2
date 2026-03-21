@@ -18,7 +18,9 @@ function ensureDir() {
 
 function readBanners() {
   ensureDir();
-  if (!fs.existsSync(BANNERS_FILE)) {return [];}
+  if (!fs.existsSync(BANNERS_FILE)) {
+    return [];
+  }
   try {
     const raw = fs.readFileSync(BANNERS_FILE, 'utf8');
     const data = JSON.parse(raw);
@@ -30,15 +32,21 @@ function readBanners() {
 }
 
 function localizeBanner(doc, lang) {
-  if (!doc) {return doc;}
+  if (!doc) {
+    return doc;
+  }
   const out = { ...doc, _id: doc._id?.toString() };
   if (lang && doc.translations && typeof doc.translations === 'object') {
     const fallbackLangs = [lang, 'fr', 'en'].filter((l, i, a) => a.indexOf(l) === i);
     for (const l of fallbackLangs) {
       const t = doc.translations[l];
       if (t) {
-        if (t.title) {out.title = t.title;}
-        if (t.description !== undefined) {out.description = t.description;}
+        if (t.title) {
+          out.title = t.title;
+        }
+        if (t.description !== undefined) {
+          out.description = t.description;
+        }
         break;
       }
     }
@@ -48,16 +56,16 @@ function localizeBanner(doc, lang) {
 
 module.exports = {
   getAll(lang, page) {
-    let list = readBanners().filter(b => b.isActive !== false);
+    let list = readBanners().filter((b) => b.isActive !== false);
     if (page && String(page).trim()) {
       const pageId = String(page).trim().toLowerCase();
-      list = list.filter(b => !b.pages || b.pages.length === 0 || b.pages.includes(pageId));
+      list = list.filter((b) => !b.pages || b.pages.length === 0 || b.pages.includes(pageId));
     }
-    return list.map(b => localizeBanner(b, lang));
+    return list.map((b) => localizeBanner(b, lang));
   },
   getById(id, lang) {
     const list = readBanners();
-    const b = list.find(x => String(x._id) === String(id));
+    const b = list.find((x) => String(x._id) === String(id));
     return b ? localizeBanner(b, lang) : null;
   },
 };

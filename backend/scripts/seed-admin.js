@@ -26,8 +26,10 @@ async function seedAdmin() {
 
     const existing = await User.findOne({ email: adminEmail });
     if (existing) {
-      console.log('ℹ️  Un admin existe déjà avec l\'email:', adminEmail);
-      console.log('   Pour réinitialiser le mot de passe, utilisez scripts/reset-admin-password.js ou supprimez l\'utilisateur en base.');
+      console.log("ℹ️  Un admin existe déjà avec l'email:", adminEmail);
+      console.log(
+        "   Pour réinitialiser le mot de passe, utilisez scripts/reset-admin-password.js ou supprimez l'utilisateur en base."
+      );
       process.exit(0);
       return;
     }

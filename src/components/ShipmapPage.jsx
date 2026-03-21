@@ -25,8 +25,22 @@ function getServiceIcon(title) {
   if (!title || typeof title !== 'string') return CircleDot;
   const t = title.toLowerCase();
   if (t.includes('poids lourd') || t.includes('camion') || t.includes('heavy')) return Truck;
-  if (t.includes('véhicule') || t.includes('vehicle') || t.includes('léger') || t.includes('light') || t.includes('voiture')) return Car;
-  if (t.includes('ascenseur') || t.includes('elevator') || t.includes('lift') || t.includes('escalier') || t.includes('stair')) return ArrowUpFromLine;
+  if (
+    t.includes('véhicule') ||
+    t.includes('vehicle') ||
+    t.includes('léger') ||
+    t.includes('light') ||
+    t.includes('voiture')
+  )
+    return Car;
+  if (
+    t.includes('ascenseur') ||
+    t.includes('elevator') ||
+    t.includes('lift') ||
+    t.includes('escalier') ||
+    t.includes('stair')
+  )
+    return ArrowUpFromLine;
   if (t.includes('restaurant') || t.includes('ristorante') || t.includes('resto')) return UtensilsCrossed;
   if (t.includes('bar') || t.includes('café') || t.includes('cafe') || t.includes('snack')) return Coffee;
   if (t.includes('piscine') || t.includes('pool')) return Waves;
@@ -66,9 +80,7 @@ export default function ShipmapPage({
   const t = tProp ?? tContext;
   const deckInfo = selectedDeck ? deckServices[selectedDeck] : null;
   const totalServices = shipDecks.reduce((acc, d) => acc + (deckServices[d.id]?.services?.length || 0), 0);
-  const filtersToShow = DECK_TYPE_FILTERS.filter(
-    (f) => f.value === 'all' || shipDecks.some((d) => d.type === f.value),
-  );
+  const filtersToShow = DECK_TYPE_FILTERS.filter((f) => f.value === 'all' || shipDecks.some((d) => d.type === f.value));
 
   return (
     <motion.div
@@ -164,7 +176,10 @@ export default function ShipmapPage({
           <>
             {/* Choix du pont — menu déroulant */}
             <section className="space-y-2">
-              <label htmlFor="shipmap-deck-select" className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-500">
+              <label
+                htmlFor="shipmap-deck-select"
+                className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-500"
+              >
                 <Waves size={12} />
                 {t('shipmap.chooseDeck')}
               </label>
@@ -182,7 +197,11 @@ export default function ShipmapPage({
                     </option>
                   ))}
                 </select>
-                <ChevronDown size={20} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden />
+                <ChevronDown
+                  size={20}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  aria-hidden
+                />
               </div>
             </section>
 
@@ -207,9 +226,7 @@ export default function ShipmapPage({
                           {deckInfo.title || selectedDeckInfo?.name || t('shipmap.deck')}
                         </h2>
                         {deckInfo.summary && (
-                          <p className="mt-0.5 text-sm leading-relaxed text-slate-600">
-                            {deckInfo.summary}
-                          </p>
+                          <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{deckInfo.summary}</p>
                         )}
                       </div>
                     </div>
@@ -283,9 +300,7 @@ export default function ShipmapPage({
                           {deckRooms[selectedDeck]}
                         </span>
                       </div>
-                      <p className="mt-2 text-center text-xs text-slate-500">
-                        Plage de numéros sur ce pont
-                      </p>
+                      <p className="mt-2 text-center text-xs text-slate-500">Plage de numéros sur ce pont</p>
                     </div>
                   )}
                 </motion.section>

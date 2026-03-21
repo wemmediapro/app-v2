@@ -18,7 +18,9 @@ function ensureDir() {
 
 function readMovies() {
   ensureDir();
-  if (!fs.existsSync(MOVIES_FILE)) {return [];}
+  if (!fs.existsSync(MOVIES_FILE)) {
+    return [];
+  }
   try {
     const raw = fs.readFileSync(MOVIES_FILE, 'utf8');
     const data = JSON.parse(raw);
@@ -36,20 +38,22 @@ function writeMovies(movies) {
 
 function nextId(movies) {
   let max = 0;
-  movies.forEach(m => {
+  movies.forEach((m) => {
     const id = typeof m._id === 'string' && m._id.match(/^\d+$/) ? parseInt(m._id, 10) : 0;
-    if (id > max) {max = id;}
+    if (id > max) {
+      max = id;
+    }
   });
   return String(max + 1);
 }
 
 module.exports = {
   getAll() {
-    return readMovies().filter(m => m.isActive !== false);
+    return readMovies().filter((m) => m.isActive !== false);
   },
   getById(id) {
     const movies = readMovies();
-    return movies.find(m => String(m._id) === String(id) && m.isActive !== false);
+    return movies.find((m) => String(m._id) === String(id) && m.isActive !== false);
   },
   create(body) {
     const movies = readMovies();
@@ -76,16 +80,17 @@ module.exports = {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       translations: body.translations && typeof body.translations === 'object' ? body.translations : {},
-      episodes: (body.type === 'series' && Array.isArray(body.episodes))
-        ? body.episodes.map((ep, i) => ({
-          title: ep.title,
-          duration: ep.duration || '',
-          description: ep.description || '',
-          videoUrl: ep.videoUrl || '',
-          order: ep.order ?? i,
-          translations: ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined,
-        }))
-        : [],
+      episodes:
+        body.type === 'series' && Array.isArray(body.episodes)
+          ? body.episodes.map((ep, i) => ({
+              title: ep.title,
+              duration: ep.duration || '',
+              description: ep.description || '',
+              videoUrl: ep.videoUrl || '',
+              order: ep.order ?? i,
+              translations: ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined,
+            }))
+          : [],
     };
     movies.push(movie);
     writeMovies(movies);
@@ -93,8 +98,10 @@ module.exports = {
   },
   update(id, body) {
     const movies = readMovies();
-    const idx = movies.findIndex(m => String(m._id) === String(id));
-    if (idx === -1) {return null;}
+    const idx = movies.findIndex((m) => String(m._id) === String(id));
+    if (idx === -1) {
+      return null;
+    }
     const updates = {
       title: body.title,
       type: body.type === 'series' ? 'series' : 'movie',
@@ -126,15 +133,17 @@ module.exports = {
     if (body.translations != null && typeof body.translations === 'object') {
       updates.translations = body.translations;
     }
-    Object.keys(updates).forEach(k => updates[k] === undefined && delete updates[k]);
+    Object.keys(updates).forEach((k) => updates[k] === undefined && delete updates[k]);
     movies[idx] = { ...movies[idx], ...updates };
     writeMovies(movies);
     return movies[idx];
   },
   remove(id) {
     const movies = readMovies();
-    const idx = movies.findIndex(m => String(m._id) === String(id));
-    if (idx === -1) {return null;}
+    const idx = movies.findIndex((m) => String(m._id) === String(id));
+    if (idx === -1) {
+      return null;
+    }
     movies[idx].isActive = false;
     movies[idx].updatedAt = new Date().toISOString();
     writeMovies(movies);

@@ -89,7 +89,9 @@ router.get('/memory-stats', (req, res) => {
 
 /** Formate une taille en octets en chaîne lisible (Ko, Mo, Go) */
 function formatBytes(bytes) {
-  if (bytes === 0) {return '0 o';}
+  if (bytes === 0) {
+    return '0 o';
+  }
   const k = 1024;
   const sizes = ['o', 'Ko', 'Mo', 'Go', 'To'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -111,11 +113,13 @@ router.get('/databases', async (req, res) => {
     }
     const admin = mongoose.connection.db.admin();
     const { databases: list, totalSize } = await admin.listDatabases();
-    const databases = (list || []).map((db) => ({
-      name: db.name,
-      sizeOnDisk: db.sizeOnDisk || 0,
-      sizeFormatted: formatBytes(db.sizeOnDisk || 0),
-    })).sort((a, b) => (b.sizeOnDisk || 0) - (a.sizeOnDisk || 0));
+    const databases = (list || [])
+      .map((db) => ({
+        name: db.name,
+        sizeOnDisk: db.sizeOnDisk || 0,
+        sizeFormatted: formatBytes(db.sizeOnDisk || 0),
+      }))
+      .sort((a, b) => (b.sizeOnDisk || 0) - (a.sizeOnDisk || 0));
     res.json({
       databases,
       totalSize: totalSize || 0,
@@ -137,7 +141,19 @@ router.get('/dashboard', async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       return res.json({
-        statistics: { totalUsers: 0, activeUsers: 0, totalRestaurants: 0, totalMessages: 0, totalFeedback: 0, totalViewers: 0, totalArticles: 0, totalRadioStations: 0, totalMovies: 0, totalActivities: 0, totalProducts: 0 },
+        statistics: {
+          totalUsers: 0,
+          activeUsers: 0,
+          totalRestaurants: 0,
+          totalMessages: 0,
+          totalFeedback: 0,
+          totalViewers: 0,
+          totalArticles: 0,
+          totalRadioStations: 0,
+          totalMovies: 0,
+          totalActivities: 0,
+          totalProducts: 0,
+        },
         charts: { feedbackByStatus: [], usersByRole: [] },
         recent: { users: [], feedback: [] },
       });
@@ -145,7 +161,9 @@ router.get('/dashboard', async (req, res) => {
 
     if (cacheManager.isConnected) {
       const cached = await cacheManager.get(DASHBOARD_CACHE_KEY);
-      if (cached) {return res.json(cached);}
+      if (cached) {
+        return res.json(cached);
+      }
     }
 
     // Get statistics (toutes les valeurs depuis la base de données)
@@ -224,7 +242,9 @@ router.get('/dashboard', async (req, res) => {
         feedback: recentFeedback,
       },
     };
-    if (cacheManager.isConnected) {await cacheManager.set(DASHBOARD_CACHE_KEY, payload, DASHBOARD_CACHE_TTL);}
+    if (cacheManager.isConnected) {
+      await cacheManager.set(DASHBOARD_CACHE_KEY, payload, DASHBOARD_CACHE_TTL);
+    }
     res.json(payload);
   } catch (error) {
     console.error('Dashboard error:', error);
@@ -258,14 +278,14 @@ router.get('/users', validatePagination, handleValidationErrors, async (req, res
       }
     }
 
-    if (role) {query.role = role;}
-    if (status !== undefined) {query.isActive = status === 'active';}
+    if (role) {
+      query.role = role;
+    }
+    if (status !== undefined) {
+      query.isActive = status === 'active';
+    }
 
-    const users = await User.find(query)
-      .select('-password')
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .skip(skip);
+    const users = await User.find(query).select('-password').sort({ createdAt: -1 }).limit(limit).skip(skip);
 
     const total = await User.countDocuments(query);
 
@@ -370,22 +390,37 @@ router.put('/users/:id', validateMongoId('id'), ...adminUserUpdateValidation, as
       }
       user.email = normalized;
     }
-    if (firstName !== undefined) {user.firstName = firstName;}
-    if (lastName !== undefined) {user.lastName = lastName;}
-    if (phone !== undefined) {user.phone = phone;}
-    if (cabinNumber !== undefined) {user.cabinNumber = cabinNumber;}
-    if (role && ['passenger', 'crew', 'admin'].includes(role)) {user.role = role;}
-    if (isActive !== undefined) {user.isActive = !!isActive;}
+    if (firstName !== undefined) {
+      user.firstName = firstName;
+    }
+    if (lastName !== undefined) {
+      user.lastName = lastName;
+    }
+    if (phone !== undefined) {
+      user.phone = phone;
+    }
+    if (cabinNumber !== undefined) {
+      user.cabinNumber = cabinNumber;
+    }
+    if (role && ['passenger', 'crew', 'admin'].includes(role)) {
+      user.role = role;
+    }
+    if (isActive !== undefined) {
+      user.isActive = !!isActive;
+    }
     if (password && String(password).length >= 8) {
       const effectiveRole = role || user.role;
       if (effectiveRole === 'admin' && !strongPassword(password)) {
         return res.status(400).json({
-          message: 'Le mot de passe admin doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un symbole.',
+          message:
+            'Le mot de passe admin doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un symbole.',
         });
       }
       user.password = password;
     }
-    if (allowedModules !== undefined) {user.allowedModules = allowedModules && typeof allowedModules === 'object' ? allowedModules : null;}
+    if (allowedModules !== undefined) {
+      user.allowedModules = allowedModules && typeof allowedModules === 'object' ? allowedModules : null;
+    }
 
     await user.save();
 
@@ -495,7 +530,9 @@ router.get('/conversations', validatePagination, handleValidationErrors, async (
       return res.json([]);
     }
     const { skip, limit } = req.pagination;
-    const messages = await Message.find().sort({ createdAt: -1 }).limit(500)
+    const messages = await Message.find()
+      .sort({ createdAt: -1 })
+      .limit(500)
       .populate('sender', 'firstName lastName email avatar cabinNumber')
       .populate('receiver', 'firstName lastName email avatar cabinNumber');
     const seen = new Set();
@@ -579,7 +616,7 @@ router.get('/audit-logs/export', async (req, res) => {
     res.send(content);
   } catch (error) {
     console.error('GET audit-logs/export error:', error);
-    res.status(500).json({ message: 'Erreur lors de l\'export des logs', error: error.message });
+    res.status(500).json({ message: "Erreur lors de l'export des logs", error: error.message });
   }
 });
 
@@ -633,22 +670,22 @@ router.put('/settings/access', ...settingsAccessValidation, async (req, res) => 
       ...(passenger != null && typeof passenger === 'object' ? { passenger } : {}),
     };
     if (Object.keys(accessByRole).length === 0) {
-      return res.status(400).json({ success: false, message: 'Corps invalide : fournir admin, crew et/ou passenger (objets)' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Corps invalide : fournir admin, crew et/ou passenger (objets)' });
     }
     const config = await LocalServerConfig.findOne({ id: 'local' }).lean();
     const merged = { ...(config?.accessByRole || {}), ...accessByRole };
     await LocalServerConfig.findOneAndUpdate(
       { id: 'local' },
       { $set: { accessByRole: merged } },
-      { new: true, upsert: true },
+      { new: true, upsert: true }
     );
     res.json({ success: true, message: 'Droits enregistrés' });
   } catch (error) {
     console.error('PUT settings/access error:', error);
-    res.status(500).json({ success: false, message: 'Erreur lors de l\'enregistrement des droits' });
+    res.status(500).json({ success: false, message: "Erreur lors de l'enregistrement des droits" });
   }
 });
 
 module.exports = router;
-
-

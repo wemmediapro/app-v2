@@ -193,7 +193,7 @@ async function main() {
 
   const content = completion.choices[0]?.message?.content;
   if (!content) {
-    console.error('Aucune réponse reçue d\'OpenAI.');
+    console.error("Aucune réponse reçue d'OpenAI.");
     process.exit(1);
   }
 

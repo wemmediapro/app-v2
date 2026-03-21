@@ -25,7 +25,7 @@ const SEED_SECRET = process.env.SEED_SCRIPT_SECRET || process.env.SEED_SECRET ||
 const WITH_MENU_IMAGES = process.argv.includes('--menu-images');
 const RESTO_ONLY = process.argv.includes('--resto-only');
 // Sans --menu-images et sans --resto-only : 4 images menu. Avec --menu-images : tous les plats/boissons.
-const MAX_DISH_IMAGES = RESTO_ONLY ? 0 : (WITH_MENU_IMAGES ? 999 : 4);
+const MAX_DISH_IMAGES = RESTO_ONLY ? 0 : WITH_MENU_IMAGES ? 999 : 4;
 
 function slug(str) {
   return String(str || '')
@@ -42,12 +42,13 @@ function buildRestaurantImagePrompt(restaurant) {
   const type = restaurant.type || 'Restaurant à la carte';
   const category = restaurant.category || 'french';
   const desc = (restaurant.description || '').slice(0, 200);
-  const style = {
-    french: 'cuisine française raffinée, ambiance bistrot élégant',
-    seafood: 'fruits de mer et poissons, vue mer, décoration maritime',
-    fastfood: 'espace convivial moderne, snacks et formules',
-    dessert: 'pâtisserie et café, douceur et gourmandise',
-  }[category] || 'restaurant confortable';
+  const style =
+    {
+      french: 'cuisine française raffinée, ambiance bistrot élégant',
+      seafood: 'fruits de mer et poissons, vue mer, décoration maritime',
+      fastfood: 'espace convivial moderne, snacks et formules',
+      dessert: 'pâtisserie et café, douceur et gourmandise',
+    }[category] || 'restaurant confortable';
   return `Professional photo of a cruise ship / ferry restaurant interior. ${name}, ${type}. Style: ${style}. ${desc ? `Ambiance: ${desc}.` : ''} Clean, welcoming, good lighting, no text or logos. High quality, realistic, suitable for a travel app.`;
 }
 
@@ -58,7 +59,18 @@ function buildDishImagePrompt(dishName, category) {
     style = 'elegant dessert on a plate, sweet, appetizing';
   } else if (cat.includes('entrée') || cat.includes('appetizer') || cat.includes('starter')) {
     style = 'appetizer starter dish on a plate, fresh';
-  } else if (cat.includes('boisson') || cat.includes('beverage') || cat.includes('cocktail') || cat.includes('drink') || cat.includes('café') || cat.includes('soda') || cat.includes('vin') || cat.includes('wine') || cat.includes('jus') || cat.includes('juice')) {
+  } else if (
+    cat.includes('boisson') ||
+    cat.includes('beverage') ||
+    cat.includes('cocktail') ||
+    cat.includes('drink') ||
+    cat.includes('café') ||
+    cat.includes('soda') ||
+    cat.includes('vin') ||
+    cat.includes('wine') ||
+    cat.includes('jus') ||
+    cat.includes('juice')
+  ) {
     style = 'professional photo of a drink in a glass, beverage, refreshing, clean background, no text';
   } else {
     style = 'main course dish on a plate, restaurant quality, savory';
@@ -78,13 +90,17 @@ async function generateAndUploadImage(openai, prompt, filename) {
     style: 'natural',
   });
   const img = response.data?.[0];
-  if (!img?.b64_json) {throw new Error('Pas d’image retournée par OpenAI');}
+  if (!img?.b64_json) {
+    throw new Error('Pas d’image retournée par OpenAI');
+  }
 
   const uploadUrl = `${API_BASE_URL}/api/upload/image-from-base64`;
   const headers = {
     'Content-Type': 'application/json',
   };
-  if (SEED_SECRET) {headers['X-Seed-Secret'] = SEED_SECRET;}
+  if (SEED_SECRET) {
+    headers['X-Seed-Secret'] = SEED_SECRET;
+  }
 
   const res = await fetch(uploadUrl, {
     method: 'POST',
@@ -101,7 +117,9 @@ async function generateAndUploadImage(openai, prompt, filename) {
   }
   const data = await res.json();
   const url = data?.image?.url || data?.image?.path;
-  if (!url) {throw new Error('Réponse upload sans image.url/path');}
+  if (!url) {
+    throw new Error('Réponse upload sans image.url/path');
+  }
   const pathRel = data.image.path || url.replace(/^https?:\/\/[^/]+/, '');
   return { url: pathRel.startsWith('/') ? pathRel : url, path: data.image.path };
 }
@@ -147,16 +165,15 @@ async function main() {
         console.log(`      📋 ${menuToProcess.length} plat(s)/boisson(s) à illustrer...`);
         for (let j = 0; j < menuToProcess.length; j++) {
           const item = menuToProcess[j];
-          if (!item.name) {continue;}
+          if (!item.name) {
+            continue;
+          }
           try {
             const dishPrompt = buildDishImagePrompt(item.name, item.category);
             const dishSlug = slug(item.name) || `plat-${j + 1}`;
             const dishFilename = `dish-${(r._id || '').toString().slice(-6)}-${j + 1}-${dishSlug}.png`;
             const { url: dishUrl } = await generateAndUploadImage(openai, dishPrompt, dishFilename);
-            await Restaurant.updateOne(
-              { _id: r._id, 'menu.id': item.id },
-              { $set: { 'menu.$.image': dishUrl } },
-            );
+            await Restaurant.updateOne({ _id: r._id, 'menu.id': item.id }, { $set: { 'menu.$.image': dishUrl } });
             console.log(`      ✅ Plat: ${item.name}`);
           } catch (err) {
             console.warn(`      ⚠️ Plat "${item.name}": ${err.message}`);
@@ -165,7 +182,9 @@ async function main() {
       }
     } catch (err) {
       console.error(`   ❌ ${label}: ${err.message}`);
-      if (err.response?.data) {console.error('      ', err.response.data);}
+      if (err.response?.data) {
+        console.error('      ', err.response.data);
+      }
     }
   }
 

@@ -54,6 +54,7 @@ code-quality.cjs — ESLint fix + gate qualité (tests, build, lint, audit)
     if (withFormat) {
       run('Prettier (racine)', 'npm', ['run', 'format'], root);
       run('Prettier (backend)', 'npm', ['run', 'format', '--prefix', 'backend'], root);
+      run('Prettier (dashboard)', 'npm', ['run', 'format', '--prefix', 'dashboard'], root);
     }
   }
 

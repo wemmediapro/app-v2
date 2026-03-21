@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  MessageSquare, 
-  Search, 
+import {
+  MessageSquare,
+  Search,
   User,
   Clock,
   Send,
@@ -11,7 +11,7 @@ import {
   Unlock,
   Filter,
   Globe,
-  MapPin
+  MapPin,
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import toast from 'react-hot-toast';
@@ -26,7 +26,6 @@ const Messages = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [countryFilter, setCountryFilter] = useState('all');
   const [destinationFilter, setDestinationFilter] = useState('all');
-  const [destinationFilter, setDestinationFilter] = useState('all');
 
   // Pays disponibles
   const availableCountries = [
@@ -34,7 +33,7 @@ const Messages = () => {
     { name: 'Tunisie', code: 'TN' },
     { name: 'Algérie', code: 'DZ' },
     { name: 'Italie', code: 'IT' },
-    { name: 'Espagne', code: 'ES' }
+    { name: 'Espagne', code: 'ES' },
   ];
 
   // Destinations disponibles (exemples)
@@ -45,9 +44,8 @@ const Messages = () => {
     'Nador - Gênes',
     'Alger - Marseille',
     'Tunis - Marseille',
-    'Palerme - Tunis'
+    'Palerme - Tunis',
   ];
-
 
   useEffect(() => {
     fetchConversations();
@@ -88,7 +86,7 @@ const Messages = () => {
   const formatTime = (date) => {
     return new Date(date).toLocaleTimeString('fr-FR', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -98,15 +96,15 @@ const Messages = () => {
     const diffTime = Math.abs(now - messageDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) return 'Aujourd\'hui';
+    if (diffDays === 1) return "Aujourd'hui";
     if (diffDays === 2) return 'Hier';
     return messageDate.toLocaleDateString('fr-FR');
   };
 
   const decryptedMessages = useMemo(() => {
-    return messages.map(msg => ({
+    return messages.map((msg) => ({
       ...msg,
-      content: getMessageContent(msg)
+      content: getMessageContent(msg),
     }));
   }, [messages]);
 
@@ -115,16 +113,17 @@ const Messages = () => {
 
     // Filtre par recherche textuelle
     if (searchQuery) {
-      filtered = filtered.filter(conv => 
-        conv.user?.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        conv.user?.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        conv.user?.email?.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (conv) =>
+          conv.user?.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          conv.user?.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          conv.user?.email?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     // Filtre par pays
     if (countryFilter !== 'all') {
-      filtered = filtered.filter(conv => {
+      filtered = filtered.filter((conv) => {
         const userCountry = conv.user?.country || conv.user?.nationality || '';
         return userCountry === countryFilter || userCountry.toLowerCase().includes(countryFilter.toLowerCase());
       });
@@ -132,9 +131,12 @@ const Messages = () => {
 
     // Filtre par destination
     if (destinationFilter !== 'all') {
-      filtered = filtered.filter(conv => {
+      filtered = filtered.filter((conv) => {
         const userDestination = conv.user?.destination || conv.destination || '';
-        return userDestination === destinationFilter || userDestination.toLowerCase().includes(destinationFilter.toLowerCase());
+        return (
+          userDestination === destinationFilter ||
+          userDestination.toLowerCase().includes(destinationFilter.toLowerCase())
+        );
       });
     }
 
@@ -235,58 +237,56 @@ const Messages = () => {
           </div>
 
           <div className="overflow-y-auto h-[calc(100%-60px)]">
-            {loading ? (
-              Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="p-4 border-b border-gray-100 animate-pulse">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
-                    <div className="flex-1">
-                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              filteredConversations.map((conversation, index) => (
-                <motion.div
-                  key={conversation._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => handleConversationSelect(conversation)}
-                  className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    selectedConversation?._id === conversation._id ? 'bg-blue-50 border-blue-200' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500">
-                      <User size={16} className="text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-gray-900 truncate">
-                          {conversation.user?.firstName} {conversation.user?.lastName}
-                        </h3>
-                        {conversation.unreadCount > 0 && (
-                          <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                            {conversation.unreadCount}
-                          </span>
-                        )}
+            {loading
+              ? Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="p-4 border-b border-gray-100 animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
                       </div>
-                      <p className="text-xs text-gray-500 truncate">
-                        {conversation.lastMessage?.encrypted 
-                          ? getMessageContent(conversation.lastMessage)
-                          : conversation.lastMessage?.content}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {formatTime(conversation.lastMessage?.createdAt || conversation.lastMessage?.timestamp)}
-                      </p>
                     </div>
                   </div>
-                </motion.div>
-              ))
-            )}
+                ))
+              : filteredConversations.map((conversation, index) => (
+                  <motion.div
+                    key={conversation._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => handleConversationSelect(conversation)}
+                    className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+                      selectedConversation?._id === conversation._id ? 'bg-blue-50 border-blue-200' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500">
+                        <User size={16} className="text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-gray-900 truncate">
+                            {conversation.user?.firstName} {conversation.user?.lastName}
+                          </h3>
+                          {conversation.unreadCount > 0 && (
+                            <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                              {conversation.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 truncate">
+                          {conversation.lastMessage?.encrypted
+                            ? getMessageContent(conversation.lastMessage)
+                            : conversation.lastMessage?.content}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {formatTime(conversation.lastMessage?.createdAt || conversation.lastMessage?.timestamp)}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
           </div>
         </div>
 
@@ -343,22 +343,24 @@ const Messages = () => {
                       transition={{ delay: index * 0.05 }}
                       className={`flex ${message.sender._id === selectedConversation.user._id ? 'justify-start' : 'justify-end'}`}
                     >
-                      <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg relative ${
-                        message.sender._id === selectedConversation.user._id
-                          ? 'bg-gray-100 text-gray-900'
-                          : 'bg-blue-600 text-white'
-                      }`}>
+                      <div
+                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg relative ${
+                          message.sender._id === selectedConversation.user._id
+                            ? 'bg-gray-100 text-gray-900'
+                            : 'bg-blue-600 text-white'
+                        }`}
+                      >
                         {message.encrypted && (
                           <div className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 bg-green-500 rounded-full">
                             <Unlock size={10} className="text-white" />
                           </div>
                         )}
                         <p className="text-sm">{message.content}</p>
-                        <p className={`text-xs mt-1 ${
-                          message.sender._id === selectedConversation.user._id
-                            ? 'text-gray-500'
-                            : 'text-blue-100'
-                        }`}>
+                        <p
+                          className={`text-xs mt-1 ${
+                            message.sender._id === selectedConversation.user._id ? 'text-gray-500' : 'text-blue-100'
+                          }`}
+                        >
                           {formatTime(message.createdAt || message.timestamp)}
                         </p>
                       </div>
@@ -401,5 +403,3 @@ const Messages = () => {
 };
 
 export default Messages;
-
-

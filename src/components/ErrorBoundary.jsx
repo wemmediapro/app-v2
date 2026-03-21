@@ -43,7 +43,10 @@ export default class ErrorBoundary extends React.Component {
             {onGoHome && (
               <button
                 type="button"
-                onClick={() => { this.setState({ hasError: false, error: null }); onGoHome(); }}
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  onGoHome();
+                }}
                 className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100"
               >
                 {translate('common.home') || 'Accueil'}

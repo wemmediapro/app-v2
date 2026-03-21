@@ -108,14 +108,22 @@ async function getAdminLogs(filters = {}) {
   if (adminId && mongoose.Types.ObjectId.isValid(adminId)) {
     query.userId = adminId;
   }
-  if (action) {query.action = action;}
-  if (resource) {query.resource = resource;}
+  if (action) {
+    query.action = action;
+  }
+  if (resource) {
+    query.resource = resource;
+  }
   if (resourceId && mongoose.Types.ObjectId.isValid(resourceId)) {
     query.resourceId = resourceId;
   }
 
   const [logs, total] = await Promise.all([
-    AuditLog.find(query).sort({ timestamp: -1 }).skip(skip).limit(Math.min(100, Math.max(1, limit))).lean(),
+    AuditLog.find(query)
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(Math.min(100, Math.max(1, limit)))
+      .lean(),
     AuditLog.countDocuments(query),
   ]);
 

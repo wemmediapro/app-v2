@@ -8,7 +8,7 @@ console.log(`🌐 Frontend local: http://localhost:${PORT}\n`);
 
 const tunnel = spawn('npx', ['localtunnel', '--port', PORT.toString()], {
   stdio: ['inherit', 'pipe', 'pipe'],
-  shell: true
+  shell: true,
 });
 
 let urlCaptured = false;
@@ -16,7 +16,7 @@ let urlCaptured = false;
 tunnel.stdout.on('data', (data) => {
   const output = data.toString();
   process.stdout.write(output);
-  
+
   // Capturer l'URL du tunnel
   const urlMatch = output.match(/https:\/\/[a-zA-Z0-9-]+\.loca\.lt/);
   if (urlMatch && !urlCaptured) {

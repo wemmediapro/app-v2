@@ -27,9 +27,7 @@ function validateSecurityConfig() {
       throw new Error('CRITICAL: ADMIN_EMAIL must be set (non-empty) in production.');
     }
     if (adminEmail.toLowerCase() === 'admin@gnv.com') {
-      throw new Error(
-        'CRITICAL: ADMIN_EMAIL must not be the default demo address admin@gnv.com in production.',
-      );
+      throw new Error('CRITICAL: ADMIN_EMAIL must not be the default demo address admin@gnv.com in production.');
     }
 
     // ADMIN_PASSWORD : obligatoire pour le dashboard
@@ -44,7 +42,7 @@ function validateSecurityConfig() {
     }
     if (!(process.env.ADMIN_EMAIL || '').trim() || !process.env.ADMIN_PASSWORD) {
       console.warn(
-        'WARN: ADMIN_EMAIL et ADMIN_PASSWORD doivent être définis dans config.env pour le login admin (sinon POST /api/auth/login renverra 500).',
+        'WARN: ADMIN_EMAIL et ADMIN_PASSWORD doivent être définis dans config.env pour le login admin (sinon POST /api/auth/login renverra 500).'
       );
     }
   }

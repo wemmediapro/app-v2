@@ -56,7 +56,11 @@ jest.mock('mongoose', () => {
     ...actual,
     connection: {
       readyState: 1,
-      db: { admin: jest.fn().mockReturnValue({ listDatabases: jest.fn().mockResolvedValue({ databases: [], totalSize: 0 }) }) },
+      db: {
+        admin: jest
+          .fn()
+          .mockReturnValue({ listDatabases: jest.fn().mockResolvedValue({ databases: [], totalSize: 0 }) }),
+      },
     },
   };
 });
@@ -102,11 +106,7 @@ function buildApp() {
 }
 
 function createAdminToken() {
-  return jwt.sign(
-    { id: adminUser._id, email: adminUser.email, role: 'admin' },
-    JWT_SECRET,
-    { expiresIn: '1h' },
-  );
+  return jwt.sign({ id: adminUser._id, email: adminUser.email, role: 'admin' }, JWT_SECRET, { expiresIn: '1h' });
 }
 
 describe('Audit logs', () => {
@@ -155,10 +155,7 @@ describe('Audit logs', () => {
       User.findOne.mockReturnValue({ select: jest.fn().mockResolvedValue(null) });
 
       const app = buildApp();
-      await request(app)
-        .post('/api/auth/login')
-        .send({ email: 'wrong@test.com', password: 'wrong' })
-        .expect(401);
+      await request(app).post('/api/auth/login').send({ email: 'wrong@test.com', password: 'wrong' }).expect(401);
 
       expect(mockLogAction).toHaveBeenCalled();
       const call = mockLogAction.mock.calls.find((c) => c[0]?.status === 'failure');

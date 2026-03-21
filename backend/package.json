@@ -12,6 +12,7 @@
     "test:watch": "jest --watch",
     "test:ci": "jest --coverage --ci",
     "test:coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .js",
     "lint:fix": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .js --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
@@ -96,14 +97,17 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.19.15",
     "better-sqlite3": "^12.5.0",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-jsdoc": "^54.0.0",
     "jest": "^29.7.0",
     "nodemon": "^3.0.2",
     "prettier": "^3.8.1",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "typescript": "~5.7.3"
   },
   "overrides": {
     "hono": "^4.12.8",

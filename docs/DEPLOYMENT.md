@@ -4,16 +4,16 @@ Vue d’ensemble pour passer en **production** : prérequis, build, process mana
 
 ## Documents détaillés
 
-| Sujet | Fichier |
-|--------|---------|
-| Déploiement production (PM2, cluster, perf) | [PRODUCTION-GUIDE.md](../PRODUCTION-GUIDE.md) |
-| VM / installation rapide | [INSTALLATION-RAPIDE-VM.md](../INSTALLATION-RAPIDE-VM.md) |
-| Hébergement VM (résumé) | [README-HEBERGEMENT-VM.md](../README-HEBERGEMENT-VM.md) |
-| Nginx (exemple) | `nginx.conf` à la racine du dépôt |
-| Sécurité (checklist) | [SECURITY.md](../SECURITY.md) |
-| Sécurité backend (détail) | [backend/docs/SECURITY.md](../backend/docs/SECURITY.md) |
-| Validateurs API | [backend/docs/VALIDATION.md](../backend/docs/VALIDATION.md) |
-| Auth JWT | [backend/docs/AUTH-MIDDLEWARE.md](../backend/docs/AUTH-MIDDLEWARE.md) |
+| Sujet                                       | Fichier                                                               |
+| ------------------------------------------- | --------------------------------------------------------------------- |
+| Déploiement production (PM2, cluster, perf) | [PRODUCTION-GUIDE.md](../PRODUCTION-GUIDE.md)                         |
+| VM / installation rapide                    | [INSTALLATION-RAPIDE-VM.md](../INSTALLATION-RAPIDE-VM.md)             |
+| Hébergement VM (résumé)                     | [README-HEBERGEMENT-VM.md](../README-HEBERGEMENT-VM.md)               |
+| Nginx (exemple)                             | `nginx.conf` à la racine du dépôt                                     |
+| Sécurité (checklist)                        | [SECURITY.md](../SECURITY.md)                                         |
+| Sécurité backend (détail)                   | [backend/docs/SECURITY.md](../backend/docs/SECURITY.md)               |
+| Validateurs API                             | [backend/docs/VALIDATION.md](../backend/docs/VALIDATION.md)           |
+| Auth JWT                                    | [backend/docs/AUTH-MIDDLEWARE.md](../backend/docs/AUTH-MIDDLEWARE.md) |
 
 ## Architecture cible (résumé)
 
@@ -32,10 +32,10 @@ Vue d’ensemble pour passer en **production** : prérequis, build, process mana
 
 ## Initialisation de la base de données
 
-| Script | Commande | Usage |
-|--------|----------|--------|
-| **Recommandé (API Mongoose)** | `cd backend && npm run init-db` | `init-database.js` — aligné avec l’application. |
-| **Prisma (legacy)** | `cd backend && npm run init-db-prisma` | `init-database-prisma.js` — hors chemin API ; **non recommandé en prod** sauf besoin précis. |
+| Script                        | Commande                               | Usage                                                                                        |
+| ----------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Recommandé (API Mongoose)** | `cd backend && npm run init-db`        | `init-database.js` — aligné avec l’application.                                              |
+| **Prisma (legacy)**           | `cd backend && npm run init-db-prisma` | `init-database-prisma.js` — hors chemin API ; **non recommandé en prod** sauf besoin précis. |
 
 ### Script Prisma (`init-database-prisma.js`)
 
@@ -56,4 +56,4 @@ Copier `backend/config.env.example` → `backend/config.env` et adapter. Côté 
 
 ---
 
-*Pour le détail des étapes PM2, Nginx et tuning charge, suivre [PRODUCTION-GUIDE.md](../PRODUCTION-GUIDE.md).*
+_Pour le détail des étapes PM2, Nginx et tuning charge, suivre [PRODUCTION-GUIDE.md](../PRODUCTION-GUIDE.md)._

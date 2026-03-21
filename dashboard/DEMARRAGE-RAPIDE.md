@@ -29,6 +29,7 @@ Le script `demo-complete.sh` choisit automatiquement :
 ## 🔧 Installation optionnelle (pour de meilleures performances)
 
 ### Cloudflare Tunnel (Recommandé)
+
 ```bash
 # macOS
 brew install cloudflare/cloudflare/cloudflared
@@ -38,6 +39,7 @@ brew install cloudflare/cloudflare/cloudflared
 ```
 
 ### Ngrok (Alternative)
+
 ```bash
 # macOS
 brew install ngrok/ngrok/ngrok
@@ -49,6 +51,7 @@ npm install -g ngrok
 ## 📱 Partage de l'URL
 
 Une fois le script lancé, vous verrez :
+
 ```
 📱 URL PUBLIQUE: https://xxxxx.xxxxx.xxxxx
 🏠 URL LOCALE:   http://localhost:5173
@@ -63,9 +66,3 @@ Appuyez sur `Ctrl+C` - le script nettoie tout automatiquement.
 ## ❓ Problèmes ?
 
 Consultez [SOLUTION-DEMO-TECHNIQUE.md](./SOLUTION-DEMO-TECHNIQUE.md) pour le dépannage complet.
-
-
-
-
-
-

@@ -14,7 +14,7 @@ import {
   X,
   Globe,
   Trash2,
-  Copy
+  Copy,
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { LANG_LIST } from '../utils/i18n';
@@ -63,9 +63,7 @@ const Notifications = () => {
   };
 
   const hasAtLeastOneContent = () => {
-    return Object.values(translations).some(
-      (tr) => (tr.title && tr.title.trim()) || (tr.message && tr.message.trim())
-    );
+    return Object.values(translations).some((tr) => (tr.title && tr.title.trim()) || (tr.message && tr.message.trim()));
   };
 
   const getPayload = () => {
@@ -79,7 +77,7 @@ const Notifications = () => {
     const payload = {
       translations: tr,
       type,
-      scheduledAt: sendMode === 'scheduled' && scheduledAt ? new Date(scheduledAt).toISOString() : undefined
+      scheduledAt: sendMode === 'scheduled' && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
     };
     return payload;
   };
@@ -101,11 +99,7 @@ const Notifications = () => {
     try {
       setSending(true);
       await apiService.createNotification(getPayload());
-      toast.success(
-        sendMode === 'scheduled'
-          ? t('notifications.scheduleSuccess')
-          : t('notifications.sendSuccess')
-      );
+      toast.success(sendMode === 'scheduled' ? t('notifications.scheduleSuccess') : t('notifications.sendSuccess'));
       setModalOpen(false);
       resetForm();
       fetchNotifications();
@@ -145,9 +139,7 @@ const Notifications = () => {
     setType(notif.type || 'info');
     setSendMode(isFutureScheduled ? 'scheduled' : 'now');
     setScheduledAt(
-      isFutureScheduled && notif.scheduledAt
-        ? new Date(notif.scheduledAt).toISOString().slice(0, 16)
-        : ''
+      isFutureScheduled && notif.scheduledAt ? new Date(notif.scheduledAt).toISOString().slice(0, 16) : ''
     );
     setModalOpen(true);
   };
@@ -193,7 +185,8 @@ const Notifications = () => {
   };
 
   const formatDate = (date) => {
-    const locale = { fr: 'fr-FR', en: 'en-GB', es: 'es-ES', it: 'it-IT', de: 'de-DE', ar: 'ar-EG' }[language] || 'fr-FR';
+    const locale =
+      { fr: 'fr-FR', en: 'en-GB', es: 'es-ES', it: 'it-IT', de: 'de-DE', ar: 'ar-EG' }[language] || 'fr-FR';
     return new Date(date).toLocaleString(locale, {
       day: '2-digit',
       month: '2-digit',
@@ -232,9 +225,7 @@ const Notifications = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('navigation.notifications')}</h1>
-          <p className="text-gray-600 mt-2">
-            {t('notifications.subtitle')}
-          </p>
+          <p className="text-gray-600 mt-2">{t('notifications.subtitle')}</p>
         </div>
         <motion.button
           type="button"
@@ -244,8 +235,8 @@ const Notifications = () => {
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
         >
           <Plus size={20} />
-{t('notifications.addNotification')}
-          </motion.button>
+          {t('notifications.addNotification')}
+        </motion.button>
       </div>
 
       {/* Modal Ajouter notification — multilingue + envoi / programmation */}
@@ -302,10 +293,10 @@ const Notifications = () => {
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white transition-shadow"
                           >
                             {TYPE_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div>
@@ -362,12 +353,10 @@ const Notifications = () => {
                             {t('notifications.contentByLanguage')}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mb-3">
-                          {t('notifications.contentByLanguageHint')}
-                        </p>
+                        <p className="text-xs text-gray-500 mb-3">{t('notifications.contentByLanguageHint')}</p>
                         <div className="flex flex-wrap gap-1" role="tablist">
                           {LANG_LIST.map(({ code, label }) => {
-                            const hasContent = (translations[code]?.title?.trim() || translations[code]?.message?.trim());
+                            const hasContent = translations[code]?.title?.trim() || translations[code]?.message?.trim();
                             const isActive = activeLangTab === code;
                             return (
                               <button
@@ -386,7 +375,10 @@ const Notifications = () => {
                               >
                                 {label}
                                 {hasContent && (
-                                  <span className={`w-2 h-2 rounded-full shrink-0 ${isActive ? 'bg-white/80' : 'bg-green-500'}`} title={t('notifications.contentByLanguageHint')} />
+                                  <span
+                                    className={`w-2 h-2 rounded-full shrink-0 ${isActive ? 'bg-white/80' : 'bg-green-500'}`}
+                                    title={t('notifications.contentByLanguageHint')}
+                                  />
                                 )}
                               </button>
                             );
@@ -415,7 +407,7 @@ const Notifications = () => {
                                 onChange={(e) =>
                                   setTranslations((prev) => ({
                                     ...prev,
-                                    [code]: { ...prev[code], title: e.target.value }
+                                    [code]: { ...prev[code], title: e.target.value },
                                   }))
                                 }
                                 maxLength={120}
@@ -431,7 +423,7 @@ const Notifications = () => {
                                 onChange={(e) =>
                                   setTranslations((prev) => ({
                                     ...prev,
-                                    [code]: { ...prev[code], message: e.target.value }
+                                    [code]: { ...prev[code], message: e.target.value },
                                   }))
                                 }
                                 rows={4}
@@ -484,7 +476,9 @@ const Notifications = () => {
             {t('notifications.listTitle')}
           </h2>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">{t('notifications.countNotifications', { count: notifications.length })}</span>
+            <span className="text-sm text-gray-500">
+              {t('notifications.countNotifications', { count: notifications.length })}
+            </span>
             <button
               type="button"
               onClick={fetchNotifications}
@@ -505,9 +499,7 @@ const Notifications = () => {
             <div className="p-12 text-center">
               <Bell size={48} className="text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">{t('notifications.noNotifications')}</p>
-              <p className="text-sm text-gray-400 mt-1">
-                {t('notifications.noNotificationsHint')}
-              </p>
+              <p className="text-sm text-gray-400 mt-1">{t('notifications.noNotificationsHint')}</p>
             </div>
           ) : (
             <ul className="divide-y divide-gray-100">

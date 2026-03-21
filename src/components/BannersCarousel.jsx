@@ -21,7 +21,12 @@ export default function BannersCarousel({
   if (!banner) return null;
 
   const src = getBannerImageUrl(banner, bannerViewWidth) || banner.image;
-  const url = src && (src.startsWith('data:') || src.startsWith('http')) ? src : src ? `${backendOrigin || ''}${src.startsWith('/') ? '' : '/'}${src}` : null;
+  const url =
+    src && (src.startsWith('data:') || src.startsWith('http'))
+      ? src
+      : src
+        ? `${backendOrigin || ''}${src.startsWith('/') ? '' : '/'}${src}`
+        : null;
 
   return (
     <section className="px-1 sm:px-3 md:px-4 mt-3 sm:mt-6 md:mt-6">

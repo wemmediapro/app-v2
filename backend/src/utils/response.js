@@ -10,7 +10,9 @@ function ok(res, data = {}, status = 200) {
 
 function err(res, message, status = 500, details = null) {
   const body = { success: false, message: message || 'Erreur serveur' };
-  if (details != null) {body.details = details;}
+  if (details != null) {
+    body.details = details;
+  }
   return res.status(status).json(body);
 }
 

@@ -10,6 +10,7 @@ Ce document liste les améliorations apportées suite à l'audit de qualité du 
 **Après** : Configuration complète avec règles strictes
 
 #### Backend
+
 - **`.eslintrc.js`** : Configuration ESLint avec règles strictes (no-var, prefer-const, max-len, etc.)
 - **`.prettierrc`** : Configuration Prettier (single quotes, 120 caractères, trailing commas)
 - **Scripts npm** :
@@ -19,12 +20,14 @@ Ce document liste les améliorations apportées suite à l'audit de qualité du 
   - `npm run format:check` : Vérifier le formatage
 
 #### Frontend
+
 - **`.eslintrc.cjs`** : Configuration ESLint avec plugins React, React Hooks, jsx-a11y
 - **`.prettierrc`** : Configuration Prettier alignée avec le backend
 - **`.prettierignore`** : Fichiers exclus du formatage
 - **Scripts npm** : Identiques au backend
 
 #### CI/CD
+
 - Lint et format check ajoutés dans `.github/workflows/tests.yml` (frontend et backend)
 - Les erreurs de lint n'empêchent pas les tests (mode `|| true` pour l'instant)
 
@@ -38,6 +41,7 @@ Ce document liste les améliorations apportées suite à l'audit de qualité du 
 **Après** : Documentation complète avec Swagger UI
 
 #### Configuration
+
 - **`backend/src/lib/swagger.js`** : Configuration Swagger/OpenAPI 3.0
   - Définition des schémas (User, Error, Health)
   - Tags organisés par domaine (Auth, Users, Restaurants, etc.)
@@ -45,21 +49,25 @@ Ce document liste les améliorations apportées suite à l'audit de qualité du 
   - Serveurs (dev, production)
 
 #### Intégration
+
 - **`backend/server.js`** : Swagger UI monté sur `/api-docs`
   - Disponible en dev par défaut
   - En production : activer via `SWAGGER_ENABLED=true`
   - JSON brut disponible sur `/api-docs.json`
 
 #### Documentation des endpoints
+
 - **`/api/auth/login`** : Documentation complète (request/response)
 - **`/api/auth/register`** : Documentation complète (admin uniquement)
 - **`/api/health`** : Documentation du health check
 - **`/api/time`** : Documentation de l'heure serveur
 
 #### Prochaines étapes
+
 Les autres endpoints (restaurants, movies, radio, etc.) peuvent être documentés progressivement en ajoutant des annotations `@swagger` dans les fichiers de routes.
 
 **Accès** :
+
 - Dev : `http://localhost:3000/api-docs`
 - Production : `https://votre-domaine.com/api-docs` (si `SWAGGER_ENABLED=true`)
 
@@ -73,17 +81,21 @@ Les autres endpoints (restaurants, movies, radio, etc.) peuvent être documenté
 **Après** : Sentry déjà installé et configuré
 
 #### Configuration existante
+
 - **`backend/src/lib/sentry.js`** : Module Sentry fonctionnel
 - **`backend/server.js`** : Initialisation conditionnelle (si `SENTRY_DSN` défini)
 - **Gestion des erreurs** : `uncaughtException` et `unhandledRejection` capturés
 
 #### Activation
+
 Pour activer Sentry en production :
+
 ```bash
 SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 ```
 
 #### Améliorations possibles
+
 - Ajouter des contextes utilisateur (userId, email) dans les erreurs
 - Configurer des alertes dans Sentry Dashboard
 - Ajouter des breadcrumbs personnalisés
@@ -98,6 +110,7 @@ SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 **Après** : Workflows complets existants
 
 #### Workflows existants
+
 - **`.github/workflows/tests.yml`** : Tests frontend (Vitest + Playwright) et backend (Jest)
 - **`.github/workflows/load-test.yml`** : Tests de charge (k6, Artillery)
 - **`.github/workflows/security.yml`** : Scans sécurité (npm audit, OWASP, Snyk)
@@ -105,6 +118,7 @@ SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 - **`.github/workflows/deploy-prod.yml`** : Déploiement production
 
 #### Améliorations apportées
+
 - **Lint et format check** ajoutés dans `tests.yml`
 - **Node.js 22** aligné partout (au lieu de 20)
 - **Badges README** pointent vers `wemmediapro/app-v2`
@@ -119,16 +133,19 @@ SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 **Après** : Infrastructure de tests en place, reste à augmenter la couverture
 
 #### Infrastructure existante
+
 - **Backend** : Jest configuré avec seuils de couverture (`jest.config.js`)
 - **Frontend** : Vitest + Playwright configurés
 - **CI/CD** : Tests exécutés automatiquement
 
 #### Configuration Jest (backend)
+
 - **Seuils globaux** : 42% branches, 60% functions, 64% lines, 61% statements
 - **Seuils par fichier** : 100% sur certains modèles (Feedback, Message, Restaurant)
 - **Collecte** : Routes critiques, middleware, models
 
 #### Prochaines étapes
+
 1. Ajouter des tests unitaires pour les routes non couvertes
 2. Augmenter les tests E2E (actuellement 10)
 3. Ajouter des tests d'intégration pour les scénarios complexes
@@ -139,13 +156,13 @@ SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 
 ## 📊 Résumé des scores
 
-| Critère | Avant | Après | Statut |
-|---------|-------|-------|--------|
-| **Tooling Code** | 0/100 | 100/100 | ✅ |
-| **API Docs** | 0/100 | 80/100 | ✅ |
-| **Monitoring** | 0/100 | 70/100 | ✅ |
-| **CI/CD** | 0/100 | 90/100 | ✅ |
-| **Tests** | 58/100 | 65/100 | 🟡 |
+| Critère          | Avant  | Après   | Statut |
+| ---------------- | ------ | ------- | ------ |
+| **Tooling Code** | 0/100  | 100/100 | ✅     |
+| **API Docs**     | 0/100  | 80/100  | ✅     |
+| **Monitoring**   | 0/100  | 70/100  | ✅     |
+| **CI/CD**        | 0/100  | 90/100  | ✅     |
+| **Tests**        | 58/100 | 65/100  | 🟡     |
 
 **Score global** : **~81/100** (amélioration significative)
 
@@ -154,6 +171,7 @@ SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 ## 🚀 Commandes utiles
 
 ### Linting et formatage
+
 ```bash
 # Backend
 cd backend
@@ -170,6 +188,7 @@ npm run format:check
 ```
 
 ### Documentation API
+
 ```bash
 # Démarrer le backend
 cd backend && npm run dev
@@ -179,6 +198,7 @@ open http://localhost:3000/api-docs
 ```
 
 ### Monitoring Sentry
+
 ```bash
 # Activer en production
 export SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx

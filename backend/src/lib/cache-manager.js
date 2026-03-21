@@ -18,6 +18,7 @@ const TTL_BY_PREFIX = [
   { prefix: 'list:radio:', ttl: 600 },
   { prefix: 'radio:', ttl: 600 },
   { prefix: 'list:magazine:', ttl: 60 },
+  { prefix: 'list:shop:', ttl: 120 },
 ];
 
 class CacheManager {
@@ -31,9 +32,13 @@ class CacheManager {
    * Retourne le TTL (secondes) selon le préfixe de la clé.
    */
   getTTL(key) {
-    if (!key || typeof key !== 'string') {return this.defaultTTL;}
+    if (!key || typeof key !== 'string') {
+      return this.defaultTTL;
+    }
     for (const { prefix, ttl } of TTL_BY_PREFIX) {
-      if (key.startsWith(prefix)) {return ttl;}
+      if (key.startsWith(prefix)) {
+        return ttl;
+      }
     }
     return this.defaultTTL;
   }
@@ -86,7 +91,7 @@ class CacheManager {
       return true;
     } catch (error) {
       console.error('❌ Erreur de connexion Redis:', error.message);
-      console.log('⚠️  L\'application continuera sans cache Redis');
+      console.log("⚠️  L'application continuera sans cache Redis");
       this.isConnected = false;
       return false;
     }
@@ -216,7 +221,9 @@ class CacheManager {
     }
     try {
       const n = await this.client.decr(key);
-      if (n < 0) {await this.client.set(key, '0');}
+      if (n < 0) {
+        await this.client.set(key, '0');
+      }
       return n;
     } catch (error) {
       console.error(`❌ Erreur Redis DECR pour ${key}:`, error.message);

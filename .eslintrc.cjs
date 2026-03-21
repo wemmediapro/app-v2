@@ -10,6 +10,8 @@ module.exports = {
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
     'plugin:jsx-a11y/recommended',
+    'plugin:jsdoc/recommended',
+    'prettier',
   ],
   parserOptions: {
     ecmaVersion: 2022,
@@ -23,7 +25,7 @@ module.exports = {
       version: 'detect',
     },
   },
-  plugins: ['react', 'react-hooks', 'jsx-a11y'],
+  plugins: ['react', 'react-hooks', 'jsx-a11y', 'jsdoc'],
   rules: {
     // Console fréquente en debug PWA — garder warn/error côté prod via revue ou règle ciblée plus tard
     'no-console': 'off',
@@ -47,14 +49,12 @@ module.exports = {
     'jsx-a11y/no-redundant-roles': 'off',
     'jsx-a11y/click-events-have-key-events': 'off',
     'jsx-a11y/no-noninteractive-element-interactions': 'off',
-    'quotes': ['error', 'single', { avoidEscape: true }],
-    'semi': ['error', 'always'],
-    'indent': ['error', 2, { SwitchCase: 1 }],
-    // Longueur de ligne : confiée à Prettier / revue humaine
     'max-len': 'off',
-    'object-curly-spacing': ['error', 'always'],
-    'array-bracket-spacing': ['error', 'never'],
-    'comma-dangle': ['error', 'always-multiline'],
+    'jsdoc/require-jsdoc': 'off',
+    'jsdoc/require-param': 'off',
+    'jsdoc/require-returns': 'off',
+    'jsdoc/require-param-description': 'off',
+    'jsdoc/require-returns-description': 'off',
   },
   ignorePatterns: [
     'node_modules/',
@@ -72,6 +72,21 @@ module.exports = {
       rules: {
         // Playwright utilise `use` (fixtures) — pas les hooks React
         'react-hooks/rules-of-hooks': 'off',
+      },
+    },
+    {
+      files: ['src/utils/**/*.js', 'src/services/**/*.js'],
+      rules: {
+        'jsdoc/require-jsdoc': [
+          'warn',
+          {
+            publicOnly: false,
+            require: {
+              FunctionDeclaration: true,
+              ClassDeclaration: true,
+            },
+          },
+        ],
       },
     },
   ],

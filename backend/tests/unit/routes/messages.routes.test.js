@@ -55,9 +55,7 @@ describe('GET /api/messages', () => {
       }),
     });
 
-    aggregateSpy = jest.spyOn(Message, 'aggregate').mockReturnValue(
-      Promise.resolve(mockConversations),
-    );
+    aggregateSpy = jest.spyOn(Message, 'aggregate').mockReturnValue(Promise.resolve(mockConversations));
   });
 
   afterEach(() => {

@@ -28,6 +28,7 @@
    - Cela évite les problèmes de cache
 
 6. **Vérifier que le tunnel est actif**
+
    ```bash
    curl http://localhost:4040/api/tunnels
    ```

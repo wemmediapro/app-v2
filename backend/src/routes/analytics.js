@@ -19,7 +19,9 @@ function getSystemUptimePercent() {
     const seconds = process.uptime();
     const hours = seconds / 3600;
     // Au-delà de 24h on considère 100 %, sinon proportionnel (ex: 12h = 50 %)
-    if (hours >= 24) {return 100;}
+    if (hours >= 24) {
+      return 100;
+    }
     return Math.min(100, Math.round((hours / 24) * 1000) / 10);
   } catch {
     return 0;
@@ -28,7 +30,9 @@ function getSystemUptimePercent() {
 
 /** Croissance en % entre période actuelle et période précédente */
 function growthPercent(current, previous) {
-  if (previous === 0) {return current > 0 ? 100 : 0;}
+  if (previous === 0) {
+    return current > 0 ? 100 : 0;
+  }
   const pct = ((current - previous) / previous) * 100;
   return Math.round(pct * 10) / 10;
 }
@@ -39,7 +43,9 @@ router.get('/connections', authMiddleware, adminMiddleware, async (req, res) => 
   try {
     const activeConnections = connectionCounters.getTotalCountAsync
       ? await connectionCounters.getTotalCountAsync()
-      : (connectionCounters.getTotalCount ? connectionCounters.getTotalCount() : 0);
+      : connectionCounters.getTotalCount
+        ? connectionCounters.getTotalCount()
+        : 0;
     res.json({
       totalConnections: activeConnections,
       activeConnections,
@@ -61,17 +67,24 @@ router.get('/connections', authMiddleware, adminMiddleware, async (req, res) => 
 router.get('/content', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
-      return res.json({ totalContent: 0, contentTypes: [], popularContent: [], contentEngagement: {}, userBehavior: {} });
+      return res.json({
+        totalContent: 0,
+        contentTypes: [],
+        popularContent: [],
+        contentEngagement: {},
+        userBehavior: {},
+      });
     }
-    const [totalMovies, totalArticles, totalRadio, totalActivities, totalProducts, totalRestaurants, viewersResult] = await Promise.all([
-      Movie.countDocuments().catch(() => 0),
-      Article.countDocuments().catch(() => 0),
-      RadioStation.countDocuments().catch(() => 0),
-      EnfantActivity.countDocuments().catch(() => 0),
-      Product.countDocuments().catch(() => 0),
-      Restaurant.countDocuments({ isActive: true }).catch(() => 0),
-      WebTVChannel.aggregate([{ $group: { _id: null, total: { $sum: '$viewers' } } }]).catch(() => []),
-    ]);
+    const [totalMovies, totalArticles, totalRadio, totalActivities, totalProducts, totalRestaurants, viewersResult] =
+      await Promise.all([
+        Movie.countDocuments().catch(() => 0),
+        Article.countDocuments().catch(() => 0),
+        RadioStation.countDocuments().catch(() => 0),
+        EnfantActivity.countDocuments().catch(() => 0),
+        Product.countDocuments().catch(() => 0),
+        Restaurant.countDocuments({ isActive: true }).catch(() => 0),
+        WebTVChannel.aggregate([{ $group: { _id: null, total: { $sum: '$viewers' } } }]).catch(() => []),
+      ]);
     const totalViewers = (viewersResult && viewersResult[0] && viewersResult[0].total) || 0;
     const totalContent = totalMovies + totalArticles + totalRadio + totalActivities + totalProducts + totalRestaurants;
     const contentTypes = [
@@ -88,7 +101,13 @@ router.get('/content', authMiddleware, adminMiddleware, async (req, res) => {
       contentTypes,
       popularContent: [],
       contentEngagement: { averageWatchTime: null, completionRate: null, favoriteGenres: [], peakViewingHours: [] },
-      userBehavior: { averageSessionTime: null, bounceRate: null, returnVisitors: null, newVisitors: null, mostActiveUsers: [] },
+      userBehavior: {
+        averageSessionTime: null,
+        bounceRate: null,
+        returnVisitors: null,
+        newVisitors: null,
+        mostActiveUsers: [],
+      },
       totalViewers,
     });
   } catch (err) {
@@ -184,12 +203,14 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
       const type = status === 'resolved' ? 'success' : status === 'pending' ? 'warning' : 'info';
       alerts.push({
         type,
-        message: `${(f.message || '').slice(0, 60)}${(f.message && f.message.length > 60) ? '…' : ''}`,
+        message: `${(f.message || '').slice(0, 60)}${f.message && f.message.length > 60 ? '…' : ''}`,
         timestamp: f.createdAt,
       });
     });
     if (recentMovies.length > 0) {
-      const titles = recentMovies.map((m) => (m.translations && m.translations.fr && m.translations.fr.title) || m.title || 'Film').slice(0, 2);
+      const titles = recentMovies
+        .map((m) => (m.translations && m.translations.fr && m.translations.fr.title) || m.title || 'Film')
+        .slice(0, 2);
       alerts.push({
         type: 'info',
         message: `Nouveau(x) film(s) ajouté(s): ${titles.join(', ')}`,
@@ -197,7 +218,9 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
       });
     }
     if (recentArticles.length > 0) {
-      const titles = recentArticles.map((a) => (a.translations && a.translations.fr && a.translations.fr.title) || 'Article').slice(0, 2);
+      const titles = recentArticles
+        .map((a) => (a.translations && a.translations.fr && a.translations.fr.title) || 'Article')
+        .slice(0, 2);
       alerts.push({
         type: 'info',
         message: `Nouveau(x) article(s) magazine: ${titles.join(', ')}`,
@@ -228,7 +251,7 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error('Analytics overview error:', err);
-    res.status(500).json({ message: 'Erreur lors du chargement de la vue d\'ensemble' });
+    res.status(500).json({ message: "Erreur lors du chargement de la vue d'ensemble" });
   }
 });
 

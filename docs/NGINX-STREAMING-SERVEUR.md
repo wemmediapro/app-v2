@@ -11,13 +11,16 @@ Les vidéos et l’audio sont servis **directement par Nginx** (sans passer par 
    - `app_deploy_path: /var/www/gnv-app` (ou votre chemin de déploiement)
 
 2. **Lancer le playbook** pour mettre à jour la config Nginx sur le serveur :
+
    ```bash
    cd ansible
    ansible-playbook -i inventory.yml playbook.yml
    ```
+
    (Adaptez le nom du playbook si nécessaire.)
 
 3. **Sur le serveur** (en SSH), tester et recharger Nginx :
+
    ```bash
    nginx -t && systemctl reload nginx
    ```
@@ -35,6 +38,7 @@ Les vidéos et l’audio sont servis **directement par Nginx** (sans passer par 
 ## Option B : Configuration à la main (sans Ansible)
 
 1. **Se connecter au serveur** :
+
    ```bash
    ssh root@VOTRE_IP
    ```
@@ -53,6 +57,7 @@ Les vidéos et l’audio sont servis **directement par Nginx** (sans passer par 
    ⚠️ Remplacez `/var/www/gnv-app` par le chemin réel de votre projet sur le serveur.
 
 3. **Tester et recharger** :
+
    ```bash
    nginx -t && systemctl reload nginx
    ```

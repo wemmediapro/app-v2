@@ -31,7 +31,11 @@ import MainContent from './components/MainContent';
 import { gnvShipsList, currentShip } from './data/ships';
 
 // Image défaut 100% offline (data URI) — plus de dépendance Unsplash
-const DEFAULT_RESTAURANT_IMAGE = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400"><rect fill="%23e5e7eb" width="800" height="400"/><text x="400" y="220" font-size="24" fill="%239ca3af" text-anchor="middle" font-family="system-ui,sans-serif">Restaurant</text></svg>');
+const DEFAULT_RESTAURANT_IMAGE =
+  'data:image/svg+xml,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400"><rect fill="%23e5e7eb" width="800" height="400"/><text x="400" y="220" font-size="24" fill="%239ca3af" text-anchor="middle" font-family="system-ui,sans-serif">Restaurant</text></svg>'
+  );
 
 function App() {
   const { t, language, changeLanguage } = useLanguage();
@@ -53,16 +57,32 @@ function App() {
   const pathnameToPage = (pathname) => {
     const raw = (pathname || '').replace(/^\/+|\/+$/g, '') || 'home';
     const p = raw === '' ? 'home' : raw.toLowerCase();
-    const map = { shop: 'shop', radio: 'radio', movies: 'movies', webtv: 'webtv', magazine: 'magazine', restaurant: 'restaurant', restaurants: 'restaurant', enfant: 'enfant', shipmap: 'shipmap', 'plan-du-navire': 'shipmap', favorites: 'favorites', notifications: 'notifications' };
+    const map = {
+      shop: 'shop',
+      radio: 'radio',
+      movies: 'movies',
+      webtv: 'webtv',
+      magazine: 'magazine',
+      restaurant: 'restaurant',
+      restaurants: 'restaurant',
+      enfant: 'enfant',
+      shipmap: 'shipmap',
+      'plan-du-navire': 'shipmap',
+      favorites: 'favorites',
+      notifications: 'notifications',
+    };
     return map[p] || (p === 'home' ? 'home' : null);
   };
   const pageToPathname = (p) => (p === 'home' ? '/' : `/${p}`);
   const [page, setPageState] = useState(() => pathnameToPage(location.pathname) || 'home');
-  const setPage = useCallback((next) => {
-    setPageState(next);
-    const path = pageToPathname(next);
-    if (location.pathname !== path) navigate(path, { replace: false });
-  }, [navigate, location.pathname]);
+  const setPage = useCallback(
+    (next) => {
+      setPageState(next);
+      const path = pageToPathname(next);
+      if (location.pathname !== path) navigate(path, { replace: false });
+    },
+    [navigate, location.pathname]
+  );
   useEffect(() => {
     const next = pathnameToPage(location.pathname);
     if (next) setPageState(next);
@@ -80,12 +100,8 @@ function App() {
   const banners = useBanners(page, language);
 
   // === Movies & Series (liste + chargement dans useMoviesState ; watchlist reste ici pour sync favoris) ===
-  const {
-    moviesAndSeries,
-    moviesLoading,
-    movieToOpenFromFavorites,
-    setMovieToOpenFromFavorites,
-  } = useMoviesState(language);
+  const { moviesAndSeries, moviesLoading, movieToOpenFromFavorites, setMovieToOpenFromFavorites } =
+    useMoviesState(language);
   const [watchlist, setWatchlist] = useState([]);
 
   // === Magazine (état + chargement dans useMagazine ; favoris restent dans App pour la page Favorites) ===
@@ -239,13 +255,20 @@ function App() {
   const [shipmapShipId, setShipmapShipId] = useState(7);
   useEffect(() => {
     let cancelled = false;
-    apiService.getBoatConfig().then((res) => {
-      if (cancelled) return;
-      const data = res?.data?.data ?? res?.data ?? {};
-      const id = data.shipId != null && data.shipId >= 1 ? Number(data.shipId) : 7;
-      setShipmapShipId(id);
-    }).catch(() => { if (!cancelled) setShipmapShipId(7); });
-    return () => { cancelled = true; };
+    apiService
+      .getBoatConfig()
+      .then((res) => {
+        if (cancelled) return;
+        const data = res?.data?.data ?? res?.data ?? {};
+        const id = data.shipId != null && data.shipId >= 1 ? Number(data.shipId) : 7;
+        setShipmapShipId(id);
+      })
+      .catch(() => {
+        if (!cancelled) setShipmapShipId(7);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
   const shipmap = useShipmap(language, t, shipmapShipId);
   const currentShipName = shipmap.currentShipName || currentShip.name;
@@ -267,23 +290,26 @@ function App() {
   } = useEnfant(language, t, enfantFavoritesIds);
 
   // Recalculer les titres de pages quand la langue change
-  const pageTitles = useMemo(() => ({
-    home: 'GNV OnBoard',
-    radio: t('radio.title'),
-    movies: t('common.movies'),
-    webtv: t('webtv.title'),
-    magazine: t('magazine.title'),
-    restaurant: t('restaurants.title'),
-    enfant: t('enfant.title'),
-    shop: t('shop.title'),
-    favorites: t('common.myFavorites'),
-    menu: t('common.dailyMenu'),
-    shipmap: t('shipmap.title'),
-    dutyfree: t('common.dutyFreeShop'),
-    kids: t('common.kidsZone'),
-    info: t('common.moreInfo'),
-    notifications: t('notifications.title'),
-  }), [language, t]);
+  const pageTitles = useMemo(
+    () => ({
+      home: 'GNV OnBoard',
+      radio: t('radio.title'),
+      movies: t('common.movies'),
+      webtv: t('webtv.title'),
+      magazine: t('magazine.title'),
+      restaurant: t('restaurants.title'),
+      enfant: t('enfant.title'),
+      shop: t('shop.title'),
+      favorites: t('common.myFavorites'),
+      menu: t('common.dailyMenu'),
+      shipmap: t('shipmap.title'),
+      dutyfree: t('common.dutyFreeShop'),
+      kids: t('common.kidsZone'),
+      info: t('common.moreInfo'),
+      notifications: t('notifications.title'),
+    }),
+    [language, t]
+  );
 
   // Clé de stockage des favoris : par profil connecté ou "guest"
   const favoritesStorageSuffix = 'guest';
@@ -300,7 +326,9 @@ function App() {
           if (legacy) raw = legacy;
         }
         return raw ? JSON.parse(raw) : [];
-      } catch (_) { return []; }
+      } catch (_) {
+        return [];
+      }
     };
 
     if (suffix === 'guest') {
@@ -316,7 +344,8 @@ function App() {
     }
 
     let cancelled = false;
-    apiService.getUserData()
+    apiService
+      .getUserData()
       .then((res) => {
         if (cancelled) return;
         const fav = res?.data?.favorites || {};
@@ -327,14 +356,22 @@ function App() {
         let watchlistData = Array.isArray(fav.watchlist) ? fav.watchlist : [];
         let shopItems = Array.isArray(fav.shopItems) ? fav.shopItems : [];
         let playbackData = typeof playback === 'object' && playback !== null ? playback : {};
-        const serverEmpty = magazineIds.length === 0 && restaurantIds.length === 0 && enfantIds.length === 0 && watchlistData.length === 0 && shopItems.length === 0 && Object.keys(playbackData).length === 0;
+        const serverEmpty =
+          magazineIds.length === 0 &&
+          restaurantIds.length === 0 &&
+          enfantIds.length === 0 &&
+          watchlistData.length === 0 &&
+          shopItems.length === 0 &&
+          Object.keys(playbackData).length === 0;
         if (serverEmpty) {
           try {
             const pre = (baseKey) => {
               try {
                 const raw = localStorage.getItem(`${baseKey}_${suffix}`);
                 return raw ? JSON.parse(raw) : [];
-              } catch (_) { return []; }
+              } catch (_) {
+                return [];
+              }
             };
             magazineIds = pre('magazineFavorites');
             restaurantIds = pre('restaurantFavorites');
@@ -345,11 +382,20 @@ function App() {
             const key = getPlaybackStorageKey(suffix);
             const rawPlay = localStorage.getItem(key);
             playbackData = rawPlay ? JSON.parse(rawPlay) : {};
-            if (magazineIds.length > 0 || restaurantIds.length > 0 || enfantIds.length > 0 || watchlistData.length > 0 || shopItems.length > 0 || Object.keys(playbackData).length > 0) {
-              apiService.putUserData({
-                favorites: { magazineIds, restaurantIds, enfantIds, watchlist: watchlistData, shopItems },
-                playbackPositions: playbackData,
-              }).catch(() => {});
+            if (
+              magazineIds.length > 0 ||
+              restaurantIds.length > 0 ||
+              enfantIds.length > 0 ||
+              watchlistData.length > 0 ||
+              shopItems.length > 0 ||
+              Object.keys(playbackData).length > 0
+            ) {
+              apiService
+                .putUserData({
+                  favorites: { magazineIds, restaurantIds, enfantIds, watchlist: watchlistData, shopItems },
+                  playbackPositions: playbackData,
+                })
+                .catch(() => {});
             }
           } catch (_) {}
         }
@@ -384,7 +430,9 @@ function App() {
           setShopFavorites(Array.isArray(shopRaw) ? shopRaw : []);
         } catch (_) {}
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [favoritesStorageSuffix]);
 
   useEffect(() => {
@@ -399,15 +447,17 @@ function App() {
     if (syncFavoritesToServerTimeoutRef.current) clearTimeout(syncFavoritesToServerTimeoutRef.current);
     syncFavoritesToServerTimeoutRef.current = setTimeout(() => {
       syncFavoritesToServerTimeoutRef.current = null;
-      apiService.putUserData({
-        favorites: {
-          magazineIds: magazineFavoritesIds,
-          restaurantIds: restaurantFavoritesIds,
-          enfantIds: enfantFavoritesIds,
-          watchlist,
-          shopItems: shopFavorites,
-        },
-      }).catch(() => {});
+      apiService
+        .putUserData({
+          favorites: {
+            magazineIds: magazineFavoritesIds,
+            restaurantIds: restaurantFavoritesIds,
+            enfantIds: enfantFavoritesIds,
+            watchlist,
+            shopItems: shopFavorites,
+          },
+        })
+        .catch(() => {});
     }, 1500);
     return () => {
       if (syncFavoritesToServerTimeoutRef.current) {
@@ -415,7 +465,14 @@ function App() {
         syncFavoritesToServerTimeoutRef.current = null;
       }
     };
-  }, [favoritesStorageSuffix, magazineFavoritesIds, restaurantFavoritesIds, enfantFavoritesIds, watchlist, shopFavorites]);
+  }, [
+    favoritesStorageSuffix,
+    magazineFavoritesIds,
+    restaurantFavoritesIds,
+    enfantFavoritesIds,
+    watchlist,
+    shopFavorites,
+  ]);
 
   const syncPlaybackToServer = useCallback(() => {
     if (favoritesStorageSuffix === 'guest') return;
@@ -428,154 +485,197 @@ function App() {
   }, [favoritesStorageSuffix]);
 
   // Récupérer le programme du jour depuis la base de données quand une chaîne est sélectionnée (avec cache du timeline)
-  const shopCategories = useMemo(() => [
-    { id: 'all', name: t('shop.categories.all'), icon: '🛍️' },
-    { id: 'souvenirs', name: t('shop.categories.souvenirs'), icon: '🎁' },
-    { id: 'dutyfree', name: t('shop.categories.dutyfree'), icon: '🍷' },
-    { id: 'fashion', name: t('shop.categories.fashion'), icon: '👕' },
-    { id: 'electronics', name: t('shop.categories.electronics'), icon: '📱' },
-    { id: 'food', name: t('shop.categories.food'), icon: '🍯' },
-  ], [t]);
+  const shopCategories = useMemo(
+    () => [
+      { id: 'all', name: t('shop.categories.all'), icon: '🛍️' },
+      { id: 'souvenirs', name: t('shop.categories.souvenirs'), icon: '🎁' },
+      { id: 'dutyfree', name: t('shop.categories.dutyfree'), icon: '🍷' },
+      { id: 'fashion', name: t('shop.categories.fashion'), icon: '👕' },
+      { id: 'electronics', name: t('shop.categories.electronics'), icon: '📱' },
+      { id: 'food', name: t('shop.categories.food'), icon: '🍯' },
+    ],
+    [t]
+  );
 
   // Promos boutique pour la page d’accueil uniquement (page Shop charge les siennes via useShop)
   useEffect(() => {
     let cancelled = false;
-    apiService.getPromotions()
+    apiService
+      .getPromotions()
       .then((response) => {
         if (cancelled) return;
         const data = response?.data;
-        const list = Array.isArray(data) ? data : (data?.promotions || data?.data || []);
-        setHomeShopPromotions((list || []).filter(p => p.isActive !== false));
+        const list = Array.isArray(data) ? data : data?.promotions || data?.data || [];
+        setHomeShopPromotions((list || []).filter((p) => p.isActive !== false));
       })
-      .catch(() => { if (!cancelled) setHomeShopPromotions([]); });
-    return () => { cancelled = true; };
+      .catch(() => {
+        if (!cancelled) setHomeShopPromotions([]);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // === Movies & Series functions ===
   const toggleWatchlist = (movieId) => {
     const key = `watchlist_${favoritesStorageSuffix}`;
-    setWatchlist(prev => {
-      const next = prev.includes(movieId) ? prev.filter(id => id !== movieId) : [...prev, movieId];
-      if (favoritesStorageSuffix === 'guest') try { localStorage.setItem(key, JSON.stringify(next)); } catch (_) {}
+    setWatchlist((prev) => {
+      const next = prev.includes(movieId) ? prev.filter((id) => id !== movieId) : [...prev, movieId];
+      if (favoritesStorageSuffix === 'guest')
+        try {
+          localStorage.setItem(key, JSON.stringify(next));
+        } catch (_) {}
       return next;
     });
   };
 
   // === Restaurant functions ===
-  const isRestaurantFavorite = (restaurantId) => restaurantFavoritesIds.some(id => String(id) === String(restaurantId));
+  const isRestaurantFavorite = (restaurantId) =>
+    restaurantFavoritesIds.some((id) => String(id) === String(restaurantId));
   const toggleRestaurantFavorite = (restaurantId) => {
     const key = `restaurantFavorites_${favoritesStorageSuffix}`;
-    setRestaurantFavoritesIds(prev => {
-      const next = prev.some(id => String(id) === String(restaurantId))
-        ? prev.filter(id => String(id) !== String(restaurantId))
+    setRestaurantFavoritesIds((prev) => {
+      const next = prev.some((id) => String(id) === String(restaurantId))
+        ? prev.filter((id) => String(id) !== String(restaurantId))
         : [...prev, String(restaurantId)];
-      if (favoritesStorageSuffix === 'guest') try { localStorage.setItem(key, JSON.stringify(next)); } catch (_) {}
+      if (favoritesStorageSuffix === 'guest')
+        try {
+          localStorage.setItem(key, JSON.stringify(next));
+        } catch (_) {}
       return next;
     });
   };
   const restaurantFavoritesList = useMemo(
-    () => restaurants.filter(r => restaurantFavoritesIds.some(id => String(id) === String(r.id))),
-    [restaurants, restaurantFavoritesIds],
+    () => restaurants.filter((r) => restaurantFavoritesIds.some((id) => String(id) === String(r.id))),
+    [restaurants, restaurantFavoritesIds]
   );
 
   /** Promos : 1 resto + 1 boutique, sélection déterministe (évite re-renders et sauts visuels). */
   const homePromosCombined = useMemo(() => {
-    const restAll = (allPromotions || []).map((p) => ({ ...p, _promoType: 'restaurant', _promoKey: `rest-${p.restaurant?.id ?? ''}-${p.id ?? ''}` }));
-    const shopAll = (homeShopPromotions || []).map((p) => ({ ...p, _promoType: 'shop', _promoKey: `shop-${p.id ?? p._id ?? ''}` }));
+    const restAll = (allPromotions || []).map((p) => ({
+      ...p,
+      _promoType: 'restaurant',
+      _promoKey: `rest-${p.restaurant?.id ?? ''}-${p.id ?? ''}`,
+    }));
+    const shopAll = (homeShopPromotions || []).map((p) => ({
+      ...p,
+      _promoType: 'shop',
+      _promoKey: `shop-${p.id ?? p._id ?? ''}`,
+    }));
     const oneRest = restAll.length > 0 ? [restAll[0]] : [];
     const oneShop = shopAll.length > 0 ? [shopAll[0]] : [];
     return [...oneRest, ...oneShop];
   }, [allPromotions, homeShopPromotions]);
 
   // Titre/description d'une promotion selon la langue (translations ou fallback) — mémoïsés pour limiter re-renders
-  const getPromoTitle = useCallback((promo) =>
-    (promo.translations && promo.translations[language] && promo.translations[language].title)
-      ? promo.translations[language].title
-      : (promo.title || ''),
-  [language]);
-  const getPromoDescription = useCallback((promo) =>
-    (promo.translations && promo.translations[language] && promo.translations[language].description)
-      ? promo.translations[language].description
-      : (promo.description || ''),
-  [language]);
+  const getPromoTitle = useCallback(
+    (promo) =>
+      promo.translations && promo.translations[language] && promo.translations[language].title
+        ? promo.translations[language].title
+        : promo.title || '',
+    [language]
+  );
+  const getPromoDescription = useCallback(
+    (promo) =>
+      promo.translations && promo.translations[language] && promo.translations[language].description
+        ? promo.translations[language].description
+        : promo.description || '',
+    [language]
+  );
 
   const addToCart = useCallback((item) => {
-    setCart(prev => [...prev, { ...item, id: Date.now(), quantity: 1 }]);
+    setCart((prev) => [...prev, { ...item, id: Date.now(), quantity: 1 }]);
   }, []);
 
   const removeFromCart = useCallback((itemId) => {
-    setCart(prev => prev.filter(item => item.id !== itemId));
+    setCart((prev) => prev.filter((item) => item.id !== itemId));
   }, []);
 
   const updateCartQuantity = useCallback((itemId, quantity) => {
     if (quantity <= 0) {
-      setCart(prev => prev.filter(item => item.id !== itemId));
+      setCart((prev) => prev.filter((item) => item.id !== itemId));
     } else {
-      setCart(prev => prev.map(item =>
-        item.id === itemId ? { ...item, quantity } : item,
-      ));
+      setCart((prev) => prev.map((item) => (item.id === itemId ? { ...item, quantity } : item)));
     }
   }, []);
 
   // === Shop favoris (utilisés par ShopPage, Favorites et raccourcis home) ===
-  const isShopFavorite = (productId) => shopFavorites.some(p => p.id === productId);
+  const isShopFavorite = (productId) => shopFavorites.some((p) => p.id === productId);
 
   const toggleShopFavorite = (product) => {
     const key = `shopFavorites_${favoritesStorageSuffix}`;
-    setShopFavorites(prev => {
-      const next = prev.some(p => p.id === product.id) ? prev.filter(p => p.id !== product.id) : [...prev, { ...product }];
-      if (favoritesStorageSuffix === 'guest') try { localStorage.setItem(key, JSON.stringify(next)); } catch (_) {}
+    setShopFavorites((prev) => {
+      const next = prev.some((p) => p.id === product.id)
+        ? prev.filter((p) => p.id !== product.id)
+        : [...prev, { ...product }];
+      if (favoritesStorageSuffix === 'guest')
+        try {
+          localStorage.setItem(key, JSON.stringify(next));
+        } catch (_) {}
       return next;
     });
   };
 
   const removeFromShopFavorites = (productId) => {
     const key = `shopFavorites_${favoritesStorageSuffix}`;
-    setShopFavorites(prev => {
-      const next = prev.filter(p => p.id !== productId);
-      if (favoritesStorageSuffix === 'guest') try { localStorage.setItem(key, JSON.stringify(next)); } catch (_) {}
+    setShopFavorites((prev) => {
+      const next = prev.filter((p) => p.id !== productId);
+      if (favoritesStorageSuffix === 'guest')
+        try {
+          localStorage.setItem(key, JSON.stringify(next));
+        } catch (_) {}
       return next;
     });
   };
 
-  const isMagazineFavorite = (articleId) => magazineFavoritesIds.some(id => String(id) === String(articleId));
+  const isMagazineFavorite = (articleId) => magazineFavoritesIds.some((id) => String(id) === String(articleId));
   const toggleMagazineFavorite = (article) => {
     const id = article?.id ?? article?._id;
     if (!id) return;
     const key = `magazineFavorites_${favoritesStorageSuffix}`;
-    setMagazineFavoritesIds(prev => {
-      const next = prev.some(i => String(i) === String(id)) ? prev.filter(i => String(i) !== String(id)) : [...prev, id];
-      if (favoritesStorageSuffix === 'guest') try { localStorage.setItem(key, JSON.stringify(next)); } catch (_) {}
+    setMagazineFavoritesIds((prev) => {
+      const next = prev.some((i) => String(i) === String(id))
+        ? prev.filter((i) => String(i) !== String(id))
+        : [...prev, id];
+      if (favoritesStorageSuffix === 'guest')
+        try {
+          localStorage.setItem(key, JSON.stringify(next));
+        } catch (_) {}
       return next;
     });
   };
 
-  const isEnfantFavorite = (activityId) => enfantFavoritesIds.some(id => String(id) === String(activityId));
+  const isEnfantFavorite = (activityId) => enfantFavoritesIds.some((id) => String(id) === String(activityId));
   const toggleEnfantFavorite = (activity) => {
     const id = activity?.id ?? activity?._id;
     if (!id) return;
     const key = `enfantFavorites_${favoritesStorageSuffix}`;
-    setEnfantFavoritesIds(prev => {
-      const next = prev.some(i => String(i) === String(id)) ? prev.filter(i => String(i) !== String(id)) : [...prev, id];
-      if (favoritesStorageSuffix === 'guest') try { localStorage.setItem(key, JSON.stringify(next)); } catch (_) {}
+    setEnfantFavoritesIds((prev) => {
+      const next = prev.some((i) => String(i) === String(id))
+        ? prev.filter((i) => String(i) !== String(id))
+        : [...prev, id];
+      if (favoritesStorageSuffix === 'guest')
+        try {
+          localStorage.setItem(key, JSON.stringify(next));
+        } catch (_) {}
       return next;
     });
   };
 
   // Favoris films (watchlist) — mémoïsés pour limiter les re-renders de MainContent/FavoritesPage
   const myWatchlist = useMemo(
-    () => moviesAndSeries.filter(item => watchlist.includes(item.id)),
-    [moviesAndSeries, watchlist],
+    () => moviesAndSeries.filter((item) => watchlist.includes(item.id)),
+    [moviesAndSeries, watchlist]
   );
 
   const magazineFavoritesArticles = useMemo(
-    () => magazineArticles.filter(a => magazineFavoritesIds.some(id => String(id) === String(a.id ?? a._id))),
-    [magazineArticles, magazineFavoritesIds],
+    () => magazineArticles.filter((a) => magazineFavoritesIds.some((id) => String(id) === String(a.id ?? a._id))),
+    [magazineArticles, magazineFavoritesIds]
   );
 
   const enfantFavoritesActivities = useMemo(
-    () => enfantActivities.filter(a => enfantFavoritesIds.some(id => String(id) === String(a.id))),
-    [enfantActivities, enfantFavoritesIds],
+    () => enfantActivities.filter((a) => enfantFavoritesIds.some((id) => String(id) === String(a.id))),
+    [enfantActivities, enfantFavoritesIds]
   );
 
   useEffect(() => {
@@ -661,7 +761,9 @@ function App() {
             )}
 
             {/* Main with page transitions + ErrorBoundary pour isoler les erreurs de page */}
-            <main className={`flex-1 p-2 sm:p-3 md:p-4 overflow-y-auto overflow-x-hidden ${!isOnline || offlineQueue.pendingCount > 0 ? 'pt-[calc(7rem+env(safe-area-inset-top,0px))] sm:pt-[7.5rem] md:pt-[8rem]' : 'pt-[calc(5rem+env(safe-area-inset-top,0px))] sm:pt-[80px] md:pt-[84px]'}`}>
+            <main
+              className={`flex-1 p-2 sm:p-3 md:p-4 overflow-y-auto overflow-x-hidden ${!isOnline || offlineQueue.pendingCount > 0 ? 'pt-[calc(7rem+env(safe-area-inset-top,0px))] sm:pt-[7.5rem] md:pt-[8rem]' : 'pt-[calc(5rem+env(safe-area-inset-top,0px))] sm:pt-[80px] md:pt-[84px]'}`}
+            >
               <BannersCarousel
                 banners={banners.homeBanners}
                 bannerIndex={banners.bannerIndex}

@@ -11,29 +11,29 @@ console.log(`🌐 Démarrage du serveur Vite sur le port ${PORT}...`);
 const vite = spawn('npm', ['run', 'dev'], {
   stdio: 'inherit',
   shell: true,
-  cwd: process.cwd()
+  cwd: process.cwd(),
 });
 
 // Attendre que le serveur démarre
 setTimeout(async () => {
   try {
     console.log('\n🔗 Création du tunnel ngrok...');
-    
+
     // Configuration du tunnel avec authentification optionnelle
     const tunnelConfig = {
       addr: PORT,
-      authtoken: process.env.NGROK_AUTH_TOKEN || undefined
+      authtoken: process.env.NGROK_AUTH_TOKEN || undefined,
     };
-    
+
     // Ajouter l'authentification HTTP de base si configurée
     if (process.env.NGROK_USERNAME && process.env.NGROK_PASSWORD) {
       tunnelConfig.basic_auth = `${process.env.NGROK_USERNAME}:${process.env.NGROK_PASSWORD}`;
       console.log('🔐 Authentification HTTP activée');
     }
-    
+
     // Essayer de se connecter avec ou sans token
     const url = await ngrok.connect(tunnelConfig);
-    
+
     console.log('\n✅ Tunnel créé avec succès!');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`🌐 URL locale:    http://localhost:${PORT}`);
@@ -41,7 +41,7 @@ setTimeout(async () => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     console.log('📋 Interface ngrok: http://localhost:4040');
     console.log('⚠️  Appuyez sur Ctrl+C pour arrêter\n');
-    
+
     // Gérer l'arrêt propre
     const cleanup = async () => {
       console.log('\n\n🛑 Arrêt en cours...');
@@ -54,10 +54,9 @@ setTimeout(async () => {
       vite.kill();
       process.exit(0);
     };
-    
+
     process.on('SIGINT', cleanup);
     process.on('SIGTERM', cleanup);
-    
   } catch (error) {
     console.error('\n❌ Erreur lors de la création du tunnel:', error.message);
     console.log('\n💡 Solutions possibles:');

@@ -5,6 +5,9 @@ import App from './App.jsx';
 import './styles/fonts.css';
 import './styles/index.css';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { initWebVitalsReporting } from './lib/webVitals';
+
+initWebVitalsReporting();
 
 // ——— Service Worker (PWA) ———
 // En développement : désinscrire tout SW pour éviter le cache et voir les changements à chaud
@@ -16,25 +19,27 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
 
 // En production : enregistrement explicite du Service Worker (généré par VitePWA / Workbox)
 if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
-  import('virtual:pwa-register').then(({ registerSW }) => {
-    registerSW({
-      immediate: true,
-      onRegistered(registration) {
-        if (registration) {
-          console.log('✅ Service Worker enregistré (scope:', registration.scope, ')');
-        }
-      },
-      onRegisterError(e) {
-        console.warn('⚠️ Échec enregistrement Service Worker:', e);
-      },
+  import('virtual:pwa-register')
+    .then(({ registerSW }) => {
+      registerSW({
+        immediate: true,
+        onRegistered(registration) {
+          if (registration) {
+            console.log('✅ Service Worker enregistré (scope:', registration.scope, ')');
+          }
+        },
+        onRegisterError(e) {
+          console.warn('⚠️ Échec enregistrement Service Worker:', e);
+        },
+      });
+    })
+    .catch(() => {
+      // Fallback si le module virtuel n'existe pas (build sans plugin PWA)
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(
+        (reg) => console.log('✅ Service Worker enregistré (fallback)', reg.scope),
+        (err) => console.warn('⚠️ Service Worker non enregistré', err)
+      );
     });
-  }).catch(() => {
-    // Fallback si le module virtuel n'existe pas (build sans plugin PWA)
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(
-      (reg) => console.log('✅ Service Worker enregistré (fallback)', reg.scope),
-      (err) => console.warn('⚠️ Service Worker non enregistré', err),
-    );
-  });
 }
 
 class ErrorBoundary extends React.Component {
@@ -81,7 +86,7 @@ if (!rootEl) {
             </BrowserRouter>
           </LanguageProvider>
         </ErrorBoundary>
-      </React.StrictMode>,
+      </React.StrictMode>
     );
     const loading = document.getElementById('loading');
     if (loading) loading.style.display = 'none';

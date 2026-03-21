@@ -15,8 +15,7 @@ const handleValidationErrors = (req, res, next) => {
 const validateEmail = () => body('email').isEmail().withMessage('Invalid email').normalizeEmail();
 const validatePassword = (minLen = 8) =>
   body('password').isLength({ min: minLen }).withMessage(`Password must be at least ${minLen} characters`);
-const validateObjectId = (paramName = 'id') =>
-  param(paramName).isMongoId().withMessage('Invalid ID');
+const validateObjectId = (paramName = 'id') => param(paramName).isMongoId().withMessage('Invalid ID');
 const validateOptionalObjectId = (fieldName) =>
   body(fieldName).optional().isMongoId().withMessage(`Invalid ${fieldName}`);
 
@@ -35,12 +34,24 @@ function validateParams(...validators) {
 
 /** Exige au moins 8 caractères, une majuscule, une minuscule, un chiffre et un symbole (pour admin) */
 const strongPassword = (value) => {
-  if (!value || typeof value !== 'string') {return false;}
-  if (value.length < 8) {return false;}
-  if (!/[A-Z]/.test(value)) {return false;}
-  if (!/[a-z]/.test(value)) {return false;}
-  if (!/[0-9]/.test(value)) {return false;}
-  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)) {return false;}
+  if (!value || typeof value !== 'string') {
+    return false;
+  }
+  if (value.length < 8) {
+    return false;
+  }
+  if (!/[A-Z]/.test(value)) {
+    return false;
+  }
+  if (!/[a-z]/.test(value)) {
+    return false;
+  }
+  if (!/[0-9]/.test(value)) {
+    return false;
+  }
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)) {
+    return false;
+  }
   return true;
 };
 
@@ -59,10 +70,7 @@ const registerValidation = [
     .isLength({ max: 50 })
     .withMessage('Last name cannot exceed 50 characters'),
 
-  body('email')
-    .isEmail()
-    .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+  body('email').isEmail().withMessage('Please provide a valid email').normalizeEmail(),
 
   body('password')
     .isLength({ min: 8 })
@@ -83,59 +91,30 @@ const registerValidation = [
 ];
 
 const loginValidation = [
-  body('email')
-    .isEmail()
-    .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+  body('email').isEmail().withMessage('Please provide a valid email').normalizeEmail(),
 
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required'),
+  body('password').notEmpty().withMessage('Password is required'),
 
   handleValidationErrors,
 ];
 
 /** [Q1] Validation PUT /api/auth/profile — champs optionnels, formats contrôlés */
 const profileValidation = [
-  body('firstName')
-    .optional()
-    .trim()
-    .isLength({ max: 50 })
-    .withMessage('First name cannot exceed 50 characters'),
-  body('lastName')
-    .optional()
-    .trim()
-    .isLength({ max: 50 })
-    .withMessage('Last name cannot exceed 50 characters'),
+  body('firstName').optional().trim().isLength({ max: 50 }).withMessage('First name cannot exceed 50 characters'),
+  body('lastName').optional().trim().isLength({ max: 50 }).withMessage('Last name cannot exceed 50 characters'),
   body('phone')
     .optional()
     .matches(/^[+]?[\d\s\-\(\)]+$/)
     .withMessage('Please provide a valid phone number'),
-  body('cabinNumber')
-    .optional()
-    .trim()
-    .isLength({ max: 30 })
-    .withMessage('Cabin number cannot exceed 30 characters'),
-  body('country')
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Country cannot exceed 100 characters'),
-  body('dateOfBirth')
-    .optional()
-    .isISO8601()
-    .withMessage('Invalid date of birth (ISO 8601 expected)'),
-  body('preferences')
-    .optional()
-    .isObject()
-    .withMessage('Preferences must be an object'),
+  body('cabinNumber').optional().trim().isLength({ max: 30 }).withMessage('Cabin number cannot exceed 30 characters'),
+  body('country').optional().trim().isLength({ max: 100 }).withMessage('Country cannot exceed 100 characters'),
+  body('dateOfBirth').optional().isISO8601().withMessage('Invalid date of birth (ISO 8601 expected)'),
+  body('preferences').optional().isObject().withMessage('Preferences must be an object'),
   handleValidationErrors,
 ];
 
 const feedbackValidation = [
-  body('type')
-    .isIn(['complaint', 'suggestion', 'compliment', 'technical'])
-    .withMessage('Invalid feedback type'),
+  body('type').isIn(['complaint', 'suggestion', 'compliment', 'technical']).withMessage('Invalid feedback type'),
 
   body('category')
     .isIn(['restaurant', 'entertainment', 'service', 'technical', 'other'])
@@ -221,7 +200,9 @@ const adminUserUpdateValidation = [
   body('password').optional().isLength({ min: 8, max: 256 }),
   body('role').optional().isIn(['passenger', 'crew', 'admin']),
   body('isActive').optional().isBoolean(),
-  body('allowedModules').optional().custom((v) => v === null || (typeof v === 'object' && !Array.isArray(v))),
+  body('allowedModules')
+    .optional()
+    .custom((v) => v === null || (typeof v === 'object' && !Array.isArray(v))),
   handleValidationErrors,
 ];
 
@@ -263,6 +244,3 @@ module.exports = {
   settingsAccessValidation,
   adminDeleteUserQueryValidation,
 };
-
-
-

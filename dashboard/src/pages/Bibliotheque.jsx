@@ -19,9 +19,27 @@ import VideoPlayerModal from '../components/VideoPlayerModal';
 const Bibliotheque = () => {
   const { t } = useLanguage();
   const typeConfig = {
-    video: { icon: FileVideo, label: t('bibliotheque.video'), color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200' },
-    image: { icon: ImageIcon, label: t('bibliotheque.image'), color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
-    audio: { icon: Music, label: t('bibliotheque.audio'), color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+    video: {
+      icon: FileVideo,
+      label: t('bibliotheque.video'),
+      color: 'text-purple-600',
+      bg: 'bg-purple-50',
+      border: 'border-purple-200',
+    },
+    image: {
+      icon: ImageIcon,
+      label: t('bibliotheque.image'),
+      color: 'text-green-600',
+      bg: 'bg-green-50',
+      border: 'border-green-200',
+    },
+    audio: {
+      icon: Music,
+      label: t('bibliotheque.audio'),
+      color: 'text-amber-600',
+      bg: 'bg-amber-50',
+      border: 'border-amber-200',
+    },
   };
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +63,9 @@ const Bibliotheque = () => {
       const isNetwork = !err.response;
       const hint = isNetwork
         ? ' Vérifiez que le backend tourne (npm run dev dans backend/, port 3000).'
-        : (msg === 'Route not found' ? ' Redémarrez le backend.' : '');
+        : msg === 'Route not found'
+          ? ' Redémarrez le backend.'
+          : '';
       toast.error(msg + hint);
       setMedia([]);
     } finally {
@@ -86,7 +106,7 @@ const Bibliotheque = () => {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  const previewUrl = (item) => item.path?.startsWith('/') ? item.path : `/${item.path || ''}`;
+  const previewUrl = (item) => (item.path?.startsWith('/') ? item.path : `/${item.path || ''}`);
 
   const filtered = media.filter((m) => {
     const matchSearch = !searchQuery.trim() || m.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
@@ -111,9 +131,7 @@ const Bibliotheque = () => {
           </span>
           {t('bibliotheque.title')}
         </h1>
-        <p className="text-gray-500 text-sm pl-11">
-          {t('bibliotheque.subtitle')}
-        </p>
+        <p className="text-gray-500 text-sm pl-11">{t('bibliotheque.subtitle')}</p>
       </header>
 
       {/* Barre de recherche et filtres */}
@@ -122,7 +140,10 @@ const Bibliotheque = () => {
           <div className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
               <div className="relative flex-1 min-w-0">
-                <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <Search
+                  size={18}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
                 <input
                   type="text"
                   placeholder={t('bibliotheque.searchPlaceholder')}
@@ -185,9 +206,7 @@ const Bibliotheque = () => {
             {media.length === 0 ? t('bibliotheque.noMediaOnServer') : t('bibliotheque.noResultsForSearch')}
           </p>
           <p className="text-sm mt-1.5 text-center max-w-sm text-gray-500">
-            {media.length === 0
-              ? t('bibliotheque.noMediaHint')
-              : t('bibliotheque.noResultsHint')}
+            {media.length === 0 ? t('bibliotheque.noMediaHint') : t('bibliotheque.noResultsHint')}
           </p>
         </div>
       ) : (
@@ -207,12 +226,7 @@ const Bibliotheque = () => {
                 {/* Zone lecteur / aperçu */}
                 <div className="aspect-video bg-gray-100 flex items-center justify-center relative">
                   {item.type === 'image' && (
-                    <img
-                      src={url}
-                      alt={item.name}
-                      className="w-full h-full object-contain"
-                      loading="lazy"
-                    />
+                    <img src={url} alt={item.name} className="w-full h-full object-contain" loading="lazy" />
                   )}
                   {item.type === 'video' && (
                     <button
@@ -236,24 +250,17 @@ const Bibliotheque = () => {
                   )}
                   {item.type === 'audio' && (
                     <div className="w-full p-4 flex items-center justify-center bg-gradient-to-b from-gray-100 to-gray-50">
-                      <audio
-                        src={url}
-                        controls
-                        preload="metadata"
-                        className="w-full max-w-full"
-                      />
+                      <audio src={url} controls preload="metadata" className="w-full max-w-full" />
                     </div>
                   )}
-                  {!['image', 'video', 'audio'].includes(item.type) && (
-                    <Icon size={40} className="text-gray-400" />
-                  )}
+                  {!['image', 'video', 'audio'].includes(item.type) && <Icon size={40} className="text-gray-400" />}
                   <span
                     className={`absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${config.bg} ${config.color} ${config.border} border`}
                   >
                     <Icon size={11} />
                     {config.label}
                   </span>
-                  {(item.duration != null && item.duration > 0) && (
+                  {item.duration != null && item.duration > 0 && (
                     <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/60 text-white text-xs font-mono">
                       {formatDuration(item.duration)}
                     </span>

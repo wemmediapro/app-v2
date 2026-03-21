@@ -6,6 +6,7 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -39,11 +40,13 @@ jobs:
       - name: Dépendances (racine)
         run: npm ci
 
-      - name: Lint frontend
-        run: npm run lint || true
+      - name: Lint frontend (advisory)
+        continue-on-error: true
+        run: npm run lint
 
-      - name: Format check frontend
-        run: npm run format:check || true
+      - name: Format check frontend (advisory)
+        continue-on-error: true
+        run: npm run format:check
 
       - name: Vitest — couverture
         run: npm run test:coverage
@@ -113,6 +116,15 @@ jobs:
           flags: frontend
           fail_ci_if_error: false
 
+      - name: Artefacts couverture frontend (lcov + HTML)
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: |
+            coverage/lcov.info
+            coverage/**/*.html
+          if-no-files-found: warn
+
       - name: Arrêt backend / preview
         if: always()
         run: |
@@ -137,11 +149,16 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint backend
-        run: npm run lint || true
+      - name: TypeScript (types Express)
+        run: npm run typecheck
 
-      - name: Format check backend
-        run: npm run format:check || true
+      - name: Lint backend (advisory)
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Format check backend (advisory)
+        continue-on-error: true
+        run: npm run format:check
 
       - name: Jest (avec couverture)
         run: npm run test
@@ -153,6 +170,40 @@ jobs:
           files: ./backend/coverage/lcov.info
           flags: backend
           fail_ci_if_error: false
+
+      - name: Artefacts couverture backend (lcov + HTML)
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: |
+            backend/coverage/lcov.info
+            backend/coverage/**/*.html
+          if-no-files-found: warn
+
+  typecheck:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            dashboard/package-lock.json
+
+      - name: Dépendances racine
+        run: npm ci
+
+      - name: Dépendances dashboard (types React, etc.)
+        working-directory: dashboard
+        run: npm ci
+
+      - name: tsc — racine, backend, dashboard
+        run: npm run typecheck
 
   dashboard-build:
     name: Dashboard build + audit

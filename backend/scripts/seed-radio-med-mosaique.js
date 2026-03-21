@@ -25,7 +25,7 @@ const IMAGES_DIR = path.join(ROOT, 'public', 'uploads', 'images');
 const RADIO_MED_DESCRIPTION = {
   fr: 'Une vague de bonheur',
   en: 'A wave of happiness',
-  it: 'Un\'onda di felicità',
+  it: "Un'onda di felicità",
   es: 'Una ola de felicidad',
   ar: 'موجة من السعادة',
   de: 'Eine Welle des Glücks',
@@ -111,8 +111,16 @@ async function seedRadioMedMosaique() {
     stations[0].logo = radioMedLogo;
     stations[1].logo = mosaiqueLogo;
 
-    if (radioMedLogo) {console.log('   Logo Radio Med copié:', radioMedLogo);} else {console.log('   ⚠️  Aucun logo Radio Med dans scripts/assets/ (radio-med-logo.png ou .jpg)');}
-    if (mosaiqueLogo) {console.log('   Logo Mosaïque copié:', mosaiqueLogo);} else {console.log('   ⚠️  Aucun logo Mosaïque dans scripts/assets/ (mosaique-logo.png ou .jpg)');}
+    if (radioMedLogo) {
+      console.log('   Logo Radio Med copié:', radioMedLogo);
+    } else {
+      console.log('   ⚠️  Aucun logo Radio Med dans scripts/assets/ (radio-med-logo.png ou .jpg)');
+    }
+    if (mosaiqueLogo) {
+      console.log('   Logo Mosaïque copié:', mosaiqueLogo);
+    } else {
+      console.log('   ⚠️  Aucun logo Mosaïque dans scripts/assets/ (mosaique-logo.png ou .jpg)');
+    }
 
     for (const s of stations) {
       const found = await RadioStation.findOne({ name: s.name });

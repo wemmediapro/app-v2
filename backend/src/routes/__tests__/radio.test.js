@@ -9,11 +9,15 @@ jest.mock('../../lib/cache-manager', () => ({ isConnected: false, get: jest.fn()
 const mockFindByIdChain = (userDoc) => {
   const chain = {
     lean: jest.fn().mockResolvedValue(userDoc),
-    then(resolve, reject) { return Promise.resolve(userDoc).then(resolve, reject); },
+    then(resolve, reject) {
+      return Promise.resolve(userDoc).then(resolve, reject);
+    },
   };
   return {
     select: jest.fn().mockReturnValue(chain),
-    then(resolve, reject) { return Promise.resolve(userDoc).then(resolve, reject); },
+    then(resolve, reject) {
+      return Promise.resolve(userDoc).then(resolve, reject);
+    },
   };
 };
 
@@ -36,63 +40,50 @@ app.use('/api/radio', radioRouter);
 describe('API Radio', () => {
   describe('GET /api/radio', () => {
     it('retourne 200 et un tableau (stations ou vide)', async () => {
-      const res = await request(app)
-        .get('/api/radio')
-        .expect(200);
+      const res = await request(app).get('/api/radio').expect(200);
       expect(Array.isArray(res.body)).toBe(true);
     });
 
     it('accepte ?lang= pour localisation', async () => {
-      const res = await request(app)
-        .get('/api/radio?lang=fr')
-        .expect(200);
+      const res = await request(app).get('/api/radio?lang=fr').expect(200);
       expect(Array.isArray(res.body)).toBe(true);
     });
 
     it('accepte ?all=1 pour toutes les stations (dashboard)', async () => {
-      const res = await request(app)
-        .get('/api/radio?all=1')
-        .expect(200);
+      const res = await request(app).get('/api/radio?all=1').expect(200);
       expect(Array.isArray(res.body)).toBe(true);
     });
   });
 
   describe('PATCH /api/radio/:id/listeners', () => {
     it('retourne 400 si action manquante ou invalide', async () => {
-      await request(app)
-        .patch('/api/radio/abc123/listeners')
-        .send({})
-        .expect(400);
+      await request(app).patch('/api/radio/abc123/listeners').send({}).expect(400);
     });
 
     it('retourne 400 si action invalide', async () => {
-      await request(app)
-        .patch('/api/radio/abc123/listeners')
-        .send({ action: 'invalid' })
-        .expect(400);
+      await request(app).patch('/api/radio/abc123/listeners').send({ action: 'invalid' }).expect(400);
     });
 
     it('accepte action join (404 ou 200 selon fallback/DB)', async () => {
-      const res = await request(app)
-        .patch('/api/radio/abc123/listeners')
-        .send({ action: 'join' });
+      const res = await request(app).patch('/api/radio/abc123/listeners').send({ action: 'join' });
       expect([200, 404]).toContain(res.status);
-      if (res.status === 200) {expect(res.body).toHaveProperty('listeners');}
+      if (res.status === 200) {
+        expect(res.body).toHaveProperty('listeners');
+      }
     });
 
     it('accepte action leave', async () => {
-      const res = await request(app)
-        .patch('/api/radio/abc123/listeners')
-        .send({ action: 'leave' });
+      const res = await request(app).patch('/api/radio/abc123/listeners').send({ action: 'leave' });
       expect([200, 404]).toContain(res.status);
-      if (res.status === 200) {expect(res.body).toHaveProperty('listeners');}
+      if (res.status === 200) {
+        expect(res.body).toHaveProperty('listeners');
+      }
     });
   });
 
   describe('GET /api/radio/:id', () => {
     it('retourne 404 pour id inexistant ou 200 avec station (fallback)', async () => {
-      const res = await request(app)
-        .get('/api/radio/507f1f77bcf86cd799439011');
+      const res = await request(app).get('/api/radio/507f1f77bcf86cd799439011');
       expect([200, 404]).toContain(res.status);
     });
   });
@@ -108,18 +99,13 @@ describe('API Radio', () => {
 
   describe('PUT /api/radio/:id', () => {
     it('retourne 401 sans token admin', async () => {
-      await request(app)
-        .put('/api/radio/abc123')
-        .send({ name: 'Updated' })
-        .expect(401);
+      await request(app).put('/api/radio/abc123').send({ name: 'Updated' }).expect(401);
     });
   });
 
   describe('DELETE /api/radio/:id', () => {
     it('retourne 401 sans token admin', async () => {
-      await request(app)
-        .delete('/api/radio/abc123')
-        .expect(401);
+      await request(app).delete('/api/radio/abc123').expect(401);
     });
   });
 

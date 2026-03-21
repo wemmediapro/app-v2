@@ -1,7 +1,7 @@
 (function () {
   const endpoints = [
-    { method: 'GET', path: '/api/health', desc: 'Health check du serveur (liveness)' },
-    { method: 'GET', path: '/api/health/ready', desc: 'Readiness (503 si MongoDB down)' },
+    { method: 'GET', path: '/api/v1/health', desc: 'Liveness (alias /api/health)' },
+    { method: 'GET', path: '/api/v1/health/ready', desc: 'Readiness (alias /api/health/ready)' },
     { method: 'GET', path: '/api/admin/dashboard', desc: 'Statistiques du dashboard' },
     { method: 'GET', path: '/api/admin/users', desc: 'Liste des utilisateurs' },
     { method: 'GET', path: '/api/restaurants', desc: 'Liste des restaurants' },
@@ -24,7 +24,9 @@
 
   function initCards() {
     const endpointsContainer = document.getElementById('endpoints');
-    if (!endpointsContainer) {return;}
+    if (!endpointsContainer) {
+      return;
+    }
 
     endpoints.forEach((endpoint) => {
       const card = document.createElement('div');
@@ -57,7 +59,9 @@
 
   async function testEndpoint(path) {
     const responseDiv = document.getElementById('response-' + pathToDomId(path));
-    if (!responseDiv) {return;}
+    if (!responseDiv) {
+      return;
+    }
     responseDiv.textContent = 'Chargement...';
     responseDiv.classList.add('show');
 
@@ -72,9 +76,11 @@
 
   async function checkStatus() {
     const el = document.getElementById('status');
-    if (!el) {return;}
+    if (!el) {
+      return;
+    }
     try {
-      const response = await fetch('/api/health');
+      const response = await fetch('/api/v1/health');
       await response.json();
       el.textContent = '● En ligne';
       el.className = 'status online';
@@ -85,7 +91,9 @@
   }
 
   const originEl = document.getElementById('origin');
-  if (originEl) {originEl.textContent = window.location.origin;}
+  if (originEl) {
+    originEl.textContent = window.location.origin;
+  }
 
   initCards();
   checkStatus();

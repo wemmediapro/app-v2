@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Ship, 
-  Users, 
-  Utensils, 
+import {
+  Ship,
+  Users,
+  Utensils,
   Bell,
   BarChart3,
   Settings,
@@ -35,9 +35,10 @@ const Sidebar = ({ user, isOpen = false, onClose, isMobileView = true }) => {
   const userRole = user?.role === 'admin' || user?.role === 'crew' || user?.role === 'passenger' ? user.role : 'admin';
   const accessByRole = getAccessByRole();
   const roleAccess = accessByRole[userRole] || accessByRole.admin;
-  const access = user?.allowedModules && typeof user.allowedModules === 'object' && Object.keys(user.allowedModules).length > 0
-    ? user.allowedModules
-    : roleAccess;
+  const access =
+    user?.allowedModules && typeof user.allowedModules === 'object' && Object.keys(user.allowedModules).length > 0
+      ? user.allowedModules
+      : roleAccess;
 
   useEffect(() => {
     if (typeof onClose === 'function') onClose();
@@ -56,12 +57,17 @@ const Sidebar = ({ user, isOpen = false, onClose, isMobileView = true }) => {
 
   useEffect(() => {
     let cancelled = false;
-    apiService.getConversationsUnreadCount()
+    apiService
+      .getConversationsUnreadCount()
       .then((res) => {
         if (!cancelled && res?.data?.count != null) setUnreadCount(res.data.count);
       })
-      .catch(() => { if (!cancelled) setUnreadCount(0); });
-    return () => { cancelled = true; };
+      .catch(() => {
+        if (!cancelled) setUnreadCount(0);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [location.pathname]);
 
   const hasUnreadMessages = unreadCount > 0;
@@ -143,71 +149,73 @@ const Sidebar = ({ user, isOpen = false, onClose, isMobileView = true }) => {
           <button
             type="button"
             onClick={() => typeof onClose === 'function' && onClose()}
-            className={isMobileView ? 'p-2.5 -m-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg touch-manipulation' : 'hidden'}
+            className={
+              isMobileView
+                ? 'p-2.5 -m-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg touch-manipulation'
+                : 'hidden'
+            }
             aria-label={t('common.closeMenu')}
           >
             <X size={22} />
           </button>
         </div>
 
-      {/* Navigation groupée avec défilement */}
-      <nav className="mt-2 sm:mt-4 px-2 sm:px-3 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-6 sm:pb-8 sidebar-nav-scroll">
-        {menuGroups.map((group) => {
-          const visibleItems = group.items.filter((item) => access[item.id]);
-          if (visibleItems.length === 0) return null;
-          return (
-            <div key={group.labelKey} className="mb-4 sm:mb-6">
-              <p className="px-2 sm:px-3 mb-1.5 sm:mb-2 text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wider truncate">
-                {t(group.labelKey)}
-              </p>
-              <div className="space-y-0.5 sm:space-y-1">
-                {visibleItems.map((item) => {
-                  const Icon = item.icon;
-                  const showUnreadDot = item.id === 'messages' && hasUnreadMessages;
-                  return (
-                    <motion.button
-                      key={item.id}
-                      onClick={() => {
-                        setActiveItem(item.id);
-                        navigate(item.path);
-                      }}
-                      className={`w-full flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-3 sm:py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[48px] sm:min-h-[44px] touch-manipulation ${
-                        activeItem === item.id
-                          ? 'bg-blue-50 text-blue-700 border-l-2 border-r-0 sm:border-l-0 sm:border-r-2 border-blue-600'
-                          : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-                      }`}
-                      aria-label={t(item.labelKey)}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                    >
-                      <span className="relative flex-shrink-0">
-                        <Icon size={20} className="sm:w-[18px] sm:h-[18px]" />
-                        {showUnreadDot && (
-                          <span
-                            className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white"
-                            aria-hidden
-                          />
-                        )}
-                      </span>
-                      <span className="truncate text-left">{t(item.labelKey)}</span>
-                    </motion.button>
-                  );
-                })}
+        {/* Navigation groupée avec défilement */}
+        <nav className="mt-2 sm:mt-4 px-2 sm:px-3 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-6 sm:pb-8 sidebar-nav-scroll">
+          {menuGroups.map((group) => {
+            const visibleItems = group.items.filter((item) => access[item.id]);
+            if (visibleItems.length === 0) return null;
+            return (
+              <div key={group.labelKey} className="mb-4 sm:mb-6">
+                <p className="px-2 sm:px-3 mb-1.5 sm:mb-2 text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wider truncate">
+                  {t(group.labelKey)}
+                </p>
+                <div className="space-y-0.5 sm:space-y-1">
+                  {visibleItems.map((item) => {
+                    const Icon = item.icon;
+                    const showUnreadDot = item.id === 'messages' && hasUnreadMessages;
+                    return (
+                      <motion.button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveItem(item.id);
+                          navigate(item.path);
+                        }}
+                        className={`w-full flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-3 sm:py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[48px] sm:min-h-[44px] touch-manipulation ${
+                          activeItem === item.id
+                            ? 'bg-blue-50 text-blue-700 border-l-2 border-r-0 sm:border-l-0 sm:border-r-2 border-blue-600'
+                            : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                        }`}
+                        aria-label={t(item.labelKey)}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                      >
+                        <span className="relative flex-shrink-0">
+                          <Icon size={20} className="sm:w-[18px] sm:h-[18px]" />
+                          {showUnreadDot && (
+                            <span
+                              className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white"
+                              aria-hidden
+                            />
+                          )}
+                        </span>
+                        <span className="truncate text-left">{t(item.labelKey)}</span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </nav>
+            );
+          })}
+        </nav>
 
         {/* Pied de menu : Powered by Mediapro */}
         <div className="shrink-0 px-3 sm:px-4 py-4 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">Powered by Mediapro</p>
         </div>
-    </div>
+      </div>
     </>
   );
 };
 
 export default Sidebar;
-
-

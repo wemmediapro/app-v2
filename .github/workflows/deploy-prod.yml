@@ -45,6 +45,7 @@ jobs:
       - run: npm ci && npm run test:coverage
       - working-directory: backend
         run: npm ci && npm run test
+      - run: npm ci --prefix dashboard && npm run typecheck
       - run: npm audit --audit-level=moderate
       - working-directory: backend
         run: npm audit --audit-level=moderate
@@ -96,10 +97,10 @@ jobs:
     outputs:
       ok: ${{ steps.curl.outputs.ok }}
     steps:
-      - name: GET /api/health/ready
+      - name: GET /api/v1/health/ready
         id: curl
         run: |
-          if curl -sfS --max-time 30 "${{ vars.PRODUCTION_PUBLIC_URL }}/api/health/ready" -o /tmp/h.json; then
+          if curl -sfS --max-time 30 "${{ vars.PRODUCTION_PUBLIC_URL }}/api/v1/health/ready" -o /tmp/h.json; then
             echo "ok=true" >> "$GITHUB_OUTPUT"
             cat /tmp/h.json | head -c 800
           else

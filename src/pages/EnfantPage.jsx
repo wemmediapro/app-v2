@@ -107,7 +107,8 @@ export default function EnfantPage(props) {
                 </div>
                 <div className="space-y-3">
                   {enfantHighlights.map((highlight) => {
-                    const categoryLabel = enfantCategories.find((cat) => cat.id === highlight.category)?.name || highlight.category;
+                    const categoryLabel =
+                      enfantCategories.find((cat) => cat.id === highlight.category)?.name || highlight.category;
                     const featureSummary = highlight.features?.slice(0, 2).join(' • ');
                     return (
                       <motion.div
@@ -118,7 +119,12 @@ export default function EnfantPage(props) {
                         whileTap={{ scale: 0.99 }}
                         className="w-full flex gap-3 rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 text-left shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => setSelectedActivity(highlight)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedActivity(highlight); } }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelectedActivity(highlight);
+                          }
+                        }}
                       >
                         <div className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-xl overflow-hidden bg-slate-200 flex-shrink-0">
                           <img
@@ -129,7 +135,8 @@ export default function EnfantPage(props) {
                             className="absolute inset-0 w-full h-full object-cover object-center"
                             onError={(e) => {
                               e.target.style.display = 'none';
-                              e.target.nextElementSibling?.style && (e.target.nextElementSibling.style.display = 'flex');
+                              e.target.nextElementSibling?.style &&
+                                (e.target.nextElementSibling.style.display = 'flex');
                             }}
                           />
                           <div className="absolute inset-0 hidden items-center justify-center text-white bg-pink-500/70">
@@ -137,16 +144,31 @@ export default function EnfantPage(props) {
                           </div>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); toggleEnfantFavorite(highlight); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleEnfantFavorite(highlight);
+                            }}
                             className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-white/90 text-slate-500 hover:bg-white shadow border border-slate-100"
-                            aria-label={isEnfantFavorite(highlight.id) ? t('common.removeFromFavorites') : t('common.addToFavorites')}
+                            aria-label={
+                              isEnfantFavorite(highlight.id)
+                                ? t('common.removeFromFavorites')
+                                : t('common.addToFavorites')
+                            }
                           >
-                            <Heart size={16} className={isEnfantFavorite(highlight.id) ? 'text-rose-500 fill-rose-500' : ''} strokeWidth={1.75} />
+                            <Heart
+                              size={16}
+                              className={isEnfantFavorite(highlight.id) ? 'text-rose-500 fill-rose-500' : ''}
+                              strokeWidth={1.75}
+                            />
                           </button>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs uppercase tracking-wider text-pink-500 font-semibold">{categoryLabel}</p>
-                          <h3 className="text-sm sm:text-base font-semibold text-slate-900 mt-0.5 line-clamp-2">{highlight.name}</h3>
+                          <p className="text-xs uppercase tracking-wider text-pink-500 font-semibold">
+                            {categoryLabel}
+                          </p>
+                          <h3 className="text-sm sm:text-base font-semibold text-slate-900 mt-0.5 line-clamp-2">
+                            {highlight.name}
+                          </h3>
                           <p className="text-xs text-slate-500 mt-1 line-clamp-2">{highlight.description}</p>
                           <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-2 flex-wrap">
                             <span>🕒 {highlight.openingHours}</span>
@@ -184,7 +206,12 @@ export default function EnfantPage(props) {
                       whileTap={{ scale: 0.98 }}
                       className="rounded-2xl bg-white shadow-md border border-slate-100 overflow-hidden text-left hover:shadow-lg transition-shadow cursor-pointer"
                       onClick={() => setSelectedActivity(activity)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedActivity(activity); } }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedActivity(activity);
+                        }
+                      }}
                     >
                       <div className="relative aspect-[16/10] sm:aspect-video bg-slate-200">
                         <img
@@ -208,21 +235,36 @@ export default function EnfantPage(props) {
                           </span>
                           <div className="flex items-center gap-1">
                             {activity.isOpen !== false && (
-                              <span className="px-2 py-1 rounded-lg bg-green-500/90 text-white text-xs font-semibold">{t('shipmap.serviceOpen')}</span>
+                              <span className="px-2 py-1 rounded-lg bg-green-500/90 text-white text-xs font-semibold">
+                                {t('shipmap.serviceOpen')}
+                              </span>
                             )}
                             <button
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); toggleEnfantFavorite(activity); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleEnfantFavorite(activity);
+                              }}
                               className="p-1.5 rounded-full bg-white/90 text-slate-500 hover:bg-white shadow border border-slate-100"
-                              aria-label={isEnfantFavorite(activity.id) ? t('common.removeFromFavorites') : t('common.addToFavorites')}
+                              aria-label={
+                                isEnfantFavorite(activity.id)
+                                  ? t('common.removeFromFavorites')
+                                  : t('common.addToFavorites')
+                              }
                             >
-                              <Heart size={16} className={isEnfantFavorite(activity.id) ? 'text-rose-500 fill-rose-500' : ''} strokeWidth={1.75} />
+                              <Heart
+                                size={16}
+                                className={isEnfantFavorite(activity.id) ? 'text-rose-500 fill-rose-500' : ''}
+                                strokeWidth={1.75}
+                              />
                             </button>
                           </div>
                         </div>
                       </div>
                       <div className="p-4">
-                        <h3 className="text-sm sm:text-base font-semibold text-slate-900 line-clamp-2">{activity.name}</h3>
+                        <h3 className="text-sm sm:text-base font-semibold text-slate-900 line-clamp-2">
+                          {activity.name}
+                        </h3>
                         <p className="text-xs text-slate-500 mt-1 line-clamp-2">{activity.description}</p>
                         <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
                           <Clock size={14} className="text-pink-500 flex-shrink-0" />
@@ -231,12 +273,17 @@ export default function EnfantPage(props) {
                         {activity.features && activity.features.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {activity.features.slice(0, 3).map((f, i) => (
-                              <span key={i} className="px-2 py-0.5 rounded-full bg-pink-50 text-pink-600 text-[11px] font-medium">
+                              <span
+                                key={i}
+                                className="px-2 py-0.5 rounded-full bg-pink-50 text-pink-600 text-[11px] font-medium"
+                              >
                                 {f}
                               </span>
                             ))}
                             {activity.features.length > 3 && (
-                              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[11px]">+{activity.features.length - 3}</span>
+                              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[11px]">
+                                +{activity.features.length - 3}
+                              </span>
                             )}
                           </div>
                         )}
@@ -248,10 +295,14 @@ export default function EnfantPage(props) {
                 <div className="rounded-2xl bg-white border border-slate-100 px-5 py-10 text-center">
                   <Baby size={48} className="mx-auto text-slate-300" />
                   <p className="text-slate-500 font-medium mt-3">
-                    {selectedEnfantCategory === 'favoris' ? t('enfant.noFavorites') : t('enfant.noActivitiesInCategory')}
+                    {selectedEnfantCategory === 'favoris'
+                      ? t('enfant.noFavorites')
+                      : t('enfant.noActivitiesInCategory')}
                   </p>
                   <p className="text-sm text-slate-500 mt-1">
-                    {selectedEnfantCategory === 'favoris' ? t('enfant.noFavoritesHint') : t('enfant.noActivitiesInCategoryHint')}
+                    {selectedEnfantCategory === 'favoris'
+                      ? t('enfant.noFavoritesHint')
+                      : t('enfant.noActivitiesInCategoryHint')}
                   </p>
                 </div>
               )}
@@ -297,12 +348,25 @@ export default function EnfantPage(props) {
                     type="button"
                     onClick={() => selectedActivity && toggleEnfantFavorite(selectedActivity)}
                     className="absolute top-4 right-14 p-2 rounded-full bg-white/90 text-slate-600 hover:bg-white shadow"
-                    aria-label={selectedActivity && isEnfantFavorite(selectedActivity.id) ? t('common.removeFromFavorites') : t('common.addToFavorites')}
+                    aria-label={
+                      selectedActivity && isEnfantFavorite(selectedActivity.id)
+                        ? t('common.removeFromFavorites')
+                        : t('common.addToFavorites')
+                    }
                   >
-                    <Heart size={20} className={selectedActivity && isEnfantFavorite(selectedActivity.id) ? 'text-rose-500 fill-rose-500' : ''} strokeWidth={1.75} />
+                    <Heart
+                      size={20}
+                      className={
+                        selectedActivity && isEnfantFavorite(selectedActivity.id) ? 'text-rose-500 fill-rose-500' : ''
+                      }
+                      strokeWidth={1.75}
+                    />
                   </button>
                   <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent text-white">
-                    <p className="text-xs uppercase tracking-wider text-white/80">{enfantCategories.find(c => c.id === selectedActivity.category)?.name || selectedActivity.category}</p>
+                    <p className="text-xs uppercase tracking-wider text-white/80">
+                      {enfantCategories.find((c) => c.id === selectedActivity.category)?.name ||
+                        selectedActivity.category}
+                    </p>
                     <h2 className="text-xl sm:text-2xl font-bold leading-tight mt-1">{selectedActivity.name}</h2>
                     <div className="flex items-center gap-3 text-xs text-white/90 mt-2">
                       <MapPin size={14} />
@@ -316,15 +380,21 @@ export default function EnfantPage(props) {
                   <p className="text-sm text-slate-600 leading-relaxed">{selectedActivity.description}</p>
                   {selectedActivity.activities && selectedActivity.activities.length > 0 && (
                     <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Animations proposées</h3>
+                      <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                        Animations proposées
+                      </h3>
                       <div className="space-y-2">
                         {selectedActivity.activities.map((sub, idx) => (
                           <div key={idx} className="flex gap-3 rounded-xl border border-slate-200 p-3">
-                            <div className="w-12 h-12 rounded-lg bg-slate-200 flex-shrink-0 flex items-center justify-center text-xl">🎨</div>
+                            <div className="w-12 h-12 rounded-lg bg-slate-200 flex-shrink-0 flex items-center justify-center text-xl">
+                              🎨
+                            </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
                                 <h4 className="text-sm font-semibold text-slate-900">{sub.name}</h4>
-                                {sub.duration && <span className="text-xs font-semibold text-pink-500">{sub.duration}</span>}
+                                {sub.duration && (
+                                  <span className="text-xs font-semibold text-pink-500">{sub.duration}</span>
+                                )}
                               </div>
                               {sub.description && <p className="text-xs text-slate-500 mt-0.5">{sub.description}</p>}
                               {sub.ageRange && <p className="text-[11px] text-slate-500 mt-1">👶 {sub.ageRange}</p>}
@@ -347,7 +417,10 @@ export default function EnfantPage(props) {
                         <p className="text-sm font-semibold text-slate-900 mt-2">Équipements</p>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {selectedActivity.features.map((feature, index) => (
-                            <span key={index} className="px-3 py-1 rounded-full bg-pink-100 text-pink-600 text-xs font-medium">
+                            <span
+                              key={index}
+                              className="px-3 py-1 rounded-full bg-pink-100 text-pink-600 text-xs font-medium"
+                            >
                               {feature}
                             </span>
                           ))}
@@ -362,6 +435,5 @@ export default function EnfantPage(props) {
         </div>
       )}
     </motion.div>
-
   );
 }

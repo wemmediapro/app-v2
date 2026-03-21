@@ -76,9 +76,7 @@ describe('Security Tests', () => {
   describe('Input Validation', () => {
     it('rejette les IDs MongoDB invalides (400 INVALID_ID)', async () => {
       const app = buildSecurityRoutesApp();
-      const res = await request(app)
-        .get('/api/users/invalid-id')
-        .set('Authorization', `Bearer ${validUserToken}`);
+      const res = await request(app).get('/api/users/invalid-id').set('Authorization', `Bearer ${validUserToken}`);
 
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('INVALID_ID');
@@ -114,7 +112,6 @@ describe('Security Tests', () => {
       expect(res.status).not.toBe(500);
       expect(res.status).toBe(200);
     });
-
   });
 
   describe('CSRF Protection', () => {
@@ -142,10 +139,7 @@ describe('Security Tests', () => {
 
     it('retourne 403 sur POST sans token CSRF (ni cookie ni header)', async () => {
       const app = buildApp();
-      const res = await request(app)
-        .post('/api/csrf-test')
-        .send({})
-        .expect(403);
+      const res = await request(app).post('/api/csrf-test').send({}).expect(403);
       expect(res.body.success).toBe(false);
       expect(res.body.code).toBe('CSRF_INVALID');
     });

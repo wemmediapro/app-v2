@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 function BottomNav({ page, setPage, t, notificationsUnreadCount = 0, hidden = false }) {
   const items = useMemo(
     () => NAV_ITEMS.map(({ key, Icon, labelKey }) => ({ key, icon: <Icon size={26} />, label: t(labelKey) })),
-    [t],
+    [t]
   );
 
   if (hidden) return null;
@@ -25,7 +25,10 @@ function BottomNav({ page, setPage, t, notificationsUnreadCount = 0, hidden = fa
     <nav
       aria-label={t('common.mainNav')}
       className="fixed bottom-0 left-0 right-0 z-50 w-full max-w-[768px] min-h-[44px] sm:min-h-[48px] mx-auto bg-gray-50 border-t border-gray-200 overflow-visible safe-area-bottom flex items-center"
-      style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}
+      style={{
+        paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+        paddingRight: 'max(1rem, env(safe-area-inset-right))',
+      }}
     >
       <div className="flex items-center justify-center sm:justify-start w-full py-1.5 px-2 sm:px-2 gap-0 sm:gap-1 min-h-[44px] sm:min-h-[48px] overflow-visible">
         {items.map((item) => (

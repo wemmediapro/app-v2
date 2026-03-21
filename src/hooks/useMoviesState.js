@@ -34,15 +34,15 @@ function transformMovie(movie) {
     translations: movie.translations || undefined,
     episodes: Array.isArray(movie.episodes)
       ? movie.episodes
-        .slice()
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-        .map((ep) => ({
-          title: ep.title || '',
-          duration: ep.duration || '',
-          description: ep.description || '',
-          videoUrl: ep.videoUrl || '',
-          order: ep.order ?? 0,
-        }))
+          .slice()
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+          .map((ep) => ({
+            title: ep.title || '',
+            duration: ep.duration || '',
+            description: ep.description || '',
+            videoUrl: ep.videoUrl || '',
+            order: ep.order ?? 0,
+          }))
       : [],
   };
 }
@@ -64,7 +64,7 @@ export function useMoviesState(language) {
         setMoviesLoading(true);
         const response = await apiService.getMovies(`lang=${language}&limit=20&page=1&_=${Date.now()}`);
         if (cancelled) return;
-        const list = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+        const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
         if (list.length > 0) {
           setMoviesAndSeries(list.map(transformMovie));
         } else {
@@ -80,7 +80,9 @@ export function useMoviesState(language) {
       }
     };
     run();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [language, refreshKey]);
 
   useEffect(() => {

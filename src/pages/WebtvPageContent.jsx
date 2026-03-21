@@ -37,7 +37,10 @@ export default function WebtvPageContent({
     >
       <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8 pb-32">
         <header className="space-y-4">
-          <div className="rounded-2xl p-3 sm:p-4 shadow-md border border-blue-200/50" style={{ backgroundColor: '#264FFF' }}>
+          <div
+            className="rounded-2xl p-3 sm:p-4 shadow-md border border-blue-200/50"
+            style={{ backgroundColor: '#264FFF' }}
+          >
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-white/20 border border-white/30 flex-shrink-0 backdrop-blur-sm">
                 <Tv size={20} className="text-white sm:w-5 sm:h-5" strokeWidth={1.75} />
@@ -70,7 +73,10 @@ export default function WebtvPageContent({
             <div className="flex flex-col">
               <div className="flex items-center gap-3 px-4 sm:px-6 py-4 sm:py-5 bg-[#264FFF]">
                 <button
-                  onClick={() => { setPage('webtv'); setSelectedChannel(null); }}
+                  onClick={() => {
+                    setPage('webtv');
+                    setSelectedChannel(null);
+                  }}
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white/90 hover:bg-white/20 transition-colors"
                   aria-label={t('common.back')}
                 >
@@ -101,11 +107,18 @@ export default function WebtvPageContent({
                     />
                     {webtvVideoError && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 text-white p-4 text-center">
-                        <p className="text-sm font-medium mb-1">{t('webtv.loadError') || 'Impossible de charger la vidéo'}</p>
-                        <p className="text-xs text-white/80">{t('webtv.loadErrorHint') || 'Vérifiez votre connexion ou réessayez.'}</p>
+                        <p className="text-sm font-medium mb-1">
+                          {t('webtv.loadError') || 'Impossible de charger la vidéo'}
+                        </p>
+                        <p className="text-xs text-white/80">
+                          {t('webtv.loadErrorHint') || 'Vérifiez votre connexion ou réessayez.'}
+                        </p>
                         <button
                           type="button"
-                          onClick={() => { setWebtvVideoError(false); handleWebtvPlayByServerTime(); }}
+                          onClick={() => {
+                            setWebtvVideoError(false);
+                            handleWebtvPlayByServerTime();
+                          }}
                           className="mt-3 px-4 py-2 rounded-lg bg-[#264FFF] text-white text-sm font-medium"
                         >
                           {t('webtv.retry') || 'Réessayer'}
@@ -127,11 +140,15 @@ export default function WebtvPageContent({
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                    <div className="absolute inset-0 hidden items-center justify-center text-4xl text-white bg-slate-700">{selectedChannel.logo}</div>
+                    <div className="absolute inset-0 hidden items-center justify-center text-4xl text-white bg-slate-700">
+                      {selectedChannel.logo}
+                    </div>
                   </>
                 )}
               </div>
-              {selectedChannel.programs?.some(p => (p.streamUrl && p.streamUrl.trim()) || (p.videoFile && String(p.videoFile).trim())) && (
+              {selectedChannel.programs?.some(
+                (p) => (p.streamUrl && p.streamUrl.trim()) || (p.videoFile && String(p.videoFile).trim())
+              ) && (
                 <div className="px-4 sm:px-6 py-3 bg-white border-b border-slate-200">
                   <button
                     type="button"
@@ -142,7 +159,10 @@ export default function WebtvPageContent({
                   >
                     {webtvPlaySyncing ? (
                       <>
-                        <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" aria-hidden />
+                        <span
+                          className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"
+                          aria-hidden
+                        />
                         {t('webtv.syncing') || 'Synchronisation…'}
                       </>
                     ) : (
@@ -155,48 +175,66 @@ export default function WebtvPageContent({
                 </div>
               )}
               {(() => {
-                const dbSchedule = selectedChannel.schedule && Array.isArray(selectedChannel.schedule) ? selectedChannel.schedule : [];
+                const dbSchedule =
+                  selectedChannel.schedule && Array.isArray(selectedChannel.schedule) ? selectedChannel.schedule : [];
                 const hasPrograms = selectedChannel.programs && selectedChannel.programs.length > 0;
-                const buildFromPrograms = dbSchedule.length === 0 && hasPrograms && selectedChannel.programs.some(p => (p.startTime || p.endTime) && (p.title || p.program));
+                const buildFromPrograms =
+                  dbSchedule.length === 0 &&
+                  hasPrograms &&
+                  selectedChannel.programs.some((p) => (p.startTime || p.endTime) && (p.title || p.program));
                 const toProgramLabel = (val) => {
                   if (val == null) return '';
                   if (typeof val === 'string') return val;
                   if (typeof val === 'object' && val !== null && typeof val.title === 'string') return val.title;
                   return '';
                 };
-                const displaySchedule = dbSchedule.length > 0
-                  ? dbSchedule.map(s => ({ time: s.time || '', program: toProgramLabel(s.program) || toProgramLabel(s.title) || '' }))
-                  : buildFromPrograms
-                    ? selectedChannel.programs
-                      .filter(p => p.startTime || p.endTime)
-                      .map(p => ({
-                        time: [p.startTime, p.endTime].filter(Boolean).join(' - ').trim() || '00:00',
-                        program: toProgramLabel(p.title) || toProgramLabel(p.program) || '',
+                const displaySchedule =
+                  dbSchedule.length > 0
+                    ? dbSchedule.map((s) => ({
+                        time: s.time || '',
+                        program: toProgramLabel(s.program) || toProgramLabel(s.title) || '',
                       }))
-                    : [];
+                    : buildFromPrograms
+                      ? selectedChannel.programs
+                          .filter((p) => p.startTime || p.endTime)
+                          .map((p) => ({
+                            time: [p.startTime, p.endTime].filter(Boolean).join(' - ').trim() || '00:00',
+                            program: toProgramLabel(p.title) || toProgramLabel(p.program) || '',
+                          }))
+                      : [];
                 if (displaySchedule.length === 0) return null;
                 const toMins = (str) => {
                   if (!str) return 0;
-                  const [h, m] = str.split(':').map(n => parseInt(n, 10) || 0);
+                  const [h, m] = str.split(':').map((n) => parseInt(n, 10) || 0);
                   return h * 60 + m;
                 };
                 return (
                   <div className="border-t border-slate-200 bg-white px-4 sm:px-6 py-4">
-                    <p className="text-xs font-bold text-slate-700 uppercase tracking-widest">{t('webtv.daySchedule')}</p>
+                    <p className="text-xs font-bold text-slate-700 uppercase tracking-widest">
+                      {t('webtv.daySchedule')}
+                    </p>
                     <div className="rounded-2xl border border-slate-200 overflow-hidden divide-y divide-slate-200/80 mt-2">
                       {displaySchedule.map((item, index) => {
                         const timeStr = (item.time || '').trim();
-                        const parts = timeStr.includes(' - ') ? timeStr.split(' - ').map(p => p.trim()) : [timeStr];
+                        const parts = timeStr.includes(' - ') ? timeStr.split(' - ').map((p) => p.trim()) : [timeStr];
                         const startMins = toMins(parts[0]);
                         let endMins = parts[1] ? toMins(parts[1]) : startMins + 180;
                         if (endMins <= startMins) endMins += 24 * 60;
                         const now = new Date();
                         const nowMins = now.getHours() * 60 + now.getMinutes();
                         const isCurrent = nowMins >= startMins && nowMins < endMins;
-                        const isStreaming = selectedWebtvProgram && (item.program === selectedWebtvProgram.title || item.program === (selectedWebtvProgram.program || ''));
+                        const isStreaming =
+                          selectedWebtvProgram &&
+                          (item.program === selectedWebtvProgram.title ||
+                            item.program === (selectedWebtvProgram.program || ''));
                         return (
-                          <div key={index} className={`flex items-center gap-4 px-4 sm:px-5 py-4 transition-colors ${isCurrent ? 'bg-sky-100/90 border-l-4 border-l-[#264FFF]' : 'bg-slate-50/70 hover:bg-slate-100/80'}`}>
-                            <span className={`text-xs font-semibold tabular-nums shrink-0 flex items-center gap-2 min-w-[7rem] ${isCurrent ? 'text-[#264FFF]' : 'text-sky-600'}`}>
+                          <div
+                            key={index}
+                            className={`flex items-center gap-4 px-4 sm:px-5 py-4 transition-colors ${isCurrent ? 'bg-sky-100/90 border-l-4 border-l-[#264FFF]' : 'bg-slate-50/70 hover:bg-slate-100/80'}`}
+                          >
+                            <span
+                              className={`text-xs font-semibold tabular-nums shrink-0 flex items-center gap-2 min-w-[7rem] ${isCurrent ? 'text-[#264FFF]' : 'text-sky-600'}`}
+                            >
                               {isStreaming ? (
                                 <span className="flex items-center gap-1.5 text-red-600">
                                   <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" aria-hidden />
@@ -207,7 +245,11 @@ export default function WebtvPageContent({
                               ) : null}
                               {item.time}
                             </span>
-                            <span className={`text-sm flex-1 font-medium ${isCurrent ? 'text-slate-900' : 'text-slate-700'}`}>{item.program}</span>
+                            <span
+                              className={`text-sm flex-1 font-medium ${isCurrent ? 'text-slate-900' : 'text-slate-700'}`}
+                            >
+                              {item.program}
+                            </span>
                           </div>
                         );
                       })}
@@ -238,7 +280,9 @@ export default function WebtvPageContent({
               <section className="space-y-4">
                 <div className="flex items-baseline justify-between gap-3 mb-1">
                   <div>
-                    <h2 className="text-sm font-semibold text-slate-500 tracking-widest uppercase">{t('webtv.availableChannels')}</h2>
+                    <h2 className="text-sm font-semibold text-slate-500 tracking-widest uppercase">
+                      {t('webtv.availableChannels')}
+                    </h2>
                     <p className="text-xs text-slate-500 mt-1">{t('webtv.selectChannelToWatch')}</p>
                   </div>
                   <span className="shrink-0 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
@@ -268,7 +312,10 @@ export default function WebtvPageContent({
                             if (fallback) fallback.classList.remove('hidden');
                           }}
                         />
-                        <div data-fallback className="absolute inset-0 hidden items-center justify-center bg-slate-200 text-2xl">
+                        <div
+                          data-fallback
+                          className="absolute inset-0 hidden items-center justify-center bg-slate-200 text-2xl"
+                        >
                           {channel.logo || '📺'}
                         </div>
                       </div>
@@ -299,7 +346,10 @@ export default function WebtvPageContent({
                         <div className="p-2 rounded-xl bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-700 transition-colors">
                           <Play size={18} className="fill-current ml-0.5" strokeWidth={1.75} />
                         </div>
-                        <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all" />
+                        <ChevronRight
+                          size={18}
+                          className="text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all"
+                        />
                       </div>
                     </motion.button>
                   ))}

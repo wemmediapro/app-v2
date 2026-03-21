@@ -40,22 +40,26 @@ Guide complet pour déployer l'application GNV OnBoard avec GitHub, Vercel et Ra
 ### Option 1 : Railway (Recommandé)
 
 #### Étape 1 : Créer un compte Railway
+
 1. Allez sur [railway.app](https://railway.app)
 2. Cliquez sur "Start a New Project"
 3. Connectez avec GitHub
 
 #### Étape 2 : Déployer depuis GitHub
+
 1. Cliquez sur "New Project"
 2. Sélectionnez "Deploy from GitHub repo"
 3. Choisissez votre repository `ahmed-test-`
 4. Railway détectera automatiquement le dossier `backend`
 
 #### Étape 3 : Configuration
+
 1. **Settings** → **Root Directory** : `backend`
 2. **Settings** → **Start Command** : `npm start`
 3. **Settings** → **Build Command** : `npm install`
 
 #### Étape 4 : Variables d'environnement
+
 Dans **Variables**, ajoutez :
 
 ```env
@@ -68,10 +72,12 @@ FRONTEND_URL=https://votre-dashboard.vercel.app
 ```
 
 #### Étape 5 : MongoDB
+
 - **Option A** : Railway peut créer une base MongoDB automatiquement
 - **Option B** : Utilisez MongoDB Atlas (voir section MongoDB)
 
 #### Étape 6 : Domaine
+
 - Railway génère automatiquement une URL
 - Exemple : `https://gnv-backend-production.up.railway.app`
 - Notez cette URL pour la configuration du dashboard
@@ -79,24 +85,30 @@ FRONTEND_URL=https://votre-dashboard.vercel.app
 ### Option 2 : Render
 
 #### Étape 1 : Créer un compte Render
+
 1. Allez sur [render.com](https://render.com)
 2. Connectez avec GitHub
 
 #### Étape 2 : Créer un Web Service
+
 1. Cliquez sur "New +" → "Web Service"
 2. Connectez votre repository GitHub
 3. Sélectionnez `ahmed-test-`
 
 #### Étape 3 : Configuration
+
 Le fichier `render.yaml` est déjà configuré. Render utilisera :
+
 - **Root Directory** : `backend`
 - **Build Command** : `npm install`
 - **Start Command** : `npm start`
 
 #### Étape 4 : Variables d'environnement
+
 Dans **Environment**, ajoutez les mêmes variables que Railway.
 
 #### Étape 5 : Plan
+
 - Sélectionnez le plan **Free** pour commencer
 - Notez l'URL générée (ex: `https://gnv-backend.onrender.com`)
 
@@ -105,16 +117,19 @@ Dans **Environment**, ajoutez les mêmes variables que Railway.
 ### Vercel
 
 #### Étape 1 : Connecter Vercel à GitHub
+
 1. Allez sur [vercel.com](https://vercel.com)
 2. Cliquez sur "Sign Up" et connectez avec GitHub
 3. Autorisez l'accès à vos repositories
 
 #### Étape 2 : Importer le projet
+
 1. Cliquez sur "Add New..." → "Project"
 2. Sélectionnez votre repository `ahmed-test-`
 3. Vercel détectera automatiquement la configuration
 
 #### Étape 3 : Configuration
+
 1. **Framework Preset** : Vite
 2. **Root Directory** : `dashboard`
 3. **Build Command** : `npm run build` (automatique)
@@ -122,6 +137,7 @@ Dans **Environment**, ajoutez les mêmes variables que Railway.
 5. **Install Command** : `npm install` (automatique)
 
 #### Étape 4 : Variables d'environnement
+
 Dans **Environment Variables**, ajoutez :
 
 ```env
@@ -131,11 +147,13 @@ VITE_API_URL=https://votre-backend.railway.app/api
 Remplacez par l'URL de votre backend Railway ou Render.
 
 #### Étape 5 : Déployer
+
 1. Cliquez sur "Deploy"
 2. Vercel construira et déploiera automatiquement
 3. Vous recevrez une URL : `https://votre-app.vercel.app`
 
 #### Étape 6 : Déploiement automatique
+
 - Chaque push sur `master` déclenchera un nouveau déploiement
 - Les Pull Requests créeront des previews automatiques
 
@@ -314,5 +332,3 @@ Votre application est maintenant déployée et accessible en ligne !
 - **Dashboard** : `https://votre-app.vercel.app`
 - **Backend API** : `https://votre-backend.railway.app/api`
 - **Health Check** : `https://votre-backend.railway.app/api/health`
-
-

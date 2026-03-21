@@ -1,7 +1,23 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Video, Plus, Edit, Trash2, Search, Filter, Eye, EyeOff, Calendar, X, Upload, Library, FileVideo, Play, BarChart2 } from 'lucide-react';
+import {
+  Video,
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Filter,
+  Eye,
+  EyeOff,
+  Calendar,
+  X,
+  Upload,
+  Library,
+  FileVideo,
+  Play,
+  BarChart2,
+} from 'lucide-react';
 import { apiService } from '../services/apiService';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -71,10 +87,10 @@ const Ads = () => {
         setForm((prev) => ({ ...prev, videoUrl: result.video.url }));
         toast.success(t('ads.videoUploadSuccess') || 'Vidéo envoyée avec succès');
       } else {
-        throw new Error(result?.message || 'Échec de l\'upload');
+        throw new Error(result?.message || "Échec de l'upload");
       }
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || (t('ads.uploadError') || 'Erreur lors de l\'upload.');
+      const msg = err.response?.data?.message || err.message || t('ads.uploadError') || "Erreur lors de l'upload.";
       toast.error(msg);
     } finally {
       setVideoUploading(false);
@@ -111,7 +127,7 @@ const Ads = () => {
       const newStatus = !ad.active;
       await apiService.put(`/ads/${adId}`, { active: newStatus });
       setAds(ads.map((a) => (a._id === adId ? { ...a, active: newStatus } : a)));
-      toast.success(newStatus ? (t('ads.activated') || 'Pub activée') : (t('ads.deactivated') || 'Pub désactivée'));
+      toast.success(newStatus ? t('ads.activated') || 'Pub activée' : t('ads.deactivated') || 'Pub désactivée');
     } catch (error) {
       toast.error(t('ads.errorUpdate') || 'Erreur lors de la mise à jour');
     }
@@ -153,7 +169,7 @@ const Ads = () => {
     const endList = ad.endDate ? new Date(ad.endDate).toISOString().slice(0, 16) : '';
     const rawSkipList = ad.skipAfterPercent;
     const skipValueList =
-      (typeof rawSkipList === 'number' || (typeof rawSkipList === 'string' && rawSkipList !== ''))
+      typeof rawSkipList === 'number' || (typeof rawSkipList === 'string' && rawSkipList !== '')
         ? Math.min(100, Math.max(0, Number(rawSkipList)))
         : 0;
     const rawTrigger = ad.triggerAtPercent;
@@ -182,16 +198,18 @@ const Ads = () => {
       const end = doc.endDate ? new Date(doc.endDate).toISOString().slice(0, 16) : '';
       const rawSkip = doc.skipAfterPercent;
       const skipValue =
-        (typeof rawSkip === 'number' || (typeof rawSkip === 'string' && String(rawSkip).trim() !== ''))
+        typeof rawSkip === 'number' || (typeof rawSkip === 'string' && String(rawSkip).trim() !== '')
           ? Math.min(100, Math.max(0, Number(rawSkip)))
           : 0;
       const rawTrigger = doc.triggerAtPercent;
       const triggerValue =
         rawTrigger !== undefined && rawTrigger !== null && !Number.isNaN(Number(rawTrigger))
           ? Math.min(100, Math.max(0, Number(rawTrigger)))
-          : (ad.triggerAtPercent !== undefined && ad.triggerAtPercent !== null && !Number.isNaN(Number(ad.triggerAtPercent))
+          : ad.triggerAtPercent !== undefined &&
+              ad.triggerAtPercent !== null &&
+              !Number.isNaN(Number(ad.triggerAtPercent))
             ? Math.min(100, Math.max(0, Number(ad.triggerAtPercent)))
-            : 50);
+            : 50;
       setForm({
         name: doc.name || '',
         videoUrl: doc.videoUrl || '',
@@ -232,9 +250,7 @@ const Ads = () => {
         endDate: new Date(form.endDate).toISOString(),
         skipAfterPercent: form.type === 'midroll' ? Math.min(100, Math.max(0, Number(form.skipAfterPercent) || 0)) : 0,
         triggerAtPercent:
-          form.type === 'midroll'
-            ? (Number.isNaN(triggerNum) ? 50 : Math.min(100, Math.max(0, triggerNum)))
-            : 50,
+          form.type === 'midroll' ? (Number.isNaN(triggerNum) ? 50 : Math.min(100, Math.max(0, triggerNum))) : 50,
         order: Number(form.order) || 0,
         active: form.active,
       };
@@ -248,7 +264,7 @@ const Ads = () => {
       fetchAds();
       setShowModal(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || (t('ads.errorSave') || 'Erreur lors de l\'enregistrement'));
+      toast.error(error.response?.data?.message || t('ads.errorSave') || "Erreur lors de l'enregistrement");
     }
   };
 
@@ -260,7 +276,9 @@ const Ads = () => {
         (ad.videoUrl || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesType = typeFilter === 'all' || ad.type === typeFilter;
       const matchesStatus =
-        statusFilter === 'all' || (statusFilter === 'active' && ad.active) || (statusFilter === 'inactive' && !ad.active);
+        statusFilter === 'all' ||
+        (statusFilter === 'active' && ad.active) ||
+        (statusFilter === 'inactive' && !ad.active);
       return matchesSearch && matchesType && matchesStatus;
     });
   }, [ads, searchQuery, typeFilter, statusFilter]);
@@ -284,8 +302,12 @@ const Ads = () => {
       {/* En-tête compact */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800 tracking-tight">{t('ads.title') || 'Gestion des publicités'}</h1>
-          <p className="text-sm text-slate-500 mt-0.5">{t('ads.subtitle') || 'Pre-roll et mid-roll. Calendrier par date.'}</p>
+          <h1 className="text-xl font-semibold text-slate-800 tracking-tight">
+            {t('ads.title') || 'Gestion des publicités'}
+          </h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {t('ads.subtitle') || 'Pre-roll et mid-roll. Calendrier par date.'}
+          </p>
         </div>
         <motion.button
           type="button"
@@ -302,20 +324,40 @@ const Ads = () => {
       {/* Stats compactes */}
       <div className="flex flex-wrap gap-3">
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100"><Video size={18} className="text-slate-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">Total</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{ads.length}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
+            <Video size={18} className="text-slate-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">Total</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{ads.length}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50"><Eye size={18} className="text-emerald-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">Actives</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{activeCount}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
+            <Eye size={18} className="text-emerald-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">Actives</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{activeCount}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100"><EyeOff size={18} className="text-slate-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">Inactives</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{ads.length - activeCount}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
+            <EyeOff size={18} className="text-slate-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">Inactives</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{ads.length - activeCount}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50"><Video size={18} className="text-amber-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">Impressions</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{totalAdImpressions.toLocaleString()}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50">
+            <Video size={18} className="text-amber-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">Impressions</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{totalAdImpressions.toLocaleString()}</p>
+          </div>
         </div>
       </div>
 
@@ -387,17 +429,22 @@ const Ads = () => {
                 <BarChart2 size={14} />
                 <span>{(ad.impressions ?? 0).toLocaleString()} affichages</span>
               </div>
-              {(ad.type === 'midroll' && (ad.triggerAtPercent != null || (ad.skipAfterPercent != null && ad.skipAfterPercent > 0))) && (
-                <p className="text-xs text-gray-500 mb-2">
-                  {ad.triggerAtPercent != null && (
-                    <span>{t('ads.triggerAtPercentLabel') || 'Afficher à'} : {Number(ad.triggerAtPercent)} %</span>
-                  )}
-                  {ad.triggerAtPercent != null && ad.skipAfterPercent != null && ad.skipAfterPercent > 0 && ' · '}
-                  {ad.skipAfterPercent != null && ad.skipAfterPercent > 0 && (
-                    <span>{t('ads.skipAfterPercentLabel') || 'Passer après'} : {Number(ad.skipAfterPercent)} %</span>
-                  )}
-                </p>
-              )}
+              {ad.type === 'midroll' &&
+                (ad.triggerAtPercent != null || (ad.skipAfterPercent != null && ad.skipAfterPercent > 0)) && (
+                  <p className="text-xs text-gray-500 mb-2">
+                    {ad.triggerAtPercent != null && (
+                      <span>
+                        {t('ads.triggerAtPercentLabel') || 'Afficher à'} : {Number(ad.triggerAtPercent)} %
+                      </span>
+                    )}
+                    {ad.triggerAtPercent != null && ad.skipAfterPercent != null && ad.skipAfterPercent > 0 && ' · '}
+                    {ad.skipAfterPercent != null && ad.skipAfterPercent > 0 && (
+                      <span>
+                        {t('ads.skipAfterPercentLabel') || 'Passer après'} : {Number(ad.skipAfterPercent)} %
+                      </span>
+                    )}
+                  </p>
+                )}
               <div className="flex gap-2 pt-3 border-t border-gray-100">
                 <button
                   onClick={() => handleToggleStatus(ad._id)}
@@ -443,7 +490,7 @@ const Ads = () => {
           >
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-lg font-semibold text-gray-900">
-                {selectedAd ? (t('ads.edit') || 'Modifier la pub') : (t('ads.add') || 'Ajouter une pub')}
+                {selectedAd ? t('ads.edit') || 'Modifier la pub' : t('ads.add') || 'Ajouter une pub'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -490,41 +537,59 @@ const Ads = () => {
                           {t('ads.compressionInProgress') || 'Compression à 480p en cours...'}
                         </p>
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${videoUploadProgress}%` }} />
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all"
+                            style={{ width: `${videoUploadProgress}%` }}
+                          />
                         </div>
                       </div>
                     )}
                     <div className="flex items-center gap-4">
                       <div
                         className="relative w-32 h-20 rounded-lg overflow-hidden bg-black border border-gray-200 flex items-center justify-center flex-shrink-0 cursor-pointer group"
-                        onClick={() => form.videoUrl && getVideoPreviewUrl(form.videoUrl) && setVideoPlayerModal({ open: true, src: form.videoUrl, title: t('ads.videoSelected') || 'Vidéo sélectionnée' })}
+                        onClick={() =>
+                          form.videoUrl &&
+                          getVideoPreviewUrl(form.videoUrl) &&
+                          setVideoPlayerModal({
+                            open: true,
+                            src: form.videoUrl,
+                            title: t('ads.videoSelected') || 'Vidéo sélectionnée',
+                          })
+                        }
                         role="button"
                         tabIndex={0}
-                        onKeyDown={(e) => form.videoUrl && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setVideoPlayerModal({ open: true, src: form.videoUrl, title: t('ads.videoSelected') || 'Vidéo sélectionnée' }))}
+                        onKeyDown={(e) =>
+                          form.videoUrl &&
+                          (e.key === 'Enter' || e.key === ' ') &&
+                          (e.preventDefault(),
+                          setVideoPlayerModal({
+                            open: true,
+                            src: form.videoUrl,
+                            title: t('ads.videoSelected') || 'Vidéo sélectionnée',
+                          }))
+                        }
                         aria-label={t('common.playVideo')}
                       >
                         {videoUploading ? (
                           <Upload size={28} className="text-blue-400 animate-pulse" />
-                        ) : (
-                          getVideoPreviewUrl(form.videoUrl) ? (
-                            <>
-                              <video
-                                key={form.videoUrl}
-                                src={getVideoPreviewUrl(form.videoUrl)}
-                                className="w-full h-full object-cover pointer-events-none group-hover:opacity-90"
-                                muted
-                                playsInline
-                                preload="metadata"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow">
-                                  <Play size={16} className="text-gray-800 ml-0.5" fill="currentColor" />
-                                </div>
+                        ) : getVideoPreviewUrl(form.videoUrl) ? (
+                          <>
+                            <video
+                              key={form.videoUrl}
+                              src={getVideoPreviewUrl(form.videoUrl)}
+                              className="w-full h-full object-cover pointer-events-none group-hover:opacity-90"
+                              muted
+                              playsInline
+                              preload="metadata"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                              <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow">
+                                <Play size={16} className="text-gray-800 ml-0.5" fill="currentColor" />
                               </div>
-                            </>
-                          ) : (
-                            <Video size={24} className="text-white" />
-                          )
+                            </div>
+                          </>
+                        ) : (
+                          <Video size={24} className="text-white" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -550,10 +615,11 @@ const Ads = () => {
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <Video size={32} className="text-gray-400 mb-2" />
                       <p className="mb-2 text-sm text-gray-500">
-                        <span className="font-semibold">{t('ads.clickToUpload') || 'Cliquez pour uploader'}</span> {t('ads.orDragDrop') || 'ou glissez-déposez'}
+                        <span className="font-semibold">{t('ads.clickToUpload') || 'Cliquez pour uploader'}</span>{' '}
+                        {t('ads.orDragDrop') || 'ou glissez-déposez'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        MP4, AVI, MOV {t('ads.upTo1000Mo') || 'jusqu\'à 1000 Mo'} (compression 480p)
+                        MP4, AVI, MOV {t('ads.upTo1000Mo') || "jusqu'à 1000 Mo"} (compression 480p)
                       </p>
                     </div>
                     <input
@@ -626,7 +692,9 @@ const Ads = () => {
                         }}
                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Moment où cette pub s&apos;affiche pendant la vidéo (ex: 50 = à la moitié)</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Moment où cette pub s&apos;affiche pendant la vidéo (ex: 50 = à la moitié)
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -637,7 +705,12 @@ const Ads = () => {
                         min={0}
                         max={100}
                         value={form.skipAfterPercent}
-                        onChange={(e) => setForm({ ...form, skipAfterPercent: Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)) })}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            skipAfterPercent: Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)),
+                          })
+                        }
                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
                       />
                       <p className="text-xs text-gray-500 mt-1">0 = dès le début, 100 = à la fin</p>
@@ -693,10 +766,12 @@ const Ads = () => {
             className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
           >
             <div className="p-4 border-b border-gray-200 flex justify-between items-center shrink-0">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {t('ads.chooseVideo') || 'Choisir une vidéo'}
-              </h3>
-              <button type="button" onClick={() => setShowVideoLibraryPicker(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-900">{t('ads.chooseVideo') || 'Choisir une vidéo'}</h3>
+              <button
+                type="button"
+                onClick={() => setShowVideoLibraryPicker(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -715,8 +790,8 @@ const Ads = () => {
                     className="font-semibold text-purple-600 hover:text-purple-700 underline"
                   >
                     {t('navigation.mediaLibrary') || 'Bibliothèque média'}
-                  </Link>
-                  {' '}{t('ads.noVideoInLibraryAfter') || 'pour en ajouter.'}
+                  </Link>{' '}
+                  {t('ads.noVideoInLibraryAfter') || 'pour en ajouter.'}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -761,7 +836,6 @@ const Ads = () => {
         src={videoPlayerModal.src}
         title={videoPlayerModal.title}
       />
-
     </div>
   );
 };

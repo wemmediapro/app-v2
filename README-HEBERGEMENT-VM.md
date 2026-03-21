@@ -4,12 +4,12 @@ Export du **02/03/2026** : dernière version de l'application prête à être d�
 
 ## Contenu
 
-| Élément | Emplacement |
-|--------|-------------|
-| **Code source** | Racine du dossier (backend, dashboard, src, scripts, etc.) |
-| **Base de données** | `dump-mongodb/gnv_onboard/` (à restaurer sur la VM avec `mongorestore`) |
-| **Documentation** | `README.md`, `INSTALLATION-RAPIDE-VM.md`, `MISE-A-JOUR-SERVEUR.md`, `docs/`, `ansible/` |
-| **Config exemple** | `backend/config.env.example` (à copier en `backend/config.env` sur la VM) |
+| Élément                 | Emplacement                                                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **Code source**         | Racine du dossier (backend, dashboard, src, scripts, etc.)                                                                |
+| **Base de données**     | `dump-mongodb/gnv_onboard/` (à restaurer sur la VM avec `mongorestore`)                                                   |
+| **Documentation**       | `README.md`, `INSTALLATION-RAPIDE-VM.md`, `MISE-A-JOUR-SERVEUR.md`, `docs/`, `ansible/`                                   |
+| **Config exemple**      | `backend/config.env.example` (à copier en `backend/config.env` sur la VM)                                                 |
 | **Scripts déploiement** | `scripts/deploy-to-vps.sh`, `scripts/update-vps.sh`, `scripts/install-on-vps-remote.sh`, `scripts/import-database-vps.sh` |
 
 ## Déploiement sur une VM

@@ -198,23 +198,24 @@ router.get('/', authenticateToken, (req, res) => {
     // Filtrage par recherche
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredUsers = filteredUsers.filter(user =>
-        user.firstName.toLowerCase().includes(searchLower) ||
-        user.lastName.toLowerCase().includes(searchLower) ||
-        user.email.toLowerCase().includes(searchLower) ||
-        user.cabinNumber.toLowerCase().includes(searchLower),
+      filteredUsers = filteredUsers.filter(
+        (user) =>
+          user.firstName.toLowerCase().includes(searchLower) ||
+          user.lastName.toLowerCase().includes(searchLower) ||
+          user.email.toLowerCase().includes(searchLower) ||
+          user.cabinNumber.toLowerCase().includes(searchLower)
       );
     }
 
     // Filtrage par rôle
     if (role && role !== 'all') {
-      filteredUsers = filteredUsers.filter(user => user.role === role);
+      filteredUsers = filteredUsers.filter((user) => user.role === role);
     }
 
     // Filtrage par statut
     if (status && status !== 'all') {
       const isActive = status === 'active';
-      filteredUsers = filteredUsers.filter(user => user.isActive === isActive);
+      filteredUsers = filteredUsers.filter((user) => user.isActive === isActive);
     }
 
     // Tri
@@ -250,7 +251,6 @@ router.get('/', authenticateToken, (req, res) => {
         sortOrder,
       },
     });
-
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs' });
@@ -261,7 +261,7 @@ router.get('/', authenticateToken, (req, res) => {
 router.get('/:id', authenticateToken, (req, res) => {
   try {
     const { id } = req.params;
-    const user = demoUsers.find(u => u._id === id);
+    const user = demoUsers.find((u) => u._id === id);
 
     if (!user) {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
@@ -275,10 +275,9 @@ router.get('/:id', authenticateToken, (req, res) => {
       const { password, ...publicUser } = user;
       res.json(publicUser);
     }
-
   } catch (error) {
     console.error('Get user error:', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération de l\'utilisateur' });
+    res.status(500).json({ error: "Erreur lors de la récupération de l'utilisateur" });
   }
 });
 
@@ -293,7 +292,7 @@ router.put('/:id', authenticateToken, (req, res) => {
       return res.status(403).json({ error: 'Permission refusée' });
     }
 
-    const userIndex = demoUsers.findIndex(u => u._id === id);
+    const userIndex = demoUsers.findIndex((u) => u._id === id);
     if (userIndex === -1) {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
@@ -311,10 +310,9 @@ router.put('/:id', authenticateToken, (req, res) => {
       message: 'Utilisateur mis à jour avec succès',
       user: updatedUser,
     });
-
   } catch (error) {
     console.error('Update user error:', error);
-    res.status(500).json({ error: 'Erreur lors de la mise à jour de l\'utilisateur' });
+    res.status(500).json({ error: "Erreur lors de la mise à jour de l'utilisateur" });
   }
 });
 
@@ -322,7 +320,7 @@ router.put('/:id', authenticateToken, (req, res) => {
 router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
-    const userIndex = demoUsers.findIndex(u => u._id === id);
+    const userIndex = demoUsers.findIndex((u) => u._id === id);
 
     if (userIndex === -1) {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
@@ -333,10 +331,9 @@ router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
     demoUsers[userIndex].deactivatedAt = new Date().toISOString();
 
     res.json({ message: 'Utilisateur désactivé avec succès' });
-
   } catch (error) {
     console.error('Delete user error:', error);
-    res.status(500).json({ error: 'Erreur lors de la désactivation de l\'utilisateur' });
+    res.status(500).json({ error: "Erreur lors de la désactivation de l'utilisateur" });
   }
 });
 
@@ -344,7 +341,7 @@ router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
 router.post('/:id/activate', authenticateToken, requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
-    const userIndex = demoUsers.findIndex(u => u._id === id);
+    const userIndex = demoUsers.findIndex((u) => u._id === id);
 
     if (userIndex === -1) {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
@@ -354,10 +351,9 @@ router.post('/:id/activate', authenticateToken, requireAdmin, (req, res) => {
     demoUsers[userIndex].reactivatedAt = new Date().toISOString();
 
     res.json({ message: 'Utilisateur réactivé avec succès' });
-
   } catch (error) {
     console.error('Activate user error:', error);
-    res.status(500).json({ error: 'Erreur lors de la réactivation de l\'utilisateur' });
+    res.status(500).json({ error: "Erreur lors de la réactivation de l'utilisateur" });
   }
 });
 
@@ -377,7 +373,7 @@ router.get('/:id/activity', authenticateToken, (req, res) => {
       loginCount: Math.floor(Math.random() * 50) + 10,
       totalSessionTime: Math.floor(Math.random() * 1000) + 500, // minutes
       favoriteRestaurants: ['Le Bistrot', 'Sushi Bar'],
-      favoriteEntertainment: ['Films d\'action', 'Musique classique'],
+      favoriteEntertainment: ["Films d'action", 'Musique classique'],
       totalOrders: Math.floor(Math.random() * 20) + 5,
       totalSpent: Math.floor(Math.random() * 500) + 100,
       feedbackGiven: Math.floor(Math.random() * 10) + 2,
@@ -385,10 +381,9 @@ router.get('/:id/activity', authenticateToken, (req, res) => {
     };
 
     res.json(activity);
-
   } catch (error) {
     console.error('Get user activity error:', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération de l\'activité' });
+    res.status(500).json({ error: "Erreur lors de la récupération de l'activité" });
   }
 });
 
@@ -397,29 +392,27 @@ router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
   try {
     const stats = {
       total: demoUsers.length,
-      active: demoUsers.filter(u => u.isActive).length,
-      inactive: demoUsers.filter(u => !u.isActive).length,
+      active: demoUsers.filter((u) => u.isActive).length,
+      inactive: demoUsers.filter((u) => !u.isActive).length,
       byRole: {
-        user: demoUsers.filter(u => u.role === 'user').length,
-        crew: demoUsers.filter(u => u.role === 'crew').length,
-        admin: demoUsers.filter(u => u.role === 'admin').length,
+        user: demoUsers.filter((u) => u.role === 'user').length,
+        crew: demoUsers.filter((u) => u.role === 'crew').length,
+        admin: demoUsers.filter((u) => u.role === 'admin').length,
       },
       byNationality: {
-        'Française': demoUsers.filter(u => u.nationality === 'Française').length,
-        'Allemande': demoUsers.filter(u => u.nationality === 'Allemande').length,
-        'Italienne': demoUsers.filter(u => u.nationality === 'Italienne').length,
-        'Britannique': demoUsers.filter(u => u.nationality === 'Britannique').length,
-        'Marocaine': demoUsers.filter(u => u.nationality === 'Marocaine').length,
-        'Espagnole': demoUsers.filter(u => u.nationality === 'Espagnole').length,
+        Française: demoUsers.filter((u) => u.nationality === 'Française').length,
+        Allemande: demoUsers.filter((u) => u.nationality === 'Allemande').length,
+        Italienne: demoUsers.filter((u) => u.nationality === 'Italienne').length,
+        Britannique: demoUsers.filter((u) => u.nationality === 'Britannique').length,
+        Marocaine: demoUsers.filter((u) => u.nationality === 'Marocaine').length,
+        Espagnole: demoUsers.filter((u) => u.nationality === 'Espagnole').length,
       },
       averageAge: Math.round(demoUsers.reduce((sum, u) => sum + u.age, 0) / demoUsers.length),
-      newThisWeek: demoUsers.filter(u =>
-        new Date(u.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-      ).length,
+      newThisWeek: demoUsers.filter((u) => new Date(u.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+        .length,
     };
 
     res.json(stats);
-
   } catch (error) {
     console.error('Get user stats error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
@@ -437,4 +430,3 @@ module.exports = {
   initialize,
   demoUsers,
 };
-

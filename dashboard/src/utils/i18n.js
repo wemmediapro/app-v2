@@ -8,7 +8,7 @@ export const LANG_LIST = [
   { code: 'en', label: 'English' },
   { code: 'es', label: 'Español' },
   { code: 'it', label: 'Italiano' },
-  { code: 'de', label: 'Deutsch' }
+  { code: 'de', label: 'Deutsch' },
 ];
 
 /** Pour formulaires où le français est dans les champs principaux (title, description) et les autres langues dans translations */

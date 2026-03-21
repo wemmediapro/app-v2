@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import {
-  Music, Trash, Plus, Search, Play, Pause, FileAudio
-} from 'lucide-react';
+import { Music, Trash, Plus, Search, Play, Pause, FileAudio } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -48,10 +46,15 @@ const Library = () => {
 
   // Fichiers music uniquement (hors radio, recording, advert, shout-out)
   const musicFiles = useMemo(() => {
-    return mp3Library.filter(f => {
+    return mp3Library.filter((f) => {
       if (f.deleted) return false;
       const category = (f.category || '').toLowerCase();
-      return !category.includes('radio') && !category.includes('recording') && !category.includes('advert') && !category.includes('shout');
+      return (
+        !category.includes('radio') &&
+        !category.includes('recording') &&
+        !category.includes('advert') &&
+        !category.includes('shout')
+      );
     });
   }, [mp3Library]);
 
@@ -60,18 +63,19 @@ const Library = () => {
 
     if (librarySearchQuery) {
       const query = librarySearchQuery.toLowerCase();
-      filtered = filtered.filter(file =>
-        file.name.toLowerCase().includes(query) ||
-        (file.title && file.title.toLowerCase().includes(query)) ||
-        (file.artist && file.artist.toLowerCase().includes(query)) ||
-        (file.album && file.album.toLowerCase().includes(query)) ||
-        (file.tags && file.tags.some(tag => tag.toLowerCase().includes(query)))
+      filtered = filtered.filter(
+        (file) =>
+          file.name.toLowerCase().includes(query) ||
+          (file.title && file.title.toLowerCase().includes(query)) ||
+          (file.artist && file.artist.toLowerCase().includes(query)) ||
+          (file.album && file.album.toLowerCase().includes(query)) ||
+          (file.tags && file.tags.some((tag) => tag.toLowerCase().includes(query)))
       );
     }
 
     if (libraryDurationFilter !== 'all') {
       const [min, max] = libraryDurationFilter.split('-').map(Number);
-      filtered = filtered.filter(file => {
+      filtered = filtered.filter((file) => {
         const duration = file.duration || 0;
         if (max) return duration >= min * 60 && duration <= max * 60;
         return duration >= min * 60;
@@ -88,7 +92,9 @@ const Library = () => {
           return (b.fileSize || 0) - (a.fileSize || 0);
         case 'date':
         default:
-          return new Date(b.uploadDate || b.dateAdded || Date.now()) - new Date(a.uploadDate || a.dateAdded || Date.now());
+          return (
+            new Date(b.uploadDate || b.dateAdded || Date.now()) - new Date(a.uploadDate || a.dateAdded || Date.now())
+          );
       }
     });
 
@@ -141,9 +147,9 @@ const Library = () => {
           tags: [],
           playCount: 0,
           lastPlayed: null,
-          bitrate: Math.round((file.size * 8) / audio.duration / 1000) || 128
+          bitrate: Math.round((file.size * 8) / audio.duration / 1000) || 128,
         };
-        setMp3Library(prev => [...prev, newFile]);
+        setMp3Library((prev) => [...prev, newFile]);
         uploadedCount++;
         if (uploadedCount + errorCount === files.length) {
           if (uploadedCount > 0) toast.success(`${uploadedCount} fichier(s) MP3 ajouté(s) à la bibliothèque`);
@@ -162,8 +168,8 @@ const Library = () => {
 
   const handleLibraryDrop = (e) => {
     e.preventDefault();
-    const files = Array.from(e.dataTransfer.files).filter(file =>
-      file.type.includes('audio/mpeg') || file.name.toLowerCase().endsWith('.mp3')
+    const files = Array.from(e.dataTransfer.files).filter(
+      (file) => file.type.includes('audio/mpeg') || file.name.toLowerCase().endsWith('.mp3')
     );
     if (files.length > 0) {
       handleLibraryMP3Upload({ target: { files } });
@@ -171,7 +177,9 @@ const Library = () => {
   };
 
   const moveToTrash = (fileId) => {
-    setMp3Library(prev => prev.map(f => f.id === fileId ? { ...f, deleted: true, deletedAt: new Date().toISOString() } : f));
+    setMp3Library((prev) =>
+      prev.map((f) => (f.id === fileId ? { ...f, deleted: true, deletedAt: new Date().toISOString() } : f))
+    );
     toast.success('Fichier déplacé dans la corbeille');
   };
 
@@ -230,7 +238,10 @@ const Library = () => {
                 type="file"
                 accept="audio/mpeg,.mp3"
                 multiple
-                onChange={(e) => { handleLibraryMP3Upload(e); e.target.value = ''; }}
+                onChange={(e) => {
+                  handleLibraryMP3Upload(e);
+                  e.target.value = '';
+                }}
                 className="hidden"
                 id="library-file-input"
               />
@@ -289,18 +300,30 @@ const Library = () => {
                         type="checkbox"
                         checked={selectedLibraryFiles.length === filteredLibrary.length && filteredLibrary.length > 0}
                         onChange={(e) => {
-                          if (e.target.checked) setSelectedLibraryFiles(filteredLibrary.map(f => f.id));
+                          if (e.target.checked) setSelectedLibraryFiles(filteredLibrary.map((f) => f.id));
                           else setSelectedLibraryFiles([]);
                         }}
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Artist</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Album</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added on</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Title
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Artist
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Album
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Added on
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Tags
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Duration
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
@@ -318,8 +341,8 @@ const Library = () => {
                             type="checkbox"
                             checked={isSelected}
                             onChange={(e) => {
-                              if (e.target.checked) setSelectedLibraryFiles(prev => [...prev, file.id]);
-                              else setSelectedLibraryFiles(prev => prev.filter(id => id !== file.id));
+                              if (e.target.checked) setSelectedLibraryFiles((prev) => [...prev, file.id]);
+                              else setSelectedLibraryFiles((prev) => prev.filter((id) => id !== file.id));
                             }}
                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           />
@@ -335,15 +358,23 @@ const Library = () => {
                         <td className="px-4 py-3 text-sm text-gray-600">{file.artist || '-'}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{file.album || '-'}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">
-                          {new Date(uploadDate).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                          {new Date(uploadDate).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: '2-digit',
+                          })}
                         </td>
                         <td className="px-4 py-3">
                           {file.tags && file.tags.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {file.tags.slice(0, 2).map((tag, idx) => (
-                                <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">{tag}</span>
+                                <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                                  {tag}
+                                </span>
                               ))}
-                              {file.tags.length > 2 && <span className="px-2 py-0.5 text-gray-500 text-xs">+{file.tags.length - 2}</span>}
+                              {file.tags.length > 2 && (
+                                <span className="px-2 py-0.5 text-gray-500 text-xs">+{file.tags.length - 2}</span>
+                              )}
                             </div>
                           ) : (
                             <span className="text-gray-400">-</span>
@@ -364,7 +395,10 @@ const Library = () => {
                                 {isPlaying ? <Pause size={14} /> : <Play size={14} />}
                               </button>
                               <button
-                                onClick={(e) => { e.stopPropagation(); deleteLibraryFile(file.id); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteLibraryFile(file.id);
+                                }}
                                 className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600"
                                 title="Supprimer"
                               >

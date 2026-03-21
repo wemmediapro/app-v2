@@ -5,13 +5,7 @@ import { Bell, ArrowLeft, Clock, RefreshCw } from 'lucide-react';
  * Page Notifications de l'app passagers (extrait de App.jsx pour refactorisation).
  * Affiche la liste des notifications push avec chargement et état vide.
  */
-export default function NotificationsPage({
-  notificationsList,
-  notificationsLoading,
-  t,
-  language,
-  onBack,
-}) {
+export default function NotificationsPage({ notificationsList, notificationsLoading, t, language, onBack }) {
   return (
     <motion.div
       key="notifications"
@@ -23,7 +17,10 @@ export default function NotificationsPage({
     >
       <div className="mx-auto w-full max-w-3xl px-3 sm:px-6 py-4 sm:py-8 space-y-6">
         <header className="space-y-4">
-          <div className="rounded-2xl p-4 sm:p-5 shadow-md border border-blue-200/50" style={{ backgroundColor: '#264FFF' }}>
+          <div
+            className="rounded-2xl p-4 sm:p-5 shadow-md border border-blue-200/50"
+            style={{ backgroundColor: '#264FFF' }}
+          >
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-white/20 border border-white/30 flex-shrink-0 backdrop-blur-sm">
                 <Bell size={24} className="text-white sm:w-6 sm:h-6" strokeWidth={1.75} />
@@ -73,7 +70,10 @@ export default function NotificationsPage({
                   {n.createdAt ? (
                     <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
                       <Clock size={12} />
-                      {new Date(n.createdAt).toLocaleString(language === 'en' ? 'en-GB' : 'fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+                      {new Date(n.createdAt).toLocaleString(language === 'en' ? 'en-GB' : 'fr-FR', {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      })}
                     </p>
                   ) : null}
                 </motion.li>

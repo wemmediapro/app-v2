@@ -60,27 +60,44 @@ Réponse : UNIQUEMENT un objet JSON valide, sans texte avant ou après :
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Génère exactement ${NUM_ARTICLES} articles (pas moins) sur le Maroc. Thèmes variés : villes (Marrakech, Fès, Chefchaouen, Essaouira, Casablanca), cuisine, désert du Sahara, médinas, plages, art gnawa, tapis berbère, sport (surf, randonnée), festivals, traditions mariage, souks, etc. Format JSON avec clé "articles" contenant 20 objets.` },
+      {
+        role: 'user',
+        content: `Génère exactement ${NUM_ARTICLES} articles (pas moins) sur le Maroc. Thèmes variés : villes (Marrakech, Fès, Chefchaouen, Essaouira, Casablanca), cuisine, désert du Sahara, médinas, plages, art gnawa, tapis berbère, sport (surf, randonnée), festivals, traditions mariage, souks, etc. Format JSON avec clé "articles" contenant 20 objets.`,
+      },
     ],
     response_format: { type: 'json_object' },
     temperature: 0.7,
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) {throw new Error('Réponse OpenAI vide');}
+  if (!raw) {
+    throw new Error('Réponse OpenAI vide');
+  }
   let data;
   try {
     data = JSON.parse(raw);
   } catch (e) {
     const match = raw.match(/\{[\s\S]*\}/);
-    if (match) {data = JSON.parse(match[0]);} else {throw new Error('JSON invalide');}
+    if (match) {
+      data = JSON.parse(match[0]);
+    } else {
+      throw new Error('JSON invalide');
+    }
   }
   const articles = data.articles || data;
-  if (!Array.isArray(articles) || articles.length === 0) {throw new Error('Aucun article dans la réponse');}
+  if (!Array.isArray(articles) || articles.length === 0) {
+    throw new Error('Aucun article dans la réponse');
+  }
   const result = articles.slice(0, NUM_ARTICLES).map((a) => ({
-    title: String(a.title || '').trim().slice(0, 200),
-    excerpt: String(a.excerpt || '').trim().slice(0, 500),
-    content: String(a.content || '').trim().slice(0, 10000),
+    title: String(a.title || '')
+      .trim()
+      .slice(0, 200),
+    excerpt: String(a.excerpt || '')
+      .trim()
+      .slice(0, 500),
+    content: String(a.content || '')
+      .trim()
+      .slice(0, 10000),
     category: CATEGORIES.includes(a.category) ? a.category : CATEGORIES[0],
   }));
   // Si moins de 20, compléter par un second appel
@@ -89,7 +106,10 @@ Réponse : UNIQUEMENT un objet JSON valide, sans texte avant ou après :
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Génère encore ${NUM_ARTICLES - result.length} articles sur le Maroc (sujets différents : Ouarzazate, vallée du Dadès, Tanger, Agadir, thé à la menthe, henné, riads, jardins Majorelle, etc.). Format JSON avec clé "articles".` },
+        {
+          role: 'user',
+          content: `Génère encore ${NUM_ARTICLES - result.length} articles sur le Maroc (sujets différents : Ouarzazate, vallée du Dadès, Tanger, Agadir, thé à la menthe, henné, riads, jardins Majorelle, etc.). Format JSON avec clé "articles".`,
+        },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.8,
@@ -99,13 +119,21 @@ Réponse : UNIQUEMENT un objet JSON valide, sans texte avant ou après :
       try {
         const match2 = raw2.match(/\{[\s\S]*\}/);
         const data2 = JSON.parse(match2 ? match2[0] : raw2);
-        const extra = (data2.articles || data2) || [];
-        result.push(...extra.slice(0, NUM_ARTICLES - result.length).map((a) => ({
-          title: String(a.title || '').trim().slice(0, 200),
-          excerpt: String(a.excerpt || '').trim().slice(0, 500),
-          content: String(a.content || '').trim().slice(0, 10000),
-          category: CATEGORIES.includes(a.category) ? a.category : CATEGORIES[0],
-        })));
+        const extra = data2.articles || data2 || [];
+        result.push(
+          ...extra.slice(0, NUM_ARTICLES - result.length).map((a) => ({
+            title: String(a.title || '')
+              .trim()
+              .slice(0, 200),
+            excerpt: String(a.excerpt || '')
+              .trim()
+              .slice(0, 500),
+            content: String(a.content || '')
+              .trim()
+              .slice(0, 10000),
+            category: CATEGORIES.includes(a.category) ? a.category : CATEGORIES[0],
+          }))
+        );
       } catch (_) {}
     }
   }
@@ -130,7 +158,9 @@ async function generateAndSaveImage(openai, article, index) {
     style: 'natural',
   });
   const img = response.data?.[0];
-  if (!img?.b64_json) {throw new Error('Pas d’image retournée par OpenAI');}
+  if (!img?.b64_json) {
+    throw new Error('Pas d’image retournée par OpenAI');
+  }
 
   const filename = `maroc-article-${index + 1}-${slug(title) || index}.png`;
   const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
@@ -141,7 +171,9 @@ async function generateAndSaveImage(openai, article, index) {
   if (health?.ok) {
     const uploadUrl = `${API_BASE_URL}/api/upload/image-from-base64`;
     const headers = { 'Content-Type': 'application/json' };
-    if (SEED_SECRET) {headers['X-Seed-Secret'] = SEED_SECRET;}
+    if (SEED_SECRET) {
+      headers['X-Seed-Secret'] = SEED_SECRET;
+    }
     const res = await fetch(uploadUrl, {
       method: 'POST',
       headers,
@@ -150,12 +182,16 @@ async function generateAndSaveImage(openai, article, index) {
     if (res.ok) {
       const data = await res.json();
       const pathRel = data?.image?.path || (data?.image?.url || '').replace(/^https?:\/\/[^/]+/, '');
-      if (pathRel) {return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;}
+      if (pathRel) {
+        return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;
+      }
     }
   }
 
   // Sinon écriture directe dans public/uploads/images/
-  if (!fs.existsSync(IMAGES_DIR)) {fs.mkdirSync(IMAGES_DIR, { recursive: true });}
+  if (!fs.existsSync(IMAGES_DIR)) {
+    fs.mkdirSync(IMAGES_DIR, { recursive: true });
+  }
   const fullPath = path.join(IMAGES_DIR, finalName);
   fs.writeFileSync(fullPath, Buffer.from(img.b64_json, 'base64'));
   return `/uploads/images/${finalName}`;
@@ -191,7 +227,7 @@ async function run() {
           art.title,
           art.excerpt,
           art.content,
-          art.category,
+          art.category
         );
 
         // Image DALL-E 3
@@ -231,7 +267,9 @@ async function run() {
     console.log(`\n✅ Terminé. ${created}/${articlesFr.length} articles sur le Maroc ajoutés (multilingues + images).`);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) {console.error(err.response.data);}
+    if (err.response?.data) {
+      console.error(err.response.data);
+    }
     process.exit(1);
   } finally {
     await mongoose.disconnect();

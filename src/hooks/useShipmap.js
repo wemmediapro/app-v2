@@ -62,29 +62,47 @@ export function useShipmap(language, t, shipmapShipId = DEFAULT_SHIP_ID) {
 
   useEffect(() => {
     let cancelled = false;
-    apiService.getGNVShips?.()?.then((res) => {
-      if (cancelled) return;
-      const data = res?.data?.data;
-      if (Array.isArray(data) && data.length > 0) {
-        setGnvShips(data.map((s) => ({
-          id: s.id || s._id,
-          name: s.name,
-          route: s.route || (s.routes?.[0] ? `${s.routes[0].from} - ${s.routes[0].to}` : ''),
-        })));
-        setCurrentShipName(data[0].name);
-      }
-    }).catch(() => {});
-    return () => { cancelled = true; };
+    apiService
+      .getGNVShips?.()
+      ?.then((res) => {
+        if (cancelled) return;
+        const data = res?.data?.data;
+        if (Array.isArray(data) && data.length > 0) {
+          setGnvShips(
+            data.map((s) => ({
+              id: s.id || s._id,
+              name: s.name,
+              route: s.route || (s.routes?.[0] ? `${s.routes[0].from} - ${s.routes[0].to}` : ''),
+            }))
+          );
+          setCurrentShipName(data[0].name);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const shipDecks = useMemo(() => shipmapDecks.map((d) => ({
-    id: d._id || d.id,
-    name: d.name || '',
-    label: (d.description || '').slice(0, 40),
-    icon: deckTypeToIcon(d.type),
-    type: (d.type || '').toLowerCase(),
-    color: d.type === 'vehicle' ? 'bg-slate-100' : d.type === 'cabin' ? 'bg-blue-100' : d.type === 'service' ? 'bg-teal-100' : 'bg-amber-100',
-  })), [shipmapDecks]);
+  const shipDecks = useMemo(
+    () =>
+      shipmapDecks.map((d) => ({
+        id: d._id || d.id,
+        name: d.name || '',
+        label: (d.description || '').slice(0, 40),
+        icon: deckTypeToIcon(d.type),
+        type: (d.type || '').toLowerCase(),
+        color:
+          d.type === 'vehicle'
+            ? 'bg-slate-100'
+            : d.type === 'cabin'
+              ? 'bg-blue-100'
+              : d.type === 'service'
+                ? 'bg-teal-100'
+                : 'bg-amber-100',
+      })),
+    [shipmapDecks]
+  );
 
   const shipDecksFiltered = useMemo(() => {
     if (shipmapDeckTypeFilter === 'all') return shipDecks;
@@ -122,7 +140,11 @@ export function useShipmap(language, t, shipmapShipId = DEFAULT_SHIP_ID) {
 
   const deckRooms = useMemo(() => {
     const o = {};
-    shipmapDecks.filter((d) => d.type === 'cabin').forEach((d) => { o[d._id || d.id] = '—'; });
+    shipmapDecks
+      .filter((d) => d.type === 'cabin')
+      .forEach((d) => {
+        o[d._id || d.id] = '—';
+      });
     return o;
   }, [shipmapDecks]);
 
@@ -139,7 +161,7 @@ export function useShipmap(language, t, shipmapShipId = DEFAULT_SHIP_ID) {
       (service) =>
         (service.title && service.title.toLowerCase().includes(query)) ||
         (service.type && service.type.toLowerCase().includes(query)) ||
-        (service.details && service.details.toLowerCase().includes(query)),
+        (service.details && service.details.toLowerCase().includes(query))
     );
   }, [currentDeck, shipSearchQuery]);
 

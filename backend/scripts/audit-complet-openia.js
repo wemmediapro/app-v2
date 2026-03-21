@@ -7,7 +7,7 @@
  * Prérequis: OPENAI_API_KEY dans backend/config.env ou .env
  */
 if (process.env.NODE_ENV === 'production') {
-  console.error('Ce script est réservé au développement. Refus d\'exécution en production.');
+  console.error("Ce script est réservé au développement. Refus d'exécution en production.");
   process.exit(1);
 }
 require('dotenv').config({ path: require('path').join(__dirname, '..', 'config.env') });
@@ -129,9 +129,15 @@ async function main() {
   }
 
   const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
-  const outputPath = path.join(ROOT, 'docs', 'AUDIT-COMPLET-ERGONOMIE-NAVIGATION-ARCHITECTURE-FONCTIONNALITES-OPENIA.md');
+  const outputPath = path.join(
+    ROOT,
+    'docs',
+    'AUDIT-COMPLET-ERGONOMIE-NAVIGATION-ARCHITECTURE-FONCTIONNALITES-OPENIA.md'
+  );
 
-  console.log('Envoi du contexte à OpenAI pour audit complet (ergonomie, navigation, architecture, fonctionnalités)...');
+  console.log(
+    'Envoi du contexte à OpenAI pour audit complet (ergonomie, navigation, architecture, fonctionnalités)...'
+  );
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
@@ -145,7 +151,7 @@ async function main() {
 
   const content = completion.choices[0]?.message?.content;
   if (!content) {
-    console.error('Aucune réponse reçue d\'OpenAI.');
+    console.error("Aucune réponse reçue d'OpenAI.");
     process.exit(1);
   }
 

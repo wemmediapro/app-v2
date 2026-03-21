@@ -11,7 +11,10 @@ const WEBTV_TIMELINE_CACHE_TTL_MS = 5 * 60 * 1000;
 
 function timeToMins(t) {
   if (!t) return 0;
-  const [h, m] = String(t).trim().split(':').map((n) => parseInt(n, 10) || 0);
+  const [h, m] = String(t)
+    .trim()
+    .split(':')
+    .map((n) => parseInt(n, 10) || 0);
   return h * 60 + m;
 }
 
@@ -48,7 +51,14 @@ export function useWebtv(language, page, t, videoPositionOnFullscreenExitRef) {
         const response = await apiService.getWebTVChannels(`lang=${language}`);
         if (cancelled) return;
         const list = response.data?.data ?? (Array.isArray(response.data) ? response.data : []);
-        const categoryMap = { entertainment: 'divertissement', music: 'musique', kids: 'enfants', documentary: 'documentaire', actualites: 'actualites', sport: 'sport' };
+        const categoryMap = {
+          entertainment: 'divertissement',
+          music: 'musique',
+          kids: 'enfants',
+          documentary: 'documentaire',
+          actualites: 'actualites',
+          sport: 'sport',
+        };
         const transformed = (list || []).map((ch) => ({
           id: ch._id || ch.id,
           name: ch.name || 'Chaîne',
@@ -73,47 +83,74 @@ export function useWebtv(language, page, t, videoPositionOnFullscreenExitRef) {
       }
     };
     loadWebTVChannels();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [language]);
 
   // Channel schedule (cache)
   useEffect(() => {
     if (!selectedChannel?.id) return;
-    const categoryMap = { entertainment: 'divertissement', music: 'musique', kids: 'enfants', documentary: 'documentaire', actualites: 'actualites', sport: 'sport' };
+    const categoryMap = {
+      entertainment: 'divertissement',
+      music: 'musique',
+      kids: 'enfants',
+      documentary: 'documentaire',
+      actualites: 'actualites',
+      sport: 'sport',
+    };
     const cacheKey = `${selectedChannel.id}-${language}`;
     const cached = webtvTimelineCacheRef.current[cacheKey];
     const now = Date.now();
     if (cached && now - cached.fetchedAt < WEBTV_TIMELINE_CACHE_TTL_MS) {
-      setSelectedChannel((prev) => (prev && prev.id === selectedChannel.id ? {
-        ...prev,
-        schedule: Array.isArray(cached.schedule) ? cached.schedule : prev.schedule || [],
-        programs: Array.isArray(cached.programs) ? cached.programs : prev.programs || [],
-        name: cached.name ?? prev.name,
-        description: cached.description ?? prev.description,
-        category: categoryMap[cached.category] || cached.category || prev.category,
-      } : prev));
+      setSelectedChannel((prev) =>
+        prev && prev.id === selectedChannel.id
+          ? {
+              ...prev,
+              schedule: Array.isArray(cached.schedule) ? cached.schedule : prev.schedule || [],
+              programs: Array.isArray(cached.programs) ? cached.programs : prev.programs || [],
+              name: cached.name ?? prev.name,
+              description: cached.description ?? prev.description,
+              category: categoryMap[cached.category] || cached.category || prev.category,
+            }
+          : prev
+      );
       return;
     }
     let cancelled = false;
-    apiService.getWebTVChannel(selectedChannel.id, `lang=${language}`)
+    apiService
+      .getWebTVChannel(selectedChannel.id, `lang=${language}`)
       .then((response) => {
         if (cancelled) return;
         const ch = response.data;
         if (!ch) return;
         const schedule = Array.isArray(ch.schedule) ? ch.schedule : [];
         const programs = Array.isArray(ch.programs) ? ch.programs : [];
-        webtvTimelineCacheRef.current[cacheKey] = { schedule, programs, name: ch.name, description: ch.description, category: ch.category, fetchedAt: Date.now() };
-        setSelectedChannel((prev) => (prev && prev.id === (ch._id || ch.id) ? {
-          ...prev,
+        webtvTimelineCacheRef.current[cacheKey] = {
           schedule,
           programs,
-          name: ch.name ?? prev.name,
-          description: ch.description ?? prev.description,
-          category: categoryMap[ch.category] || ch.category || prev.category,
-        } : prev));
+          name: ch.name,
+          description: ch.description,
+          category: ch.category,
+          fetchedAt: Date.now(),
+        };
+        setSelectedChannel((prev) =>
+          prev && prev.id === (ch._id || ch.id)
+            ? {
+                ...prev,
+                schedule,
+                programs,
+                name: ch.name ?? prev.name,
+                description: ch.description ?? prev.description,
+                category: categoryMap[ch.category] || ch.category || prev.category,
+              }
+            : prev
+        );
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedChannel?.id, language]);
 
   useEffect(() => {
@@ -131,7 +168,9 @@ export function useWebtv(language, page, t, videoPositionOnFullscreenExitRef) {
     webtvPrevPageRef.current = page;
     const justEnteredWebtv = page === 'webtv' && prevPage !== 'webtv';
     if (!justEnteredWebtv || !selectedChannel?.programs?.length) return;
-    const programsWithVideo = selectedChannel.programs.filter((p) => (p.streamUrl && p.streamUrl.trim()) || (p.videoFile && String(p.videoFile).trim()));
+    const programsWithVideo = selectedChannel.programs.filter(
+      (p) => (p.streamUrl && p.streamUrl.trim()) || (p.videoFile && String(p.videoFile).trim())
+    );
     if (programsWithVideo.length === 0) return;
     let cancelled = false;
     setWebtvPlaySyncing(true);
@@ -175,7 +214,9 @@ export function useWebtv(language, page, t, videoPositionOnFullscreenExitRef) {
         if (!cancelled) setWebtvPlaySyncing(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [page, selectedChannel?.id, selectedChannel?.programs]);
 
   // Resolve playback URL
@@ -198,13 +239,19 @@ export function useWebtv(language, page, t, videoPositionOnFullscreenExitRef) {
     getMediaUrlForPlayback(streamUrl).then((url) => {
       if (!revoked) setWebtvPlaybackUrl(url);
     });
-    return () => { revoked = true; };
+    return () => {
+      revoked = true;
+    };
   }, [selectedWebtvProgram?.streamUrl, selectedWebtvProgram?.videoFile]);
 
   // Attach video source + play
   useEffect(() => {
     const el = webtvVideoRef;
-    const url = webtvPlaybackUrl || (selectedWebtvProgram ? getStreamingVideoUrl(selectedWebtvProgram.streamUrl || selectedWebtvProgram.videoFile || '') : null);
+    const url =
+      webtvPlaybackUrl ||
+      (selectedWebtvProgram
+        ? getStreamingVideoUrl(selectedWebtvProgram.streamUrl || selectedWebtvProgram.videoFile || '')
+        : null);
     if (!el) return;
     const shouldPlay = isWebtvVideoPlaying && url;
     const exitRef = videoPositionOnFullscreenExitRef;
@@ -224,7 +271,12 @@ export function useWebtv(language, page, t, videoPositionOnFullscreenExitRef) {
             el.currentTime = Math.min(seekTo, el.duration || seekTo);
             webtvSeekToSecondsRef.current = null;
           }
-          if (exitRef?.current && exitRef.current.type === 'webtv' && el.duration && exitRef.current.time < el.duration) {
+          if (
+            exitRef?.current &&
+            exitRef.current.type === 'webtv' &&
+            el.duration &&
+            exitRef.current.time < el.duration
+          ) {
             el.currentTime = exitRef.current.time;
             exitRef.current = null;
           }
@@ -242,7 +294,12 @@ export function useWebtv(language, page, t, videoPositionOnFullscreenExitRef) {
                   el.currentTime = Math.min(seekTo, el.duration || seekTo);
                   webtvSeekToSecondsRef.current = null;
                 }
-                if (exitRef?.current && exitRef.current.type === 'webtv' && el.duration && exitRef.current.time < el.duration) {
+                if (
+                  exitRef?.current &&
+                  exitRef.current.type === 'webtv' &&
+                  el.duration &&
+                  exitRef.current.time < el.duration
+                ) {
                   el.currentTime = exitRef.current.time;
                   exitRef.current = null;
                 }
@@ -267,37 +324,45 @@ export function useWebtv(language, page, t, videoPositionOnFullscreenExitRef) {
     el.pause();
   }, [selectedWebtvProgram, isWebtvVideoPlaying, webtvVideoRef, webtvPlaybackUrl, videoPositionOnFullscreenExitRef]);
 
-  const channelCategories = useMemo(() => [
-    { id: 'all', nameKey: 'webtv.categories.all' },
-    { id: 'actualites', nameKey: 'webtv.categories.actualites' },
-    { id: 'sport', nameKey: 'webtv.categories.sport' },
-    { id: 'divertissement', nameKey: 'webtv.categories.divertissement' },
-    { id: 'enfants', nameKey: 'webtv.categories.enfants' },
-    { id: 'musique', nameKey: 'webtv.categories.musique' },
-    { id: 'documentaire', nameKey: 'webtv.categories.documentaire' },
-  ], []);
+  const channelCategories = useMemo(
+    () => [
+      { id: 'all', nameKey: 'webtv.categories.all' },
+      { id: 'actualites', nameKey: 'webtv.categories.actualites' },
+      { id: 'sport', nameKey: 'webtv.categories.sport' },
+      { id: 'divertissement', nameKey: 'webtv.categories.divertissement' },
+      { id: 'enfants', nameKey: 'webtv.categories.enfants' },
+      { id: 'musique', nameKey: 'webtv.categories.musique' },
+      { id: 'documentaire', nameKey: 'webtv.categories.documentaire' },
+    ],
+    []
+  );
 
   const normalizeWebtvCategoryId = useCallback((raw) => {
     if (!raw || typeof raw !== 'string') return '';
-    return raw
-      .toLowerCase()
-      .trim()
-      .replace(/é|è|ê|ë/g, 'e')
-      .replace(/à|â/g, 'a')
-      .replace(/ù|û|ü/g, 'u')
-      .replace(/î|ï/g, 'i')
-      .replace(/ô/g, 'o')
-      .replace(/ç/g, 'c')
-      .replace(/\s+/g, '') || raw.toLowerCase();
+    return (
+      raw
+        .toLowerCase()
+        .trim()
+        .replace(/é|è|ê|ë/g, 'e')
+        .replace(/à|â/g, 'a')
+        .replace(/ù|û|ü/g, 'u')
+        .replace(/î|ï/g, 'i')
+        .replace(/ô/g, 'o')
+        .replace(/ç/g, 'c')
+        .replace(/\s+/g, '') || raw.toLowerCase()
+    );
   }, []);
 
-  const getWebtvCategoryLabel = useCallback((raw, tFunc) => {
-    const id = normalizeWebtvCategoryId(raw);
-    if (!id) return raw || '';
-    const key = `webtv.categories.${id}`;
-    const translated = tFunc(key);
-    return translated !== key ? translated : raw;
-  }, [normalizeWebtvCategoryId]);
+  const getWebtvCategoryLabel = useCallback(
+    (raw, tFunc) => {
+      const id = normalizeWebtvCategoryId(raw);
+      if (!id) return raw || '';
+      const key = `webtv.categories.${id}`;
+      const translated = tFunc(key);
+      return translated !== key ? translated : raw;
+    },
+    [normalizeWebtvCategoryId]
+  );
 
   const filteredChannels = useMemo(() => {
     return tvChannels.filter((channel) => {
@@ -308,7 +373,9 @@ export function useWebtv(language, page, t, videoPositionOnFullscreenExitRef) {
 
   const handleWebtvPlayByServerTime = useCallback(async () => {
     if (!selectedChannel?.programs?.length) return;
-    const programsWithVideo = selectedChannel.programs.filter((p) => (p.streamUrl && p.streamUrl.trim()) || (p.videoFile && String(p.videoFile).trim()));
+    const programsWithVideo = selectedChannel.programs.filter(
+      (p) => (p.streamUrl && p.streamUrl.trim()) || (p.videoFile && String(p.videoFile).trim())
+    );
     if (programsWithVideo.length === 0) return;
     if (!isWebtvVideoPlaying && selectedWebtvProgram && webtvVideoRef?.readyState >= 2) {
       setIsWebtvVideoPlaying(true);
@@ -360,7 +427,9 @@ export function useWebtv(language, page, t, videoPositionOnFullscreenExitRef) {
       setIsWebtvVideoPlaying(false);
       return;
     }
-    const programsWithVideo = selectedChannel.programs.filter((p) => (p.streamUrl && p.streamUrl.trim()) || (p.videoFile && String(p.videoFile).trim()));
+    const programsWithVideo = selectedChannel.programs.filter(
+      (p) => (p.streamUrl && p.streamUrl.trim()) || (p.videoFile && String(p.videoFile).trim())
+    );
     if (programsWithVideo.length === 0) {
       setIsWebtvVideoPlaying(false);
       return;

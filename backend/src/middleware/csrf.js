@@ -15,8 +15,12 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
  *   pour ne pas exposer la longueur attendue par le temps de réponse.
  */
 function csrfTokensEqual(cookieToken, headerToken) {
-  if (cookieToken == null || headerToken == null) {return false;}
-  if (typeof cookieToken !== 'string' || typeof headerToken !== 'string') {return false;}
+  if (cookieToken == null || headerToken == null) {
+    return false;
+  }
+  if (typeof cookieToken !== 'string' || typeof headerToken !== 'string') {
+    return false;
+  }
   const bufCookie = Buffer.from(cookieToken, 'utf8');
   const bufHeader = Buffer.from(headerToken, 'utf8');
   if (bufCookie.length !== bufHeader.length) {
@@ -37,9 +41,7 @@ function getToken() {
 function csrfCookie(req, res, next) {
   if (!req.cookies[COOKIE_NAME]) {
     const token = getToken();
-    const isSecure = process.env.NODE_ENV === 'production' && (
-      req.get('X-Forwarded-Proto') === 'https' || req.secure
-    );
+    const isSecure = process.env.NODE_ENV === 'production' && (req.get('X-Forwarded-Proto') === 'https' || req.secure);
     res.cookie(COOKIE_NAME, token, {
       httpOnly: false,
       secure: isSecure,
@@ -61,6 +63,7 @@ const EXEMPT_PATHS = [
   '/auth/refresh',
   '/auth/logout',
   '/auth/2fa/complete-login',
+  '/metrics/web-vitals',
 ];
 
 /** Patterns exemptés : tracking public (impressions, clics, listeners) — pas d’auth, pas de CSRF */
@@ -77,12 +80,18 @@ const EXEMPT_PATH_PATTERNS = [
  * À monter sur les routes API qui modifient des données.
  */
 function csrfProtection(req, res, next) {
-  if (SAFE_METHODS.has(req.method)) {return next();}
+  if (SAFE_METHODS.has(req.method)) {
+    return next();
+  }
   // originalUrl = path + query ; path peut être relatif au mount (/api) selon Express
   const raw = (req.originalUrl || req.url || req.path || '').split('?')[0];
-  const path = raw.replace(/^\/api\/?/, '/') || '/';
-  if (EXEMPT_PATHS.some((p) => path === p || path.startsWith(p + '/'))) {return next();}
-  if (EXEMPT_PATH_PATTERNS.some((re) => re.test(path))) {return next();}
+  const path = raw.replace(/^\/api\/v1\/?/i, '/').replace(/^\/api\/?/i, '/') || '/';
+  if (EXEMPT_PATHS.some((p) => path === p || path.startsWith(p + '/'))) {
+    return next();
+  }
+  if (EXEMPT_PATH_PATTERNS.some((re) => re.test(path))) {
+    return next();
+  }
   const cookieToken = req.cookies[COOKIE_NAME];
   const headerToken = req.get(HEADER_NAME) || req.body?._csrf;
   if (!csrfTokensEqual(cookieToken, headerToken)) {

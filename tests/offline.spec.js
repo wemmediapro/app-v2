@@ -9,7 +9,9 @@ test.describe('Offline', () => {
     await page.context().setOffline(false);
     await page.reload().catch(() => {});
     await acceptConditions(page);
-    await expect(page.getByRole('main')).toBeVisible({ timeout: 15000 }).catch(() => {});
+    await expect(page.getByRole('main'))
+      .toBeVisible({ timeout: 15000 })
+      .catch(() => {});
   });
 
   test('après acceptation en ligne, passage offline puis retour en ligne', async ({ page }) => {

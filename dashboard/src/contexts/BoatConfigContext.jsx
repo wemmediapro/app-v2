@@ -7,7 +7,7 @@ export function BoatConfigProvider({ children }) {
   const [boatConfig, setBoatConfig] = useState({
     shipName: '',
     shipCapacity: null,
-    shipInfo: ''
+    shipInfo: '',
   });
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +18,7 @@ export function BoatConfigProvider({ children }) {
       setBoatConfig({
         shipName: data.shipName ?? '',
         shipCapacity: data.shipCapacity != null ? data.shipCapacity : null,
-        shipInfo: data.shipInfo ?? ''
+        shipInfo: data.shipInfo ?? '',
       });
     } catch (err) {
       console.error('Erreur chargement configuration bateau:', err);
@@ -35,14 +35,10 @@ export function BoatConfigProvider({ children }) {
   const value = {
     boatConfig,
     loading,
-    refreshBoatConfig
+    refreshBoatConfig,
   };
 
-  return (
-    <BoatConfigContext.Provider value={value}>
-      {children}
-    </BoatConfigContext.Provider>
-  );
+  return <BoatConfigContext.Provider value={value}>{children}</BoatConfigContext.Provider>;
 }
 
 export function useBoatConfig() {
@@ -51,7 +47,7 @@ export function useBoatConfig() {
     return {
       boatConfig: { shipName: '', shipCapacity: null, shipInfo: '' },
       loading: false,
-      refreshBoatConfig: () => {}
+      refreshBoatConfig: () => {},
     };
   }
   return ctx;

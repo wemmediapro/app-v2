@@ -27,7 +27,7 @@ export function useFavorites(storageKey, idField = 'id') {
       const v = item[idField] ?? item._id ?? item.id;
       return v != null ? String(v) : null;
     },
-    [idField],
+    [idField]
   );
 
   const isFavorite = useCallback(
@@ -35,7 +35,7 @@ export function useFavorites(storageKey, idField = 'id') {
       const id = getId(item);
       return id != null && ids.some((i) => i === id);
     },
-    [ids, getId],
+    [ids, getId]
   );
 
   const toggle = useCallback(
@@ -43,16 +43,14 @@ export function useFavorites(storageKey, idField = 'id') {
       const id = getId(item);
       if (!id) return;
       setIds((prev) => {
-        const next = prev.some((i) => i === id)
-          ? prev.filter((i) => i !== id)
-          : [...prev, id];
+        const next = prev.some((i) => i === id) ? prev.filter((i) => i !== id) : [...prev, id];
         try {
           localStorage.setItem(storageKey, JSON.stringify(next));
         } catch (_) {}
         return next;
       });
     },
-    [storageKey, getId],
+    [storageKey, getId]
   );
 
   return { ids, setIds, isFavorite, toggle };

@@ -35,43 +35,46 @@ export const LanguageProvider = ({ children }) => {
   }, [language]);
 
   // Mémoriser la fonction t pour qu'elle se mette à jour quand la langue change
-  const t = useCallback((key, params = {}) => {
-    const keys = key.split('.');
-    const getByKeys = (obj) => {
-      let v = obj;
-      for (const k of keys) {
-        v = v?.[k];
-      }
-      return v;
-    };
+  const t = useCallback(
+    (key, params = {}) => {
+      const keys = key.split('.');
+      const getByKeys = (obj) => {
+        let v = obj;
+        for (const k of keys) {
+          v = v?.[k];
+        }
+        return v;
+      };
 
-    const value = getByKeys(translations[language]);
+      const value = getByKeys(translations[language]);
 
-    // Fallback fr puis en si la clé manque (ex. cache Vite sur les JSON)
-    if (value === undefined) {
-      if (language !== 'fr') {
-        const fromFr = getByKeys(translations.fr);
-        if (typeof fromFr === 'string') return fromFr;
+      // Fallback fr puis en si la clé manque (ex. cache Vite sur les JSON)
+      if (value === undefined) {
+        if (language !== 'fr') {
+          const fromFr = getByKeys(translations.fr);
+          if (typeof fromFr === 'string') return fromFr;
+        }
+        if (language !== 'en') {
+          const fromEn = getByKeys(translations.en);
+          if (typeof fromEn === 'string') return fromEn;
+        }
+        if (import.meta.env.DEV) {
+          console.warn(`Translation missing for key: ${key} in language: ${language}`);
+        }
+        return key;
       }
-      if (language !== 'en') {
-        const fromEn = getByKeys(translations.en);
-        if (typeof fromEn === 'string') return fromEn;
+
+      // Replace parameters in translation
+      if (typeof value === 'string' && Object.keys(params).length > 0) {
+        return value.replace(/\{\{(\w+)\}\}/g, (match, paramKey) => {
+          return params[paramKey] !== undefined ? params[paramKey] : match;
+        });
       }
-      if (import.meta.env.DEV) {
-        console.warn(`Translation missing for key: ${key} in language: ${language}`);
-      }
-      return key;
-    }
-    
-    // Replace parameters in translation
-    if (typeof value === 'string' && Object.keys(params).length > 0) {
-      return value.replace(/\{\{(\w+)\}\}/g, (match, paramKey) => {
-        return params[paramKey] !== undefined ? params[paramKey] : match;
-      });
-    }
-    
-    return value;
-  }, [language]);
+
+      return value;
+    },
+    [language]
+  );
 
   const changeLanguage = useCallback((lang) => {
     if (translations[lang]) {
@@ -84,17 +87,16 @@ export const LanguageProvider = ({ children }) => {
   }, []);
 
   // Mémoriser la valeur du contexte pour éviter les re-renders inutiles
-  const contextValue = useMemo(() => ({
-    language,
-    changeLanguage,
-    t,
-  }), [language, t, changeLanguage]);
-
-  return (
-    <LanguageContext.Provider value={contextValue}>
-      {children}
-    </LanguageContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      language,
+      changeLanguage,
+      t,
+    }),
+    [language, t, changeLanguage]
   );
+
+  return <LanguageContext.Provider value={contextValue}>{children}</LanguageContext.Provider>;
 };
 
 export const useLanguage = () => {
@@ -104,7 +106,3 @@ export const useLanguage = () => {
   }
   return context;
 };
-
-
-
-

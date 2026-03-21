@@ -34,8 +34,12 @@ const LARGE_JPEG_QUALITY = 68;
 const LARGE_WEBP_QUALITY = 68;
 
 function formatBytes(n) {
-  if (n >= 1024 * 1024) {return (n / (1024 * 1024)).toFixed(2) + ' Mo';}
-  if (n >= 1024) {return (n / 1024).toFixed(1) + ' Ko';}
+  if (n >= 1024 * 1024) {
+    return (n / (1024 * 1024)).toFixed(2) + ' Mo';
+  }
+  if (n >= 1024) {
+    return (n / 1024).toFixed(1) + ' Ko';
+  }
   return n + ' o';
 }
 
@@ -44,7 +48,9 @@ function escapeRegex(s) {
 }
 
 async function updateDbRenames(renames) {
-  if (renames.length === 0) {return;}
+  if (renames.length === 0) {
+    return;
+  }
   const mongoose = require('mongoose');
   const MONGODB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/gnv_onboard';
   await mongoose.connect(MONGODB_URI);
@@ -68,15 +74,16 @@ async function updateDbRenames(renames) {
     for (const { collection: collName, field } of updates) {
       try {
         const coll = db.collection(collName);
-        const r = await coll.updateMany(
-          { [field]: { $regex: escaped } },
-          [{ $set: { [field]: { $replaceAll: { input: `$${field}`, find: oldName, replacement: newName } } } }],
-        );
+        const r = await coll.updateMany({ [field]: { $regex: escaped } }, [
+          { $set: { [field]: { $replaceAll: { input: `$${field}`, find: oldName, replacement: newName } } } },
+        ]);
         if (r.modifiedCount > 0) {
           console.log(`    DB: ${collName}.${field} → ${r.modifiedCount} doc(s) mis à jour (${oldName} → ${newName})`);
         }
       } catch (e) {
-        if (e.codeName !== 'NamespaceNotFound') {console.warn(`    DB ${collName}.${field}:`, e.message);}
+        if (e.codeName !== 'NamespaceNotFound') {
+          console.warn(`    DB ${collName}.${field}:`, e.message);
+        }
       }
     }
     const products = db.collection('products');
@@ -84,14 +91,21 @@ async function updateDbRenames(renames) {
       const docs = await products.find({ 'images.url': { $regex: escapeRegex(oldName) } }).toArray();
       for (const doc of docs) {
         const images = (doc.images || []).map((img) =>
-          typeof img === 'string' ? (img.includes(oldName) ? img.replace(oldName, newName) : img)
-            : { ...img, url: (img.url || '').includes(oldName) ? img.url.replace(oldName, newName) : img.url },
+          typeof img === 'string'
+            ? img.includes(oldName)
+              ? img.replace(oldName, newName)
+              : img
+            : { ...img, url: (img.url || '').includes(oldName) ? img.url.replace(oldName, newName) : img.url }
         );
         await products.updateOne({ _id: doc._id }, { $set: { images } });
       }
-      if (docs.length > 0) {console.log(`    DB: products.images → ${docs.length} doc(s) mis à jour`);}
+      if (docs.length > 0) {
+        console.log(`    DB: products.images → ${docs.length} doc(s) mis à jour`);
+      }
     } catch (e) {
-      if (e.codeName !== 'NamespaceNotFound') {console.warn('    DB products.images:', e.message);}
+      if (e.codeName !== 'NamespaceNotFound') {
+        console.warn('    DB products.images:', e.message);
+      }
     }
   }
 
@@ -104,7 +118,8 @@ async function main() {
     process.exit(1);
   }
 
-  const files = fs.readdirSync(IMAGES_DIR)
+  const files = fs
+    .readdirSync(IMAGES_DIR)
     .map((name) => path.join(IMAGES_DIR, name))
     .filter((p) => fs.statSync(p).isFile())
     .filter((p) => EXTENSIONS.has(path.extname(p).toLowerCase()));
@@ -114,7 +129,22 @@ async function main() {
     process.exit(0);
   }
 
-  console.log('Compression des images déjà uploadées' + (APP_MODE ? ' (mode app: max ' + APP_MAX_WIDTH + 'px, qualité ' + APP_JPEG_QUALITY + ' ; >500 Ko: max ' + LARGE_MAX_WIDTH + 'px, qualité ' + LARGE_JPEG_QUALITY + ')' : AGGRESSIVE ? ' (mode agressif: PNG→JPEG si plus léger)' : ''));
+  console.log(
+    'Compression des images déjà uploadées' +
+      (APP_MODE
+        ? ' (mode app: max ' +
+          APP_MAX_WIDTH +
+          'px, qualité ' +
+          APP_JPEG_QUALITY +
+          ' ; >500 Ko: max ' +
+          LARGE_MAX_WIDTH +
+          'px, qualité ' +
+          LARGE_JPEG_QUALITY +
+          ')'
+        : AGGRESSIVE
+          ? ' (mode agressif: PNG→JPEG si plus léger)'
+          : '')
+  );
   console.log('Dossier:', IMAGES_DIR);
   console.log('Fichiers trouvés:', files.length);
   console.log('');
@@ -131,16 +161,19 @@ async function main() {
     const isLarge = APP_MODE && sizeBeforeFile > SIZE_THRESHOLD_LARGE;
     const inPlaceOptions = APP_MODE
       ? {
-        keepFormat: true,
-        maxWidth: isLarge ? LARGE_MAX_WIDTH : APP_MAX_WIDTH,
-        jpegQuality: isLarge ? LARGE_JPEG_QUALITY : APP_JPEG_QUALITY,
-        webpQuality: isLarge ? LARGE_WEBP_QUALITY : undefined,
-      }
+          keepFormat: true,
+          maxWidth: isLarge ? LARGE_MAX_WIDTH : APP_MAX_WIDTH,
+          jpegQuality: isLarge ? LARGE_JPEG_QUALITY : APP_JPEG_QUALITY,
+          webpQuality: isLarge ? LARGE_WEBP_QUALITY : undefined,
+        }
       : { keepFormat: true };
 
     try {
       const result = AGGRESSIVE
-        ? await optimizeImageInPlaceAggressive(filePath, { tryConvertPngToJpeg: true, maxWidth: APP_MODE ? (isLarge ? LARGE_MAX_WIDTH : APP_MAX_WIDTH) : undefined })
+        ? await optimizeImageInPlaceAggressive(filePath, {
+            tryConvertPngToJpeg: true,
+            maxWidth: APP_MODE ? (isLarge ? LARGE_MAX_WIDTH : APP_MAX_WIDTH) : undefined,
+          })
         : await optimizeImageInPlace(filePath, inPlaceOptions);
 
       const { sizeBefore, sizeAfter, skipped, newFilename } = result;
@@ -179,7 +212,9 @@ async function main() {
   const pctSaved = totalBefore > 0 ? ((totalSaved / totalBefore) * 100).toFixed(1) : 0;
   console.log('');
   console.log(`Terminé. ${ok} traité(s), ${fail} erreur(s).`);
-  console.log(`Poids total: ${formatBytes(totalBefore)} → ${formatBytes(totalAfter)}  (économie: ${formatBytes(totalSaved)}, -${pctSaved}%)`);
+  console.log(
+    `Poids total: ${formatBytes(totalBefore)} → ${formatBytes(totalAfter)}  (économie: ${formatBytes(totalSaved)}, -${pctSaved}%)`
+  );
   process.exit(fail > 0 ? 1 : 0);
 }
 

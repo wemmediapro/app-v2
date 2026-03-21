@@ -11,32 +11,41 @@ export function useEnfant(language, t, enfantFavoritesIds = []) {
   const [selectedEnfantCategory, setSelectedEnfantCategory] = useState('all');
   const [selectedActivity, setSelectedActivity] = useState(null);
 
-  const enfantCategories = useMemo(() => [
-    { id: 'all', name: t('enfant.categories.all'), icon: '🎯' },
-    { id: 'favoris', name: t('enfant.favoris'), icon: '❤️' },
-    { id: 'games', name: t('enfant.categories.games'), icon: '🎮' },
-    { id: 'activities', name: t('enfant.categories.activities'), icon: '🎨' },
-    { id: 'education', name: t('enfant.categories.education'), icon: '📚' },
-    { id: 'entertainment', name: t('enfant.categories.entertainment'), icon: '🎪' },
-  ], [t]);
+  const enfantCategories = useMemo(
+    () => [
+      { id: 'all', name: t('enfant.categories.all'), icon: '🎯' },
+      { id: 'favoris', name: t('enfant.favoris'), icon: '❤️' },
+      { id: 'games', name: t('enfant.categories.games'), icon: '🎮' },
+      { id: 'activities', name: t('enfant.categories.activities'), icon: '🎨' },
+      { id: 'education', name: t('enfant.categories.education'), icon: '📚' },
+      { id: 'entertainment', name: t('enfant.categories.entertainment'), icon: '🎪' },
+    ],
+    [t]
+  );
 
-  const filteredEnfantActivities = useMemo(() => enfantActivities.filter(activity => {
-    const matchesCategory = selectedEnfantCategory === 'all'
-      ? true
-      : selectedEnfantCategory === 'favoris'
-        ? enfantFavoritesIds.some(id => String(id) === String(activity.id))
-        : activity.category === selectedEnfantCategory;
-    const features = Array.isArray(activity.features) ? activity.features : [];
-    const matchesSearch = !enfantSearchQuery.trim() ||
-      (activity.name || '').toLowerCase().includes(enfantSearchQuery.toLowerCase()) ||
-      (activity.description || '').toLowerCase().includes(enfantSearchQuery.toLowerCase()) ||
-      features.some(f => String(f).toLowerCase().includes(enfantSearchQuery.toLowerCase()));
-    return matchesCategory && matchesSearch;
-  }), [enfantActivities, selectedEnfantCategory, enfantSearchQuery, enfantFavoritesIds]);
+  const filteredEnfantActivities = useMemo(
+    () =>
+      enfantActivities.filter((activity) => {
+        const matchesCategory =
+          selectedEnfantCategory === 'all'
+            ? true
+            : selectedEnfantCategory === 'favoris'
+              ? enfantFavoritesIds.some((id) => String(id) === String(activity.id))
+              : activity.category === selectedEnfantCategory;
+        const features = Array.isArray(activity.features) ? activity.features : [];
+        const matchesSearch =
+          !enfantSearchQuery.trim() ||
+          (activity.name || '').toLowerCase().includes(enfantSearchQuery.toLowerCase()) ||
+          (activity.description || '').toLowerCase().includes(enfantSearchQuery.toLowerCase()) ||
+          features.some((f) => String(f).toLowerCase().includes(enfantSearchQuery.toLowerCase()));
+        return matchesCategory && matchesSearch;
+      }),
+    [enfantActivities, selectedEnfantCategory, enfantSearchQuery, enfantFavoritesIds]
+  );
 
   const enfantHighlights = useMemo(
-    () => (enfantActivities.filter(a => a.isHighlight) || enfantActivities).slice(0, 3),
-    [enfantActivities],
+    () => (enfantActivities.filter((a) => a.isHighlight) || enfantActivities).slice(0, 3),
+    [enfantActivities]
   );
 
   useEffect(() => {
@@ -46,19 +55,19 @@ export function useEnfant(language, t, enfantFavoritesIds = []) {
         setEnfantLoading(true);
         const response = await apiService.getEnfantActivities(`lang=${language}`);
         if (cancelled) return;
-        const list = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+        const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
         const categoryMap = {
-          'Jeux': 'games',
+          Jeux: 'games',
           'Arts & Créativité': 'activities',
-          'Sport': 'activities',
-          'Créatif': 'activities',
-          'Éducation': 'education',
-          'Divertissement': 'entertainment',
-          'Musique': 'entertainment',
-          'Danse': 'entertainment',
-          'Lecture': 'entertainment',
+          Sport: 'activities',
+          Créatif: 'activities',
+          Éducation: 'education',
+          Divertissement: 'entertainment',
+          Musique: 'entertainment',
+          Danse: 'entertainment',
+          Lecture: 'entertainment',
         };
-        const transformed = (list || []).map(a => {
+        const transformed = (list || []).map((a) => {
           const rawCat = (a.category || 'Jeux').trim();
           const frontendCategory = categoryMap[rawCat] || rawCat.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '-');
           return {
@@ -86,7 +95,9 @@ export function useEnfant(language, t, enfantFavoritesIds = []) {
       }
     };
     loadEnfantActivities();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [language]);
 
   return {

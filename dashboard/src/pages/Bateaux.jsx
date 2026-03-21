@@ -1,6 +1,27 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Ship, Map, UtensilsCrossed, Users, Calendar, Navigation, Wifi, Coffee, Search, Edit, Plus, Trash2, Info, MapPin, Filter, ChevronLeft, ChevronRight, X, Image as ImageIcon, Clock3 } from 'lucide-react';
+import {
+  Ship,
+  Map,
+  UtensilsCrossed,
+  Users,
+  Calendar,
+  Navigation,
+  Wifi,
+  Coffee,
+  Search,
+  Edit,
+  Plus,
+  Trash2,
+  Info,
+  MapPin,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Image as ImageIcon,
+  Clock3,
+} from 'lucide-react';
 import { apiService } from '../services/apiService';
 import toast from 'react-hot-toast';
 
@@ -34,35 +55,47 @@ const Bateaux = () => {
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvexcelsior.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/corridoio-aree-ristorazione.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-bar-centrale.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-cabina-4-letti-esterna.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-cabina-4-letti-esterna.jpg',
       ],
-      description: 'Le GNV Excelsior est un ferry moderne offrant un confort optimal pour les traversées entre la France et le Maroc. Équipé des dernières technologies, il garantit une traversée agréable et sécurisée.',
-      facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Espace enfants', 'Bar', 'Terrasse', 'Piscine', 'Cinéma', 'Casino'],
+      description:
+        'Le GNV Excelsior est un ferry moderne offrant un confort optimal pour les traversées entre la France et le Maroc. Équipé des dernières technologies, il garantit une traversée agréable et sécurisée.',
+      facilities: [
+        'Wi-Fi',
+        'Restaurants',
+        'Boutiques',
+        'Cabines',
+        'Espace enfants',
+        'Bar',
+        'Terrasse',
+        'Piscine',
+        'Cinéma',
+        'Casino',
+      ],
       decks: [
         {
           id: 1,
           name: 'Pont 7 - Pont supérieur',
           facilities: ['Bar panoramique', 'Terrasse extérieure', 'Cabines de luxe'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 6 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Espace enfants'],
-          restaurants: ['Restaurant Self-Service', 'Restaurant à la carte']
+          restaurants: ['Restaurant Self-Service', 'Restaurant à la carte'],
         },
         {
           id: 3,
           name: 'Pont 5 - Pont véhicules',
           facilities: ['Garage véhicules', 'Accès cabines'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 4,
           name: 'Pont 4 - Pont inférieur',
           facilities: ['Garage véhicules', 'Cabines'],
-          restaurants: []
-        }
+          restaurants: [],
+        },
       ],
       restaurants: [
         {
@@ -73,7 +106,7 @@ const Bateaux = () => {
           capacity: 200,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
         },
         {
           id: 2,
@@ -83,7 +116,7 @@ const Bateaux = () => {
           capacity: 80,
           openingHours: '19:00 - 23:00',
           cuisine: 'Française',
-          image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=400&fit=crop'
+          image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=400&fit=crop',
         },
         {
           id: 3,
@@ -93,8 +126,8 @@ const Bateaux = () => {
           capacity: 120,
           openingHours: '08:00 - 02:00',
           cuisine: 'Snacks et boissons',
-          image: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '32,000 GT',
@@ -102,12 +135,12 @@ const Bateaux = () => {
         power: '37,600 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Sète', to: 'Nador', duration: '24h', frequency: 'Quotidien' },
-        { from: 'Nador', to: 'Sète', duration: '24h', frequency: 'Quotidien' }
-      ]
+        { from: 'Nador', to: 'Sète', duration: '24h', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 2,
@@ -126,23 +159,24 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvrhapsody.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-lounge-bar.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-reception.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-reception.jpg',
       ],
-      description: 'Le GNV Rhapsody offre des traversées confortables entre l\'Italie et l\'Espagne. Navire élégant avec des espaces spacieux et des services de qualité.',
+      description:
+        "Le GNV Rhapsody offre des traversées confortables entre l'Italie et l'Espagne. Navire élégant avec des espaces spacieux et des services de qualité.",
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Espace enfants', 'Bar', 'Terrasse'],
       decks: [
         {
           id: 1,
           name: 'Pont 6 - Pont supérieur',
           facilities: ['Bar', 'Terrasse', 'Cabines'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 5 - Pont principal',
           facilities: ['Restaurants', 'Boutiques'],
-          restaurants: ['Restaurant Self-Service']
-        }
+          restaurants: ['Restaurant Self-Service'],
+        },
       ],
       restaurants: [
         {
@@ -153,8 +187,8 @@ const Bateaux = () => {
           capacity: 150,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '28,000 GT',
@@ -162,11 +196,9 @@ const Bateaux = () => {
         power: '32,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
-      routes: [
-        { from: 'Gênes', to: 'Barcelone', duration: '20h', frequency: 'Quotidien' }
-      ]
+      routes: [{ from: 'Gênes', to: 'Barcelone', duration: '20h', frequency: 'Quotidien' }],
     },
     {
       id: 3,
@@ -186,17 +218,18 @@ const Bateaux = () => {
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvallegra.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-bar-centrale.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-cabina-4-letti-esterna.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-lounge-bar.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-lounge-bar.jpg',
       ],
-      description: 'Le GNV Allegra assure les liaisons entre l\'Italie continentale et la Sardaigne. Navire compact et efficace, idéal pour les traversées courtes.',
+      description:
+        "Le GNV Allegra assure les liaisons entre l'Italie continentale et la Sardaigne. Navire compact et efficace, idéal pour les traversées courtes.",
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Bar', 'Espace enfants'],
       decks: [
         {
           id: 1,
           name: 'Pont 5 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Bar'],
-          restaurants: ['Restaurant Self-Service']
-        }
+          restaurants: ['Restaurant Self-Service'],
+        },
       ],
       restaurants: [
         {
@@ -207,8 +240,8 @@ const Bateaux = () => {
           capacity: 120,
           openingHours: '06:00 - 22:00',
           cuisine: 'Italienne',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '25,000 GT',
@@ -216,11 +249,9 @@ const Bateaux = () => {
         power: '28,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
-      routes: [
-        { from: 'Livourne', to: 'Olbia', duration: '8h', frequency: 'Quotidien' }
-      ]
+      routes: [{ from: 'Livourne', to: 'Olbia', duration: '8h', frequency: 'Quotidien' }],
     },
     {
       id: 4,
@@ -240,29 +271,42 @@ const Bateaux = () => {
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvpolaris.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-ristorante.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-suite-presidenziale.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-steak-house.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-steak-house.jpg',
       ],
-      description: 'Le GNV Polaris est le premier navire de nouvelle génération de la flotte GNV. Propulsé au GNL, il respecte les normes environnementales les plus strictes tout en offrant un confort exceptionnel.',
-      facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines Premium', 'Espace enfants', 'Bar', 'Terrasse', 'Piscine', 'Cinéma', 'Spa', 'Gym'],
+      description:
+        'Le GNV Polaris est le premier navire de nouvelle génération de la flotte GNV. Propulsé au GNL, il respecte les normes environnementales les plus strictes tout en offrant un confort exceptionnel.',
+      facilities: [
+        'Wi-Fi',
+        'Restaurants',
+        'Boutiques',
+        'Cabines Premium',
+        'Espace enfants',
+        'Bar',
+        'Terrasse',
+        'Piscine',
+        'Cinéma',
+        'Spa',
+        'Gym',
+      ],
       decks: [
         {
           id: 1,
           name: 'Pont 8 - Pont supérieur',
           facilities: ['Bar panoramique', 'Terrasse extérieure', 'Suites de luxe', 'Spa'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 7 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Espace enfants', 'Cinéma'],
-          restaurants: ['Restaurant Self-Service', 'Restaurant à la carte', 'Sushi Bar']
+          restaurants: ['Restaurant Self-Service', 'Restaurant à la carte', 'Sushi Bar'],
         },
         {
           id: 3,
           name: 'Pont 6 - Pont véhicules',
           facilities: ['Garage véhicules', 'Accès cabines'],
-          restaurants: []
-        }
+          restaurants: [],
+        },
       ],
       restaurants: [
         {
@@ -273,7 +317,7 @@ const Bateaux = () => {
           capacity: 250,
           openingHours: '06:00 - 23:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
         },
         {
           id: 2,
@@ -283,7 +327,7 @@ const Bateaux = () => {
           capacity: 100,
           openingHours: '19:00 - 23:30',
           cuisine: 'Méditerranéenne',
-          image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=400&fit=crop'
+          image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=400&fit=crop',
         },
         {
           id: 3,
@@ -293,8 +337,8 @@ const Bateaux = () => {
           capacity: 40,
           openingHours: '12:00 - 22:00',
           cuisine: 'Japonaise',
-          image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '45,000 GT',
@@ -304,12 +348,12 @@ const Bateaux = () => {
         flag: 'Italie',
         operator: 'GNV (Grandi Navi Veloci)',
         emissions: 'Réduction CO2 de 30%',
-        certification: 'Green Ship'
+        certification: 'Green Ship',
       },
       routes: [
         { from: 'Gênes', to: 'Palerme', duration: '12h', frequency: 'Quotidien' },
-        { from: 'Palerme', to: 'Gênes', duration: '12h', frequency: 'Quotidien' }
-      ]
+        { from: 'Palerme', to: 'Gênes', duration: '12h', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 5,
@@ -328,23 +372,24 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvlasuprema.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-bar-disco.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-sala-poltrone.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-sala-poltrone.jpg',
       ],
-      description: 'Le GNV La Suprema assure les liaisons entre l\'Espagne et le Maroc. Navire spacieux avec de nombreux équipements pour une traversée agréable.',
+      description:
+        "Le GNV La Suprema assure les liaisons entre l'Espagne et le Maroc. Navire spacieux avec de nombreux équipements pour une traversée agréable.",
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Espace enfants', 'Bar', 'Terrasse', 'Piscine'],
       decks: [
         {
           id: 1,
           name: 'Pont 7 - Pont supérieur',
           facilities: ['Bar panoramique', 'Terrasse extérieure', 'Piscine', 'Cabines'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 6 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Espace enfants'],
-          restaurants: ['Restaurant Self-Service', 'Restaurant à la carte']
-        }
+          restaurants: ['Restaurant Self-Service', 'Restaurant à la carte'],
+        },
       ],
       restaurants: [
         {
@@ -355,7 +400,7 @@ const Bateaux = () => {
           capacity: 180,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
         },
         {
           id: 2,
@@ -365,8 +410,8 @@ const Bateaux = () => {
           capacity: 90,
           openingHours: '19:00 - 23:00',
           cuisine: 'Espagnole',
-          image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '38,000 GT',
@@ -374,12 +419,12 @@ const Bateaux = () => {
         power: '40,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Barcelone', to: 'Tanger', duration: '8h', frequency: 'Quotidien' },
-        { from: 'Tanger', to: 'Barcelone', duration: '8h', frequency: 'Quotidien' }
-      ]
+        { from: 'Tanger', to: 'Barcelone', duration: '8h', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 6,
@@ -398,23 +443,24 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvlasuperba.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-self-service.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-shop.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-shop.jpg',
       ],
-      description: 'Le GNV La Superba connecte l\'Italie à la Tunisie. Navire moderne avec des services de qualité pour une traversée confortable.',
+      description:
+        "Le GNV La Superba connecte l'Italie à la Tunisie. Navire moderne avec des services de qualité pour une traversée confortable.",
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Espace enfants', 'Bar', 'Terrasse'],
       decks: [
         {
           id: 1,
           name: 'Pont 7 - Pont supérieur',
           facilities: ['Bar', 'Terrasse', 'Cabines'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 6 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Espace enfants'],
-          restaurants: ['Restaurant Self-Service', 'Pizzeria']
-        }
+          restaurants: ['Restaurant Self-Service', 'Pizzeria'],
+        },
       ],
       restaurants: [
         {
@@ -425,7 +471,7 @@ const Bateaux = () => {
           capacity: 170,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
         },
         {
           id: 2,
@@ -435,8 +481,8 @@ const Bateaux = () => {
           capacity: 60,
           openingHours: '11:00 - 23:00',
           cuisine: 'Italienne',
-          image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '36,000 GT',
@@ -444,12 +490,12 @@ const Bateaux = () => {
         power: '38,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Gênes', to: 'Tunis', duration: '22h', frequency: 'Quotidien' },
-        { from: 'Tunis', to: 'Gênes', duration: '22h', frequency: 'Quotidien' }
-      ]
+        { from: 'Tunis', to: 'Gênes', duration: '22h', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 7,
@@ -468,23 +514,24 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvexcellent.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-cabina-2-letti-esterna.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-sala-bambini.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-sala-bambini.jpg',
       ],
-      description: 'Le GNV Excellent est un cruise-ferry de la classe Excellence, offrant des traversées confortables vers la Sicile.',
+      description:
+        'Le GNV Excellent est un cruise-ferry de la classe Excellence, offrant des traversées confortables vers la Sicile.',
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Espace enfants', 'Bar', 'Terrasse', 'Piscine'],
       decks: [
         {
           id: 1,
           name: 'Pont 7 - Pont supérieur',
           facilities: ['Bar panoramique', 'Terrasse', 'Cabines'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 6 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Espace enfants'],
-          restaurants: ['Restaurant Self-Service', 'Restaurant à la carte']
-        }
+          restaurants: ['Restaurant Self-Service', 'Restaurant à la carte'],
+        },
       ],
       restaurants: [
         {
@@ -495,7 +542,7 @@ const Bateaux = () => {
           capacity: 200,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
         },
         {
           id: 2,
@@ -505,8 +552,8 @@ const Bateaux = () => {
           capacity: 85,
           openingHours: '19:00 - 23:00',
           cuisine: 'Italienne',
-          image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '33,000 GT',
@@ -514,12 +561,12 @@ const Bateaux = () => {
         power: '36,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Gênes', to: 'Palerme', duration: '11h30', frequency: 'Quotidien' },
-        { from: 'Palerme', to: 'Gênes', duration: '11h30', frequency: 'Quotidien' }
-      ]
+        { from: 'Palerme', to: 'Gênes', duration: '11h30', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 8,
@@ -538,23 +585,24 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvfantastic.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-lounge-bar-2.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-cabina-2-letti-interna.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-cabina-2-letti-interna.jpg',
       ],
-      description: 'Le GNV Fantastic assure les liaisons entre l\'Italie continentale et la Sardaigne. Navire fiable et confortable.',
+      description:
+        "Le GNV Fantastic assure les liaisons entre l'Italie continentale et la Sardaigne. Navire fiable et confortable.",
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Espace enfants', 'Bar', 'Terrasse'],
       decks: [
         {
           id: 1,
           name: 'Pont 6 - Pont supérieur',
           facilities: ['Bar', 'Terrasse', 'Cabines'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 5 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Espace enfants'],
-          restaurants: ['Restaurant Self-Service']
-        }
+          restaurants: ['Restaurant Self-Service'],
+        },
       ],
       restaurants: [
         {
@@ -565,8 +613,8 @@ const Bateaux = () => {
           capacity: 180,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '31,000 GT',
@@ -574,12 +622,12 @@ const Bateaux = () => {
         power: '35,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Gênes', to: 'Porto Torres', duration: '10h', frequency: 'Quotidien' },
-        { from: 'Porto Torres', to: 'Gênes', duration: '10h', frequency: 'Quotidien' }
-      ]
+        { from: 'Porto Torres', to: 'Gênes', duration: '10h', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 9,
@@ -598,23 +646,24 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvsplendid.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-cabina-4-letti-interna.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-shop2.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-shop2.jpg',
       ],
-      description: 'Le GNV Splendid est un navire emblématique de la flotte GNV, assurant les liaisons vers la Sardaigne depuis plus de 30 ans.',
+      description:
+        'Le GNV Splendid est un navire emblématique de la flotte GNV, assurant les liaisons vers la Sardaigne depuis plus de 30 ans.',
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Bar', 'Terrasse'],
       decks: [
         {
           id: 1,
           name: 'Pont 6 - Pont supérieur',
           facilities: ['Bar', 'Terrasse', 'Cabines'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 5 - Pont principal',
           facilities: ['Restaurants', 'Boutiques'],
-          restaurants: ['Restaurant Self-Service']
-        }
+          restaurants: ['Restaurant Self-Service'],
+        },
       ],
       restaurants: [
         {
@@ -625,8 +674,8 @@ const Bateaux = () => {
           capacity: 170,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '30,000 GT',
@@ -634,12 +683,12 @@ const Bateaux = () => {
         power: '34,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Livourne', to: 'Olbia', duration: '8h', frequency: 'Quotidien' },
-        { from: 'Olbia', to: 'Livourne', duration: '8h', frequency: 'Quotidien' }
-      ]
+        { from: 'Olbia', to: 'Livourne', duration: '8h', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 10,
@@ -658,23 +707,24 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvmajestic.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-suite-famigliare.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra_animali-esterna.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra_animali-esterna.jpg',
       ],
-      description: 'Le GNV Majestic est un navire historique de la flotte GNV, assurant les liaisons vers la Corse avec fiabilité et confort.',
+      description:
+        'Le GNV Majestic est un navire historique de la flotte GNV, assurant les liaisons vers la Corse avec fiabilité et confort.',
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Bar', 'Terrasse'],
       decks: [
         {
           id: 1,
           name: 'Pont 6 - Pont supérieur',
           facilities: ['Bar', 'Terrasse', 'Cabines'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 5 - Pont principal',
           facilities: ['Restaurants', 'Boutiques'],
-          restaurants: ['Restaurant Self-Service']
-        }
+          restaurants: ['Restaurant Self-Service'],
+        },
       ],
       restaurants: [
         {
@@ -685,8 +735,8 @@ const Bateaux = () => {
           capacity: 160,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '29,000 GT',
@@ -694,12 +744,12 @@ const Bateaux = () => {
         power: '33,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Gênes', to: 'Bastia', duration: '6h30', frequency: 'Quotidien' },
-        { from: 'Bastia', to: 'Gênes', duration: '6h30', frequency: 'Quotidien' }
-      ]
+        { from: 'Bastia', to: 'Gênes', duration: '6h30', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 11,
@@ -718,17 +768,18 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvsirio.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-pmr.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-animali-interna.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-animali-interna.jpg',
       ],
-      description: 'Le GNV Sirio est un ferry rapide moderne, idéal pour les traversées express vers la Sicile. Vitesse et confort combinés.',
+      description:
+        'Le GNV Sirio est un ferry rapide moderne, idéal pour les traversées express vers la Sicile. Vitesse et confort combinés.',
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Bar'],
       decks: [
         {
           id: 1,
           name: 'Pont 5 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Bar', 'Cabines'],
-          restaurants: ['Restaurant Self-Service']
-        }
+          restaurants: ['Restaurant Self-Service'],
+        },
       ],
       restaurants: [
         {
@@ -739,8 +790,8 @@ const Bateaux = () => {
           capacity: 120,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '18,000 GT',
@@ -748,12 +799,12 @@ const Bateaux = () => {
         power: '28,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Gênes', to: 'Palerme', duration: '10h', frequency: 'Quotidien' },
-        { from: 'Palerme', to: 'Gênes', duration: '10h', frequency: 'Quotidien' }
-      ]
+        { from: 'Palerme', to: 'Gênes', duration: '10h', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 12,
@@ -772,23 +823,24 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvatlas.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-bar-centrale.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-cabina-4-letti-esterna.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-cabina-4-letti-esterna.jpg',
       ],
-      description: 'Le GNV Atlas assure les liaisons entre la France et le Maroc. Navire moderne avec des équipements de qualité.',
+      description:
+        'Le GNV Atlas assure les liaisons entre la France et le Maroc. Navire moderne avec des équipements de qualité.',
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Espace enfants', 'Bar', 'Terrasse'],
       decks: [
         {
           id: 1,
           name: 'Pont 6 - Pont supérieur',
           facilities: ['Bar', 'Terrasse', 'Cabines'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 5 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Espace enfants'],
-          restaurants: ['Restaurant Self-Service']
-        }
+          restaurants: ['Restaurant Self-Service'],
+        },
       ],
       restaurants: [
         {
@@ -799,8 +851,8 @@ const Bateaux = () => {
           capacity: 150,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '26,000 GT',
@@ -808,12 +860,12 @@ const Bateaux = () => {
         power: '30,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Sète', to: 'Tanger', duration: '36h', frequency: 'Quotidien' },
-        { from: 'Tanger', to: 'Sète', duration: '36h', frequency: 'Quotidien' }
-      ]
+        { from: 'Tanger', to: 'Sète', duration: '36h', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 13,
@@ -832,23 +884,24 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvazzurra.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-lounge-bar.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-reception.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-reception.jpg',
       ],
-      description: 'Le GNV Azzurra offre des traversées confortables entre l\'Italie et l\'Espagne. Navire élégant avec des espaces spacieux.',
+      description:
+        "Le GNV Azzurra offre des traversées confortables entre l'Italie et l'Espagne. Navire élégant avec des espaces spacieux.",
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Espace enfants', 'Bar', 'Terrasse'],
       decks: [
         {
           id: 1,
           name: 'Pont 6 - Pont supérieur',
           facilities: ['Bar', 'Terrasse', 'Cabines'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 5 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Espace enfants'],
-          restaurants: ['Restaurant Self-Service', 'Restaurant à la carte']
-        }
+          restaurants: ['Restaurant Self-Service', 'Restaurant à la carte'],
+        },
       ],
       restaurants: [
         {
@@ -859,7 +912,7 @@ const Bateaux = () => {
           capacity: 160,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
         },
         {
           id: 2,
@@ -869,8 +922,8 @@ const Bateaux = () => {
           capacity: 75,
           openingHours: '19:00 - 23:00',
           cuisine: 'Méditerranéenne',
-          image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '27,000 GT',
@@ -878,12 +931,12 @@ const Bateaux = () => {
         power: '31,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Gênes', to: 'Barcelone', duration: '19h', frequency: 'Quotidien' },
-        { from: 'Barcelone', to: 'Gênes', duration: '19h', frequency: 'Quotidien' }
-      ]
+        { from: 'Barcelone', to: 'Gênes', duration: '19h', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 14,
@@ -902,17 +955,18 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvcristal.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-ristorante.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-suite-presidenziale.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-suite-presidenziale.jpg',
       ],
-      description: 'Le GNV Cristal assure les liaisons vers la Sardaigne. Navire compact et efficace, idéal pour les traversées courtes.',
+      description:
+        'Le GNV Cristal assure les liaisons vers la Sardaigne. Navire compact et efficace, idéal pour les traversées courtes.',
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Bar'],
       decks: [
         {
           id: 1,
           name: 'Pont 5 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Bar', 'Cabines'],
-          restaurants: ['Restaurant Self-Service']
-        }
+          restaurants: ['Restaurant Self-Service'],
+        },
       ],
       restaurants: [
         {
@@ -923,8 +977,8 @@ const Bateaux = () => {
           capacity: 130,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '24,000 GT',
@@ -932,12 +986,12 @@ const Bateaux = () => {
         power: '27,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Livourne', to: 'Olbia', duration: '8h', frequency: 'Quotidien' },
-        { from: 'Olbia', to: 'Livourne', duration: '8h', frequency: 'Quotidien' }
-      ]
+        { from: 'Olbia', to: 'Livourne', duration: '8h', frequency: 'Quotidien' },
+      ],
     },
     {
       id: 15,
@@ -956,23 +1010,24 @@ const Bateaux = () => {
       gallery: [
         'https://www.gnv.it/-/media/foundation/entities/ships/gnvaries.jpg',
         'https://www.gnv.it/-/media/foundation/entities/ships/allegra-steak-house.jpg',
-        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-suite-famigliare.jpg'
+        'https://www.gnv.it/-/media/foundation/entities/ships/allegra-suite-famigliare.jpg',
       ],
-      description: 'Le GNV Aries connecte l\'Italie à la Tunisie. Navire moderne avec des services de qualité pour une traversée confortable.',
+      description:
+        "Le GNV Aries connecte l'Italie à la Tunisie. Navire moderne avec des services de qualité pour une traversée confortable.",
       facilities: ['Wi-Fi', 'Restaurants', 'Boutiques', 'Cabines', 'Espace enfants', 'Bar', 'Terrasse'],
       decks: [
         {
           id: 1,
           name: 'Pont 6 - Pont supérieur',
           facilities: ['Bar', 'Terrasse', 'Cabines'],
-          restaurants: []
+          restaurants: [],
         },
         {
           id: 2,
           name: 'Pont 5 - Pont principal',
           facilities: ['Restaurants', 'Boutiques', 'Espace enfants'],
-          restaurants: ['Restaurant Self-Service', 'Pizzeria']
-        }
+          restaurants: ['Restaurant Self-Service', 'Pizzeria'],
+        },
       ],
       restaurants: [
         {
@@ -983,7 +1038,7 @@ const Bateaux = () => {
           capacity: 165,
           openingHours: '06:00 - 22:00',
           cuisine: 'Internationale',
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop'
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=400&fit=crop',
         },
         {
           id: 2,
@@ -993,8 +1048,8 @@ const Bateaux = () => {
           capacity: 55,
           openingHours: '11:00 - 23:00',
           cuisine: 'Italienne',
-          image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=400&fit=crop'
-        }
+          image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=400&fit=crop',
+        },
       ],
       technicalInfo: {
         tonnage: '25,500 GT',
@@ -1002,13 +1057,13 @@ const Bateaux = () => {
         power: '29,000 kW',
         fuel: 'Diesel',
         flag: 'Italie',
-        operator: 'GNV (Grandi Navi Veloci)'
+        operator: 'GNV (Grandi Navi Veloci)',
       },
       routes: [
         { from: 'Gênes', to: 'Tunis', duration: '21h', frequency: 'Quotidien' },
-        { from: 'Tunis', to: 'Gênes', duration: '21h', frequency: 'Quotidien' }
-      ]
-    }
+        { from: 'Tunis', to: 'Gênes', duration: '21h', frequency: 'Quotidien' },
+      ],
+    },
   ];
 
   useEffect(() => {
@@ -1040,22 +1095,23 @@ const Bateaux = () => {
   };
 
   // Extraire toutes les destinations uniques
-  const allDestinations = Array.from(new Set(
-    ships.flatMap(ship => 
-      ship.routes.flatMap(route => [route.from, route.to])
-    )
-  )).sort();
+  const allDestinations = Array.from(
+    new Set(ships.flatMap((ship) => ship.routes.flatMap((route) => [route.from, route.to])))
+  ).sort();
 
-  const filteredShips = ships.filter(ship => {
-    const matchesSearch = ship.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredShips = ships.filter((ship) => {
+    const matchesSearch =
+      ship.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ship.route.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesDestination = destinationFilter === 'all' || 
-      ship.routes.some(route => 
-        route.from.toLowerCase() === destinationFilter.toLowerCase() ||
-        route.to.toLowerCase() === destinationFilter.toLowerCase()
+
+    const matchesDestination =
+      destinationFilter === 'all' ||
+      ship.routes.some(
+        (route) =>
+          route.from.toLowerCase() === destinationFilter.toLowerCase() ||
+          route.to.toLowerCase() === destinationFilter.toLowerCase()
       );
-    
+
     return matchesSearch && matchesDestination;
   });
 
@@ -1155,11 +1211,11 @@ const Bateaux = () => {
                     <h3 className="font-semibold text-gray-900 truncate">{ship.name}</h3>
                     <p className="text-sm text-gray-600 mt-1">{ship.route}</p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className={`px-2 py-0.5 text-xs rounded-full ${
-                        ship.status === 'En service'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}>
+                      <span
+                        className={`px-2 py-0.5 text-xs rounded-full ${
+                          ship.status === 'En service' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
                         {ship.status}
                       </span>
                     </div>
@@ -1189,13 +1245,17 @@ const Bateaux = () => {
                     {selectedShip.gallery.length > 1 && (
                       <>
                         <button
-                          onClick={() => setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : selectedShip.gallery.length - 1))}
+                          onClick={() =>
+                            setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : selectedShip.gallery.length - 1))
+                          }
                           className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
                         >
                           <ChevronLeft size={20} />
                         </button>
                         <button
-                          onClick={() => setSelectedImageIndex((prev) => (prev < selectedShip.gallery.length - 1 ? prev + 1 : 0))}
+                          onClick={() =>
+                            setSelectedImageIndex((prev) => (prev < selectedShip.gallery.length - 1 ? prev + 1 : 0))
+                          }
                           className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
                         >
                           <ChevronRight size={20} />
@@ -1224,14 +1284,14 @@ const Bateaux = () => {
                     )}
                   </>
                 ) : (
-                <img
-                  src={selectedShip.image}
-                  alt={selectedShip.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
+                  <img
+                    src={selectedShip.image}
+                    alt={selectedShip.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 <div className="absolute bottom-4 left-4 right-4">
@@ -1251,10 +1311,10 @@ const Bateaux = () => {
               <div className="border-b border-gray-200">
                 <div className="flex space-x-1 px-4">
                   {[
-                    { id: 'overview', label: 'Vue d\'ensemble', icon: Info },
+                    { id: 'overview', label: "Vue d'ensemble", icon: Info },
                     { id: 'plan', label: 'Plan du navire', icon: Map },
                     { id: 'restaurants', label: 'Restaurants', icon: UtensilsCrossed },
-                    { id: 'info', label: 'Informations', icon: Navigation }
+                    { id: 'info', label: 'Informations', icon: Navigation },
                   ].map((tab) => {
                     const Icon = tab.icon;
                     return (
@@ -1330,13 +1390,13 @@ const Bateaux = () => {
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                                   <MapPin size={18} className="text-blue-600" />
-                            </div>
+                                </div>
                                 <div>
                                   <div className="flex items-center gap-2">
                                     <span className="font-bold text-gray-900">{route.from}</span>
                                     <ChevronRight size={16} className="text-blue-500" />
                                     <span className="font-bold text-gray-900">{route.to}</span>
-                          </div>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -1360,10 +1420,7 @@ const Bateaux = () => {
                       <h3 className="font-semibold text-gray-900 mb-3">Équipements</h3>
                       <div className="flex flex-wrap gap-2">
                         {selectedShip.facilities.map((facility, idx) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
-                          >
+                          <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
                             {facility}
                           </span>
                         ))}
@@ -1406,10 +1463,7 @@ const Bateaux = () => {
                                 <p className="text-sm font-medium text-gray-700 mb-1">Restaurants :</p>
                                 <div className="flex flex-wrap gap-2">
                                   {deck.restaurants.map((restaurant, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs"
-                                    >
+                                    <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
                                       {restaurant}
                                     </span>
                                   ))}
@@ -1483,7 +1537,9 @@ const Bateaux = () => {
                       <div className="grid grid-cols-2 gap-4">
                         {Object.entries(selectedShip.technicalInfo).map(([key, value]) => (
                           <div key={key} className="bg-gray-50 rounded-lg p-3">
-                            <p className="text-xs text-gray-600 mb-1 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                            <p className="text-xs text-gray-600 mb-1 capitalize">
+                              {key.replace(/([A-Z])/g, ' $1').trim()}
+                            </p>
                             <p className="font-semibold text-gray-900">{value}</p>
                           </div>
                         ))}
@@ -1534,13 +1590,17 @@ const Bateaux = () => {
               {selectedShip.gallery.length > 1 && (
                 <>
                   <button
-                    onClick={() => setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : selectedShip.gallery.length - 1))}
+                    onClick={() =>
+                      setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : selectedShip.gallery.length - 1))
+                    }
                     className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-colors"
                   >
                     <ChevronLeft size={24} />
                   </button>
                   <button
-                    onClick={() => setSelectedImageIndex((prev) => (prev < selectedShip.gallery.length - 1 ? prev + 1 : 0))}
+                    onClick={() =>
+                      setSelectedImageIndex((prev) => (prev < selectedShip.gallery.length - 1 ? prev + 1 : 0))
+                    }
                     className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-colors"
                   >
                     <ChevronRight size={24} />
@@ -1573,11 +1633,7 @@ const Bateaux = () => {
                       idx === selectedImageIndex ? 'border-blue-500' : 'border-transparent opacity-60 hover:opacity-100'
                     }`}
                   >
-                    <img
-                      src={img}
-                      alt={`Thumbnail ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -1590,4 +1646,3 @@ const Bateaux = () => {
 };
 
 export default Bateaux;
-

@@ -12,14 +12,25 @@ const MONGODB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mong
 
 // Toutes les pages de l'app (clés utilisées dans setPage)
 const ALL_PAGES = [
-  'home', 'radio', 'movies', 'webtv', 'magazine', 'messaging',
-  'restaurant', 'enfant', 'shipmap', 'feedback', 'favorites', 'shop',
-  'profile', 'signup',
+  'home',
+  'radio',
+  'movies',
+  'webtv',
+  'magazine',
+  'messaging',
+  'restaurant',
+  'enfant',
+  'shipmap',
+  'feedback',
+  'favorites',
+  'shop',
+  'profile',
+  'signup',
 ];
 
 const BANNER = {
   title: 'Un été inoubliable!',
-  description: 'RÉSERVEZ MAINTENANT AVEC JUSQU\'À 30% DE RÉDUCTION',
+  description: "RÉSERVEZ MAINTENANT AVEC JUSQU'À 30% DE RÉDUCTION",
   position: 'home-top',
   order: 0,
   image: '/public/banner-ete-inoubliable.png',

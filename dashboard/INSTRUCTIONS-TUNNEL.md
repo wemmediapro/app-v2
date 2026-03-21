@@ -7,6 +7,7 @@ Le serveur et le tunnel sont maintenant actifs en arrière-plan.
 ## 📱 Comment obtenir l'URL du tunnel
 
 ### Option 1: Vérifier les processus actifs
+
 Le tunnel est en cours d'exécution. Pour voir l'URL, ouvrez un **nouveau terminal** et exécutez:
 
 ```bash
@@ -17,7 +18,9 @@ npx localtunnel --port 5173
 L'URL et le mot de passe seront affichés dans ce terminal.
 
 ### Option 2: URL locale
+
 Si vous êtes sur le même réseau, utilisez:
+
 ```
 http://localhost:5173
 ```
@@ -29,6 +32,7 @@ Quand vous accédez à l'URL publique, une page de sécurité s'affichera. Le mo
 ## 🛑 Arrêter le tunnel
 
 Pour arrêter tous les processus:
+
 ```bash
 pkill -f "vite"
 pkill -f "localtunnel"
@@ -37,9 +41,3 @@ pkill -f "localtunnel"
 ## 💡 Astuce
 
 Pour une démo rapide sans mot de passe, vous pouvez utiliser l'URL locale si vous êtes sur le même réseau WiFi.
-
-
-
-
-
-

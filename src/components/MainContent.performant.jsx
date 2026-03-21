@@ -19,10 +19,7 @@ function MainContentPerformant(props) {
 
   const pageProps = getProps(props);
 
-  const fallback = useMemo(
-    () => <LoadingFallback t={t} minHeight={fallbackHeight} />,
-    [t, fallbackHeight],
-  );
+  const fallback = useMemo(() => <LoadingFallback t={t} minHeight={fallbackHeight} />, [t, fallbackHeight]);
 
   const content = (
     <Suspense fallback={fallback}>
@@ -42,11 +39,7 @@ function MainContentPerformant(props) {
     return content;
   }
 
-  return (
-    <AnimatePresence mode="wait">
-      {wrappedContent}
-    </AnimatePresence>
-  );
+  return <AnimatePresence mode="wait">{wrappedContent}</AnimatePresence>;
 }
 
 export default React.memo(MainContentPerformant);

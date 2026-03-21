@@ -40,6 +40,11 @@ jobs:
           npm ci
           npm run test
 
+      - name: TypeScript (racine + backend + dashboard)
+        run: |
+          npm ci --prefix dashboard
+          npm run typecheck
+
       - name: Audits npm (moderate)
         run: npm audit --audit-level=moderate
       - name: Audit backend
@@ -105,5 +110,5 @@ jobs:
     steps:
       - name: Readiness check
         run: |
-          curl -sfS "${{ vars.STAGING_PUBLIC_URL }}/api/health/ready" | head -c 500
+          curl -sfS "${{ vars.STAGING_PUBLIC_URL }}/api/v1/health/ready" | head -c 500
           echo ""

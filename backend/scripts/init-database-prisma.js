@@ -27,7 +27,9 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
  */
 function resolveAdminEmail() {
   const fromEnv = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-  if (fromEnv) {return fromEnv;}
+  if (fromEnv) {
+    return fromEnv;
+  }
   console.error('CRITICAL: ADMIN_EMAIL doit être défini dans config.env (init-database-prisma, aucun défaut).');
   process.exit(1);
 }
@@ -352,7 +354,9 @@ async function initDatabase() {
   try {
     console.log('🚀 Initialisation de la base de données avec Prisma...\n');
     if (IS_PRODUCTION) {
-      console.warn('⚠️  Script Prisma en PRODUCTION : assurez-vous que c’est voulu (souvent préférer npm run init-db).');
+      console.warn(
+        '⚠️  Script Prisma en PRODUCTION : assurez-vous que c’est voulu (souvent préférer npm run init-db).'
+      );
     }
 
     await connectDB();
@@ -369,13 +373,15 @@ async function initDatabase() {
     console.log(`   - ${await prisma.user.count()} utilisateur(s)`);
     console.log(`   - ${await prisma.restaurant.count()} restaurant(s)`);
 
-    console.log('\n🔑 Connexion : identifiants admin = valeurs ADMIN_EMAIL / ADMIN_PASSWORD dans config.env (non affichées).');
+    console.log(
+      '\n🔑 Connexion : identifiants admin = valeurs ADMIN_EMAIL / ADMIN_PASSWORD dans config.env (non affichées).'
+    );
     console.log('   En production, changez le mot de passe après le premier login.');
 
     await prisma.$disconnect();
     process.exit(0);
   } catch (error) {
-    console.error('\n❌ Erreur lors de l\'initialisation:', error);
+    console.error("\n❌ Erreur lors de l'initialisation:", error);
     await prisma.$disconnect();
     process.exit(1);
   }
@@ -386,4 +392,3 @@ if (require.main === module) {
 }
 
 module.exports = { initDatabase };
-

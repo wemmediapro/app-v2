@@ -16,7 +16,9 @@ function verifyJWTSecretStrength(secret) {
  * @returns {boolean} - Returns true if credentials are valid, otherwise false.
  */
 function validateAdminCredentials(credentials) {
-  if (!credentials || typeof credentials !== 'object') {return false;}
+  if (!credentials || typeof credentials !== 'object') {
+    return false;
+  }
   const { username, password } = credentials;
   return typeof username === 'string' && typeof password === 'string' && password.length >= 8;
 }

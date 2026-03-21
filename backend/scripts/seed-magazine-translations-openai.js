@@ -17,8 +17,10 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const SKIP_IF_TRANSLATED = process.env.SKIP_IF_TRANSLATED !== '0';
 const LANGS = ['fr', 'en', 'es', 'it', 'de', 'ar'];
 function hasAllTranslations(doc) {
-  if (!doc.translations || typeof doc.translations !== 'object') {return false;}
-  return LANGS.every(l => doc.translations[l] && doc.translations[l].title);
+  if (!doc.translations || typeof doc.translations !== 'object') {
+    return false;
+  }
+  return LANGS.every((l) => doc.translations[l] && doc.translations[l].title);
 }
 
 async function run() {
@@ -42,7 +44,7 @@ async function run() {
       return;
     }
 
-    const toProcess = SKIP_IF_TRANSLATED ? list.filter(doc => !hasAllTranslations(doc)) : list;
+    const toProcess = SKIP_IF_TRANSLATED ? list.filter((doc) => !hasAllTranslations(doc)) : list;
     if (SKIP_IF_TRANSLATED && toProcess.length < list.length) {
       console.log(`ℹ️ ${list.length - toProcess.length} article(s) ont déjà les 6 langues (ignorés).`);
     }
@@ -66,13 +68,7 @@ async function run() {
 
       try {
         console.log(`   [${i + 1}/${toProcess.length}] 🌐 ${titleFr.slice(0, 50)}...`);
-        const translations = await generateTranslationsForArticle(
-          openai,
-          titleFr,
-          excerptFr,
-          contentFr,
-          category,
-        );
+        const translations = await generateTranslationsForArticle(openai, titleFr, excerptFr, contentFr, category);
         await Article.updateOne({ _id: id }, { $set: { translations } });
         updated++;
         console.log('      ✅ Traductions enregistrées.');
@@ -84,7 +80,9 @@ async function run() {
     console.log(`\n✅ Terminé. ${updated}/${toProcess.length} article(s) mis à jour avec les traductions.`);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) {console.error(err.response.data);}
+    if (err.response?.data) {
+      console.error(err.response.data);
+    }
     process.exit(1);
   } finally {
     await mongoose.disconnect();

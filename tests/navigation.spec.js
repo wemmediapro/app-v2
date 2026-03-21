@@ -33,7 +33,10 @@ test.describe('Navigation', () => {
     await page.getByRole('button', { name: /radio/i }).first().click();
     await expect(page).toHaveURL(/\/radio/);
 
-    await page.getByRole('button', { name: /films|séries|movies/i }).first().click();
+    await page
+      .getByRole('button', { name: /films|séries|movies/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/movies/);
   });
 

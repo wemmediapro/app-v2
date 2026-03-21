@@ -11,16 +11,27 @@ const cacheManager = require('../lib/cache-manager');
 // Localise le contenu depuis la base uniquement (aucun appel de traduction en ligne).
 // Langues : fr (champs principaux), en, es, it, de, ar (translations[code]). Si une traduction manque, on garde le français.
 function localizeArticle(article, lang) {
-  if (!article || typeof article !== 'object') {return article;}
+  if (!article || typeof article !== 'object') {
+    return article;
+  }
   try {
     const code = (lang && String(lang).trim().toLowerCase()) || null;
     const translations = article.translations;
-    const t = code && translations && typeof translations === 'object' && !Array.isArray(translations) ? translations[code] : null;
+    const t =
+      code && translations && typeof translations === 'object' && !Array.isArray(translations)
+        ? translations[code]
+        : null;
     const out = { ...article, readTime: article.readingTime ?? 0 };
     if (t && typeof t === 'object') {
-      if (t.title != null) {out.title = t.title;}
-      if (t.excerpt != null) {out.excerpt = t.excerpt;}
-      if (t.content != null) {out.content = t.content;}
+      if (t.title != null) {
+        out.title = t.title;
+      }
+      if (t.excerpt != null) {
+        out.excerpt = t.excerpt;
+      }
+      if (t.content != null) {
+        out.content = t.content;
+      }
     }
     delete out.translations;
     return out;
@@ -47,7 +58,9 @@ router.get('/', optionalAuth, async (req, res) => {
     if (!req.get('Authorization')) {
       const cacheKey = `list:magazine:${lang}:${page}:${limit}:${category || ''}:${featured || ''}:${search || ''}:${all || ''}`;
       const cached = await cacheManager.get(cacheKey);
-      if (cached) {return res.json(cached);}
+      if (cached) {
+        return res.json(cached);
+      }
     }
 
     if (mongoose.connection.readyState !== 1) {
@@ -71,12 +84,28 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 
     const query = { isActive: { $ne: false } };
-    if (!all) {query.$or = [{ isPublished: true }, { status: 'published' }];}
-    if (category && String(category).trim() && category !== 'all') {query.category = String(category).trim();}
-    if (featured === 'true') {query.featured = true;}
+    if (!all) {
+      query.$or = [{ isPublished: true }, { status: 'published' }];
+    }
+    if (category && String(category).trim() && category !== 'all') {
+      query.category = String(category).trim();
+    }
+    if (featured === 'true') {
+      query.featured = true;
+    }
     if (search && String(search).trim()) {
       const safe = safeRegexSearch(search);
-      if (safe) {query.$and = [{ $or: [{ title: { $regex: safe, $options: 'i' } }, { excerpt: { $regex: safe, $options: 'i' } }, { content: { $regex: safe, $options: 'i' } }] }];}
+      if (safe) {
+        query.$and = [
+          {
+            $or: [
+              { title: { $regex: safe, $options: 'i' } },
+              { excerpt: { $regex: safe, $options: 'i' } },
+              { content: { $regex: safe, $options: 'i' } },
+            ],
+          },
+        ];
+      }
     }
     const [list, total] = await Promise.all([
       Article.find(query).sort({ publishedAt: -1, createdAt: -1 }).skip(skip).limit(limit).lean(),
@@ -84,8 +113,8 @@ router.get('/', optionalAuth, async (req, res) => {
     ]);
     const isAdminWithTranslations = withTranslations === '1' && req.user && req.user.role === 'admin';
     const data = isAdminWithTranslations
-      ? list.map(a => ({ ...a, readTime: a.readingTime ?? 0 }))
-      : list.map(a => localizeArticle(a, lang));
+      ? list.map((a) => ({ ...a, readTime: a.readingTime ?? 0 }))
+      : list.map((a) => localizeArticle(a, lang));
     const body = { data: Array.isArray(data) ? data : [], total, page, limit };
     if (!req.get('Authorization')) {
       const cacheKey = `list:magazine:${lang}:${page}:${limit}:${category || ''}:${featured || ''}:${search || ''}:${all || ''}`;
@@ -163,7 +192,9 @@ router.get('/:id', optionalAuth, async (req, res) => {
     if (mongoose.connection.readyState === 1) {
       const lang = (req.query.lang && String(req.query.lang).trim().toLowerCase()) || null;
       const article = await Article.findById(req.params.id).lean();
-      if (!article) {return res.status(404).json({ message: 'Article non trouvé' });}
+      if (!article) {
+        return res.status(404).json({ message: 'Article non trouvé' });
+      }
       await Article.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
       const isAdminWithTranslations = req.query.withTranslations === '1' && req.user?.role === 'admin';
       const data = isAdminWithTranslations
@@ -173,7 +204,9 @@ router.get('/:id', optionalAuth, async (req, res) => {
     }
     const lang = (req.query.lang && String(req.query.lang).trim().toLowerCase()) || null;
     const data = magazineFallback.getById(req.params.id, lang);
-    if (!data) {return res.status(404).json({ message: 'Article non trouvé' });}
+    if (!data) {
+      return res.status(404).json({ message: 'Article non trouvé' });
+    }
     return res.json({ data });
   } catch (error) {
     console.error('Get article error:', error);
@@ -203,33 +236,47 @@ router.put('/:id', authMiddleware, adminMiddleware, articleValidation, async (re
       imageUrl: (raw.imageUrl && String(raw.imageUrl).trim()) || undefined,
       isPublished: raw.status === 'published',
       status: raw.status || 'draft',
-      publishedAt: raw.publishedAt === '' || raw.publishedAt === null ? null : (raw.publishedAt ? new Date(raw.publishedAt) : undefined),
+      publishedAt:
+        raw.publishedAt === '' || raw.publishedAt === null
+          ? null
+          : raw.publishedAt
+            ? new Date(raw.publishedAt)
+            : undefined,
       featured: !!raw.featured,
       allowComments: raw.allowComments !== false,
-      readingTime: typeof raw.readingTime === 'number' ? raw.readingTime : (typeof raw.readTime === 'number' ? raw.readTime : 0),
-      tags: Array.isArray(raw.tags) ? raw.tags.map(t => (typeof t === 'string' ? t.trim() : String(t))) : [],
+      readingTime:
+        typeof raw.readingTime === 'number' ? raw.readingTime : typeof raw.readTime === 'number' ? raw.readTime : 0,
+      tags: Array.isArray(raw.tags) ? raw.tags.map((t) => (typeof t === 'string' ? t.trim() : String(t))) : [],
       countries: Array.isArray(raw.countries) ? raw.countries : [],
       metaDescription: typeof raw.metaDescription === 'string' ? raw.metaDescription.slice(0, 160) : '',
-      metaKeywords: Array.isArray(raw.metaKeywords) ? raw.metaKeywords : (typeof raw.metaKeywords === 'string' && raw.metaKeywords ? [raw.metaKeywords] : []),
-      gallery: Array.isArray(raw.gallery) ? raw.gallery.map(g => ({ url: g?.url ?? '', caption: g?.caption ?? '' })) : [],
+      metaKeywords: Array.isArray(raw.metaKeywords)
+        ? raw.metaKeywords
+        : typeof raw.metaKeywords === 'string' && raw.metaKeywords
+          ? [raw.metaKeywords]
+          : [],
+      gallery: Array.isArray(raw.gallery)
+        ? raw.gallery.map((g) => ({ url: g?.url ?? '', caption: g?.caption ?? '' }))
+        : [],
       isActive: raw.isActive !== false,
     };
     if (raw.translations && typeof raw.translations === 'object') {
       body.translations = raw.translations;
     }
-    Object.keys(body).forEach(k => { if (body[k] === undefined) {delete body[k];} });
+    Object.keys(body).forEach((k) => {
+      if (body[k] === undefined) {
+        delete body[k];
+      }
+    });
     if (!body.title?.trim() || !body.category?.trim() || body.content == null) {
       return res.status(400).json({ message: 'Titre, catégorie et contenu requis.' });
     }
     if (body.imageUrl !== undefined && !body.imageUrl) {
       return res.status(400).json({ message: 'Image requise. Uploadez une image.' });
     }
-    const updated = await Article.findByIdAndUpdate(
-      id,
-      { $set: body },
-      { new: true, runValidators: true },
-    ).lean();
-    if (!updated) {return res.status(404).json({ message: 'Article non trouvé' });}
+    const updated = await Article.findByIdAndUpdate(id, { $set: body }, { new: true, runValidators: true }).lean();
+    if (!updated) {
+      return res.status(404).json({ message: 'Article non trouvé' });
+    }
     return res.json({ data: { ...updated, readTime: updated.readingTime || 0 } });
   } catch (error) {
     console.error('Update article error:', error);
@@ -258,7 +305,9 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Identifiant article invalide' });
     }
     const deleted = await Article.findByIdAndDelete(id);
-    if (!deleted) {return res.status(404).json({ message: 'Article non trouvé' });}
+    if (!deleted) {
+      return res.status(404).json({ message: 'Article non trouvé' });
+    }
     return res.json({ message: 'Article supprimé' });
   } catch (error) {
     console.error('Delete article error:', error);
@@ -270,6 +319,3 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 });
 
 module.exports = router;
-
-
-

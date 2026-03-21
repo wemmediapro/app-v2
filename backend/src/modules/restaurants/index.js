@@ -235,7 +235,7 @@ const demoRestaurants = [
       {
         id: 3,
         title: 'Petit-déjeuner complet',
-        description: 'Café + Croissant + Jus d\'orange',
+        description: "Café + Croissant + Jus d'orange",
         discount: 20,
         validUntil: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
       },
@@ -338,42 +338,34 @@ const demoRestaurants = [
 // GET /api/restaurants - Liste des restaurants
 router.get('/', (req, res) => {
   try {
-    const {
-      type,
-      priceRange,
-      isOpen,
-      search,
-      page = 1,
-      limit = 20,
-      sortBy = 'rating',
-      sortOrder = 'desc',
-    } = req.query;
+    const { type, priceRange, isOpen, search, page = 1, limit = 20, sortBy = 'rating', sortOrder = 'desc' } = req.query;
 
     let filteredRestaurants = [...demoRestaurants];
 
     // Filtrage par type
     if (type && type !== 'all') {
-      filteredRestaurants = filteredRestaurants.filter(rest => rest.type === type);
+      filteredRestaurants = filteredRestaurants.filter((rest) => rest.type === type);
     }
 
     // Filtrage par gamme de prix
     if (priceRange && priceRange !== 'all') {
-      filteredRestaurants = filteredRestaurants.filter(rest => rest.priceRange === priceRange);
+      filteredRestaurants = filteredRestaurants.filter((rest) => rest.priceRange === priceRange);
     }
 
     // Filtrage par statut d'ouverture
     if (isOpen !== undefined) {
       const isOpenBool = isOpen === 'true';
-      filteredRestaurants = filteredRestaurants.filter(rest => rest.isOpen === isOpenBool);
+      filteredRestaurants = filteredRestaurants.filter((rest) => rest.isOpen === isOpenBool);
     }
 
     // Filtrage par recherche
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredRestaurants = filteredRestaurants.filter(rest =>
-        rest.name.toLowerCase().includes(searchLower) ||
-        rest.description.toLowerCase().includes(searchLower) ||
-        rest.specialties.some(spec => spec.toLowerCase().includes(searchLower)),
+      filteredRestaurants = filteredRestaurants.filter(
+        (rest) =>
+          rest.name.toLowerCase().includes(searchLower) ||
+          rest.description.toLowerCase().includes(searchLower) ||
+          rest.specialties.some((spec) => spec.toLowerCase().includes(searchLower))
       );
     }
 
@@ -411,7 +403,6 @@ router.get('/', (req, res) => {
         sortOrder,
       },
     });
-
   } catch (error) {
     console.error('Get restaurants error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des restaurants' });
@@ -422,14 +413,13 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const restaurant = demoRestaurants.find(r => r._id === id);
+    const restaurant = demoRestaurants.find((r) => r._id === id);
 
     if (!restaurant) {
       return res.status(404).json({ error: 'Restaurant non trouvé' });
     }
 
     res.json(restaurant);
-
   } catch (error) {
     console.error('Get restaurant error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération du restaurant' });
@@ -440,7 +430,7 @@ router.get('/:id', (req, res) => {
 router.get('/:id/menu', (req, res) => {
   try {
     const { id } = req.params;
-    const restaurant = demoRestaurants.find(r => r._id === id);
+    const restaurant = demoRestaurants.find((r) => r._id === id);
 
     if (!restaurant) {
       return res.status(404).json({ error: 'Restaurant non trouvé' });
@@ -451,30 +441,26 @@ router.get('/:id/menu', (req, res) => {
 
     // Filtrage par catégorie
     if (category && category !== 'all') {
-      menu = menu.filter(item => item.category === category);
+      menu = menu.filter((item) => item.category === category);
     }
 
     // Filtrage par allergènes
     if (allergens) {
       const allergenList = allergens.split(',');
-      menu = menu.filter(item =>
-        !allergenList.some(allergen =>
-          item.allergens.includes(allergen),
-        ),
-      );
+      menu = menu.filter((item) => !allergenList.some((allergen) => item.allergens.includes(allergen)));
     }
 
     // Filtrage par régime alimentaire
     if (dietary) {
       switch (dietary) {
         case 'vegetarian':
-          menu = menu.filter(item => item.isVegetarian);
+          menu = menu.filter((item) => item.isVegetarian);
           break;
         case 'vegan':
-          menu = menu.filter(item => item.isVegan);
+          menu = menu.filter((item) => item.isVegan);
           break;
         case 'gluten-free':
-          menu = menu.filter(item => item.isGlutenFree);
+          menu = menu.filter((item) => item.isGlutenFree);
           break;
       }
     }
@@ -487,7 +473,6 @@ router.get('/:id/menu', (req, res) => {
       },
       menu,
     });
-
   } catch (error) {
     console.error('Get restaurant menu error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération du menu' });
@@ -514,7 +499,6 @@ router.post('/', authenticateToken, requireAdmin, (req, res) => {
       message: 'Restaurant créé avec succès',
       restaurant: newRestaurant,
     });
-
   } catch (error) {
     console.error('Create restaurant error:', error);
     res.status(500).json({ error: 'Erreur lors de la création du restaurant' });
@@ -527,7 +511,7 @@ router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    const restaurantIndex = demoRestaurants.findIndex(r => r._id === id);
+    const restaurantIndex = demoRestaurants.findIndex((r) => r._id === id);
     if (restaurantIndex === -1) {
       return res.status(404).json({ error: 'Restaurant non trouvé' });
     }
@@ -544,7 +528,6 @@ router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
       message: 'Restaurant mis à jour avec succès',
       restaurant: updatedRestaurant,
     });
-
   } catch (error) {
     console.error('Update restaurant error:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour du restaurant' });
@@ -555,7 +538,7 @@ router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
 router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
-    const restaurantIndex = demoRestaurants.findIndex(r => r._id === id);
+    const restaurantIndex = demoRestaurants.findIndex((r) => r._id === id);
 
     if (restaurantIndex === -1) {
       return res.status(404).json({ error: 'Restaurant non trouvé' });
@@ -564,7 +547,6 @@ router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
     demoRestaurants.splice(restaurantIndex, 1);
 
     res.json({ message: 'Restaurant supprimé avec succès' });
-
   } catch (error) {
     console.error('Delete restaurant error:', error);
     res.status(500).json({ error: 'Erreur lors de la suppression du restaurant' });
@@ -586,7 +568,6 @@ router.get('/categories/list', (req, res) => {
     ];
 
     res.json(categories);
-
   } catch (error) {
     console.error('Get categories error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des catégories' });
@@ -598,31 +579,29 @@ router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
   try {
     const stats = {
       total: demoRestaurants.length,
-      open: demoRestaurants.filter(r => r.isOpen).length,
-      closed: demoRestaurants.filter(r => !r.isOpen).length,
-      averageRating: Math.round(
-        demoRestaurants.reduce((sum, r) => sum + r.rating, 0) / demoRestaurants.length * 10,
-      ) / 10,
+      open: demoRestaurants.filter((r) => r.isOpen).length,
+      closed: demoRestaurants.filter((r) => !r.isOpen).length,
+      averageRating:
+        Math.round((demoRestaurants.reduce((sum, r) => sum + r.rating, 0) / demoRestaurants.length) * 10) / 10,
       totalCapacity: demoRestaurants.reduce((sum, r) => sum + r.capacity, 0),
       currentOccupancy: demoRestaurants.reduce((sum, r) => sum + r.currentOccupancy, 0),
       byType: {
-        'Français': demoRestaurants.filter(r => r.type === 'Français').length,
-        'Japonais': demoRestaurants.filter(r => r.type === 'Japonais').length,
-        'Méditerranéen': demoRestaurants.filter(r => r.type === 'Méditerranéen').length,
-        'Steakhouse': demoRestaurants.filter(r => r.type === 'Steakhouse').length,
-        'Café': demoRestaurants.filter(r => r.type === 'Café').length,
-        'Bar': demoRestaurants.filter(r => r.type === 'Bar').length,
-        'Fast Food': demoRestaurants.filter(r => r.type === 'Fast Food').length,
+        Français: demoRestaurants.filter((r) => r.type === 'Français').length,
+        Japonais: demoRestaurants.filter((r) => r.type === 'Japonais').length,
+        Méditerranéen: demoRestaurants.filter((r) => r.type === 'Méditerranéen').length,
+        Steakhouse: demoRestaurants.filter((r) => r.type === 'Steakhouse').length,
+        Café: demoRestaurants.filter((r) => r.type === 'Café').length,
+        Bar: demoRestaurants.filter((r) => r.type === 'Bar').length,
+        'Fast Food': demoRestaurants.filter((r) => r.type === 'Fast Food').length,
       },
       byPriceRange: {
-        '€': demoRestaurants.filter(r => r.priceRange === '€').length,
-        '€€': demoRestaurants.filter(r => r.priceRange === '€€').length,
-        '€€€': demoRestaurants.filter(r => r.priceRange === '€€€').length,
+        '€': demoRestaurants.filter((r) => r.priceRange === '€').length,
+        '€€': demoRestaurants.filter((r) => r.priceRange === '€€').length,
+        '€€€': demoRestaurants.filter((r) => r.priceRange === '€€€').length,
       },
     };
 
     res.json(stats);
-
   } catch (error) {
     console.error('Get restaurant stats error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
@@ -640,4 +619,3 @@ module.exports = {
   initialize,
   demoRestaurants,
 };
-

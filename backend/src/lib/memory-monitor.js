@@ -85,10 +85,16 @@ class MemoryMonitor extends EventEmitter {
   }
 
   start(options = {}) {
-    if (this.timer) {return this;}
-    if (options.intervalMs) {this.intervalMs = options.intervalMs;}
+    if (this.timer) {
+      return this;
+    }
+    if (options.intervalMs) {
+      this.intervalMs = options.intervalMs;
+    }
     this.timer = setInterval(() => this._tick(), this.intervalMs);
-    if (typeof this.timer.unref === 'function') {this.timer.unref();}
+    if (typeof this.timer.unref === 'function') {
+      this.timer.unref();
+    }
     // Premier échantillon rapide au démarrage
     setImmediate(() => {
       try {

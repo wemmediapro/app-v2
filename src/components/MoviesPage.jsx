@@ -1,13 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Clapperboard,
-  Play,
-  Heart,
-  Star,
-  ArrowLeft,
-  ChevronDown,
-} from 'lucide-react';
+import { Clapperboard, Play, Heart, Star, ArrowLeft, ChevronDown } from 'lucide-react';
 import { apiService, getStreamingVideoUrl, getPosterUrl } from '../services/apiService';
 import MoviePlayer from './MoviePlayer';
 import AdSlot from './AdSlot';
@@ -22,14 +15,7 @@ import {
 } from '../hooks/useMoviePlayback';
 
 // Clés de genre pour le filtre (valeurs telles que renvoyées par l’API)
-const GENRE_IDS = [
-  'all',
-  'action',
-  'drame',
-  'aventure',
-  'comédie',
-  'romance',
-];
+const GENRE_IDS = ['all', 'action', 'drame', 'aventure', 'comédie', 'romance'];
 
 function normalizeGenreKey(s) {
   if (!s || typeof s !== 'string') return '';
@@ -59,7 +45,21 @@ function getTranslatedGenre(genreStr, t) {
     .join(', ');
 }
 
-export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLoading = false, watchlist = [], toggleWatchlist, playbackStorageSuffix = 'guest', onSyncPlaybackToServer, initialSelectedMovie = null, initialAutoPlay = false, onClearInitialMovie, onVideoPlayStart, onVideoPlayEnd }) {
+export default function MoviesPage({
+  t,
+  language,
+  moviesAndSeries = [],
+  moviesLoading = false,
+  watchlist = [],
+  toggleWatchlist,
+  playbackStorageSuffix = 'guest',
+  onSyncPlaybackToServer,
+  initialSelectedMovie = null,
+  initialAutoPlay = false,
+  onClearInitialMovie,
+  onVideoPlayStart,
+  onVideoPlayEnd,
+}) {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [selectedEpisodeIndex, setSelectedEpisodeIndex] = useState(0);
   const [isMoviePlaying, setIsMoviePlaying] = useState(false);
@@ -90,21 +90,27 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
 
   // Notifier le parent (App) quand la lecture vidéo démarre ou s'arrête → pause radio
   useEffect(() => {
-    if (isMoviePlaying) onVideoPlayStart?.(); else onVideoPlayEnd?.();
-    return () => { onVideoPlayEnd?.(); };
+    if (isMoviePlaying) onVideoPlayStart?.();
+    else onVideoPlayEnd?.();
+    return () => {
+      onVideoPlayEnd?.();
+    };
   }, [isMoviePlaying, onVideoPlayStart, onVideoPlayEnd]);
 
   // Charger la config des cue points mid-roll (uniquement % de la durée)
   useEffect(() => {
-    apiService.getAdsConfig().then((res) => {
-      const d = res?.data;
-      if (d && Array.isArray(d.midrollCuePointsPercent)) {
-        midrollConfigRef.current = {
-          seconds: [],
-          percent: d.midrollCuePointsPercent.length ? d.midrollCuePointsPercent : [50],
-        };
-      }
-    }).catch(() => {});
+    apiService
+      .getAdsConfig()
+      .then((res) => {
+        const d = res?.data;
+        if (d && Array.isArray(d.midrollCuePointsPercent)) {
+          midrollConfigRef.current = {
+            seconds: [],
+            percent: d.midrollCuePointsPercent.length ? d.midrollCuePointsPercent : [50],
+          };
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Recharger le détail série pour avoir les épisodes à jour
@@ -129,7 +135,9 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
         setSelectedMovie((prev) => (prev?.id === selectedMovie.id ? { ...prev, episodes } : prev));
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedMovie?.id, selectedMovie?.type, language]);
 
   // Dernier épisode regardé pour les séries
@@ -166,7 +174,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
 
   const playbackKey = getMoviePlaybackKey(
     selectedMovie?.id,
-    selectedMovie?.type === 'serie' ? selectedEpisodeIndex : null,
+    selectedMovie?.type === 'serie' ? selectedEpisodeIndex : null
   );
   const savedPosition = playbackKey ? getSavedPlaybackPosition(playbackKey, playbackStorageSuffix) : null;
   const startTime = savedPosition?.time > 0 ? savedPosition.time : 0;
@@ -208,9 +216,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
     // Pause radio dès le clic sur Lire (y compris pendant le preroll)
     onVideoPlayStart?.();
     // Capturer le plein écran avant de passer au preroll (sinon le navigateur le quitte au démontage du lecteur)
-    wasFullscreenBeforeAdRef.current = !!(
-      document.fullscreenElement || document.webkitFullscreenElement
-    );
+    wasFullscreenBeforeAdRef.current = !!(document.fullscreenElement || document.webkitFullscreenElement);
     prerollConsumedRef.current = true;
     setPlaybackPhase('preroll');
     setCurrentAd(null);
@@ -264,24 +270,27 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
   const triggerMidroll = useCallback((atPercent) => {
     setIsMoviePlaying(false);
     setPlaybackPhase('midroll');
-    apiService.getNextAd('midroll', atPercent).then((res) => {
-      const data = res?.data;
-      if (data?.videoUrl) {
-        const adPayload = {
-          id: data.id,
-          videoUrl: data.videoUrl,
-          skipAfterPercent: data.skipAfterPercent != null ? Math.min(100, Math.max(0, data.skipAfterPercent)) : 0,
-        };
-        setCurrentAd(adPayload);
-        if (data.id) apiService.recordAdImpression(String(data.id));
-      } else {
+    apiService
+      .getNextAd('midroll', atPercent)
+      .then((res) => {
+        const data = res?.data;
+        if (data?.videoUrl) {
+          const adPayload = {
+            id: data.id,
+            videoUrl: data.videoUrl,
+            skipAfterPercent: data.skipAfterPercent != null ? Math.min(100, Math.max(0, data.skipAfterPercent)) : 0,
+          };
+          setCurrentAd(adPayload);
+          if (data.id) apiService.recordAdImpression(String(data.id));
+        } else {
+          setPlaybackPhase('content');
+          setIsMoviePlaying(true);
+        }
+      })
+      .catch(() => {
         setPlaybackPhase('content');
         setIsMoviePlaying(true);
-      }
-    }).catch(() => {
-      setPlaybackPhase('content');
-      setIsMoviePlaying(true);
-    });
+      });
   }, []);
 
   const handleProgress = useCallback(
@@ -294,7 +303,12 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
       }
       // Mid-roll : cue points uniquement en % de la durée (MIDROLL_CUE_POINTS_PERCENT)
       // Une seule midroll par vidéo : une fois déclenchée, on ne redéclenche plus (évite double passage à 50% puis 50% du reste)
-      if (playbackPhase === 'content' && typeof duration === 'number' && duration > 0 && !midrollAlreadyTriggeredRef.current) {
+      if (
+        playbackPhase === 'content' &&
+        typeof duration === 'number' &&
+        duration > 0 &&
+        !midrollAlreadyTriggeredRef.current
+      ) {
         const { percent: pctList } = midrollConfigRef.current;
         const cuePoints = [];
         for (const pct of pctList || []) {
@@ -308,10 +322,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
             midrollAlreadyTriggeredRef.current = true;
             const atPercent = duration > 0 ? Math.min(100, Math.max(0, Math.round((threshold / duration) * 100))) : 50;
             // Capturer le plein écran avant de passer au mid-roll (sinon le navigateur le quitte au démontage du lecteur)
-            wasFullscreenBeforeAdRef.current = !!(
-              document.fullscreenElement ||
-              document.webkitFullscreenElement
-            );
+            wasFullscreenBeforeAdRef.current = !!(document.fullscreenElement || document.webkitFullscreenElement);
             const inFullscreen = wasFullscreenBeforeAdRef.current;
             const container = playerContainerRef.current;
 
@@ -320,17 +331,27 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
               // On transfère le plein écran sur le conteneur AVANT de lancer le mid-roll,
               // ainsi quand la vidéo est remplacée par la pub, le conteneur reste en plein écran.
               const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
-              const reqFs = container.requestFullscreen || container.webkitRequestFullscreen || container.mozRequestFullScreen || container.msRequestFullscreen;
+              const reqFs =
+                container.requestFullscreen ||
+                container.webkitRequestFullscreen ||
+                container.mozRequestFullScreen ||
+                container.msRequestFullscreen;
               if (typeof exitFs === 'function' && typeof reqFs === 'function') {
-                exitFs.call(document).then(() => {
-                  // Un tick pour que le navigateur enregistre la sortie avant de repasser sur le conteneur
-                  requestAnimationFrame(() => {
-                    reqFs.call(container).then(() => {
-                      fullscreenRequestedForAdRef.current = true;
-                      triggerMidroll(atPercent);
-                    }).catch(() => triggerMidroll(atPercent));
-                  });
-                }).catch(() => triggerMidroll(atPercent));
+                exitFs
+                  .call(document)
+                  .then(() => {
+                    // Un tick pour que le navigateur enregistre la sortie avant de repasser sur le conteneur
+                    requestAnimationFrame(() => {
+                      reqFs
+                        .call(container)
+                        .then(() => {
+                          fullscreenRequestedForAdRef.current = true;
+                          triggerMidroll(atPercent);
+                        })
+                        .catch(() => triggerMidroll(atPercent));
+                    });
+                  })
+                  .catch(() => triggerMidroll(atPercent));
                 return;
               }
             }
@@ -340,7 +361,16 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
         }
       }
     },
-    [playbackKey, selectedMovie?.id, selectedMovie?.type, selectedEpisodeIndex, playbackStorageSuffix, playbackPhase, triggerMidroll, onSyncPlaybackToServer],
+    [
+      playbackKey,
+      selectedMovie?.id,
+      selectedMovie?.type,
+      selectedEpisodeIndex,
+      playbackStorageSuffix,
+      playbackPhase,
+      triggerMidroll,
+      onSyncPlaybackToServer,
+    ]
   );
 
   // Réactiver le plein écran quand une pub (preroll ou mid-roll) s'affiche — le conteneur reste monté, on repasse en plein écran après rendu de l'ad
@@ -350,11 +380,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
     const el = playerContainerRef.current;
     if (!el) return;
     wasFullscreenBeforeAdRef.current = false;
-    const req =
-      el.requestFullscreen ||
-      el.webkitRequestFullscreen ||
-      el.mozRequestFullScreen ||
-      el.msRequestFullscreen;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
     if (typeof req !== 'function') return;
     // Délai court pour laisser le DOM (AdSlot) se monter avant de demander le plein écran
     const t = setTimeout(() => {
@@ -370,11 +396,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
     const el = playerContainerRef.current;
     if (!el) return;
     fullscreenRequestedForAdRef.current = false;
-    const req =
-      el.requestFullscreen ||
-      el.webkitRequestFullscreen ||
-      el.mozRequestFullScreen ||
-      el.msRequestFullscreen;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
     if (typeof req !== 'function') return;
     const t = setTimeout(() => {
       req.call(el).catch(() => {});
@@ -395,7 +417,14 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
         setMovieProgress((p) => ({ ...p, [selectedMovie.id]: percent }));
       }
     },
-    [playbackKey, selectedMovie?.id, selectedMovie?.type, selectedEpisodeIndex, playbackStorageSuffix, onSyncPlaybackToServer],
+    [
+      playbackKey,
+      selectedMovie?.id,
+      selectedMovie?.type,
+      selectedEpisodeIndex,
+      playbackStorageSuffix,
+      onSyncPlaybackToServer,
+    ]
   );
 
   // Synchroniser les barres de progression depuis le storage
@@ -450,7 +479,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
         const typeOk = filterType === 'all' || item.type === filterType;
         return genreOk && typeOk;
       }),
-    [moviesAndSeries, selectedGenre, filterType],
+    [moviesAndSeries, selectedGenre, filterType]
   );
 
   const featured = useMemo(() => moviesAndSeries.find((item) => item.isFeatured), [moviesAndSeries]);
@@ -495,7 +524,10 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                   <option value="film">{t('movies.films')}</option>
                   <option value="serie">{t('movies.series')}</option>
                 </select>
-                <ChevronDown size={18} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <ChevronDown
+                  size={18}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                />
               </div>
             </div>
             <div className="flex-1 min-w-0 sm:min-w-[160px] max-w-[200px]">
@@ -515,7 +547,10 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                     </option>
                   ))}
                 </select>
-                <ChevronDown size={18} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <ChevronDown
+                  size={18}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                />
               </div>
             </div>
           </div>
@@ -587,7 +622,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                   </button>
                   <div className="min-w-0 flex-1">
                     <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
-                      {(selectedMovie.translations?.[language]?.title) ?? selectedMovie.title}
+                      {selectedMovie.translations?.[language]?.title ?? selectedMovie.title}
                     </h2>
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                       <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">
@@ -617,71 +652,70 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
               </div>
 
               {/* Description */}
-              {((selectedMovie.translations?.[language]?.description) ?? selectedMovie.description) && (
+              {(selectedMovie.translations?.[language]?.description ?? selectedMovie.description) && (
                 <div className="px-4 sm:px-5 pb-4 border-t border-slate-100">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wider pt-3 pb-1.5">
                     {t('movies.description')}
                   </p>
                   <p className="text-sm text-slate-600 leading-relaxed">
-                    {(selectedMovie.translations?.[language]?.description) ?? selectedMovie.description}
+                    {selectedMovie.translations?.[language]?.description ?? selectedMovie.description}
                   </p>
                 </div>
               )}
 
               {/* Épisodes (séries) */}
-              {selectedMovie.type === 'serie' && Array.isArray(selectedMovie.episodes) && selectedMovie.episodes.length > 0 && (
-                <div className="px-4 sm:px-5 pb-4 border-t border-slate-100">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider pt-3 pb-2">
-                    {t('movies.episodesAvailable')}
-                  </p>
-                  <ul className="space-y-2">
-                    {selectedMovie.episodes.map((ep, index) => {
-                      const hasVideo = !!(ep.videoUrl && String(ep.videoUrl).trim());
-                      const isSelected = selectedEpisodeIndex === index;
-                      return (
-                        <li key={index}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (hasVideo) {
-                                setSelectedEpisodeIndex(index);
-                                setIsMoviePlaying(false);
-                              }
-                            }}
-                            className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-colors ${
-                              isSelected
-                                ? 'border-[#264FFF] bg-[#264FFF]/5'
-                                : 'border-slate-100 hover:border-slate-200 bg-slate-50/50'
-                            }`}
-                          >
-                            <span
-                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
-                                isSelected ? 'bg-[#264FFF] text-white' : 'bg-slate-200 text-slate-700'
+              {selectedMovie.type === 'serie' &&
+                Array.isArray(selectedMovie.episodes) &&
+                selectedMovie.episodes.length > 0 && (
+                  <div className="px-4 sm:px-5 pb-4 border-t border-slate-100">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider pt-3 pb-2">
+                      {t('movies.episodesAvailable')}
+                    </p>
+                    <ul className="space-y-2">
+                      {selectedMovie.episodes.map((ep, index) => {
+                        const hasVideo = !!(ep.videoUrl && String(ep.videoUrl).trim());
+                        const isSelected = selectedEpisodeIndex === index;
+                        return (
+                          <li key={index}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (hasVideo) {
+                                  setSelectedEpisodeIndex(index);
+                                  setIsMoviePlaying(false);
+                                }
+                              }}
+                              className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-colors ${
+                                isSelected
+                                  ? 'border-[#264FFF] bg-[#264FFF]/5'
+                                  : 'border-slate-100 hover:border-slate-200 bg-slate-50/50'
                               }`}
                             >
-                              {index + 1}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-slate-900">
-                                {ep.title || `Episode ${index + 1}`}
-                              </p>
-                              {ep.duration && (
-                                <p className="text-xs text-slate-500">{ep.duration}</p>
-                              )}
-                            </div>
-                            {hasVideo && (
-                              <div className="rounded-full bg-[#264FFF] p-2 text-white shrink-0">
-                                <Play size={16} className="fill-current" />
+                              <span
+                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
+                                  isSelected ? 'bg-[#264FFF] text-white' : 'bg-slate-200 text-slate-700'
+                                }`}
+                              >
+                                {index + 1}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-slate-900">
+                                  {ep.title || `Episode ${index + 1}`}
+                                </p>
+                                {ep.duration && <p className="text-xs text-slate-500">{ep.duration}</p>}
                               </div>
-                            )}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-
+                              {hasVideo && (
+                                <div className="rounded-full bg-[#264FFF] p-2 text-white shrink-0">
+                                  <Play size={16} className="fill-current" />
+                                </div>
+                              )}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
             </div>
           ) : featured ? (
             <button
@@ -696,7 +730,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                 {featured.poster ? (
                   <img
                     src={getPosterUrl(featured.poster)}
-                    alt={(featured.translations?.[language]?.title) ?? featured.title}
+                    alt={featured.translations?.[language]?.title ?? featured.title}
                     className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
                     decoding="async"
@@ -706,7 +740,9 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                     }}
                   />
                 ) : null}
-                <div className={`absolute inset-0 flex items-center justify-center text-3xl text-white bg-slate-700 ${featured.poster ? 'hidden' : ''}`}>
+                <div
+                  className={`absolute inset-0 flex items-center justify-center text-3xl text-white bg-slate-700 ${featured.poster ? 'hidden' : ''}`}
+                >
                   🎬
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
@@ -715,7 +751,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                     {featured.type === 'film' ? t('movies.films') : t('movies.series')} · À la une
                   </span>
                   <h2 className="text-lg font-bold mt-1">
-                    {(featured.translations?.[language]?.title) ?? featured.title}
+                    {featured.translations?.[language]?.title ?? featured.title}
                   </h2>
                   <span className="inline-flex items-center gap-1 mt-1 text-amber-300 text-xs">
                     <Star size={12} className="fill-current" />
@@ -763,7 +799,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                       {item.poster ? (
                         <img
                           src={getPosterUrl(item.poster)}
-                          alt={(item.translations?.[language]?.title) ?? item.title}
+                          alt={item.translations?.[language]?.title ?? item.title}
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           loading="lazy"
                           decoding="async"
@@ -773,7 +809,9 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                           }}
                         />
                       ) : null}
-                      <div className={`absolute inset-0 flex items-center justify-center text-3xl text-white bg-slate-700 ${item.poster ? 'hidden' : ''}`}>
+                      <div
+                        className={`absolute inset-0 flex items-center justify-center text-3xl text-white bg-slate-700 ${item.poster ? 'hidden' : ''}`}
+                      >
                         🎬
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -786,10 +824,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                       </span>
                       {movieProgress[item.id] > 0 && movieProgress[item.id] < 100 && (
                         <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-700/80">
-                          <div
-                            className="h-full bg-[#264FFF]"
-                            style={{ width: `${movieProgress[item.id]}%` }}
-                          />
+                          <div className="h-full bg-[#264FFF]" style={{ width: `${movieProgress[item.id]}%` }} />
                         </div>
                       )}
                       <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded bg-black/50 px-1.5 py-0.5 text-xs text-amber-300">
@@ -799,7 +834,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
                     </div>
                     <div className="p-3 flex-1 flex flex-col min-h-0">
                       <h4 className="text-sm font-semibold text-slate-900 line-clamp-2 leading-tight">
-                        {(item.translations?.[language]?.title) ?? item.title}
+                        {item.translations?.[language]?.title ?? item.title}
                       </h4>
                       <p className="text-xs text-slate-500 mt-1 flex-shrink-0">
                         {item.year}

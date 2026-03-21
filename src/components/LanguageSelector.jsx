@@ -66,19 +66,19 @@ const LanguageSelector = ({ variant = 'dark' }) => {
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
     if (langCode === language) {
       setIsOpen(false);
       return;
     }
-    
+
     console.log('Selecting language:', langCode);
     // Close menu immediately before changing language
     setIsOpen(false);
     changeLanguage(langCode);
   };
 
-  const currentLanguage = languages.find(lang => lang.code === language) || languages[0];
+  const currentLanguage = languages.find((lang) => lang.code === language) || languages[0];
 
   const dropdownMenu = isOpen && (
     <AnimatePresence key="lang-dropdown">
@@ -99,7 +99,19 @@ const LanguageSelector = ({ variant = 'dark' }) => {
       >
         <div className="px-3 py-2 border-b border-slate-100">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            {language === 'fr' ? 'Langue' : language === 'en' ? 'Language' : language === 'es' ? 'Idioma' : language === 'it' ? 'Lingua' : language === 'de' ? 'Sprache' : language === 'ar' ? 'اللغة' : 'Langue'}
+            {language === 'fr'
+              ? 'Langue'
+              : language === 'en'
+                ? 'Language'
+                : language === 'es'
+                  ? 'Idioma'
+                  : language === 'it'
+                    ? 'Lingua'
+                    : language === 'de'
+                      ? 'Sprache'
+                      : language === 'ar'
+                        ? 'اللغة'
+                        : 'Langue'}
           </p>
         </div>
         <div className="py-1">
@@ -118,11 +130,11 @@ const LanguageSelector = ({ variant = 'dark' }) => {
                 language === lang.code ? 'bg-blue-50 text-blue-700' : 'text-slate-700'
               }`}
             >
-              <span className="text-xl flex-shrink-0" aria-hidden>{lang.flag}</span>
+              <span className="text-xl flex-shrink-0" aria-hidden>
+                {lang.flag}
+              </span>
               <span className="flex-1 text-sm font-medium">{lang.name}</span>
-              {language === lang.code && (
-                <Check size={18} className="text-blue-600 flex-shrink-0" strokeWidth={2.5} />
-              )}
+              {language === lang.code && <Check size={18} className="text-blue-600 flex-shrink-0" strokeWidth={2.5} />}
             </motion.button>
           ))}
         </div>
@@ -155,13 +167,30 @@ const LanguageSelector = ({ variant = 'dark' }) => {
               : 'bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20'
           }`}
           style={isLight ? { boxShadow: '0 2px 6px rgba(0,0,0,0.06)' } : undefined}
-          title={t('common.changeLanguage') || (language === 'fr' ? 'Changer la langue' : language === 'en' ? 'Change language' : language === 'es' ? 'Cambiar idioma' : language === 'it' ? 'Cambia lingua' : language === 'de' ? 'Sprache ändern' : language === 'ar' ? 'تغيير اللغة' : 'Changer la langue')}
+          title={
+            t('common.changeLanguage') ||
+            (language === 'fr'
+              ? 'Changer la langue'
+              : language === 'en'
+                ? 'Change language'
+                : language === 'es'
+                  ? 'Cambiar idioma'
+                  : language === 'it'
+                    ? 'Cambia lingua'
+                    : language === 'de'
+                      ? 'Sprache ändern'
+                      : language === 'ar'
+                        ? 'تغيير اللغة'
+                        : 'Changer la langue')
+          }
           aria-haspopup="listbox"
           aria-expanded={isOpen}
         >
           {isLight ? (
             <>
-              <span className="text-[10px] sm:text-sm font-bold uppercase text-[#264FFF]">{currentLanguage.code.toUpperCase()}</span>
+              <span className="text-[10px] sm:text-sm font-bold uppercase text-[#264FFF]">
+                {currentLanguage.code.toUpperCase()}
+              </span>
               <ChevronDown
                 size={16}
                 className={`text-[#264FFF] flex-shrink-0 transition-transform duration-200 sm:w-[18px] sm:h-[18px] ${isOpen ? 'rotate-180' : ''}`}
@@ -170,7 +199,9 @@ const LanguageSelector = ({ variant = 'dark' }) => {
             </>
           ) : (
             <>
-              <span className="text-base sm:text-sm font-bold tracking-wide uppercase text-white">{currentLanguage.code.toUpperCase()}</span>
+              <span className="text-base sm:text-sm font-bold tracking-wide uppercase text-white">
+                {currentLanguage.code.toUpperCase()}
+              </span>
               <ChevronDown
                 size={20}
                 className={`text-white flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}

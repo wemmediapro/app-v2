@@ -1,7 +1,34 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Radio, Clapperboard, Tv, BookOpen, Image, Megaphone, Calendar, TrendingUp, BarChart3, Clock, SlidersHorizontal, LayoutGrid, Users, Activity, Server } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from 'recharts';
+import {
+  Radio,
+  Clapperboard,
+  Tv,
+  BookOpen,
+  Image,
+  Megaphone,
+  Calendar,
+  TrendingUp,
+  BarChart3,
+  Clock,
+  SlidersHorizontal,
+  LayoutGrid,
+  Users,
+  Activity,
+  Server,
+} from 'lucide-react';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Cell,
+} from 'recharts';
 import { apiService } from '../services/apiService';
 
 const PERIODS = [
@@ -85,7 +112,7 @@ function buildDailyDataFromRange(startDateStr, endDateStr) {
 function hourlyCurve(hour, peakAt = 21, base = 5, peakVal = 100) {
   if (hour <= 5) return base + Math.floor(hour * 0.8);
   if (hour <= 11) return Math.round(base + 4 + ((hour - 5) / 6) * (peakVal * 0.5 - base - 4));
-  if (hour <= 17) return Math.round(base + (peakVal - base) * (0.5 + (hour - 11) / 18 * 0.35));
+  if (hour <= 17) return Math.round(base + (peakVal - base) * (0.5 + ((hour - 11) / 18) * 0.35));
   if (hour <= 21) {
     const distFromPeak = Math.abs(hour - peakAt);
     return Math.round(base + (peakVal - base) * (0.85 + 0.15 * (1 - distFromPeak / 3)));
@@ -133,7 +160,8 @@ function computeKPIs(dailyData, dataKey, clicksKey = null) {
   const half = Math.floor(dailyData.length / 2);
   const firstHalf = dailyData.slice(0, half).reduce((s, r) => s + (r[dataKey] || 0), 0);
   const secondHalf = dailyData.slice(half).reduce((s, r) => s + (r[dataKey] || 0), 0);
-  const growth = firstHalf === 0 ? (secondHalf > 0 ? 100 : 0) : Math.round(((secondHalf - firstHalf) / firstHalf) * 1000) / 10;
+  const growth =
+    firstHalf === 0 ? (secondHalf > 0 ? 100 : 0) : Math.round(((secondHalf - firstHalf) / firstHalf) * 1000) / 10;
   let totalClicks = 0;
   if (clicksKey && dailyData[0][clicksKey] != null) {
     totalClicks = dailyData.reduce((s, r) => s + (r[clicksKey] || 0), 0);
@@ -178,10 +206,19 @@ function SectionChart({ data, dataKey, color, t }) {
           <YAxis tick={{ fontSize: 11 }} stroke="#6b7280" />
           <Tooltip
             contentStyle={{ fontSize: 12, borderRadius: 8 }}
-            labelFormatter={(_, payload) => payload?.[0]?.payload?.date && new Date(payload[0].payload.date).toLocaleDateString('fr-FR')}
+            labelFormatter={(_, payload) =>
+              payload?.[0]?.payload?.date && new Date(payload[0].payload.date).toLocaleDateString('fr-FR')
+            }
             formatter={(value) => [t('statisticsPage.usersPerDay') || 'Utilisateurs/jour', value]}
           />
-          <Area type="monotone" dataKey={dataKey} stroke={color.stroke} fill={color.fill} strokeWidth={2} name={t('statisticsPage.users') || 'Utilisateurs'} />
+          <Area
+            type="monotone"
+            dataKey={dataKey}
+            stroke={color.stroke}
+            fill={color.fill}
+            strokeWidth={2}
+            name={t('statisticsPage.users') || 'Utilisateurs'}
+          />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -214,7 +251,12 @@ function HourlyChart({ dataKey, color, peakHour, t }) {
           />
           <Bar dataKey={dataKey} radius={[2, 2, 0, 0]} name={t('statisticsPage.usage') || 'Utilisation'}>
             {HOURLY_DATA.map((entry, index) => (
-              <Cell key={index} fill={entry.hour === peakHour ? color.stroke : barFill} stroke={entry.hour === peakHour ? color.stroke : 'transparent'} strokeWidth={entry.hour === peakHour ? 2 : 0} />
+              <Cell
+                key={index}
+                fill={entry.hour === peakHour ? color.stroke : barFill}
+                stroke={entry.hour === peakHour ? color.stroke : 'transparent'}
+                strokeWidth={entry.hour === peakHour ? 2 : 0}
+              />
             ))}
           </Bar>
         </BarChart>
@@ -270,7 +312,9 @@ const Statistics = () => {
         if (!cancelled) setRealLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const viewModeConfig = useMemo(() => VIEW_MODES.find((m) => m.value === viewMode) || VIEW_MODES[0], [viewMode]);
@@ -339,22 +383,22 @@ const Statistics = () => {
   return (
     <div className="min-w-0 w-full space-y-6 pb-8">
       <header>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t('statisticsPage.title') || 'Statistiques d\'usage'}</h1>
-        <p className="mt-1 text-sm text-gray-500 max-w-xl">{t('statisticsPage.subtitle') || 'Chiffres et courbes par module avec filtres de période.'}</p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          {t('statisticsPage.title') || "Statistiques d'usage"}
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 max-w-xl">
+          {t('statisticsPage.subtitle') || 'Chiffres et courbes par module avec filtres de période.'}
+        </p>
       </header>
 
       {/* Vue d'ensemble (données réelles API) */}
       <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm p-4">
         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4 flex items-center gap-2">
           <Activity size={16} aria-hidden />
-          {t('statisticsPage.realOverview') || 'Vue d\'ensemble (données réelles)'}
+          {t('statisticsPage.realOverview') || "Vue d'ensemble (données réelles)"}
         </h2>
-        {realLoading && (
-          <p className="text-sm text-gray-500 py-4">{t('statisticsPage.loading') || 'Chargement…'}</p>
-        )}
-        {realError && (
-          <p className="text-sm text-amber-600 py-2">{realError}</p>
-        )}
+        {realLoading && <p className="text-sm text-gray-500 py-4">{t('statisticsPage.loading') || 'Chargement…'}</p>}
+        {realError && <p className="text-sm text-amber-600 py-2">{realError}</p>}
         {!realLoading && !realError && (realOverview || realConnections) && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {realOverview?.summary && (
@@ -428,14 +472,20 @@ const Statistics = () => {
                       period === p.value ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    {p.value === 1 ? t('statisticsPage.period24h') : p.value === 'custom' ? t(p.labelKey) : `${p.value} ${t('statisticsPage.days') || 'j'}`}
+                    {p.value === 1
+                      ? t('statisticsPage.period24h')
+                      : p.value === 'custom'
+                        ? t(p.labelKey)
+                        : `${p.value} ${t('statisticsPage.days') || 'j'}`}
                   </button>
                 ))}
               </div>
               {period === 'custom' && (
                 <div className="flex flex-wrap items-center gap-2 pl-2 border-l border-gray-200">
                   <label className="flex items-center gap-1.5 text-sm text-gray-600">
-                    <span className="text-xs font-medium text-gray-500 uppercase">{t('statisticsPage.dateStart') || 'Début'}</span>
+                    <span className="text-xs font-medium text-gray-500 uppercase">
+                      {t('statisticsPage.dateStart') || 'Début'}
+                    </span>
                     <input
                       type="date"
                       value={dateRangeStart}
@@ -444,7 +494,9 @@ const Statistics = () => {
                     />
                   </label>
                   <label className="flex items-center gap-1.5 text-sm text-gray-600">
-                    <span className="text-xs font-medium text-gray-500 uppercase">{t('statisticsPage.dateEnd') || 'Fin'}</span>
+                    <span className="text-xs font-medium text-gray-500 uppercase">
+                      {t('statisticsPage.dateEnd') || 'Fin'}
+                    </span>
                     <input
                       type="date"
                       value={dateRangeEnd}
@@ -487,7 +539,9 @@ const Statistics = () => {
                 type="button"
                 onClick={selectAllModules}
                 className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
-                  !hasModuleFilter ? 'bg-slate-100 border-slate-300 text-slate-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  !hasModuleFilter
+                    ? 'bg-slate-100 border-slate-300 text-slate-700'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 {t('statisticsPage.allModules') || 'Tous'}
@@ -498,7 +552,9 @@ const Statistics = () => {
                   type="button"
                   onClick={() => toggleModule(id)}
                   className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
-                    selectedModules[id] ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-500'
+                    selectedModules[id]
+                      ? 'bg-blue-50 border-blue-200 text-blue-700'
+                      : 'bg-gray-50 border-gray-200 text-gray-500'
                   }`}
                 >
                   {moduleLabels[id]}
@@ -511,194 +567,422 @@ const Statistics = () => {
 
       {!MODULE_IDS.some((id) => selectedModules[id]) && (
         <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-          {t('statisticsPage.selectAtLeastOneModule') || 'Sélectionnez au moins un module pour afficher les statistiques.'}
+          {t('statisticsPage.selectAtLeastOneModule') ||
+            'Sélectionnez au moins un module pour afficher les statistiques.'}
         </p>
       )}
 
       {/* Radio */}
       {selectedModules.radio && (
-      <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-50">
-            <Radio size={24} className="text-blue-600" aria-hidden />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{t('statisticsPage.radio') || 'Radio'}</h2>
-            <p className="text-sm text-gray-500">{t('statisticsPage.radioDescription') || 'Écoutes et utilisateurs par jour'}</p>
-          </div>
-        </div>
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <KpiCard label={t('statisticsPage.stationsCount') || 'Stations'} value={(realCounts.radio ?? kpis.radio.total).toLocaleString()} subValue={realCounts.radio != null ? t('statisticsPage.realData') : null} icon={BarChart3} iconBg="bg-blue-50" iconColor="text-blue-600" />
-            <KpiCard label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'} value={kpis.radio.avgPerDay.toLocaleString()} icon={BarChart3} iconBg="bg-blue-50" iconColor="text-blue-600" />
-            <KpiCard label={t('statisticsPage.peakDay') || 'Pic jour'} value={kpis.radio.peak} subValue={formatDate(kpis.radio.peakDate)} icon={TrendingUp} iconBg="bg-blue-50" iconColor="text-blue-600" />
-            <KpiCard label={t('statisticsPage.peakHour') || 'Pic horaire'} value={hourlyPeaks.radio.peakHourLabel} subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.radio.peakHourValue}`} icon={Clock} iconBg="bg-blue-50" iconColor="text-blue-600" />
-            <KpiCard label={t('statisticsPage.growth') || 'Évolution'} value={`${kpis.radio.growth >= 0 ? '+' : ''}${kpis.radio.growth}%`} icon={TrendingUp} iconBg="bg-blue-50" iconColor="text-blue-600" />
-          </div>
-          {viewModeConfig.showDaily && <SectionChart data={dailyData} dataKey="radio" color={COLORS.radio} t={t} />}
-          {viewModeConfig.showHourly && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('statisticsPage.peakUsageByHour') || 'Pic d\'utilisation dans la journée (par heure)'}</h3>
-              <HourlyChart dataKey="radio" color={COLORS.radio} peakHour={hourlyPeaks.radio.peakHour} t={t} />
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-50">
+              <Radio size={24} className="text-blue-600" aria-hidden />
             </div>
-          )}
-        </div>
-      </section>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{t('statisticsPage.radio') || 'Radio'}</h2>
+              <p className="text-sm text-gray-500">
+                {t('statisticsPage.radioDescription') || 'Écoutes et utilisateurs par jour'}
+              </p>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <KpiCard
+                label={t('statisticsPage.stationsCount') || 'Stations'}
+                value={(realCounts.radio ?? kpis.radio.total).toLocaleString()}
+                subValue={realCounts.radio != null ? t('statisticsPage.realData') : null}
+                icon={BarChart3}
+                iconBg="bg-blue-50"
+                iconColor="text-blue-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'}
+                value={kpis.radio.avgPerDay.toLocaleString()}
+                icon={BarChart3}
+                iconBg="bg-blue-50"
+                iconColor="text-blue-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.peakDay') || 'Pic jour'}
+                value={kpis.radio.peak}
+                subValue={formatDate(kpis.radio.peakDate)}
+                icon={TrendingUp}
+                iconBg="bg-blue-50"
+                iconColor="text-blue-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.peakHour') || 'Pic horaire'}
+                value={hourlyPeaks.radio.peakHourLabel}
+                subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.radio.peakHourValue}`}
+                icon={Clock}
+                iconBg="bg-blue-50"
+                iconColor="text-blue-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.growth') || 'Évolution'}
+                value={`${kpis.radio.growth >= 0 ? '+' : ''}${kpis.radio.growth}%`}
+                icon={TrendingUp}
+                iconBg="bg-blue-50"
+                iconColor="text-blue-600"
+              />
+            </div>
+            {viewModeConfig.showDaily && <SectionChart data={dailyData} dataKey="radio" color={COLORS.radio} t={t} />}
+            {viewModeConfig.showHourly && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  {t('statisticsPage.peakUsageByHour') || "Pic d'utilisation dans la journée (par heure)"}
+                </h3>
+                <HourlyChart dataKey="radio" color={COLORS.radio} peakHour={hourlyPeaks.radio.peakHour} t={t} />
+              </div>
+            )}
+          </div>
+        </section>
       )}
 
       {/* Vidéos */}
       {selectedModules.videos && (
-      <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-purple-50">
-            <Clapperboard size={24} className="text-purple-600" aria-hidden />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{t('statisticsPage.videos') || 'Vidéos (Films & Séries)'}</h2>
-            <p className="text-sm text-gray-500">{t('statisticsPage.videosDescription') || 'Utilisateurs par jour'}</p>
-          </div>
-        </div>
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <KpiCard label={t('statisticsPage.moviesCount') || 'Films & séries'} value={(realCounts.videos ?? kpis.videos.total).toLocaleString()} subValue={realCounts.videos != null ? t('statisticsPage.realData') : null} icon={BarChart3} iconBg="bg-purple-50" iconColor="text-purple-600" />
-            <KpiCard label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'} value={kpis.videos.avgPerDay.toLocaleString()} icon={BarChart3} iconBg="bg-purple-50" iconColor="text-purple-600" />
-            <KpiCard label={t('statisticsPage.peakDay') || 'Pic jour'} value={kpis.videos.peak} subValue={formatDate(kpis.videos.peakDate)} icon={TrendingUp} iconBg="bg-purple-50" iconColor="text-purple-600" />
-            <KpiCard label={t('statisticsPage.peakHour') || 'Pic horaire'} value={hourlyPeaks.videos.peakHourLabel} subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.videos.peakHourValue}`} icon={Clock} iconBg="bg-purple-50" iconColor="text-purple-600" />
-            <KpiCard label={t('statisticsPage.growth') || 'Évolution'} value={`${kpis.videos.growth >= 0 ? '+' : ''}${kpis.videos.growth}%`} icon={TrendingUp} iconBg="bg-purple-50" iconColor="text-purple-600" />
-          </div>
-          {viewModeConfig.showDaily && <SectionChart data={dailyData} dataKey="videos" color={COLORS.videos} t={t} />}
-          {viewModeConfig.showHourly && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('statisticsPage.peakUsageByHour') || 'Pic d\'utilisation dans la journée (par heure)'}</h3>
-              <HourlyChart dataKey="videos" color={COLORS.videos} peakHour={hourlyPeaks.videos.peakHour} t={t} />
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-50">
+              <Clapperboard size={24} className="text-purple-600" aria-hidden />
             </div>
-          )}
-        </div>
-      </section>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {t('statisticsPage.videos') || 'Vidéos (Films & Séries)'}
+              </h2>
+              <p className="text-sm text-gray-500">
+                {t('statisticsPage.videosDescription') || 'Utilisateurs par jour'}
+              </p>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <KpiCard
+                label={t('statisticsPage.moviesCount') || 'Films & séries'}
+                value={(realCounts.videos ?? kpis.videos.total).toLocaleString()}
+                subValue={realCounts.videos != null ? t('statisticsPage.realData') : null}
+                icon={BarChart3}
+                iconBg="bg-purple-50"
+                iconColor="text-purple-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'}
+                value={kpis.videos.avgPerDay.toLocaleString()}
+                icon={BarChart3}
+                iconBg="bg-purple-50"
+                iconColor="text-purple-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.peakDay') || 'Pic jour'}
+                value={kpis.videos.peak}
+                subValue={formatDate(kpis.videos.peakDate)}
+                icon={TrendingUp}
+                iconBg="bg-purple-50"
+                iconColor="text-purple-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.peakHour') || 'Pic horaire'}
+                value={hourlyPeaks.videos.peakHourLabel}
+                subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.videos.peakHourValue}`}
+                icon={Clock}
+                iconBg="bg-purple-50"
+                iconColor="text-purple-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.growth') || 'Évolution'}
+                value={`${kpis.videos.growth >= 0 ? '+' : ''}${kpis.videos.growth}%`}
+                icon={TrendingUp}
+                iconBg="bg-purple-50"
+                iconColor="text-purple-600"
+              />
+            </div>
+            {viewModeConfig.showDaily && <SectionChart data={dailyData} dataKey="videos" color={COLORS.videos} t={t} />}
+            {viewModeConfig.showHourly && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  {t('statisticsPage.peakUsageByHour') || "Pic d'utilisation dans la journée (par heure)"}
+                </h3>
+                <HourlyChart dataKey="videos" color={COLORS.videos} peakHour={hourlyPeaks.videos.peakHour} t={t} />
+              </div>
+            )}
+          </div>
+        </section>
       )}
 
       {/* WebTV */}
       {selectedModules.webtv && (
-      <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-emerald-50">
-            <Tv size={24} className="text-emerald-600" aria-hidden />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{t('statisticsPage.webtv') || 'WebTV'}</h2>
-            <p className="text-sm text-gray-500">{t('statisticsPage.webtvDescription') || 'Utilisateurs par jour'}</p>
-          </div>
-        </div>
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <KpiCard label={t('statisticsPage.viewersCount') || 'Spectateurs'} value={(realCounts.webtv ?? kpis.webtv.total).toLocaleString()} subValue={realCounts.webtv != null ? t('statisticsPage.realData') : null} icon={BarChart3} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-            <KpiCard label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'} value={kpis.webtv.avgPerDay.toLocaleString()} icon={BarChart3} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-            <KpiCard label={t('statisticsPage.peakDay') || 'Pic jour'} value={kpis.webtv.peak} subValue={formatDate(kpis.webtv.peakDate)} icon={TrendingUp} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-            <KpiCard label={t('statisticsPage.peakHour') || 'Pic horaire'} value={hourlyPeaks.webtv.peakHourLabel} subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.webtv.peakHourValue}`} icon={Clock} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-            <KpiCard label={t('statisticsPage.growth') || 'Évolution'} value={`${kpis.webtv.growth >= 0 ? '+' : ''}${kpis.webtv.growth}%`} icon={TrendingUp} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-          </div>
-          {viewModeConfig.showDaily && <SectionChart data={dailyData} dataKey="webtv" color={COLORS.webtv} t={t} />}
-          {viewModeConfig.showHourly && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('statisticsPage.peakUsageByHour') || 'Pic d\'utilisation dans la journée (par heure)'}</h3>
-              <HourlyChart dataKey="webtv" color={COLORS.webtv} peakHour={hourlyPeaks.webtv.peakHour} t={t} />
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-50">
+              <Tv size={24} className="text-emerald-600" aria-hidden />
             </div>
-          )}
-        </div>
-      </section>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{t('statisticsPage.webtv') || 'WebTV'}</h2>
+              <p className="text-sm text-gray-500">{t('statisticsPage.webtvDescription') || 'Utilisateurs par jour'}</p>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <KpiCard
+                label={t('statisticsPage.viewersCount') || 'Spectateurs'}
+                value={(realCounts.webtv ?? kpis.webtv.total).toLocaleString()}
+                subValue={realCounts.webtv != null ? t('statisticsPage.realData') : null}
+                icon={BarChart3}
+                iconBg="bg-emerald-50"
+                iconColor="text-emerald-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'}
+                value={kpis.webtv.avgPerDay.toLocaleString()}
+                icon={BarChart3}
+                iconBg="bg-emerald-50"
+                iconColor="text-emerald-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.peakDay') || 'Pic jour'}
+                value={kpis.webtv.peak}
+                subValue={formatDate(kpis.webtv.peakDate)}
+                icon={TrendingUp}
+                iconBg="bg-emerald-50"
+                iconColor="text-emerald-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.peakHour') || 'Pic horaire'}
+                value={hourlyPeaks.webtv.peakHourLabel}
+                subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.webtv.peakHourValue}`}
+                icon={Clock}
+                iconBg="bg-emerald-50"
+                iconColor="text-emerald-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.growth') || 'Évolution'}
+                value={`${kpis.webtv.growth >= 0 ? '+' : ''}${kpis.webtv.growth}%`}
+                icon={TrendingUp}
+                iconBg="bg-emerald-50"
+                iconColor="text-emerald-600"
+              />
+            </div>
+            {viewModeConfig.showDaily && <SectionChart data={dailyData} dataKey="webtv" color={COLORS.webtv} t={t} />}
+            {viewModeConfig.showHourly && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  {t('statisticsPage.peakUsageByHour') || "Pic d'utilisation dans la journée (par heure)"}
+                </h3>
+                <HourlyChart dataKey="webtv" color={COLORS.webtv} peakHour={hourlyPeaks.webtv.peakHour} t={t} />
+              </div>
+            )}
+          </div>
+        </section>
       )}
 
       {/* Magazine */}
       {selectedModules.magazine && (
-      <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-amber-50">
-            <BookOpen size={24} className="text-amber-600" aria-hidden />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{t('statisticsPage.magazine') || 'Magazine'}</h2>
-            <p className="text-sm text-gray-500">{t('statisticsPage.magazineDescription') || 'Lectures et utilisateurs par jour'}</p>
-          </div>
-        </div>
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <KpiCard label={t('statisticsPage.articlesCount') || 'Articles'} value={(realCounts.magazine ?? kpis.magazine.total).toLocaleString()} subValue={realCounts.magazine != null ? t('statisticsPage.realData') : null} icon={BarChart3} iconBg="bg-amber-50" iconColor="text-amber-600" />
-            <KpiCard label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'} value={kpis.magazine.avgPerDay.toLocaleString()} icon={BarChart3} iconBg="bg-amber-50" iconColor="text-amber-600" />
-            <KpiCard label={t('statisticsPage.peakDay') || 'Pic jour'} value={kpis.magazine.peak} subValue={formatDate(kpis.magazine.peakDate)} icon={TrendingUp} iconBg="bg-amber-50" iconColor="text-amber-600" />
-            <KpiCard label={t('statisticsPage.peakHour') || 'Pic horaire'} value={hourlyPeaks.magazine.peakHourLabel} subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.magazine.peakHourValue}`} icon={Clock} iconBg="bg-amber-50" iconColor="text-amber-600" />
-            <KpiCard label={t('statisticsPage.growth') || 'Évolution'} value={`${kpis.magazine.growth >= 0 ? '+' : ''}${kpis.magazine.growth}%`} icon={TrendingUp} iconBg="bg-amber-50" iconColor="text-amber-600" />
-          </div>
-          {viewModeConfig.showDaily && <SectionChart data={dailyData} dataKey="magazine" color={COLORS.magazine} t={t} />}
-          {viewModeConfig.showHourly && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('statisticsPage.peakUsageByHour') || 'Pic d\'utilisation dans la journée (par heure)'}</h3>
-              <HourlyChart dataKey="magazine" color={COLORS.magazine} peakHour={hourlyPeaks.magazine.peakHour} t={t} />
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-50">
+              <BookOpen size={24} className="text-amber-600" aria-hidden />
             </div>
-          )}
-        </div>
-      </section>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{t('statisticsPage.magazine') || 'Magazine'}</h2>
+              <p className="text-sm text-gray-500">
+                {t('statisticsPage.magazineDescription') || 'Lectures et utilisateurs par jour'}
+              </p>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <KpiCard
+                label={t('statisticsPage.articlesCount') || 'Articles'}
+                value={(realCounts.magazine ?? kpis.magazine.total).toLocaleString()}
+                subValue={realCounts.magazine != null ? t('statisticsPage.realData') : null}
+                icon={BarChart3}
+                iconBg="bg-amber-50"
+                iconColor="text-amber-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.avgPerDay') || 'Moyenne/jour'}
+                value={kpis.magazine.avgPerDay.toLocaleString()}
+                icon={BarChart3}
+                iconBg="bg-amber-50"
+                iconColor="text-amber-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.peakDay') || 'Pic jour'}
+                value={kpis.magazine.peak}
+                subValue={formatDate(kpis.magazine.peakDate)}
+                icon={TrendingUp}
+                iconBg="bg-amber-50"
+                iconColor="text-amber-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.peakHour') || 'Pic horaire'}
+                value={hourlyPeaks.magazine.peakHourLabel}
+                subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.magazine.peakHourValue}`}
+                icon={Clock}
+                iconBg="bg-amber-50"
+                iconColor="text-amber-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.growth') || 'Évolution'}
+                value={`${kpis.magazine.growth >= 0 ? '+' : ''}${kpis.magazine.growth}%`}
+                icon={TrendingUp}
+                iconBg="bg-amber-50"
+                iconColor="text-amber-600"
+              />
+            </div>
+            {viewModeConfig.showDaily && (
+              <SectionChart data={dailyData} dataKey="magazine" color={COLORS.magazine} t={t} />
+            )}
+            {viewModeConfig.showHourly && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  {t('statisticsPage.peakUsageByHour') || "Pic d'utilisation dans la journée (par heure)"}
+                </h3>
+                <HourlyChart
+                  dataKey="magazine"
+                  color={COLORS.magazine}
+                  peakHour={hourlyPeaks.magazine.peakHour}
+                  t={t}
+                />
+              </div>
+            )}
+          </div>
+        </section>
       )}
 
       {/* Bannières */}
       {selectedModules.banners && (
-      <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-sky-50">
-            <Image size={24} className="text-sky-600" aria-hidden />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{t('statisticsPage.banners') || 'Bannières'}</h2>
-            <p className="text-sm text-gray-500">{t('statisticsPage.bannersDescription') || 'Affichages et clics par jour'}</p>
-          </div>
-        </div>
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <KpiCard label={t('statisticsPage.impressions') || 'Impressions'} value={kpis.banners.total.toLocaleString()} icon={BarChart3} iconBg="bg-sky-50" iconColor="text-sky-600" />
-            <KpiCard label={t('statisticsPage.clicks') || 'Clics'} value={kpis.banners.totalClicks.toLocaleString()} icon={BarChart3} iconBg="bg-sky-50" iconColor="text-sky-600" />
-            <KpiCard label={t('statisticsPage.peakHour') || 'Pic horaire'} value={hourlyPeaks.banners.peakHourLabel} subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.banners.peakHourValue}`} icon={Clock} iconBg="bg-sky-50" iconColor="text-sky-600" />
-            <KpiCard label={t('statisticsPage.ctr') || 'CTR'} value={`${kpis.banners.ctr}%`} icon={TrendingUp} iconBg="bg-sky-50" iconColor="text-sky-600" />
-            <KpiCard label={t('statisticsPage.growth') || 'Évolution'} value={`${kpis.banners.growth >= 0 ? '+' : ''}${kpis.banners.growth}%`} icon={TrendingUp} iconBg="bg-sky-50" iconColor="text-sky-600" />
-          </div>
-          {viewModeConfig.showDaily && <SectionChart data={dailyData} dataKey="banners" color={COLORS.banners} t={t} />}
-          {viewModeConfig.showHourly && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('statisticsPage.peakUsageByHour') || 'Pic d\'utilisation dans la journée (par heure)'}</h3>
-              <HourlyChart dataKey="banners" color={COLORS.banners} peakHour={hourlyPeaks.banners.peakHour} t={t} />
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-sky-50">
+              <Image size={24} className="text-sky-600" aria-hidden />
             </div>
-          )}
-        </div>
-      </section>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{t('statisticsPage.banners') || 'Bannières'}</h2>
+              <p className="text-sm text-gray-500">
+                {t('statisticsPage.bannersDescription') || 'Affichages et clics par jour'}
+              </p>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <KpiCard
+                label={t('statisticsPage.impressions') || 'Impressions'}
+                value={kpis.banners.total.toLocaleString()}
+                icon={BarChart3}
+                iconBg="bg-sky-50"
+                iconColor="text-sky-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.clicks') || 'Clics'}
+                value={kpis.banners.totalClicks.toLocaleString()}
+                icon={BarChart3}
+                iconBg="bg-sky-50"
+                iconColor="text-sky-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.peakHour') || 'Pic horaire'}
+                value={hourlyPeaks.banners.peakHourLabel}
+                subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.banners.peakHourValue}`}
+                icon={Clock}
+                iconBg="bg-sky-50"
+                iconColor="text-sky-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.ctr') || 'CTR'}
+                value={`${kpis.banners.ctr}%`}
+                icon={TrendingUp}
+                iconBg="bg-sky-50"
+                iconColor="text-sky-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.growth') || 'Évolution'}
+                value={`${kpis.banners.growth >= 0 ? '+' : ''}${kpis.banners.growth}%`}
+                icon={TrendingUp}
+                iconBg="bg-sky-50"
+                iconColor="text-sky-600"
+              />
+            </div>
+            {viewModeConfig.showDaily && (
+              <SectionChart data={dailyData} dataKey="banners" color={COLORS.banners} t={t} />
+            )}
+            {viewModeConfig.showHourly && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  {t('statisticsPage.peakUsageByHour') || "Pic d'utilisation dans la journée (par heure)"}
+                </h3>
+                <HourlyChart dataKey="banners" color={COLORS.banners} peakHour={hourlyPeaks.banners.peakHour} t={t} />
+              </div>
+            )}
+          </div>
+        </section>
       )}
 
       {/* Publicités */}
       {selectedModules.ads && (
-      <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-pink-50">
-            <Megaphone size={24} className="text-pink-600" aria-hidden />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{t('statisticsPage.ads') || 'Publicités'}</h2>
-            <p className="text-sm text-gray-500">{t('statisticsPage.adsDescription') || 'Vues et clics (pre-roll, mid-roll)'}</p>
-          </div>
-        </div>
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <KpiCard label={t('statisticsPage.views') || 'Vues'} value={kpis.ads.total.toLocaleString()} icon={BarChart3} iconBg="bg-pink-50" iconColor="text-pink-600" />
-            <KpiCard label={t('statisticsPage.clicks') || 'Clics'} value={kpis.ads.totalClicks.toLocaleString()} icon={BarChart3} iconBg="bg-pink-50" iconColor="text-pink-600" />
-            <KpiCard label={t('statisticsPage.peakHour') || 'Pic horaire'} value={hourlyPeaks.ads.peakHourLabel} subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.ads.peakHourValue}`} icon={Clock} iconBg="bg-pink-50" iconColor="text-pink-600" />
-            <KpiCard label={t('statisticsPage.ctr') || 'CTR'} value={`${kpis.ads.ctr}%`} icon={TrendingUp} iconBg="bg-pink-50" iconColor="text-pink-600" />
-            <KpiCard label={t('statisticsPage.growth') || 'Évolution'} value={`${kpis.ads.growth >= 0 ? '+' : ''}${kpis.ads.growth}%`} icon={TrendingUp} iconBg="bg-pink-50" iconColor="text-pink-600" />
-          </div>
-          {viewModeConfig.showDaily && <SectionChart data={dailyData} dataKey="ads" color={COLORS.ads} t={t} />}
-          {viewModeConfig.showHourly && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('statisticsPage.peakUsageByHour') || 'Pic d\'utilisation dans la journée (par heure)'}</h3>
-              <HourlyChart dataKey="ads" color={COLORS.ads} peakHour={hourlyPeaks.ads.peakHour} t={t} />
+        <section className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-pink-50">
+              <Megaphone size={24} className="text-pink-600" aria-hidden />
             </div>
-          )}
-        </div>
-      </section>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{t('statisticsPage.ads') || 'Publicités'}</h2>
+              <p className="text-sm text-gray-500">
+                {t('statisticsPage.adsDescription') || 'Vues et clics (pre-roll, mid-roll)'}
+              </p>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <KpiCard
+                label={t('statisticsPage.views') || 'Vues'}
+                value={kpis.ads.total.toLocaleString()}
+                icon={BarChart3}
+                iconBg="bg-pink-50"
+                iconColor="text-pink-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.clicks') || 'Clics'}
+                value={kpis.ads.totalClicks.toLocaleString()}
+                icon={BarChart3}
+                iconBg="bg-pink-50"
+                iconColor="text-pink-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.peakHour') || 'Pic horaire'}
+                value={hourlyPeaks.ads.peakHourLabel}
+                subValue={`${t('statisticsPage.usage') || 'Utilisation'}: ${hourlyPeaks.ads.peakHourValue}`}
+                icon={Clock}
+                iconBg="bg-pink-50"
+                iconColor="text-pink-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.ctr') || 'CTR'}
+                value={`${kpis.ads.ctr}%`}
+                icon={TrendingUp}
+                iconBg="bg-pink-50"
+                iconColor="text-pink-600"
+              />
+              <KpiCard
+                label={t('statisticsPage.growth') || 'Évolution'}
+                value={`${kpis.ads.growth >= 0 ? '+' : ''}${kpis.ads.growth}%`}
+                icon={TrendingUp}
+                iconBg="bg-pink-50"
+                iconColor="text-pink-600"
+              />
+            </div>
+            {viewModeConfig.showDaily && <SectionChart data={dailyData} dataKey="ads" color={COLORS.ads} t={t} />}
+            {viewModeConfig.showHourly && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  {t('statisticsPage.peakUsageByHour') || "Pic d'utilisation dans la journée (par heure)"}
+                </h3>
+                <HourlyChart dataKey="ads" color={COLORS.ads} peakHour={hourlyPeaks.ads.peakHour} t={t} />
+              </div>
+            )}
+          </div>
+        </section>
       )}
     </div>
   );

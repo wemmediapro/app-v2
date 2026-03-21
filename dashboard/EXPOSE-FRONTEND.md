@@ -12,6 +12,7 @@ cd dashboard
 ```
 
 Le script va :
+
 1. Vérifier que le serveur tourne sur le port 5173
 2. Créer un tunnel public avec localtunnel
 3. Afficher l'URL publique
@@ -105,13 +106,13 @@ cd dashboard
 ## 🔍 Dépannage
 
 ### Le tunnel ne se connecte pas
+
 - Vérifiez que le port 5173 est bien utilisé
 - Essayez un autre sous-domaine
 - Vérifiez votre connexion Internet
 
 ### L'URL ne fonctionne pas
+
 - Vérifiez que le serveur local fonctionne
 - Réessayez avec un nouveau tunnel
 - Vérifiez les logs du tunnel
-
-

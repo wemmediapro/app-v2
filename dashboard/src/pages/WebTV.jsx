@@ -1,7 +1,39 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Tv, Plus, Edit, Trash2, Search, Play, Pause, Radio, Users, X, Save, MapPin, Upload, Video, FileVideo, Clock, Calendar as CalendarIcon, Repeat, List, BarChart3, Volume2, VolumeX, ArrowUp, ArrowDown, Copy, CheckCircle, AlertCircle, Calendar, ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
+import {
+  Tv,
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Play,
+  Pause,
+  Radio,
+  Users,
+  X,
+  Save,
+  MapPin,
+  Upload,
+  Video,
+  FileVideo,
+  Clock,
+  Calendar as CalendarIcon,
+  Repeat,
+  List,
+  BarChart3,
+  Volume2,
+  VolumeX,
+  ArrowUp,
+  ArrowDown,
+  Copy,
+  CheckCircle,
+  AlertCircle,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  GripVertical,
+} from 'lucide-react';
 import FilterBar from '../components/FilterBar';
 import { apiService } from '../services/apiService';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -46,7 +78,7 @@ const WebTV = () => {
     isRepeating: false,
     isActive: true,
     order: 0,
-    tags: []
+    tags: [],
   });
   const [editingProgram, setEditingProgram] = useState(null);
   const [newTag, setNewTag] = useState('');
@@ -71,7 +103,7 @@ const WebTV = () => {
     viewers: 0,
     schedule: [],
     countries: [],
-    translations: emptyTranslations()
+    translations: emptyTranslations(),
   });
 
   // Pays disponibles
@@ -80,7 +112,7 @@ const WebTV = () => {
     { name: 'Tunisie', code: 'TN' },
     { name: 'Algérie', code: 'DZ' },
     { name: 'Italie', code: 'IT' },
-    { name: 'Espagne', code: 'ES' }
+    { name: 'Espagne', code: 'ES' },
   ];
 
   const [dbConnected, setDbConnected] = useState(null);
@@ -90,7 +122,8 @@ const WebTV = () => {
   }, []);
 
   useEffect(() => {
-    apiService.healthCheck()
+    apiService
+      .healthCheck()
       .then((res) => setDbConnected(res.data?.mongodb === 'connected'))
       .catch(() => setDbConnected(false));
   }, []);
@@ -98,7 +131,8 @@ const WebTV = () => {
   useEffect(() => {
     if (!showVideoLibraryPicker) return;
     setMediaLibraryLoading(true);
-    apiService.getMediaLibrary()
+    apiService
+      .getMediaLibrary()
       .then((res) => {
         const list = res.data?.media && Array.isArray(res.data.media) ? res.data.media : [];
         setMediaLibraryVideos(list.filter((m) => m.type === 'video'));
@@ -112,11 +146,11 @@ const WebTV = () => {
       setLoading(true);
       const response = await apiService.getWebTVChannels();
       const raw = response.data;
-      const list = Array.isArray(raw) ? raw : (raw?.data || raw?.channels || []);
-      const channelsData = (Array.isArray(list) ? list : []).map(channel => ({
+      const list = Array.isArray(raw) ? raw : raw?.data || raw?.channels || [];
+      const channelsData = (Array.isArray(list) ? list : []).map((channel) => ({
         ...channel,
         _id: channel._id || channel.id,
-        programs: channel.programs || []
+        programs: channel.programs || [],
       }));
       setChannels(channelsData);
     } catch (error) {
@@ -129,17 +163,20 @@ const WebTV = () => {
     }
   };
 
-  const filteredChannels = channels.filter(channel => {
-    const matchesSearch = !searchQuery || 
-      (channel.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-       channel.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-       channel.category?.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesFilter = filter === 'all' || 
-                         (filter === 'live' && channel.isLive) ||
-                         (filter === 'ondemand' && !channel.isLive);
-    const matchesCountry = countryFilter === 'all' || 
-      (channel.countries && channel.countries.some(country => country.toLowerCase().includes(countryFilter.toLowerCase())));
-    const matchesDestination = destinationFilter === 'all' || 
+  const filteredChannels = channels.filter((channel) => {
+    const matchesSearch =
+      !searchQuery ||
+      channel.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      channel.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      channel.category?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter =
+      filter === 'all' || (filter === 'live' && channel.isLive) || (filter === 'ondemand' && !channel.isLive);
+    const matchesCountry =
+      countryFilter === 'all' ||
+      (channel.countries &&
+        channel.countries.some((country) => country.toLowerCase().includes(countryFilter.toLowerCase())));
+    const matchesDestination =
+      destinationFilter === 'all' ||
       (channel.destination && channel.destination.toLowerCase().includes(destinationFilter.toLowerCase()));
     const matchesShip = true;
     return matchesSearch && matchesFilter && matchesCountry && matchesDestination && matchesShip;
@@ -197,8 +234,8 @@ const WebTV = () => {
     setNewChannel({
       ...newChannel,
       countries: newChannel.countries.includes(countryName)
-        ? newChannel.countries.filter(c => c !== countryName)
-        : [...newChannel.countries, countryName]
+        ? newChannel.countries.filter((c) => c !== countryName)
+        : [...newChannel.countries, countryName],
     });
   };
 
@@ -226,14 +263,14 @@ const WebTV = () => {
         ...newChannel,
         translations,
         imageUrl: logoPreview || newChannel.imageUrl || newChannel.logo,
-        logo: logoPreview || newChannel.logo
+        logo: logoPreview || newChannel.logo,
       };
 
       await apiService.createWebTVChannel(channelData);
       setShowModal(false);
       toast.success(t('webtv.channelAddedSuccess'));
       fetchChannels();
-      
+
       // Réinitialiser le formulaire
       setLogoFile(null);
       setLogoPreview(null);
@@ -251,11 +288,11 @@ const WebTV = () => {
         viewers: 0,
         schedule: [],
         countries: [],
-        translations: emptyTranslations()
+        translations: emptyTranslations(),
       });
     } catch (error) {
-      console.error('Erreur lors de l\'ajout de la chaîne:', error);
-      const msg = error.response?.data?.message || error.message || 'Erreur lors de l\'ajout de la chaîne';
+      console.error("Erreur lors de l'ajout de la chaîne:", error);
+      const msg = error.response?.data?.message || error.message || "Erreur lors de l'ajout de la chaîne";
       toast.error(msg);
     }
   };
@@ -267,7 +304,7 @@ const WebTV = () => {
       divertissement: 'Divertissement',
       enfants: 'Enfants',
       musique: 'Musique',
-      documentaire: 'Documentaire'
+      documentaire: 'Documentaire',
     };
     return labels[category] || category;
   };
@@ -280,7 +317,7 @@ const WebTV = () => {
     { value: 3, label: 'Jeudi', short: 'Jeu' },
     { value: 4, label: 'Vendredi', short: 'Ven' },
     { value: 5, label: 'Samedi', short: 'Sam' },
-    { value: 6, label: 'Dimanche', short: 'Dim' }
+    { value: 6, label: 'Dimanche', short: 'Dim' },
   ];
 
   const programCategories = ['Actualités', 'Sport', 'Divertissement', 'Enfants', 'Musique', 'Documentaire', 'Autre'];
@@ -303,7 +340,7 @@ const WebTV = () => {
       days.push({
         date: new Date(year, month, 1 - paddingCount + i),
         isCurrentMonth: false,
-        isToday: false
+        isToday: false,
       });
     }
 
@@ -313,7 +350,7 @@ const WebTV = () => {
       days.push({
         date: dayDate,
         isCurrentMonth: true,
-        isToday: dayDate.toDateString() === today.toDateString()
+        isToday: dayDate.toDateString() === today.toDateString(),
       });
     }
 
@@ -322,7 +359,7 @@ const WebTV = () => {
       days.push({
         date: new Date(year, month + 1, i),
         isCurrentMonth: false,
-        isToday: false
+        isToday: false,
       });
     }
 
@@ -335,11 +372,11 @@ const WebTV = () => {
     const jsDay = date.getDay();
     const formDay = (jsDay + 6) % 7;
 
-    return programs.filter(program => {
+    return programs.filter((program) => {
       if (!program.isActive) return false;
 
       if (program.isRepeating && program.daysOfWeek && program.daysOfWeek.length > 0) {
-        const normalizedDays = program.daysOfWeek.map(d => Number(d));
+        const normalizedDays = program.daysOfWeek.map((d) => Number(d));
         if (normalizedDays.includes(formDay)) return true;
       }
 
@@ -371,7 +408,7 @@ const WebTV = () => {
   };
 
   const navigateMonth = (direction) => {
-    setCurrentDate(prev => {
+    setCurrentDate((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(prev.getMonth() + direction);
       return newDate;
@@ -440,14 +477,13 @@ const WebTV = () => {
     let currentStart = '00:00';
     return sorted.map((p, index) => {
       const duration = p.duration ?? 0;
-      const endTime = duration > 0
-        ? computeEndTimeFromStartAndDuration(currentStart, duration)
-        : (p.endTime || currentStart);
+      const endTime =
+        duration > 0 ? computeEndTimeFromStartAndDuration(currentStart, duration) : p.endTime || currentStart;
       const program = {
         ...p,
         order: index,
         startTime: currentStart,
-        endTime: endTime || p.endTime
+        endTime: endTime || p.endTime,
       };
       currentStart = program.endTime || currentStart;
       return program;
@@ -461,7 +497,7 @@ const WebTV = () => {
     if (!start || dur <= 0) return;
     const computed = computeEndTimeFromStartAndDuration(start, dur);
     if (!computed) return;
-    setNewProgram(prev => (prev.endTime === computed ? prev : { ...prev, endTime: computed }));
+    setNewProgram((prev) => (prev.endTime === computed ? prev : { ...prev, endTime: computed }));
   }, [showProgramModal, webTVAutoCalcEndTime, newProgram.startTime, newProgram.duration, newProgram.endTime]);
 
   const formatFileSize = (bytes) => {
@@ -469,7 +505,7 @@ const WebTV = () => {
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
   const handleVideoUpload = async (e) => {
@@ -485,11 +521,11 @@ const WebTV = () => {
     }
 
     const previewUrl = URL.createObjectURL(file);
-    setNewProgram(prev => ({
+    setNewProgram((prev) => ({
       ...prev,
       videoFile: file,
       videoPreview: previewUrl,
-      uploadDate: new Date().toISOString()
+      uploadDate: new Date().toISOString(),
     }));
 
     const video = document.createElement('video');
@@ -497,23 +533,26 @@ const WebTV = () => {
     video.onloadedmetadata = () => {
       window.URL.revokeObjectURL(previewUrl);
       const dur = Math.round(video.duration);
-      setNewProgram(prev => ({
+      setNewProgram((prev) => ({
         ...prev,
         duration: dur,
-        endTime: computeEndTimeFromStartAndDuration(prev.startTime, dur) || prev.endTime
+        endTime: computeEndTimeFromStartAndDuration(prev.startTime, dur) || prev.endTime,
       }));
     };
     video.src = previewUrl;
 
     try {
-      toast.loading('Compression à 480p en cours (1 à 2 min selon la taille)…', { id: 'webtv-video', duration: 120000 });
+      toast.loading('Compression à 480p en cours (1 à 2 min selon la taille)…', {
+        id: 'webtv-video',
+        duration: 120000,
+      });
       const result = await apiService.uploadVideo(file);
       if (result?.success && result?.video?.url) {
-        setNewProgram(prev => ({
+        setNewProgram((prev) => ({
           ...prev,
           streamUrl: result.video.url,
           videoPreview: result.video.url,
-          endTime: computeEndTimeFromStartAndDuration(prev.startTime, prev.duration) || prev.endTime
+          endTime: computeEndTimeFromStartAndDuration(prev.startTime, prev.duration) || prev.endTime,
         }));
         toast.success('Vidéo compressée à 480p', { id: 'webtv-video' });
       } else {
@@ -533,7 +572,7 @@ const WebTV = () => {
       videoFile: null,
       videoPreview: null,
       streamUrl: '',
-      duration: 0
+      duration: 0,
     });
   };
 
@@ -547,16 +586,18 @@ const WebTV = () => {
     }
     // Durée fournie par l'API (backend lit les métadonnées avec ffprobe)
     const durFromApi = video.duration != null ? Math.round(Number(video.duration)) : 0;
-    setNewProgram(prev => ({
+    setNewProgram((prev) => ({
       ...prev,
       videoFile: null,
       videoPreview: url,
       streamUrl: url,
       duration: durFromApi,
-      endTime: computeEndTimeFromStartAndDuration(prev.startTime, durFromApi) || prev.endTime
+      endTime: computeEndTimeFromStartAndDuration(prev.startTime, durFromApi) || prev.endTime,
     }));
     setShowVideoLibraryPicker(false);
-    toast.success(durFromApi > 0 ? 'Vidéo sélectionnée depuis la bibliothèque' : 'Vidéo sélectionnée (durée non disponible)');
+    toast.success(
+      durFromApi > 0 ? 'Vidéo sélectionnée depuis la bibliothèque' : 'Vidéo sélectionnée (durée non disponible)'
+    );
   };
 
   const generateStreamUrl = (videoFile) => {
@@ -584,13 +625,16 @@ const WebTV = () => {
     // Ne jamais enregistrer une URL blob: — elle ne fonctionne pas sur l'app passagers (autre origine/session)
     const candidateUrl = newProgram.streamUrl || (newProgram.videoFile ? generateStreamUrl(newProgram.videoFile) : '');
     if (!isPlayableStreamUrl(candidateUrl)) {
-      toast.error('La vidéo doit être sur le serveur pour être lue sur l\'app. Attendez la fin de l\'upload (compression 480p) ou choisissez une vidéo depuis la bibliothèque.');
+      toast.error(
+        "La vidéo doit être sur le serveur pour être lue sur l'app. Attendez la fin de l'upload (compression 480p) ou choisissez une vidéo depuis la bibliothèque."
+      );
       return;
     }
     const streamUrl = candidateUrl;
-    const endTime = webTVAutoCalcEndTime && newProgram.startTime && newProgram.duration
-      ? computeEndTimeFromStartAndDuration(newProgram.startTime, newProgram.duration)
-      : (newProgram.endTime || '');
+    const endTime =
+      webTVAutoCalcEndTime && newProgram.startTime && newProgram.duration
+        ? computeEndTimeFromStartAndDuration(newProgram.startTime, newProgram.duration)
+        : newProgram.endTime || '';
     const program = {
       id: `program_${Date.now()}`,
       title: newProgram.title,
@@ -609,7 +653,7 @@ const WebTV = () => {
       order: newProgram.order,
       tags: newProgram.tags,
       playCount: 0,
-      lastPlayed: null
+      lastPlayed: null,
     };
 
     const rawList = [...programs, program];
@@ -617,17 +661,18 @@ const WebTV = () => {
     setPrograms(updatedPrograms);
 
     if (selectedChannelForProgram) {
-      const updatedChannels = channels.map(c => 
-        c._id === selectedChannelForProgram._id 
-          ? { ...c, programs: updatedPrograms }
-          : c
+      const updatedChannels = channels.map((c) =>
+        c._id === selectedChannelForProgram._id ? { ...c, programs: updatedPrograms } : c
       );
       setChannels(updatedChannels);
       try {
-        await apiService.updateWebTVChannel(selectedChannelForProgram._id, { ...selectedChannelForProgram, programs: updatedPrograms });
+        await apiService.updateWebTVChannel(selectedChannelForProgram._id, {
+          ...selectedChannelForProgram,
+          programs: updatedPrograms,
+        });
       } catch (err) {
         console.error('Erreur sauvegarde programmes:', err);
-        toast.error(err.response?.data?.message || 'Les programmes n\'ont pas été enregistrés sur le serveur.');
+        toast.error(err.response?.data?.message || "Les programmes n'ont pas été enregistrés sur le serveur.");
       }
     }
 
@@ -646,7 +691,7 @@ const WebTV = () => {
       isRepeating: false,
       isActive: true,
       order: 0,
-      tags: []
+      tags: [],
     });
     setNewTag('');
 
@@ -670,7 +715,7 @@ const WebTV = () => {
       isRepeating: program.isRepeating || false,
       isActive: program.isActive !== undefined ? program.isActive : true,
       order: program.order || 0,
-      tags: program.tags || []
+      tags: program.tags || [],
     });
     setNewTag('');
   };
@@ -681,16 +726,17 @@ const WebTV = () => {
       return;
     }
 
-    const endTime = webTVAutoCalcEndTime && newProgram.startTime && (newProgram.duration || editingProgram?.duration)
-      ? computeEndTimeFromStartAndDuration(newProgram.startTime, newProgram.duration || editingProgram?.duration || 0)
-      : (newProgram.endTime || '');
-    const mapped = programs.map(p =>
+    const endTime =
+      webTVAutoCalcEndTime && newProgram.startTime && (newProgram.duration || editingProgram?.duration)
+        ? computeEndTimeFromStartAndDuration(newProgram.startTime, newProgram.duration || editingProgram?.duration || 0)
+        : newProgram.endTime || '';
+    const mapped = programs.map((p) =>
       p.id === editingProgram.id
         ? {
             ...p,
             title: newProgram.title,
             description: newProgram.description || '',
-            streamUrl: isPlayableStreamUrl(newProgram.streamUrl) ? newProgram.streamUrl : (p.streamUrl || ''),
+            streamUrl: isPlayableStreamUrl(newProgram.streamUrl) ? newProgram.streamUrl : p.streamUrl || '',
             duration: newProgram.duration ?? p.duration,
             fileName: newProgram.videoFile ? newProgram.videoFile.name : p.fileName,
             fileSize: newProgram.videoFile ? newProgram.videoFile.size : p.fileSize,
@@ -701,7 +747,7 @@ const WebTV = () => {
             isRepeating: newProgram.isRepeating || false,
             isActive: newProgram.isActive !== undefined ? newProgram.isActive : true,
             order: newProgram.order !== undefined ? newProgram.order : p.order,
-            tags: newProgram.tags || []
+            tags: newProgram.tags || [],
           }
         : p
     );
@@ -709,17 +755,18 @@ const WebTV = () => {
     setPrograms(updatedPrograms);
 
     if (selectedChannelForProgram) {
-      const updatedChannels = channels.map(c => 
-        c._id === selectedChannelForProgram._id 
-          ? { ...c, programs: updatedPrograms }
-          : c
+      const updatedChannels = channels.map((c) =>
+        c._id === selectedChannelForProgram._id ? { ...c, programs: updatedPrograms } : c
       );
       setChannels(updatedChannels);
       try {
-        await apiService.updateWebTVChannel(selectedChannelForProgram._id, { ...selectedChannelForProgram, programs: updatedPrograms });
+        await apiService.updateWebTVChannel(selectedChannelForProgram._id, {
+          ...selectedChannelForProgram,
+          programs: updatedPrograms,
+        });
       } catch (err) {
         console.error('Erreur sauvegarde programmes:', err);
-        toast.error(err.response?.data?.message || 'Les modifications n\'ont pas été enregistrées.');
+        toast.error(err.response?.data?.message || "Les modifications n'ont pas été enregistrées.");
       }
     }
 
@@ -739,7 +786,7 @@ const WebTV = () => {
       isRepeating: false,
       isActive: true,
       order: 0,
-      tags: []
+      tags: [],
     });
     setNewTag('');
 
@@ -752,23 +799,24 @@ const WebTV = () => {
     }
 
     const idToRemove = programId != null ? String(programId) : '';
-    const afterFilter = programs.filter(p => getProgramId(p) !== idToRemove);
+    const afterFilter = programs.filter((p) => getProgramId(p) !== idToRemove);
     const updatedPrograms = recalcProgramTimes(afterFilter);
 
     setPrograms(updatedPrograms);
 
     if (selectedChannelForProgram) {
-      const updatedChannels = channels.map(c =>
-        c._id === selectedChannelForProgram._id
-          ? { ...c, programs: updatedPrograms }
-          : c
+      const updatedChannels = channels.map((c) =>
+        c._id === selectedChannelForProgram._id ? { ...c, programs: updatedPrograms } : c
       );
       setChannels(updatedChannels);
       try {
-        await apiService.updateWebTVChannel(selectedChannelForProgram._id, { ...selectedChannelForProgram, programs: updatedPrograms });
+        await apiService.updateWebTVChannel(selectedChannelForProgram._id, {
+          ...selectedChannelForProgram,
+          programs: updatedPrograms,
+        });
       } catch (err) {
         console.error('Erreur sauvegarde programmes:', err);
-        toast.error(err.response?.data?.message || 'La suppression n\'a pas été enregistrée.');
+        toast.error(err.response?.data?.message || "La suppression n'a pas été enregistrée.");
       }
     }
 
@@ -777,7 +825,7 @@ const WebTV = () => {
 
   const toggleDayOfWeek = (day) => {
     const updatedDays = newProgram.daysOfWeek.includes(day)
-      ? newProgram.daysOfWeek.filter(d => d !== day)
+      ? newProgram.daysOfWeek.filter((d) => d !== day)
       : [...newProgram.daysOfWeek, day];
     setNewProgram({ ...newProgram, daysOfWeek: updatedDays });
   };
@@ -787,12 +835,15 @@ const WebTV = () => {
     const updatedPrograms = recalcProgramTimes(programs);
     setPrograms(updatedPrograms);
     if (selectedChannelForProgram) {
-      const updatedChannels = channels.map(c =>
+      const updatedChannels = channels.map((c) =>
         c._id === selectedChannelForProgram._id ? { ...c, programs: updatedPrograms } : c
       );
       setChannels(updatedChannels);
       try {
-        await apiService.updateWebTVChannel(selectedChannelForProgram._id, { ...selectedChannelForProgram, programs: updatedPrograms });
+        await apiService.updateWebTVChannel(selectedChannelForProgram._id, {
+          ...selectedChannelForProgram,
+          programs: updatedPrograms,
+        });
         toast.success('Heures recalculées : premier programme à 00:00, les suivants enchaînent.');
       } catch (err) {
         console.error('Erreur recalc heures WebTV:', err);
@@ -805,7 +856,7 @@ const WebTV = () => {
     if (newTag.trim() && !newProgram.tags.includes(newTag.trim())) {
       setNewProgram({
         ...newProgram,
-        tags: [...newProgram.tags, newTag.trim()]
+        tags: [...newProgram.tags, newTag.trim()],
       });
       setNewTag('');
     }
@@ -814,7 +865,7 @@ const WebTV = () => {
   const removeTag = (tagToRemove) => {
     setNewProgram({
       ...newProgram,
-      tags: newProgram.tags.filter(tag => tag !== tagToRemove)
+      tags: newProgram.tags.filter((tag) => tag !== tagToRemove),
     });
   };
 
@@ -831,34 +882,34 @@ const WebTV = () => {
         videoElement.pause();
         videoElement.currentTime = 0;
       }
-      
+
       if (program.streamUrl) {
         const video = document.createElement('video');
         video.src = program.streamUrl;
         video.preload = 'metadata';
         video.playsInline = true;
         video.controls = true;
-        video.play().catch(err => {
+        video.play().catch((err) => {
           console.error('Erreur de lecture:', err);
           toast.error('Impossible de lire le fichier vidéo');
         });
         setVideoElement(video);
-        
+
         video.addEventListener('ended', () => {
           setPlayingProgram(null);
           setVideoElement(null);
         });
       }
-      
+
       setPlayingProgram(program);
-      setProgramStats(prev => {
+      setProgramStats((prev) => {
         const pid = getProgramId(program);
         return {
           ...prev,
           [pid]: {
             playCount: (prev[pid]?.playCount || program.playCount || 0) + 1,
-            lastPlayed: new Date().toISOString()
-          }
+            lastPlayed: new Date().toISOString(),
+          },
         };
       });
     }
@@ -889,7 +940,10 @@ const WebTV = () => {
           <div>
             <p className="font-medium text-amber-900">Base de données indisponible</p>
             <p className="text-sm text-amber-800 mt-1">
-              Impossible de créer ou modifier les chaînes WebTV. Démarrez MongoDB (ex: <code className="bg-amber-100 px-1 rounded">docker run -d -p 27017:27017 mongo</code>) puis redémarrez le backend. Vérifiez <code className="bg-amber-100 px-1 rounded">MONGODB_URI</code> dans <code className="bg-amber-100 px-1 rounded">backend/config.env</code>.
+              Impossible de créer ou modifier les chaînes WebTV. Démarrez MongoDB (ex:{' '}
+              <code className="bg-amber-100 px-1 rounded">docker run -d -p 27017:27017 mongo</code>) puis redémarrez le
+              backend. Vérifiez <code className="bg-amber-100 px-1 rounded">MONGODB_URI</code> dans{' '}
+              <code className="bg-amber-100 px-1 rounded">backend/config.env</code>.
             </p>
           </div>
         </div>
@@ -921,7 +975,7 @@ const WebTV = () => {
               viewers: 0,
               schedule: [],
               countries: [],
-              translations: emptyTranslations()
+              translations: emptyTranslations(),
             });
             setShowModal(true);
           }}
@@ -990,9 +1044,7 @@ const WebTV = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">{t('webtv.activeChannels')}</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {channels.filter(c => c.isActive).length}
-              </p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{channels.filter((c) => c.isActive).length}</p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100">
               <Play size={24} className="text-green-600" />
@@ -1003,9 +1055,7 @@ const WebTV = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">{t('webtv.liveCount')}</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {channels.filter(c => c.isLive).length}
-              </p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{channels.filter((c) => c.isLive).length}</p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-100">
               <Radio size={24} className="text-red-600" />
@@ -1041,15 +1091,13 @@ const WebTV = () => {
               >
                 <div className="flex items-center gap-4 flex-1">
                   <div className="relative">
-                    <div className={`flex h-16 w-16 items-center justify-center rounded-xl overflow-hidden ${
-                      channel.isActive ? 'bg-blue-100' : 'bg-gray-200'
-                    }`}>
+                    <div
+                      className={`flex h-16 w-16 items-center justify-center rounded-xl overflow-hidden ${
+                        channel.isActive ? 'bg-blue-100' : 'bg-gray-200'
+                      }`}
+                    >
                       {channel.imageUrl ? (
-                        <img 
-                          src={channel.imageUrl} 
-                          alt={channel.name}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={channel.imageUrl} alt={channel.name} className="w-full h-full object-cover" />
                       ) : (
                         <Tv size={24} className={channel.isActive ? 'text-blue-600' : 'text-gray-400'} />
                       )}
@@ -1073,7 +1121,9 @@ const WebTV = () => {
                       <span className="text-xs text-gray-500">•</span>
                       <span className="text-xs text-gray-500">{channel.quality}</span>
                       <span className="text-xs text-gray-500">•</span>
-                      <span className="text-xs text-gray-500">{channel.viewers?.toLocaleString()} {t('webtv.viewersLabel')}</span>
+                      <span className="text-xs text-gray-500">
+                        {channel.viewers?.toLocaleString()} {t('webtv.viewersLabel')}
+                      </span>
                       {channel.countries && channel.countries.length > 0 && (
                         <>
                           <span className="text-xs text-gray-500">•</span>
@@ -1091,11 +1141,11 @@ const WebTV = () => {
                       )}
                     </div>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    channel.isActive 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-gray-100 text-gray-700'
-                  }`}>
+                  <div
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      channel.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
                     {channel.isActive ? t('webtv.channelActive') : t('webtv.channelInactive')}
                   </div>
                 </div>
@@ -1103,9 +1153,7 @@ const WebTV = () => {
                   <button
                     onClick={() => handleToggleStatus(channel)}
                     className={`p-2 rounded-lg transition-colors ${
-                      channel.isActive 
-                        ? 'text-gray-600 hover:bg-gray-200' 
-                        : 'text-green-600 hover:bg-green-50'
+                      channel.isActive ? 'text-gray-600 hover:bg-gray-200' : 'text-green-600 hover:bg-green-50'
                     }`}
                     title={channel.isActive ? t('webtv.deactivateChannel') : t('webtv.activateChannel')}
                   >
@@ -1119,9 +1167,21 @@ const WebTV = () => {
                       const nextOrder = progs.length;
                       const nextStart = getStartTimeFromPreviousProgramFromList(progs, nextOrder) || '00:00';
                       setNewProgram({
-                        title: '', description: '', videoFile: null, videoPreview: null, streamUrl: '', duration: 0,
-                        uploadDate: '', category: '', startTime: nextStart, endTime: '', daysOfWeek: [], isRepeating: false,
-                        isActive: true, order: nextOrder, tags: []
+                        title: '',
+                        description: '',
+                        videoFile: null,
+                        videoPreview: null,
+                        streamUrl: '',
+                        duration: 0,
+                        uploadDate: '',
+                        category: '',
+                        startTime: nextStart,
+                        endTime: '',
+                        daysOfWeek: [],
+                        isRepeating: false,
+                        isActive: true,
+                        order: nextOrder,
+                        tags: [],
                       });
                       setEditingProgram(null);
                       setShowProgramModal(true);
@@ -1136,7 +1196,13 @@ const WebTV = () => {
                   <button
                     onClick={() => {
                       setSelectedChannel(channel);
-                      setEditingChannel({ ...channel, translations: channel.translations && typeof channel.translations === 'object' ? { ...emptyTranslations(), ...channel.translations } : emptyTranslations() });
+                      setEditingChannel({
+                        ...channel,
+                        translations:
+                          channel.translations && typeof channel.translations === 'object'
+                            ? { ...emptyTranslations(), ...channel.translations }
+                            : emptyTranslations(),
+                      });
                       setShowModal(true);
                     }}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -1210,7 +1276,9 @@ const WebTV = () => {
                 {selectedChannel && editingChannel ? (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">{t('webtv.contentByLanguage')}</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        {t('webtv.contentByLanguage')}
+                      </label>
                       <div className="flex flex-wrap gap-2 mb-3">
                         {LANG_LIST.map(({ code, label }) => (
                           <button
@@ -1225,36 +1293,58 @@ const WebTV = () => {
                       </div>
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('webtv.channelNameRequired')}</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                            {t('webtv.channelNameRequired')}
+                          </label>
                           <input
                             type="text"
-                            value={activeLang === 'fr' ? (editingChannel.name ?? '') : (editingChannel.translations?.[activeLang]?.name ?? '')}
-                            onChange={(e) => activeLang === 'fr'
-                              ? setEditingChannel({ ...editingChannel, name: e.target.value })
-                              : setEditingChannel({
-                                  ...editingChannel,
-                                  translations: {
-                                    ...editingChannel.translations,
-                                    [activeLang]: { ...editingChannel.translations?.[activeLang], name: e.target.value }
-                                  }
-                                })}
+                            value={
+                              activeLang === 'fr'
+                                ? (editingChannel.name ?? '')
+                                : (editingChannel.translations?.[activeLang]?.name ?? '')
+                            }
+                            onChange={(e) =>
+                              activeLang === 'fr'
+                                ? setEditingChannel({ ...editingChannel, name: e.target.value })
+                                : setEditingChannel({
+                                    ...editingChannel,
+                                    translations: {
+                                      ...editingChannel.translations,
+                                      [activeLang]: {
+                                        ...editingChannel.translations?.[activeLang],
+                                        name: e.target.value,
+                                      },
+                                    },
+                                  })
+                            }
                             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                             placeholder="Ex. GNV News"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('webtv.description')}</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                            {t('webtv.description')}
+                          </label>
                           <textarea
-                            value={activeLang === 'fr' ? (editingChannel.description ?? '') : (editingChannel.translations?.[activeLang]?.description ?? '')}
-                            onChange={(e) => activeLang === 'fr'
-                              ? setEditingChannel({ ...editingChannel, description: e.target.value })
-                              : setEditingChannel({
-                                  ...editingChannel,
-                                  translations: {
-                                    ...editingChannel.translations,
-                                    [activeLang]: { ...editingChannel.translations?.[activeLang], description: e.target.value }
-                                  }
-                                })}
+                            value={
+                              activeLang === 'fr'
+                                ? (editingChannel.description ?? '')
+                                : (editingChannel.translations?.[activeLang]?.description ?? '')
+                            }
+                            onChange={(e) =>
+                              activeLang === 'fr'
+                                ? setEditingChannel({ ...editingChannel, description: e.target.value })
+                                : setEditingChannel({
+                                    ...editingChannel,
+                                    translations: {
+                                      ...editingChannel.translations,
+                                      [activeLang]: {
+                                        ...editingChannel.translations?.[activeLang],
+                                        description: e.target.value,
+                                      },
+                                    },
+                                  })
+                            }
                             rows={3}
                             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
                             placeholder={t('webtv.descriptionPlaceholderShort')}
@@ -1266,7 +1356,9 @@ const WebTV = () => {
                 ) : (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">{t('webtv.contentByLanguage')}</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        {t('webtv.contentByLanguage')}
+                      </label>
                       <div className="flex flex-wrap gap-2 mb-3">
                         {LANG_LIST.map(({ code, label }) => (
                           <button
@@ -1281,36 +1373,55 @@ const WebTV = () => {
                       </div>
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('webtv.channelNameRequired')}</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                            {t('webtv.channelNameRequired')}
+                          </label>
                           <input
                             type="text"
-                            value={activeLang === 'fr' ? newChannel.name : (newChannel.translations?.[activeLang]?.name ?? '')}
-                            onChange={(e) => activeLang === 'fr'
-                              ? setNewChannel({ ...newChannel, name: e.target.value })
-                              : setNewChannel({
-                                  ...newChannel,
-                                  translations: {
-                                    ...newChannel.translations,
-                                    [activeLang]: { ...newChannel.translations?.[activeLang], name: e.target.value }
-                                  }
-                                })}
+                            value={
+                              activeLang === 'fr'
+                                ? newChannel.name
+                                : (newChannel.translations?.[activeLang]?.name ?? '')
+                            }
+                            onChange={(e) =>
+                              activeLang === 'fr'
+                                ? setNewChannel({ ...newChannel, name: e.target.value })
+                                : setNewChannel({
+                                    ...newChannel,
+                                    translations: {
+                                      ...newChannel.translations,
+                                      [activeLang]: { ...newChannel.translations?.[activeLang], name: e.target.value },
+                                    },
+                                  })
+                            }
                             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                             placeholder="Ex. GNV News"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('webtv.description')}</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                            {t('webtv.description')}
+                          </label>
                           <textarea
-                            value={activeLang === 'fr' ? newChannel.description : (newChannel.translations?.[activeLang]?.description ?? '')}
-                            onChange={(e) => activeLang === 'fr'
-                              ? setNewChannel({ ...newChannel, description: e.target.value })
-                              : setNewChannel({
-                                  ...newChannel,
-                                  translations: {
-                                    ...newChannel.translations,
-                                    [activeLang]: { ...newChannel.translations?.[activeLang], description: e.target.value }
-                                  }
-                                })}
+                            value={
+                              activeLang === 'fr'
+                                ? newChannel.description
+                                : (newChannel.translations?.[activeLang]?.description ?? '')
+                            }
+                            onChange={(e) =>
+                              activeLang === 'fr'
+                                ? setNewChannel({ ...newChannel, description: e.target.value })
+                                : setNewChannel({
+                                    ...newChannel,
+                                    translations: {
+                                      ...newChannel.translations,
+                                      [activeLang]: {
+                                        ...newChannel.translations?.[activeLang],
+                                        description: e.target.value,
+                                      },
+                                    },
+                                  })
+                            }
                             rows={3}
                             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
                             placeholder={t('webtv.descriptionPlaceholderShort')}
@@ -1329,12 +1440,16 @@ const WebTV = () => {
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('webtv.categoryRequired')}</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      {t('webtv.categoryRequired')}
+                    </label>
                     <select
                       value={selectedChannel && editingChannel ? editingChannel.category : newChannel.category}
-                      onChange={(e) => selectedChannel && editingChannel
-                        ? setEditingChannel({ ...editingChannel, category: e.target.value })
-                        : setNewChannel({ ...newChannel, category: e.target.value })}
+                      onChange={(e) =>
+                        selectedChannel && editingChannel
+                          ? setEditingChannel({ ...editingChannel, category: e.target.value })
+                          : setNewChannel({ ...newChannel, category: e.target.value })
+                      }
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                     >
                       <option value="">{t('webtv.selectPlaceholder')}</option>
@@ -1350,9 +1465,11 @@ const WebTV = () => {
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('webtv.quality')}</label>
                     <select
                       value={selectedChannel && editingChannel ? editingChannel.quality : newChannel.quality}
-                      onChange={(e) => selectedChannel && editingChannel
-                        ? setEditingChannel({ ...editingChannel, quality: e.target.value })
-                        : setNewChannel({ ...newChannel, quality: e.target.value })}
+                      onChange={(e) =>
+                        selectedChannel && editingChannel
+                          ? setEditingChannel({ ...editingChannel, quality: e.target.value })
+                          : setNewChannel({ ...newChannel, quality: e.target.value })
+                      }
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                     >
                       <option value="SD">SD</option>
@@ -1363,13 +1480,17 @@ const WebTV = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('webtv.streamUrlRequired')}</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    {t('webtv.streamUrlRequired')}
+                  </label>
                   <input
                     type="url"
                     value={selectedChannel && editingChannel ? editingChannel.streamUrl : newChannel.streamUrl}
-                    onChange={(e) => selectedChannel && editingChannel
-                      ? setEditingChannel({ ...editingChannel, streamUrl: e.target.value })
-                      : setNewChannel({ ...newChannel, streamUrl: e.target.value })}
+                    onChange={(e) =>
+                      selectedChannel && editingChannel
+                        ? setEditingChannel({ ...editingChannel, streamUrl: e.target.value })
+                        : setNewChannel({ ...newChannel, streamUrl: e.target.value })
+                    }
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 font-mono text-sm"
                     placeholder="https://example.com/stream.m3u8"
                   />
@@ -1389,9 +1510,15 @@ const WebTV = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-900 truncate">{logoFile?.name || 'Logo'}</p>
-                        <p className="text-xs text-slate-500">{logoFile ? `${(logoFile.size / 1024).toFixed(1)} KB` : '—'}</p>
+                        <p className="text-xs text-slate-500">
+                          {logoFile ? `${(logoFile.size / 1024).toFixed(1)} KB` : '—'}
+                        </p>
                       </div>
-                      <button type="button" onClick={removeLogo} className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                      <button
+                        type="button"
+                        onClick={removeLogo}
+                        className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      >
                         <X size={18} />
                       </button>
                     </div>
@@ -1429,8 +1556,12 @@ const WebTV = () => {
                               className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                             />
                             <span className="font-medium text-slate-800">{country.name}</span>
-                            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">{country.code}</span>
-                            {newChannel.countries.includes(country.name) && <CheckCircle size={16} className="text-indigo-500 ml-auto" />}
+                            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                              {country.code}
+                            </span>
+                            {newChannel.countries.includes(country.name) && (
+                              <CheckCircle size={16} className="text-indigo-500 ml-auto" />
+                            )}
                           </label>
                         ))}
                       </div>
@@ -1453,9 +1584,11 @@ const WebTV = () => {
                       type="checkbox"
                       id="isLive"
                       checked={selectedChannel && editingChannel ? editingChannel.isLive : newChannel.isLive}
-                      onChange={(e) => selectedChannel && editingChannel
-                        ? setEditingChannel({ ...editingChannel, isLive: e.target.checked })
-                        : setNewChannel({ ...newChannel, isLive: e.target.checked })}
+                      onChange={(e) =>
+                        selectedChannel && editingChannel
+                          ? setEditingChannel({ ...editingChannel, isLive: e.target.checked })
+                          : setNewChannel({ ...newChannel, isLive: e.target.checked })
+                      }
                       className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                     />
                     <Radio size={18} className="text-slate-500" />
@@ -1465,10 +1598,14 @@ const WebTV = () => {
                     <input
                       type="checkbox"
                       id="isActive"
-                      checked={selectedChannel && editingChannel ? (editingChannel.isActive !== false) : newChannel.isActive}
-                      onChange={(e) => selectedChannel && editingChannel
-                        ? setEditingChannel({ ...editingChannel, isActive: e.target.checked })
-                        : setNewChannel({ ...newChannel, isActive: e.target.checked })}
+                      checked={
+                        selectedChannel && editingChannel ? editingChannel.isActive !== false : newChannel.isActive
+                      }
+                      onChange={(e) =>
+                        selectedChannel && editingChannel
+                          ? setEditingChannel({ ...editingChannel, isActive: e.target.checked })
+                          : setNewChannel({ ...newChannel, isActive: e.target.checked })
+                      }
                       className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                     />
                     <CheckCircle size={18} className="text-slate-500" />
@@ -1501,7 +1638,12 @@ const WebTV = () => {
                     try {
                       const { _id, ...payload } = editingChannel;
                       // Synchroniser translations.fr avec name/description et envoyer toutes les langues
-                      const translations = { ...(payload.translations && typeof payload.translations === 'object' ? payload.translations : {}), fr: { name: payload.name ?? '', description: payload.description ?? '' } };
+                      const translations = {
+                        ...(payload.translations && typeof payload.translations === 'object'
+                          ? payload.translations
+                          : {}),
+                        fr: { name: payload.name ?? '', description: payload.description ?? '' },
+                      };
                       payload.translations = translations;
                       await apiService.updateWebTVChannel(selectedChannel._id, payload);
                       toast.success('Chaîne modifiée');
@@ -1550,7 +1692,9 @@ const WebTV = () => {
                     <Video size={24} className="text-purple-600" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">{t('webtv.programming')} - {selectedChannelForProgram.name}</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {t('webtv.programming')} - {selectedChannelForProgram.name}
+                    </h2>
                     <p className="text-sm text-gray-600 mt-1">{t('webtv.programmingSubtitle')}</p>
                   </div>
                 </div>
@@ -1570,34 +1714,34 @@ const WebTV = () => {
                   </motion.button>
                 )}
                 <button
-                onClick={() => {
-                  setShowProgramModal(false);
-                  setSelectedChannelForProgram(null);
-                  setEditingProgram(null);
-                  setNewProgram({
-                    title: '',
-                    description: '',
-                    videoFile: null,
-                    videoPreview: null,
-                    streamUrl: '',
-                    duration: 0,
-                    uploadDate: '',
-                    category: '',
-                    startTime: '',
-                    endTime: '',
-                    daysOfWeek: [],
-                    isRepeating: false,
-                    isActive: true,
-                    order: 0,
-                    tags: []
-                  });
-                  setNewTag('');
-                  setPlayingProgram(null);
-                }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X size={20} className="text-gray-600" />
-              </button>
+                  onClick={() => {
+                    setShowProgramModal(false);
+                    setSelectedChannelForProgram(null);
+                    setEditingProgram(null);
+                    setNewProgram({
+                      title: '',
+                      description: '',
+                      videoFile: null,
+                      videoPreview: null,
+                      streamUrl: '',
+                      duration: 0,
+                      uploadDate: '',
+                      category: '',
+                      startTime: '',
+                      endTime: '',
+                      daysOfWeek: [],
+                      isRepeating: false,
+                      isActive: true,
+                      order: 0,
+                      tags: [],
+                    });
+                    setNewTag('');
+                    setPlayingProgram(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-gray-600" />
+                </button>
               </div>
             </div>
 
@@ -1636,7 +1780,7 @@ const WebTV = () => {
                         isRepeating: false,
                         isActive: true,
                         order: 0,
-                        tags: []
+                        tags: [],
                       });
                       setNewTag('');
                     }}
@@ -1650,9 +1794,7 @@ const WebTV = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('webtv.programTitle')} *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('webtv.programTitle')} *</label>
                     <input
                       type="text"
                       value={newProgram.title}
@@ -1662,26 +1804,24 @@ const WebTV = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('webtv.category')}
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('webtv.category')}</label>
                     <select
                       value={newProgram.category}
                       onChange={(e) => setNewProgram({ ...newProgram, category: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">{t('webtv.selectCategoryPlaceholder')}</option>
-                      {programCategories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                      {programCategories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
                       ))}
                     </select>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Durée
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Durée</label>
                     <input
                       type="text"
                       value={formatDuration(newProgram.duration)}
@@ -1691,9 +1831,7 @@ const WebTV = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                   <textarea
                     value={newProgram.description}
                     onChange={(e) => setNewProgram({ ...newProgram, description: e.target.value })}
@@ -1714,7 +1852,8 @@ const WebTV = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {t('webtv.startTimeAuto')} {newProgram.order >= 1 && <span className="text-gray-500 font-normal">(auto)</span>}
+                        {t('webtv.startTimeAuto')}{' '}
+                        {newProgram.order >= 1 && <span className="text-gray-500 font-normal">(auto)</span>}
                       </label>
                       <input
                         type="time"
@@ -1723,8 +1862,11 @@ const WebTV = () => {
                         onChange={(e) => {
                           if (newProgram.order >= 1) return;
                           const start = e.target.value;
-                          setNewProgram(prev => {
-                            const end = (webTVAutoCalcEndTime && prev.duration && start) ? computeEndTimeFromStartAndDuration(start, prev.duration) : prev.endTime;
+                          setNewProgram((prev) => {
+                            const end =
+                              webTVAutoCalcEndTime && prev.duration && start
+                                ? computeEndTimeFromStartAndDuration(start, prev.duration)
+                                : prev.endTime;
                             return { ...prev, startTime: start, endTime: end };
                           });
                         }}
@@ -1743,7 +1885,9 @@ const WebTV = () => {
                       <input
                         type="time"
                         value={newProgram.endTime}
-                        onChange={(e) => !webTVAutoCalcEndTime && setNewProgram(prev => ({ ...prev, endTime: e.target.value }))}
+                        onChange={(e) =>
+                          !webTVAutoCalcEndTime && setNewProgram((prev) => ({ ...prev, endTime: e.target.value }))
+                        }
                         readOnly={webTVAutoCalcEndTime}
                         className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${webTVAutoCalcEndTime ? 'bg-gray-100 text-gray-600' : ''}`}
                         title={webTVAutoCalcEndTime ? t('radio.endTimeTitleAuto') : ''}
@@ -1759,9 +1903,12 @@ const WebTV = () => {
                         onChange={(e) => {
                           const newOrder = Math.max(0, parseInt(e.target.value, 10) || 0);
                           const startFromPrev = newOrder >= 1 ? getStartTimeFromPreviousProgram(newOrder) : '';
-                          setNewProgram(prev => {
+                          setNewProgram((prev) => {
                             const start = newOrder >= 1 ? startFromPrev : prev.startTime;
-                            const end = (webTVAutoCalcEndTime && prev.duration && start) ? computeEndTimeFromStartAndDuration(start, prev.duration) : prev.endTime;
+                            const end =
+                              webTVAutoCalcEndTime && prev.duration && start
+                                ? computeEndTimeFromStartAndDuration(start, prev.duration)
+                                : prev.endTime;
                             return { ...prev, order: newOrder, startTime: start, endTime: end };
                           });
                         }}
@@ -1798,9 +1945,7 @@ const WebTV = () => {
                   </div>
                   {newProgram.isRepeating && (
                     <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {t('radio.daysOfWeek')}
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('radio.daysOfWeek')}</label>
                       <div className="flex flex-wrap gap-2">
                         {daysOfWeek.map((day) => (
                           <button
@@ -1822,9 +1967,7 @@ const WebTV = () => {
                 </div>
                 {/* Tags */}
                 <div className="border-t border-gray-200 pt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('webtv.tagsSection')}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('webtv.tagsSection')}</label>
                   <div className="flex gap-2 mb-2">
                     <input
                       type="text"
@@ -1855,10 +1998,7 @@ const WebTV = () => {
                           className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
                         >
                           {tag}
-                          <button
-                            onClick={() => removeTag(tag)}
-                            className="hover:text-blue-900"
-                          >
+                          <button onClick={() => removeTag(tag)} className="hover:text-blue-900">
                             <X size={14} />
                           </button>
                         </span>
@@ -1901,21 +2041,29 @@ const WebTV = () => {
                   </div>
                   <div className="flex items-center gap-4">
                     <label className="flex-1 cursor-pointer">
-                      <div className={`flex items-center gap-3 px-4 py-4 border-2 border-dashed rounded-lg transition-all ${
-                        newProgram.videoFile 
-                          ? 'border-green-300 bg-green-50' 
-                          : 'border-gray-300 bg-white hover:border-purple-500 hover:bg-purple-50'
-                      }`}>
-                        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${
-                          newProgram.videoFile ? 'bg-green-100' : 'bg-gray-100'
-                        }`}>
+                      <div
+                        className={`flex items-center gap-3 px-4 py-4 border-2 border-dashed rounded-lg transition-all ${
+                          newProgram.videoFile
+                            ? 'border-green-300 bg-green-50'
+                            : 'border-gray-300 bg-white hover:border-purple-500 hover:bg-purple-50'
+                        }`}
+                      >
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-lg ${
+                            newProgram.videoFile ? 'bg-green-100' : 'bg-gray-100'
+                          }`}
+                        >
                           <FileVideo size={24} className={newProgram.videoFile ? 'text-green-600' : 'text-gray-400'} />
                         </div>
                         <div className="flex-1">
-                          <p className={`text-sm font-medium ${
-                            newProgram.videoFile ? 'text-green-900' : 'text-gray-700'
-                          }`}>
-                            {newProgram.videoFile ? newProgram.videoFile.name : 'Cliquez pour sélectionner un fichier vidéo'}
+                          <p
+                            className={`text-sm font-medium ${
+                              newProgram.videoFile ? 'text-green-900' : 'text-gray-700'
+                            }`}
+                          >
+                            {newProgram.videoFile
+                              ? newProgram.videoFile.name
+                              : 'Cliquez pour sélectionner un fichier vidéo'}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
                             {newProgram.videoFile ? (
@@ -1935,12 +2083,7 @@ const WebTV = () => {
                         </div>
                         <Upload size={20} className={newProgram.videoFile ? 'text-green-600' : 'text-gray-400'} />
                       </div>
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={handleVideoUpload}
-                        className="hidden"
-                      />
+                      <input type="file" accept="video/*" onChange={handleVideoUpload} className="hidden" />
                     </label>
                     {newProgram.videoPreview && (
                       <motion.button
@@ -1958,7 +2101,13 @@ const WebTV = () => {
                     <div className="mt-3 flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <button
                         type="button"
-                        onClick={() => setVideoPlayerModal({ open: true, src: newProgram.videoPreview || newProgram.streamUrl, title: newProgram.title || 'Aperçu vidéo' })}
+                        onClick={() =>
+                          setVideoPlayerModal({
+                            open: true,
+                            src: newProgram.videoPreview || newProgram.streamUrl,
+                            title: newProgram.title || 'Aperçu vidéo',
+                          })
+                        }
                         className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
                       >
                         <Play size={18} />
@@ -2019,7 +2168,7 @@ const WebTV = () => {
                             isRepeating: false,
                             isActive: true,
                             order: 0,
-                            tags: []
+                            tags: [],
                           });
                           setNewTag('');
                         }}
@@ -2065,7 +2214,7 @@ const WebTV = () => {
                   </p>
                 </div>
                 <div className="bg-white rounded-lg p-4 border border-green-200 text-center shadow-sm">
-                  <p className="text-3xl font-bold text-green-600">{programs.filter(p => p.isActive).length}</p>
+                  <p className="text-3xl font-bold text-green-600">{programs.filter((p) => p.isActive).length}</p>
                   <p className="text-xs text-gray-600 mt-1 flex items-center justify-center gap-1">
                     <CheckCircle size={12} />
                     Actifs
@@ -2082,8 +2231,8 @@ const WebTV = () => {
                 </div>
                 <div className="bg-white rounded-lg p-4 border border-purple-200 text-center shadow-sm">
                   <p className="text-3xl font-bold text-purple-600">
-                    {Object.values(programStats).reduce((sum, stat) => sum + (stat.playCount || 0), 0) + 
-                     programs.reduce((sum, p) => sum + (p.playCount || 0), 0)}
+                    {Object.values(programStats).reduce((sum, stat) => sum + (stat.playCount || 0), 0) +
+                      programs.reduce((sum, p) => sum + (p.playCount || 0), 0)}
                   </p>
                   <p className="text-xs text-gray-600 mt-1 flex items-center justify-center gap-1">
                     <BarChart3 size={12} />
@@ -2100,9 +2249,7 @@ const WebTV = () => {
                   <button
                     onClick={() => setViewMode('list')}
                     className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                      viewMode === 'list'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     <List size={18} />
@@ -2111,9 +2258,7 @@ const WebTV = () => {
                   <button
                     onClick={() => setViewMode('calendar')}
                     className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                      viewMode === 'calendar'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      viewMode === 'calendar' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     <Calendar size={18} />
@@ -2145,9 +2290,7 @@ const WebTV = () => {
                     >
                       <ChevronLeft size={20} className="text-gray-600" />
                     </motion.button>
-                    <h3 className="text-xl font-bold text-gray-900 capitalize">
-                      {formatMonthYear(currentDate)}
-                    </h3>
+                    <h3 className="text-xl font-bold text-gray-900 capitalize">{formatMonthYear(currentDate)}</h3>
                     <motion.button
                       onClick={() => navigateMonth(1)}
                       whileHover={{ scale: 1.1 }}
@@ -2158,7 +2301,7 @@ const WebTV = () => {
                     </motion.button>
                   </div>
                   <div className="text-sm text-gray-600">
-                    {programs.filter(p => p.isActive).length} {t('webtv.programsActiveCountLabel')}
+                    {programs.filter((p) => p.isActive).length} {t('webtv.programsActiveCountLabel')}
                   </div>
                 </div>
 
@@ -2181,27 +2324,27 @@ const WebTV = () => {
                     {getDaysInMonth(currentDate).map((day, index) => {
                       const dayPrograms = getProgramsForDate(day.date);
                       const isSelected = selectedDate.toDateString() === day.date.toDateString();
-                      
+
                       return (
                         <div
                           key={index}
                           onClick={() => setSelectedDate(day.date)}
                           className={`min-h-[120px] border-r border-b border-gray-200 p-2 cursor-pointer transition-colors ${
                             day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'
-                          } ${
-                            isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-                          } ${
+                          } ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''} ${
                             day.isToday ? 'bg-blue-50' : ''
                           } hover:bg-gray-50`}
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <span className={`text-sm font-medium ${
-                              day.isCurrentMonth
-                                ? day.isToday
-                                  ? 'text-blue-600 font-bold'
-                                  : 'text-gray-900'
-                                : 'text-gray-400'
-                            }`}>
+                            <span
+                              className={`text-sm font-medium ${
+                                day.isCurrentMonth
+                                  ? day.isToday
+                                    ? 'text-blue-600 font-bold'
+                                    : 'text-gray-900'
+                                  : 'text-gray-400'
+                              }`}
+                            >
                               {day.date.getDate()}
                             </span>
                             {dayPrograms.length > 0 && (
@@ -2249,11 +2392,12 @@ const WebTV = () => {
                       <div className="flex items-center gap-3">
                         <CalendarIcon size={20} className="text-purple-600" />
                         <h3 className="text-lg font-semibold text-gray-900">
-                          {t('webtv.programmingOf')} {selectedDate.toLocaleDateString('fr-FR', { 
-                            weekday: 'long', 
-                            day: 'numeric', 
-                            month: 'long', 
-                            year: 'numeric' 
+                          {t('webtv.programmingOf')}{' '}
+                          {selectedDate.toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
                           })}
                         </h3>
                       </div>
@@ -2302,7 +2446,9 @@ const WebTV = () => {
                                             )}
                                           </div>
                                           {program.description && (
-                                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{program.description}</p>
+                                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                                              {program.description}
+                                            </p>
                                           )}
                                           <div className="flex items-center gap-4 text-xs text-gray-500">
                                             <span className="flex items-center gap-1">
@@ -2313,12 +2459,14 @@ const WebTV = () => {
                                               <FileVideo size={12} />
                                               {formatDuration(program.duration)}
                                             </span>
-                                            {program.isRepeating && program.daysOfWeek && program.daysOfWeek.length > 0 && (
-                                              <span className="flex items-center gap-1">
-                                                <Repeat size={12} />
-                                                Répété
-                                              </span>
-                                            )}
+                                            {program.isRepeating &&
+                                              program.daysOfWeek &&
+                                              program.daysOfWeek.length > 0 && (
+                                                <span className="flex items-center gap-1">
+                                                  <Repeat size={12} />
+                                                  Répété
+                                                </span>
+                                              )}
                                           </div>
                                         </div>
                                         <div className="flex items-center gap-1 ml-4">
@@ -2334,9 +2482,18 @@ const WebTV = () => {
                                                 ? 'text-green-600 bg-green-50'
                                                 : 'text-gray-600 hover:bg-gray-200'
                                             }`}
-                                            title={playingProgram && getProgramId(playingProgram) === getProgramId(program) ? 'Arrêter' : 'Lire'}
+                                            title={
+                                              playingProgram && getProgramId(playingProgram) === getProgramId(program)
+                                                ? 'Arrêter'
+                                                : 'Lire'
+                                            }
                                           >
-                                            {playingProgram && getProgramId(playingProgram) === getProgramId(program) ? <VolumeX size={16} /> : <Play size={16} />}
+                                            {playingProgram &&
+                                            getProgramId(playingProgram) === getProgramId(program) ? (
+                                              <VolumeX size={16} />
+                                            ) : (
+                                              <Play size={16} />
+                                            )}
                                           </motion.button>
                                           <motion.button
                                             onClick={(e) => {
@@ -2374,13 +2531,13 @@ const WebTV = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <List size={20} className="text-gray-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Liste des programmes ({programs.length})
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-900">Liste des programmes ({programs.length})</h3>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <BarChart3 size={16} />
-                    <span>{programs.filter(p => p.isActive).length} {t('webtv.activeCountShort')}</span>
+                    <span>
+                      {programs.filter((p) => p.isActive).length} {t('webtv.activeCountShort')}
+                    </span>
                   </div>
                 </div>
                 {programs.length > 0 && (
@@ -2396,153 +2553,180 @@ const WebTV = () => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {[...programs].sort((a, b) => (a.order || 0) - (b.order || 0)).map((program, index) => (
-                      <motion.div
-                        key={getProgramId(program)}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.dataTransfer.dropEffect = 'move';
-                          setWebtvDragOverIndex(index);
-                        }}
-                        onDragLeave={() => setWebtvDragOverIndex(null)}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          setWebtvDragOverIndex(null);
-                          const from = webtvDragSourceIndexRef.current;
-                          const to = index;
-                          if (from == null || from === to) return;
-                          const sorted = [...programs].sort((a, b) => (a.order || 0) - (b.order || 0));
-                          const [removed] = sorted.splice(from, 1);
-                          sorted.splice(to, 0, removed);
-                          const withOrder = sorted.map((p, i) => ({ ...p, order: i }));
-                          const updatedPrograms = recalcProgramTimes(withOrder);
-                          setPrograms(updatedPrograms);
-                          if (selectedChannelForProgram) {
-                            const updatedChannels = channels.map(c =>
-                              c._id === selectedChannelForProgram._id ? { ...c, programs: updatedPrograms } : c
-                            );
-                            setChannels(updatedChannels);
-                            apiService.updateWebTVChannel(selectedChannelForProgram._id, { ...selectedChannelForProgram, programs: updatedPrograms })
-                              .catch((err) => {
-                                console.error('Erreur sauvegarde ordre WebTV:', err);
-                                toast.error(err.response?.data?.message || 'Ordre non enregistré.');
-                              });
-                          }
-                          webtvDragSourceIndexRef.current = null;
-                        }}
-                        className={`p-4 rounded-lg transition-colors ${
-                          webtvDragOverIndex === index
-                            ? 'bg-purple-50 border-2 border-purple-300'
-                            : program.isActive ? 'bg-gray-50 hover:bg-gray-100 border border-transparent' : 'bg-gray-100 opacity-60 border border-transparent'
-                        }`}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div
-                            draggable
-                            onDragStart={(e) => {
-                              webtvDragSourceIndexRef.current = index;
-                              e.dataTransfer.effectAllowed = 'move';
-                              e.dataTransfer.setData('text/plain', String(index));
-                            }}
-                            onDragEnd={() => {
-                              setWebtvDragOverIndex(null);
-                              webtvDragSourceIndexRef.current = null;
-                            }}
-                            className="flex flex-col items-center gap-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
-                            title={t('webtv.dragToReorder')}
-                          >
-                            <div className="flex items-center gap-1">
-                              <span className="text-sm font-medium text-gray-500 w-5">{index + 1}</span>
-                              <GripVertical size={16} className="text-gray-400" />
-                            </div>
-                            <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${
-                              program.isActive ? 'bg-purple-100' : 'bg-gray-200'
-                            }`}>
-                              {playingProgram && getProgramId(playingProgram) === getProgramId(program) ? (
-                                <Volume2 size={24} className="text-purple-600 animate-pulse" />
-                              ) : (
-                                <FileVideo size={24} className={program.isActive ? 'text-purple-600' : 'text-gray-400'} />
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="font-semibold text-gray-900">{program.title}</h4>
-                                  {program.category && (
-                                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
-                                      {program.category}
-                                    </span>
-                                  )}
-                                  {!program.isActive && (
-                                    <span className="px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs">
-                                      Inactif
-                                    </span>
-                                  )}
-                                </div>
-                                {program.description && (
-                                  <p className="text-sm text-gray-600 mt-1">{program.description}</p>
+                    {[...programs]
+                      .sort((a, b) => (a.order || 0) - (b.order || 0))
+                      .map((program, index) => (
+                        <motion.div
+                          key={getProgramId(program)}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'move';
+                            setWebtvDragOverIndex(index);
+                          }}
+                          onDragLeave={() => setWebtvDragOverIndex(null)}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setWebtvDragOverIndex(null);
+                            const from = webtvDragSourceIndexRef.current;
+                            const to = index;
+                            if (from == null || from === to) return;
+                            const sorted = [...programs].sort((a, b) => (a.order || 0) - (b.order || 0));
+                            const [removed] = sorted.splice(from, 1);
+                            sorted.splice(to, 0, removed);
+                            const withOrder = sorted.map((p, i) => ({ ...p, order: i }));
+                            const updatedPrograms = recalcProgramTimes(withOrder);
+                            setPrograms(updatedPrograms);
+                            if (selectedChannelForProgram) {
+                              const updatedChannels = channels.map((c) =>
+                                c._id === selectedChannelForProgram._id ? { ...c, programs: updatedPrograms } : c
+                              );
+                              setChannels(updatedChannels);
+                              apiService
+                                .updateWebTVChannel(selectedChannelForProgram._id, {
+                                  ...selectedChannelForProgram,
+                                  programs: updatedPrograms,
+                                })
+                                .catch((err) => {
+                                  console.error('Erreur sauvegarde ordre WebTV:', err);
+                                  toast.error(err.response?.data?.message || 'Ordre non enregistré.');
+                                });
+                            }
+                            webtvDragSourceIndexRef.current = null;
+                          }}
+                          className={`p-4 rounded-lg transition-colors ${
+                            webtvDragOverIndex === index
+                              ? 'bg-purple-50 border-2 border-purple-300'
+                              : program.isActive
+                                ? 'bg-gray-50 hover:bg-gray-100 border border-transparent'
+                                : 'bg-gray-100 opacity-60 border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div
+                              draggable
+                              onDragStart={(e) => {
+                                webtvDragSourceIndexRef.current = index;
+                                e.dataTransfer.effectAllowed = 'move';
+                                e.dataTransfer.setData('text/plain', String(index));
+                              }}
+                              onDragEnd={() => {
+                                setWebtvDragOverIndex(null);
+                                webtvDragSourceIndexRef.current = null;
+                              }}
+                              className="flex flex-col items-center gap-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+                              title={t('webtv.dragToReorder')}
+                            >
+                              <div className="flex items-center gap-1">
+                                <span className="text-sm font-medium text-gray-500 w-5">{index + 1}</span>
+                                <GripVertical size={16} className="text-gray-400" />
+                              </div>
+                              <div
+                                className={`flex h-12 w-12 items-center justify-center rounded-lg ${
+                                  program.isActive ? 'bg-purple-100' : 'bg-gray-200'
+                                }`}
+                              >
+                                {playingProgram && getProgramId(playingProgram) === getProgramId(program) ? (
+                                  <Volume2 size={24} className="text-purple-600 animate-pulse" />
+                                ) : (
+                                  <FileVideo
+                                    size={24}
+                                    className={program.isActive ? 'text-purple-600' : 'text-gray-400'}
+                                  />
                                 )}
-                                <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500">
-                                  <span className="flex items-center gap-1">
-                                    <Clock size={14} />
-                                    {formatDuration(program.duration)}
-                                  </span>
-                                  {(program.startTime || program.endTime) && (
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="font-semibold text-gray-900">{program.title}</h4>
+                                    {program.category && (
+                                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
+                                        {program.category}
+                                      </span>
+                                    )}
+                                    {!program.isActive && (
+                                      <span className="px-2 py-0.5 bg-gray-200 text-gray-600 rounded-full text-xs">
+                                        Inactif
+                                      </span>
+                                    )}
+                                  </div>
+                                  {program.description && (
+                                    <p className="text-sm text-gray-600 mt-1">{program.description}</p>
+                                  )}
+                                  <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500">
                                     <span className="flex items-center gap-1">
                                       <Clock size={14} />
-                                      {program.startTime || '—'} - {program.endTime || '—'}
+                                      {formatDuration(program.duration)}
                                     </span>
-                                  )}
-                                  {program.isRepeating && program.daysOfWeek && program.daysOfWeek.length > 0 && (
-                                    <span className="flex items-center gap-1">
-                                      <Repeat size={14} />
-                                      {program.daysOfWeek.map(d => daysOfWeek.find(dw => dw.value === Number(d) || dw.value === d)?.label).filter(Boolean).join(', ')}
-                                    </span>
-                                  )}
+                                    {(program.startTime || program.endTime) && (
+                                      <span className="flex items-center gap-1">
+                                        <Clock size={14} />
+                                        {program.startTime || '—'} - {program.endTime || '—'}
+                                      </span>
+                                    )}
+                                    {program.isRepeating && program.daysOfWeek && program.daysOfWeek.length > 0 && (
+                                      <span className="flex items-center gap-1">
+                                        <Repeat size={14} />
+                                        {program.daysOfWeek
+                                          .map(
+                                            (d) =>
+                                              daysOfWeek.find((dw) => dw.value === Number(d) || dw.value === d)?.label
+                                          )
+                                          .filter(Boolean)
+                                          .join(', ')}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-1 ml-4">
-                                <motion.button
-                                  onClick={() => playProgram(program)}
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className={`p-2 rounded-lg transition-colors ${
-                                    playingProgram && getProgramId(playingProgram) === getProgramId(program)
-                                      ? 'text-green-600 bg-green-50'
-                                      : 'text-gray-600 hover:bg-gray-200'
-                                  }`}
-                                  title={playingProgram && getProgramId(playingProgram) === getProgramId(program) ? 'Arrêter' : 'Lire'}
-                                >
-                                  {playingProgram && getProgramId(playingProgram) === getProgramId(program) ? <VolumeX size={18} /> : <Play size={18} />}
-                                </motion.button>
-                                <motion.button
-                                  onClick={() => handleEditProgram(program)}
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                  title="Modifier"
-                                >
-                                  <Edit size={18} />
-                                </motion.button>
-                                <motion.button
-                                  onClick={() => handleDeleteProgram(getProgramId(program))}
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                  title="Supprimer"
-                                >
-                                  <Trash2 size={18} />
-                                </motion.button>
+                                <div className="flex items-center gap-1 ml-4">
+                                  <motion.button
+                                    onClick={() => playProgram(program)}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className={`p-2 rounded-lg transition-colors ${
+                                      playingProgram && getProgramId(playingProgram) === getProgramId(program)
+                                        ? 'text-green-600 bg-green-50'
+                                        : 'text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                    title={
+                                      playingProgram && getProgramId(playingProgram) === getProgramId(program)
+                                        ? 'Arrêter'
+                                        : 'Lire'
+                                    }
+                                  >
+                                    {playingProgram && getProgramId(playingProgram) === getProgramId(program) ? (
+                                      <VolumeX size={18} />
+                                    ) : (
+                                      <Play size={18} />
+                                    )}
+                                  </motion.button>
+                                  <motion.button
+                                    onClick={() => handleEditProgram(program)}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="Modifier"
+                                  >
+                                    <Edit size={18} />
+                                  </motion.button>
+                                  <motion.button
+                                    onClick={() => handleDeleteProgram(getProgramId(program))}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Supprimer"
+                                  >
+                                    <Trash2 size={18} />
+                                  </motion.button>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    ))}
+                        </motion.div>
+                      ))}
                   </div>
                 )}
               </div>
@@ -2561,7 +2745,11 @@ const WebTV = () => {
           >
             <div className="p-4 border-b border-gray-200 flex justify-between items-center shrink-0">
               <h3 className="text-lg font-semibold text-gray-900">Choisir une vidéo dans la bibliothèque média</h3>
-              <button type="button" onClick={() => setShowVideoLibraryPicker(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setShowVideoLibraryPicker(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -2580,8 +2768,8 @@ const WebTV = () => {
                     className="font-semibold text-purple-600 hover:text-purple-700 underline"
                   >
                     Bibliothèque média
-                  </Link>
-                  {' '}pour en ajouter.
+                  </Link>{' '}
+                  pour en ajouter.
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -2598,7 +2786,7 @@ const WebTV = () => {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 truncate">{v.name || 'Sans titre'}</p>
                         <p className="text-sm text-gray-500 flex items-center gap-2">
-                          {v.size != null && <span>{Math.round(v.size / 1024 / 1024 * 100) / 100} Mo</span>}
+                          {v.size != null && <span>{Math.round((v.size / 1024 / 1024) * 100) / 100} Mo</span>}
                         </p>
                       </div>
                       <Play size={18} className="text-purple-600 flex-shrink-0" />
@@ -2622,4 +2810,3 @@ const WebTV = () => {
 };
 
 export default WebTV;
-

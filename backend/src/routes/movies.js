@@ -17,26 +17,34 @@ const { fetchPosterUrlFromGoogle } = require('../lib/google-poster-search');
 const { buildPosterPrompt, DALLE3_POSTER_OPTIONS } = require('../lib/openai-poster-config');
 
 function normalizeEpisodes(episodes) {
-  if (!Array.isArray(episodes)) {return [];}
+  if (!Array.isArray(episodes)) {
+    return [];
+  }
   return episodes.map((ep, i) => ({
-    title: ep && (ep.title != null) ? String(ep.title).trim() : '',
-    duration: ep && (ep.duration != null) ? String(ep.duration).trim() : '',
-    description: ep && (ep.description != null) ? String(ep.description).trim() : '',
-    videoUrl: ep && (ep.videoUrl != null) ? String(ep.videoUrl).trim() : '',
+    title: ep && ep.title != null ? String(ep.title).trim() : '',
+    duration: ep && ep.duration != null ? String(ep.duration).trim() : '',
+    description: ep && ep.description != null ? String(ep.description).trim() : '',
+    videoUrl: ep && ep.videoUrl != null ? String(ep.videoUrl).trim() : '',
     order: typeof ep?.order === 'number' ? ep.order : i,
     translations: ep && ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined,
   }));
 }
 
 function localizeEpisodes(episodes, lang) {
-  if (!Array.isArray(episodes) || !lang) {return normalizeEpisodes(episodes);}
+  if (!Array.isArray(episodes) || !lang) {
+    return normalizeEpisodes(episodes);
+  }
   return episodes.map((ep) => {
     const normalized = normalizeEpisodes([ep])[0];
     if (ep.translations && typeof ep.translations === 'object') {
       const t = ep.translations[lang] || ep.translations.fr;
       if (t) {
-        if (t.title) {normalized.title = t.title;}
-        if (t.description !== undefined) {normalized.description = t.description;}
+        if (t.title) {
+          normalized.title = t.title;
+        }
+        if (t.description !== undefined) {
+          normalized.description = t.description;
+        }
       }
     }
     return normalized;
@@ -44,23 +52,33 @@ function localizeEpisodes(episodes, lang) {
 }
 
 function formatMovie(doc) {
-  if (!doc) {return null;}
+  if (!doc) {
+    return null;
+  }
   const o = doc.toObject ? doc.toObject() : { ...doc };
   o.id = o._id?.toString();
-  if (Array.isArray(o.episodes)) {o.episodes = normalizeEpisodes(o.episodes);}
+  if (Array.isArray(o.episodes)) {
+    o.episodes = normalizeEpisodes(o.episodes);
+  }
   return o;
 }
 
 const TMDB_POSTER_BASE = 'https://image.tmdb.org/t/p/w500';
 
 function localizeMovie(doc, lang) {
-  if (!doc) {return doc;}
+  if (!doc) {
+    return doc;
+  }
   const o = { ...doc, id: doc._id?.toString() };
   if (lang && doc.translations && typeof doc.translations === 'object') {
     const t = doc.translations[lang] || doc.translations.fr;
     if (t) {
-      if (t.title) {o.title = t.title;}
-      if (t.description !== undefined) {o.description = t.description;}
+      if (t.title) {
+        o.title = t.title;
+      }
+      if (t.description !== undefined) {
+        o.description = t.description;
+      }
     }
   }
   // Affiche réelle : si pas d'URL poster mais tmdbPosterPath fourni, construire l'URL TMDB
@@ -68,7 +86,9 @@ function localizeMovie(doc, lang) {
     const path = String(doc.tmdbPosterPath).startsWith('/') ? doc.tmdbPosterPath : `/${doc.tmdbPosterPath}`;
     o.poster = TMDB_POSTER_BASE + path;
   }
-  if (Array.isArray(o.episodes)) {o.episodes = localizeEpisodes(o.episodes, lang);}
+  if (Array.isArray(o.episodes)) {
+    o.episodes = localizeEpisodes(o.episodes, lang);
+  }
   return o;
 }
 
@@ -77,15 +97,21 @@ function formatFallbackMovie(m, lang) {
   if (lang && m.translations && typeof m.translations === 'object') {
     const t = m.translations[lang] || m.translations.fr;
     if (t) {
-      if (t.title) {o.title = t.title;}
-      if (t.description !== undefined) {o.description = t.description;}
+      if (t.title) {
+        o.title = t.title;
+      }
+      if (t.description !== undefined) {
+        o.description = t.description;
+      }
     }
   }
   if (!o.poster && m.tmdbPosterPath) {
     const path = String(m.tmdbPosterPath).startsWith('/') ? m.tmdbPosterPath : `/${m.tmdbPosterPath}`;
     o.poster = TMDB_POSTER_BASE + path;
   }
-  if (Array.isArray(o.episodes)) {o.episodes = localizeEpisodes(o.episodes, lang);}
+  if (Array.isArray(o.episodes)) {
+    o.episodes = localizeEpisodes(o.episodes, lang);
+  }
   return o;
 }
 
@@ -113,11 +139,16 @@ router.post('/:id/fetch-poster', authMiddleware, adminMiddleware, async (req, re
     } else {
       movie = moviesFallback.getById(id);
     }
-    if (!movie) {return res.status(404).json({ message: 'Film/série non trouvé' });}
+    if (!movie) {
+      return res.status(404).json({ message: 'Film/série non trouvé' });
+    }
     const title = movie.title || movie.translations?.fr?.title || '';
     const posterUrl = await fetchPosterUrlFromGoogle(title);
     if (!posterUrl) {
-      return res.status(422).json({ message: 'Aucune affiche trouvée pour ce titre (vérifiez GOOGLE_CSE_API_KEY et GOOGLE_CSE_CX)', url: null });
+      return res.status(422).json({
+        message: 'Aucune affiche trouvée pour ce titre (vérifiez GOOGLE_CSE_API_KEY et GOOGLE_CSE_CX)',
+        url: null,
+      });
     }
     if (useMongo()) {
       await Movie.findByIdAndUpdate(id, { $set: { poster: posterUrl } });
@@ -143,7 +174,9 @@ router.post('/:id/generate-poster', authMiddleware, adminMiddleware, async (req,
     } else {
       movie = moviesFallback.getById(id);
     }
-    if (!movie) {return res.status(404).json({ message: 'Film/série non trouvé' });}
+    if (!movie) {
+      return res.status(404).json({ message: 'Film/série non trouvé' });
+    }
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return res.status(503).json({
@@ -178,7 +211,9 @@ router.post('/:id/generate-poster', authMiddleware, adminMiddleware, async (req,
     const safeName = slug(movie.title) || (movie.type === 'series' ? 'series' : 'movie');
     const filename = `movie-${String(movie._id || id).slice(-8)}-${safeName}.png`;
     const IMAGES_DIR = config.paths?.images || path.join(__dirname, '..', '..', 'public', 'uploads', 'images');
-    if (!fs.existsSync(IMAGES_DIR)) {fs.mkdirSync(IMAGES_DIR, { recursive: true });}
+    if (!fs.existsSync(IMAGES_DIR)) {
+      fs.mkdirSync(IMAGES_DIR, { recursive: true });
+    }
     const fullPath = path.join(IMAGES_DIR, filename);
     fs.writeFileSync(fullPath, Buffer.from(img.b64_json, 'base64'));
     const posterPath = `/uploads/images/${filename}`;
@@ -207,17 +242,24 @@ router.get('/', paginate, async (req, res) => {
     if (!req.get('Authorization')) {
       const cacheKey = `list:movies:${langNorm}:${page}:${limit}`;
       const cached = await cacheManager.get(cacheKey);
-      if (cached) {return res.json(cached);}
+      if (cached) {
+        return res.json(cached);
+      }
     }
 
     let body;
     if (useMongo()) {
       const [movies, total] = await Promise.all([
-        Movie.find({ isActive: true }).read('secondaryPreferred').lean().sort({ createdAt: -1 }).skip(skip).limit(limit),
+        Movie.find({ isActive: true })
+          .read('secondaryPreferred')
+          .lean()
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
         Movie.countDocuments({ isActive: true }).read('secondaryPreferred'),
       ]);
       body = {
-        data: movies.map(doc => localizeMovie(doc, lang)),
+        data: movies.map((doc) => localizeMovie(doc, lang)),
         total,
         page,
         limit,
@@ -227,7 +269,7 @@ router.get('/', paginate, async (req, res) => {
       const total = list.length;
       const paginated = list.slice(skip, skip + limit);
       body = {
-        data: paginated.map(m => formatFallbackMovie(m, lang)),
+        data: paginated.map((m) => formatFallbackMovie(m, lang)),
         total,
         page,
         limit,
@@ -257,11 +299,15 @@ router.get('/:id', async (req, res) => {
     const { lang } = req.query;
     if (useMongo()) {
       const doc = await Movie.findById(req.params.id).lean();
-      if (!doc) {return res.status(404).json({ message: 'Film/série non trouvé' });}
+      if (!doc) {
+        return res.status(404).json({ message: 'Film/série non trouvé' });
+      }
       return res.json(localizeMovie(doc, lang));
     }
     const movie = moviesFallback.getById(req.params.id);
-    if (!movie) {return res.status(404).json({ message: 'Film/série non trouvé' });}
+    if (!movie) {
+      return res.status(404).json({ message: 'Film/série non trouvé' });
+    }
     res.json(formatFallbackMovie(movie, lang));
   } catch (error) {
     console.error('Get movie error:', error);
@@ -273,8 +319,10 @@ router.get('/:id', async (req, res) => {
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const body = req.body;
-    const title = (body.title && String(body.title).trim());
-    if (!title) {return res.status(400).json({ message: 'Le titre est requis' });}
+    const title = body.title && String(body.title).trim();
+    if (!title) {
+      return res.status(400).json({ message: 'Le titre est requis' });
+    }
 
     if (useMongo()) {
       const movie = new Movie({
@@ -295,16 +343,17 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
         destination: body.destination,
         isActive: true,
         translations: body.translations && typeof body.translations === 'object' ? body.translations : undefined,
-        episodes: (body.type === 'series' && Array.isArray(body.episodes))
-          ? body.episodes.map((ep, i) => ({
-            title: ep.title,
-            duration: ep.duration || '',
-            description: ep.description || '',
-            videoUrl: ep.videoUrl || '',
-            order: ep.order ?? i,
-            translations: ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined,
-          }))
-          : [],
+        episodes:
+          body.type === 'series' && Array.isArray(body.episodes)
+            ? body.episodes.map((ep, i) => ({
+                title: ep.title,
+                duration: ep.duration || '',
+                description: ep.description || '',
+                videoUrl: ep.videoUrl || '',
+                order: ep.order ?? i,
+                translations: ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined,
+              }))
+            : [],
       });
       await movie.save();
       return res.status(201).json(formatMovie(movie));
@@ -341,7 +390,9 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
         shipId: body.shipId,
         destination: body.destination,
       };
-      if (body.translations && typeof body.translations === 'object') {updates.translations = body.translations;}
+      if (body.translations && typeof body.translations === 'object') {
+        updates.translations = body.translations;
+      }
       if (body.type === 'series' && Array.isArray(body.episodes)) {
         updates.episodes = body.episodes.map((ep, i) => ({
           title: ep.title,
@@ -352,16 +403,22 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
           translations: ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined,
         }));
       }
-      Object.keys(updates).forEach(k => updates[k] === undefined && delete updates[k]);
+      Object.keys(updates).forEach((k) => updates[k] === undefined && delete updates[k]);
       const doc = await Movie.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true }).lean();
-      if (!doc) {return res.status(404).json({ message: 'Film/série non trouvé' });}
+      if (!doc) {
+        return res.status(404).json({ message: 'Film/série non trouvé' });
+      }
       const out = { ...doc, id: doc._id?.toString() };
-      if (Array.isArray(out.episodes)) {out.episodes = normalizeEpisodes(out.episodes);}
+      if (Array.isArray(out.episodes)) {
+        out.episodes = normalizeEpisodes(out.episodes);
+      }
       return res.json(out);
     }
 
     const movie = moviesFallback.update(req.params.id, body);
-    if (!movie) {return res.status(404).json({ message: 'Film/série non trouvé' });}
+    if (!movie) {
+      return res.status(404).json({ message: 'Film/série non trouvé' });
+    }
     res.json(formatFallbackMovie(movie));
   } catch (error) {
     console.error('Update movie error:', error);
@@ -374,11 +431,15 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (useMongo()) {
       const doc = await Movie.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
-      if (!doc) {return res.status(404).json({ message: 'Film/série non trouvé' });}
+      if (!doc) {
+        return res.status(404).json({ message: 'Film/série non trouvé' });
+      }
       return res.json({ message: 'Contenu désactivé' });
     }
     const movie = moviesFallback.remove(req.params.id);
-    if (!movie) {return res.status(404).json({ message: 'Film/série non trouvé' });}
+    if (!movie) {
+      return res.status(404).json({ message: 'Film/série non trouvé' });
+    }
     res.json({ message: 'Contenu désactivé' });
   } catch (error) {
     console.error('Delete movie error:', error);

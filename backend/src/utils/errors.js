@@ -45,7 +45,9 @@ function globalErrorHandler(config = {}) {
     }
 
     // Erreur non opérationnelle (crash, bug) — envoi à Sentry si configuré
-    if (sentry && sentry.captureException) {sentry.captureException(err);}
+    if (sentry && sentry.captureException) {
+      sentry.captureException(err);
+    }
     logger.error({
       event: 'unhandled_error',
       err: err.message,
@@ -57,7 +59,7 @@ function globalErrorHandler(config = {}) {
 
     res.status(500).json({
       success: false,
-      message: isProduction ? 'Internal server error' : (err.message || 'Erreur serveur'),
+      message: isProduction ? 'Internal server error' : err.message || 'Erreur serveur',
       code: 'INTERNAL_ERROR',
       ...(isProduction ? {} : { stack: err.stack }),
     });

@@ -21,8 +21,15 @@ test.describe('Magazine et images', () => {
     if (await article.isVisible().catch(() => false)) {
       await article.click();
       await expect(page.getByRole('main')).toBeVisible({ timeout: 5000 });
-      const backButton = page.getByRole('button', { name: /retour|back/i }).or(page.locator('button').filter({ has: page.locator('svg') }).first());
-      await expect(backButton).toBeVisible({ timeout: 3000 }).catch(() => {});
+      const backButton = page.getByRole('button', { name: /retour|back/i }).or(
+        page
+          .locator('button')
+          .filter({ has: page.locator('svg') })
+          .first()
+      );
+      await expect(backButton)
+        .toBeVisible({ timeout: 3000 })
+        .catch(() => {});
     }
   });
 
@@ -33,7 +40,12 @@ test.describe('Magazine et images', () => {
     if (await article.isVisible().catch(() => false)) {
       await article.click();
       await page.waitForTimeout(500);
-      const back = page.getByRole('button', { name: /retour|back/i }).or(page.locator('button').filter({ has: page.locator('svg') }).first());
+      const back = page.getByRole('button', { name: /retour|back/i }).or(
+        page
+          .locator('button')
+          .filter({ has: page.locator('svg') })
+          .first()
+      );
       if (await back.isVisible().catch(() => false)) {
         await back.click();
         await expect(page).toHaveURL(/\/magazine/);

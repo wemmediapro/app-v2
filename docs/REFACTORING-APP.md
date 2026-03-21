@@ -23,13 +23,13 @@ Conséquences : maintenance difficile, re-renders inutiles, tests et évolutions
 
 Chaque domaine est extrait dans un **hook dédié**. `App.jsx` ne fait plus qu’orchestrer ces hooks et passer les props à `MainContent`.
 
-| Hook | Responsabilité | Réduction estimée |
-|------|----------------|-------------------|
-| `useRadio(language, isAnyVideoPlaying)` | État radio, chargement stations, lecture, seek serveur, MediaSession | ~650 lignes |
-| `useWebtv(language, page)` | Chaînes, programme du jour, sync heure serveur, playback URL, ended/loop | ~450 lignes |
-| `useBanners(page, language)` | Bannières API, rotation, largeur viewport, impression/click | ~80 lignes |
-| `useShipmap(language)` | Navires GNV, ponts, deckServices, refetchShipmap | ~120 lignes |
-| (optionnel) `useChat()` | Socket.io, conversations, messages, typing | ~400 lignes |
+| Hook                                    | Responsabilité                                                           | Réduction estimée |
+| --------------------------------------- | ------------------------------------------------------------------------ | ----------------- |
+| `useRadio(language, isAnyVideoPlaying)` | État radio, chargement stations, lecture, seek serveur, MediaSession     | ~650 lignes       |
+| `useWebtv(language, page)`              | Chaînes, programme du jour, sync heure serveur, playback URL, ended/loop | ~450 lignes       |
+| `useBanners(page, language)`            | Bannières API, rotation, largeur viewport, impression/click              | ~80 lignes        |
+| `useShipmap(language)`                  | Navires GNV, ponts, deckServices, refetchShipmap                         | ~120 lignes       |
+| (optionnel) `useChat()`                 | Socket.io, conversations, messages, typing                               | ~400 lignes       |
 
 Hooks **déjà en place** : `useMagazine`, `useRestaurant`, `useEnfant`, `useNotifications`, `useMoviesState`.
 

@@ -13,12 +13,12 @@
 
 ## Où modifier
 
-| Objectif | Où |
-|----------|-----|
-| Changer le contenu **par défaut** (quand pas de bannière API) | `src/App.jsx` : section « Promotional Banner » |
-| Gérer les bannières (CRUD, position, dates) | **Dashboard** → Bannières (`/banners`) |
-| API bannières | `backend/src/routes/banners.js` |
-| Modèle (champs) | `backend/src/models/Banner.js` (title, description, position, image, link, startDate, endDate, isActive, order, etc.) |
+| Objectif                                                      | Où                                                                                                                    |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Changer le contenu **par défaut** (quand pas de bannière API) | `src/App.jsx` : section « Promotional Banner »                                                                        |
+| Gérer les bannières (CRUD, position, dates)                   | **Dashboard** → Bannières (`/banners`)                                                                                |
+| API bannières                                                 | `backend/src/routes/banners.js`                                                                                       |
+| Modèle (champs)                                               | `backend/src/models/Banner.js` (title, description, position, image, link, startDate, endDate, isActive, order, etc.) |
 
 ## Positions utilisées pour l’accueil
 

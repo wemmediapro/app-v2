@@ -16,8 +16,18 @@ const LANGS = ['fr', 'en', 'es', 'it', 'de', 'ar'];
  * @param {string[]} [featuresFr] - liste de libellés en français (ex: ["Espace sécurisé", "Encadré par une animatrice"])
  * @returns {Promise<object>} { fr: { name, description, ageRange?, schedule?, features? }, en: ..., ... }
  */
-async function generateTranslationsForEnfant(openai, nameFr, descriptionFr, category, ageRangeFr, scheduleFr, featuresFr) {
-  const hasExtra = [ageRangeFr, scheduleFr, featuresFr].some(x => x !== undefined && x !== null && (Array.isArray(x) ? x.length > 0 : String(x).trim()));
+async function generateTranslationsForEnfant(
+  openai,
+  nameFr,
+  descriptionFr,
+  category,
+  ageRangeFr,
+  scheduleFr,
+  featuresFr
+) {
+  const hasExtra = [ageRangeFr, scheduleFr, featuresFr].some(
+    (x) => x !== undefined && x !== null && (Array.isArray(x) ? x.length > 0 : String(x).trim())
+  );
   const systemPrompt = `Tu es un traducteur pour un portail d'activités enfants à bord des ferries (GNV OnBoard).
 Pour une activité enfant, tu dois fournir les champs demandés dans exactement 6 langues : français (fr), anglais (en), espagnol (es), italien (it), allemand (de), arabe (ar).
 
@@ -44,9 +54,15 @@ Inclus ageRange, schedule et features dans chaque langue UNIQUEMENT si ces champ
   let userPrompt = `Catégorie : ${category || 'Activité'}.
 Nom (français) : ${nameFr}
 Description (français) : ${descriptionFr || '(aucune)'}`;
-  if (ageRangeFr) {userPrompt += `\nTranche d'âge (français) : ${ageRangeFr}`;}
-  if (scheduleFr) {userPrompt += `\nHoraires (français) : ${scheduleFr}`;}
-  if (Array.isArray(featuresFr) && featuresFr.length > 0) {userPrompt += `\nÉtiquettes/features (français) : ${JSON.stringify(featuresFr)}`;}
+  if (ageRangeFr) {
+    userPrompt += `\nTranche d'âge (français) : ${ageRangeFr}`;
+  }
+  if (scheduleFr) {
+    userPrompt += `\nHoraires (français) : ${scheduleFr}`;
+  }
+  if (Array.isArray(featuresFr) && featuresFr.length > 0) {
+    userPrompt += `\nÉtiquettes/features (français) : ${JSON.stringify(featuresFr)}`;
+  }
   userPrompt += '\n\nGénère l\'objet JSON avec "translations" pour les 6 langues (fr, en, es, it, de, ar).';
 
   const completion = await openai.chat.completions.create({
@@ -60,14 +76,20 @@ Description (français) : ${descriptionFr || '(aucune)'}`;
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) {throw new Error('Réponse OpenAI vide');}
+  if (!raw) {
+    throw new Error('Réponse OpenAI vide');
+  }
 
   let data;
   try {
     data = JSON.parse(raw);
   } catch (e) {
     const match = raw.match(/\{[\s\S]*\}/);
-    if (match) {data = JSON.parse(match[0]);} else {throw new Error('JSON invalide: ' + raw.slice(0, 200));}
+    if (match) {
+      data = JSON.parse(match[0]);
+    } else {
+      throw new Error('JSON invalide: ' + raw.slice(0, 200));
+    }
   }
 
   const translations = data.translations || data;
@@ -76,21 +98,35 @@ Description (français) : ${descriptionFr || '(aucune)'}`;
     const t = translations[lang];
     if (t && (t.name || t.description !== undefined)) {
       out[lang] = {
-        name: String(t.name || nameFr).trim().slice(0, 200),
-        description: String(t.description ?? descriptionFr ?? '').trim().slice(0, 2000),
+        name: String(t.name || nameFr)
+          .trim()
+          .slice(0, 200),
+        description: String(t.description ?? descriptionFr ?? '')
+          .trim()
+          .slice(0, 2000),
       };
-      if (hasExtra && t.ageRange) {out[lang].ageRange = String(t.ageRange).trim().slice(0, 50);}
-      if (hasExtra && t.schedule) {out[lang].schedule = String(t.schedule).trim().slice(0, 200);}
+      if (hasExtra && t.ageRange) {
+        out[lang].ageRange = String(t.ageRange).trim().slice(0, 50);
+      }
+      if (hasExtra && t.schedule) {
+        out[lang].schedule = String(t.schedule).trim().slice(0, 200);
+      }
       if (hasExtra && Array.isArray(t.features) && t.features.length > 0) {
-        out[lang].features = t.features.map(f => String(f).trim().slice(0, 100));
+        out[lang].features = t.features.map((f) => String(f).trim().slice(0, 100));
       }
     }
   }
   if (!out.fr) {
     out.fr = { name: nameFr, description: descriptionFr || '' };
-    if (ageRangeFr) {out.fr.ageRange = ageRangeFr;}
-    if (scheduleFr) {out.fr.schedule = scheduleFr;}
-    if (Array.isArray(featuresFr) && featuresFr.length > 0) {out.fr.features = [...featuresFr];}
+    if (ageRangeFr) {
+      out.fr.ageRange = ageRangeFr;
+    }
+    if (scheduleFr) {
+      out.fr.schedule = scheduleFr;
+    }
+    if (Array.isArray(featuresFr) && featuresFr.length > 0) {
+      out.fr.features = [...featuresFr];
+    }
   }
   return out;
 }

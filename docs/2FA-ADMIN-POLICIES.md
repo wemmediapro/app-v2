@@ -7,14 +7,14 @@
 
 ## Exigences techniques
 
-| Élément | Détail |
-|--------|--------|
-| Secret TOTP | Stocké en base (`twoFactorSecret`, `select: false`), base32. |
-| Activation | Deux étapes : `POST /api/auth/2fa/setup` puis `POST /api/auth/2fa/verify` avec un code TOTP valide. |
-| Session | JWT inclut **`mfa: true`** après login 2FA complet ou après `/verify`. |
-| Challenge intermédiaire | JWT à usage unique **`typ: '2fa_challenge'`**, TTL configurable (`TWO_FACTOR_CHALLENGE_EXPIRES_IN`, défaut 5 min). |
-| Routes sans MFA sur JWT « partiel » | `/auth/login`, `/auth/logout`, `/auth/2fa/complete-login`, `/auth/me`, `/auth/2fa/setup`, `/auth/2fa/verify`. |
-| Désactivation | `POST /auth/2fa/disable` : **mot de passe + TOTP** ; **non** listé comme exempt MFA — le JWT doit être une session MFA complète **ou** utiliser `X-2FA-Token`. |
+| Élément                             | Détail                                                                                                                                                         |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Secret TOTP                         | Stocké en base (`twoFactorSecret`, `select: false`), base32.                                                                                                   |
+| Activation                          | Deux étapes : `POST /api/auth/2fa/setup` puis `POST /api/auth/2fa/verify` avec un code TOTP valide.                                                            |
+| Session                             | JWT inclut **`mfa: true`** après login 2FA complet ou après `/verify`.                                                                                         |
+| Challenge intermédiaire             | JWT à usage unique **`typ: '2fa_challenge'`**, TTL configurable (`TWO_FACTOR_CHALLENGE_EXPIRES_IN`, défaut 5 min).                                             |
+| Routes sans MFA sur JWT « partiel » | `/auth/login`, `/auth/logout`, `/auth/2fa/complete-login`, `/auth/me`, `/auth/2fa/setup`, `/auth/2fa/verify`.                                                  |
+| Désactivation                       | `POST /auth/2fa/disable` : **mot de passe + TOTP** ; **non** listé comme exempt MFA — le JWT doit être une session MFA complète **ou** utiliser `X-2FA-Token`. |
 
 ## Contrôle d’accès
 
@@ -23,11 +23,11 @@
 
 ## Variables d’environnement (optionnel)
 
-| Variable | Rôle |
-|----------|------|
+| Variable                                    | Rôle                                                  |
+| ------------------------------------------- | ----------------------------------------------------- |
 | `TWO_FACTOR_ISSUER` / `TWO_FACTOR_APP_NAME` | Nom affiché dans l’app TOTP (défaut : `GNV OnBoard`). |
-| `TWO_FACTOR_CHALLENGE_EXPIRES_IN` | Durée du JWT challenge (ex. `5m`, `10m`). |
-| `TOTP_WINDOW` | Fenêtre de validation TOTP (défaut `1`). |
+| `TWO_FACTOR_CHALLENGE_EXPIRES_IN`           | Durée du JWT challenge (ex. `5m`, `10m`).             |
+| `TOTP_WINDOW`                               | Fenêtre de validation TOTP (défaut `1`).              |
 
 ## Audit & opérations
 
@@ -41,6 +41,6 @@
 
 ## Références
 
-- [Guide utilisateur](./2FA-USER-GUIDE.md)  
-- [SECURITY.md](../SECURITY.md) (racine du dépôt)  
+- [Guide utilisateur](./2FA-USER-GUIDE.md)
+- [SECURITY.md](../SECURITY.md) (racine du dépôt)
 - `backend/src/services/authService.js`, `backend/src/routes/auth.js`, `backend/src/middleware/auth.js`

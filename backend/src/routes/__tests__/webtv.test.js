@@ -12,24 +12,19 @@ app.use('/api/webtv', webtvRouter);
 describe('API WebTV', () => {
   describe('GET /api/webtv/channels', () => {
     it('retourne 200 et un tableau (vide si DB indisponible)', async () => {
-      const res = await request(app)
-        .get('/api/webtv/channels')
-        .expect(200);
+      const res = await request(app).get('/api/webtv/channels').expect(200);
       expect(Array.isArray(res.body)).toBe(true);
     });
 
     it('accepte ?lang= pour localisation', async () => {
-      const res = await request(app)
-        .get('/api/webtv/channels?lang=fr')
-        .expect(200);
+      const res = await request(app).get('/api/webtv/channels?lang=fr').expect(200);
       expect(Array.isArray(res.body)).toBe(true);
     });
   });
 
   describe('GET /api/webtv/channels/:id', () => {
     it('retourne 503 si base indisponible ou 404 si chaîne inexistante', async () => {
-      const res = await request(app)
-        .get('/api/webtv/channels/507f1f77bcf86cd799439011');
+      const res = await request(app).get('/api/webtv/channels/507f1f77bcf86cd799439011');
       expect([503, 404]).toContain(res.status);
       if (res.status === 503) {
         expect(res.body).toHaveProperty('message');
@@ -48,10 +43,7 @@ describe('API WebTV', () => {
 
   describe('POST /api/webtv/translate', () => {
     it('retourne 401 sans token', async () => {
-      await request(app)
-        .post('/api/webtv/translate')
-        .send({ name: 'Test', description: 'Desc' })
-        .expect(401);
+      await request(app).post('/api/webtv/translate').send({ name: 'Test', description: 'Desc' }).expect(401);
     });
   });
 
@@ -75,9 +67,7 @@ describe('API WebTV', () => {
 
   describe('DELETE /api/webtv/channels/:id', () => {
     it('retourne 401 sans token', async () => {
-      await request(app)
-        .delete('/api/webtv/channels/507f1f77bcf86cd799439011')
-        .expect(401);
+      await request(app).delete('/api/webtv/channels/507f1f77bcf86cd799439011').expect(401);
     });
   });
 });

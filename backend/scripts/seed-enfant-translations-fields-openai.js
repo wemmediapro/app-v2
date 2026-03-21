@@ -28,7 +28,9 @@ async function main() {
   console.log('✅ Connecté:', mongoose.connection.name);
 
   const activities = await EnfantActivity.find({ isActive: { $ne: false } }).lean();
-  console.log(`\n👶 ${activities.length} activité(s) Enfant à traiter (compléter ageRange, schedule, features en 6 langues).\n`);
+  console.log(
+    `\n👶 ${activities.length} activité(s) Enfant à traiter (compléter ageRange, schedule, features en 6 langues).\n`
+  );
 
   for (let i = 0; i < activities.length; i++) {
     const a = activities[i];
@@ -43,10 +45,12 @@ async function main() {
       continue;
     }
 
-    const existing = (a.translations && typeof a.translations === 'object') ? a.translations : {};
-    const hasMissing = ['en', 'es', 'it', 'de', 'ar'].some(lang => {
+    const existing = a.translations && typeof a.translations === 'object' ? a.translations : {};
+    const hasMissing = ['en', 'es', 'it', 'de', 'ar'].some((lang) => {
       const t = existing[lang];
-      return !t || !t.ageRange || !t.schedule || (featuresFr && (!Array.isArray(t.features) || t.features.length === 0));
+      return (
+        !t || !t.ageRange || !t.schedule || (featuresFr && (!Array.isArray(t.features) || t.features.length === 0))
+      );
     });
     if (!hasMissing && existing.fr?.ageRange) {
       console.log(`   [${i + 1}/${activities.length}] ✅ ${label.slice(0, 40)}... (déjà complets)`);
@@ -57,14 +61,31 @@ async function main() {
       const nameFr = (a.name || '').trim();
       const descriptionFr = (a.description || '').trim();
       console.log(`   [${i + 1}/${activities.length}] 🌐 ${label.slice(0, 45)}...`);
-      const generated = await generateTranslationsForEnfant(openai, nameFr, descriptionFr, a.category, ageRangeFr, scheduleFr, featuresFr);
+      const generated = await generateTranslationsForEnfant(
+        openai,
+        nameFr,
+        descriptionFr,
+        a.category,
+        ageRangeFr,
+        scheduleFr,
+        featuresFr
+      );
 
       const merged = {};
       for (const lang of ['fr', 'en', 'es', 'it', 'de', 'ar']) {
         merged[lang] = { ...(existing[lang] || {}), ...(generated[lang] || {}) };
-        if (merged[lang].ageRange === undefined && ageRangeFr) {merged[lang].ageRange = ageRangeFr;}
-        if (merged[lang].schedule === undefined && scheduleFr) {merged[lang].schedule = scheduleFr;}
-        if (featuresFr && (!Array.isArray(merged[lang].features) || merged[lang].features.length === 0)) {merged[lang].features = (generated[lang] && generated[lang].features && generated[lang].features.length > 0) ? generated[lang].features : (existing[lang]?.features || featuresFr);}
+        if (merged[lang].ageRange === undefined && ageRangeFr) {
+          merged[lang].ageRange = ageRangeFr;
+        }
+        if (merged[lang].schedule === undefined && scheduleFr) {
+          merged[lang].schedule = scheduleFr;
+        }
+        if (featuresFr && (!Array.isArray(merged[lang].features) || merged[lang].features.length === 0)) {
+          merged[lang].features =
+            generated[lang] && generated[lang].features && generated[lang].features.length > 0
+              ? generated[lang].features
+              : existing[lang]?.features || featuresFr;
+        }
       }
 
       await EnfantActivity.updateOne({ _id: id }, { $set: { translations: merged } });
@@ -79,4 +100,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

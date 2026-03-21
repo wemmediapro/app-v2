@@ -40,7 +40,7 @@ function isHostAllowed(host) {
 const viteProxy = createProxyServer({
   target: 'http://localhost:5173',
   changeOrigin: true,
-  ws: true
+  ws: true,
 });
 
 // Vérification du Host : rejeter les requêtes dont le host n'est pas dans la whitelist
@@ -59,7 +59,7 @@ app.use((req, res, next) => {
 app.use((req, res) => {
   viteProxy.web(req, res, {
     target: 'http://localhost:5173',
-    changeOrigin: true
+    changeOrigin: true,
   });
 });
 
@@ -72,7 +72,7 @@ viteProxy.on('error', (err, req, res) => {
   console.error('Proxy error:', err.message);
   if (!res.headersSent) {
     res.writeHead(502, {
-      'Content-Type': 'text/plain'
+      'Content-Type': 'text/plain',
     });
     res.end('Proxy error: ' + err.message);
   }
@@ -85,9 +85,3 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`📱 URL locale: http://localhost:${PORT}`);
   console.log(`🔄 Proxy vers Vite: http://localhost:5173`);
 });
-
-
-
-
-
-

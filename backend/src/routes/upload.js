@@ -10,26 +10,37 @@ const config = require('../config');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { processVideo, checkFfmpegAvailable } = require('../services/videoCompression');
 const { encodeToHls } = require('../services/hlsEncode');
-const { optimizeImage, optimizeImageBuffer } = require('../services/imageOptimization');
+const { optimizeImage, optimizeImageBuffer, writeWebpSibling } = require('../services/imageOptimization');
 
 const router = express.Router();
 
 // [SEC-2] Validation magic-bytes (file-type)
-const ALLOWED_VIDEO_MIMES = new Set(['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/mpeg']);
+const ALLOWED_VIDEO_MIMES = new Set([
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
+  'video/quicktime',
+  'video/x-msvideo',
+  'video/mpeg',
+]);
 const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 const ALLOWED_AUDIO_MIMES = new Set(['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/x-wav']);
 
 async function validateFileTypeFromPath(filePath, allowedMimes) {
   const { fileTypeFromFile } = await import('file-type');
   const type = await fileTypeFromFile(filePath);
-  if (!type || !allowedMimes.has(type.mime)) {return { valid: false, detected: type?.mime };}
+  if (!type || !allowedMimes.has(type.mime)) {
+    return { valid: false, detected: type?.mime };
+  }
   return { valid: true };
 }
 
 async function validateFileTypeFromBuffer(buffer, allowedMimes) {
   const { fileTypeFromBuffer } = await import('file-type');
   const type = await fileTypeFromBuffer(buffer);
-  if (!type || !allowedMimes.has(type.mime)) {return { valid: false, detected: type?.mime };}
+  if (!type || !allowedMimes.has(type.mime)) {
+    return { valid: false, detected: type?.mime };
+  }
   return { valid: true };
 }
 const { temp: UPLOAD_DIR, videos: VIDEOS_DIR, images: IMAGES_DIR, audio: AUDIO_DIR, public: PUBLIC_DIR } = config.paths;
@@ -48,7 +59,7 @@ const videoStorage = multer.diskStorage({
     cb(null, UPLOAD_DIR);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const ext = path.extname(file.originalname) || '.mp4';
     cb(null, `video-${uniqueSuffix}${ext}`);
   },
@@ -116,7 +127,9 @@ const audioUpload = multer({
  * Gère les erreurs Multer (taille, type) pour renvoyer un JSON clair au front
  */
 function handleUploadError(err, req, res, next) {
-  if (!err) {return next();}
+  if (!err) {
+    return next();
+  }
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(413).json({
       success: false,
@@ -142,195 +155,237 @@ function handleUploadError(err, req, res, next) {
  * POST /api/upload/video
  * Upload et compression d'une vidéo à 480p (ou copie si FFmpeg absent/échec)
  */
-router.post('/video', authMiddleware, adminMiddleware, videoUpload.single('video'), handleUploadError, async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
+router.post(
+  '/video',
+  authMiddleware,
+  adminMiddleware,
+  videoUpload.single('video'),
+  handleUploadError,
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'Aucun fichier vidéo fourni. Utilisez le champ "video".',
+        });
+      }
+      const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_VIDEO_MIMES);
+      if (!valid) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (e) {}
+        return res.status(400).json({
+          success: false,
+          message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez MP4, WebM, OGG ou MOV.',
+        });
+      }
+
+      const inputPath = req.file.path;
+      const port = process.env.PORT || 3000;
+      const host = req.get('host') || `localhost:${port}`;
+      const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
+      const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
+
+      const { url, path: outputPath } = await processVideo(inputPath);
+
+      if (process.env.ENABLE_HLS_STATIC === 'true' && outputPath && fs.existsSync(outputPath)) {
+        encodeToHls(outputPath)
+          .then((hls) => {
+            if (hls) {
+              console.log('HLS généré:', hls.hlsUrl);
+            }
+          })
+          .catch((e) => console.warn('HLS encode (async):', e.message));
+      }
+
+      const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+      res.json({
+        success: true,
+        message: 'Vidéo enregistrée avec succès',
+        video: {
+          url: fullUrl,
+          path: url,
+          quality: '480p',
+        },
+      });
+    } catch (error) {
+      console.error('Erreur upload vidéo:', error);
+
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (e) {}
+      }
+
+      const message =
+        process.env.NODE_ENV === 'development'
+          ? error.message || 'Erreur lors du traitement de la vidéo'
+          : 'Erreur lors du traitement de la vidéo';
+      res.status(500).json({
         success: false,
-        message: 'Aucun fichier vidéo fourni. Utilisez le champ "video".',
+        message,
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined,
       });
     }
-    const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_VIDEO_MIMES);
-    if (!valid) {
-      try { fs.unlinkSync(req.file.path); } catch (e) {}
-      return res.status(400).json({
-        success: false,
-        message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez MP4, WebM, OGG ou MOV.',
-      });
-    }
-
-    const inputPath = req.file.path;
-    const port = process.env.PORT || 3000;
-    const host = req.get('host') || `localhost:${port}`;
-    const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
-    const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
-
-    const { url, path: outputPath } = await processVideo(inputPath);
-
-    if (process.env.ENABLE_HLS_STATIC === 'true' && outputPath && fs.existsSync(outputPath)) {
-      encodeToHls(outputPath).then((hls) => {
-        if (hls) {console.log('HLS généré:', hls.hlsUrl);}
-      }).catch((e) => console.warn('HLS encode (async):', e.message));
-    }
-
-    const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
-    res.json({
-      success: true,
-      message: 'Vidéo enregistrée avec succès',
-      video: {
-        url: fullUrl,
-        path: url,
-        quality: '480p',
-      },
-    });
-  } catch (error) {
-    console.error('Erreur upload vidéo:', error);
-
-    if (req.file?.path && fs.existsSync(req.file.path)) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (e) {}
-    }
-
-    const message = process.env.NODE_ENV === 'development' ? (error.message || 'Erreur lors du traitement de la vidéo') : 'Erreur lors du traitement de la vidéo';
-    res.status(500).json({
-      success: false,
-      message,
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-    });
   }
-});
+);
 
 /**
  * POST /api/upload/image
  * Upload d'une image (logo de station, etc.)
  */
-router.post('/image', authMiddleware, adminMiddleware, imageUpload.single('image'), (err, req, res, next) => {
-  if (err) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(413).json({ success: false, message: 'Image trop volumineuse (max 5 Mo).' });
-    }
-    if (err.message && err.message.includes('Type')) {
-      return res.status(400).json({ success: false, message: err.message });
-    }
-    return next(err);
-  }
-  next();
-}, (req, res) => {
-  return (async () => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: 'Aucune image fournie. Utilisez le champ "image".',
-        });
+router.post(
+  '/image',
+  authMiddleware,
+  adminMiddleware,
+  imageUpload.single('image'),
+  (err, req, res, next) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ success: false, message: 'Image trop volumineuse (max 5 Mo).' });
       }
-      const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_IMAGE_MIMES);
-      if (!valid) {
-        try { fs.unlinkSync(req.file.path); } catch (e) {}
-        return res.status(400).json({
-          success: false,
-          message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez JPEG, PNG, GIF ou WebP.',
-        });
+      if (err.message && err.message.includes('Type')) {
+        return res.status(400).json({ success: false, message: err.message });
       }
-      let filePath = req.file.path;
-      let filename = req.file.filename;
+      return next(err);
+    }
+    next();
+  },
+  (req, res) => {
+    return (async () => {
       try {
-        const result = await optimizeImage(req.file.path);
-        filePath = result.path;
-        filename = result.filename;
-      } catch (optErr) {
-        console.warn('Optimisation image (fallback sans optimisation):', optErr.message);
-      }
-      const port = process.env.PORT || 3000;
-      const host = req.get('host') || `localhost:${port}`;
-      const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
-      const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
-      const relativePath = `/uploads/images/${filename}`;
-      const fullUrl = `${baseUrl}${relativePath}`;
-      res.json({
-        success: true,
-        message: 'Image enregistrée',
-        image: {
-          url: fullUrl,
-          path: relativePath,
-        },
-      });
-    } catch (error) {
-      console.error('Upload image error:', error);
-      if (!res.headersSent) {
-        res.status(500).json({
-          success: false,
-          message: process.env.NODE_ENV === 'development' ? error.message : 'Erreur lors de l\'upload.',
+        if (!req.file) {
+          return res.status(400).json({
+            success: false,
+            message: 'Aucune image fournie. Utilisez le champ "image".',
+          });
+        }
+        const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_IMAGE_MIMES);
+        if (!valid) {
+          try {
+            fs.unlinkSync(req.file.path);
+          } catch (e) {}
+          return res.status(400).json({
+            success: false,
+            message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez JPEG, PNG, GIF ou WebP.',
+          });
+        }
+        let filePath = req.file.path;
+        let filename = req.file.filename;
+        try {
+          const result = await optimizeImage(req.file.path);
+          filePath = result.path;
+          filename = result.filename;
+        } catch (optErr) {
+          console.warn('Optimisation image (fallback sans optimisation):', optErr.message);
+        }
+        const webpFilename = await writeWebpSibling(filePath);
+        const port = process.env.PORT || 3000;
+        const host = req.get('host') || `localhost:${port}`;
+        const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
+        const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
+        const relativePath = `/uploads/images/${filename}`;
+        const fullUrl = `${baseUrl}${relativePath}`;
+        const webpRelative = webpFilename ? `/uploads/images/${webpFilename}` : undefined;
+        res.json({
+          success: true,
+          message: 'Image enregistrée',
+          image: {
+            url: fullUrl,
+            path: relativePath,
+            ...(webpRelative && {
+              webpPath: webpRelative,
+              webpUrl: `${baseUrl}${webpRelative}`,
+            }),
+          },
         });
+      } catch (error) {
+        console.error('Upload image error:', error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            success: false,
+            message: process.env.NODE_ENV === 'development' ? error.message : "Erreur lors de l'upload.",
+          });
+        }
       }
-    }
-  })();
-});
+    })();
+  }
+);
 
 /**
  * POST /api/upload/audio
  * Upload d'un fichier audio (MP3, etc.) pour la programmation radio — sans passer par la bibliothèque
  */
-router.post('/audio', authMiddleware, adminMiddleware, audioUpload.single('audio'), (err, req, res, next) => {
-  if (err) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(413).json({ success: false, message: 'Fichier audio trop volumineux (max 1000 Mo).' });
+router.post(
+  '/audio',
+  authMiddleware,
+  adminMiddleware,
+  audioUpload.single('audio'),
+  (err, req, res, next) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ success: false, message: 'Fichier audio trop volumineux (max 1000 Mo).' });
+      }
+      if (err.message && err.message.includes('Type')) {
+        return res.status(400).json({ success: false, message: err.message });
+      }
+      return next(err);
     }
-    if (err.message && err.message.includes('Type')) {
-      return res.status(400).json({ success: false, message: err.message });
+    next();
+  },
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'Aucun fichier audio fourni. Utilisez le champ "audio".',
+        });
+      }
+      const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_AUDIO_MIMES);
+      if (!valid) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (e) {}
+        return res.status(400).json({
+          success: false,
+          message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez MP3, WAV ou OGG.',
+        });
+      }
+      const port = process.env.PORT || 3000;
+      const host = req.get('host') || `localhost:${port}`;
+      const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
+      const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
+      const relativePath = `/uploads/audio/${req.file.filename}`;
+      const fullUrl = `${baseUrl}${relativePath}`;
+      res.json({
+        success: true,
+        message: 'Audio enregistré',
+        audio: {
+          url: fullUrl,
+          path: relativePath,
+          fileName: req.file.originalname,
+        },
+      });
+    } catch (error) {
+      console.error('Upload audio error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          message: process.env.NODE_ENV === 'development' ? error.message : "Erreur lors de l'upload.",
+        });
+      }
     }
-    return next(err);
   }
-  next();
-}, async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Aucun fichier audio fourni. Utilisez le champ "audio".',
-      });
-    }
-    const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_AUDIO_MIMES);
-    if (!valid) {
-      try { fs.unlinkSync(req.file.path); } catch (e) {}
-      return res.status(400).json({
-        success: false,
-        message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez MP3, WAV ou OGG.',
-      });
-    }
-    const port = process.env.PORT || 3000;
-    const host = req.get('host') || `localhost:${port}`;
-    const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
-    const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
-    const relativePath = `/uploads/audio/${req.file.filename}`;
-    const fullUrl = `${baseUrl}${relativePath}`;
-    res.json({
-      success: true,
-      message: 'Audio enregistré',
-      audio: {
-        url: fullUrl,
-        path: relativePath,
-        fileName: req.file.originalname,
-      },
-    });
-  } catch (error) {
-    console.error('Upload audio error:', error);
-    if (!res.headersSent) {
-      res.status(500).json({
-        success: false,
-        message: process.env.NODE_ENV === 'development' ? error.message : 'Erreur lors de l\'upload.',
-      });
-    }
-  }
-});
+);
 
 /**
  * Scanne un dossier et retourne les fichiers avec infos (nom, path relatif, taille, date)
  */
 function scanUploadDir(dirPath, urlPrefix) {
   const items = [];
-  if (!fs.existsSync(dirPath)) {return items;}
+  if (!fs.existsSync(dirPath)) {
+    return items;
+  }
   const names = fs.readdirSync(dirPath);
   for (const name of names) {
     const fullPath = path.join(dirPath, name);
@@ -391,13 +446,17 @@ router.delete('/media', authMiddleware, adminMiddleware, (req, res) => {
         message: 'Paramètre "path" requis (ex: /uploads/videos/nom.mp4).',
       });
     }
-    const normalized = path.normalize(filePath).replace(/^(\.\.(\/|\\))+/, '').replace(/^\//, '');
+    const normalized = path
+      .normalize(filePath)
+      .replace(/^(\.\.(\/|\\))+/, '')
+      .replace(/^\//, '');
     const allowedPrefixes = ['uploads/videos/', 'uploads/images/', 'uploads/audio/'];
     const isAllowed = allowedPrefixes.some((prefix) => normalized.startsWith(prefix));
     if (!isAllowed) {
       return res.status(403).json({
         success: false,
-        message: 'Chemin non autorisé. Seuls les fichiers sous uploads/videos, uploads/images ou uploads/audio peuvent être supprimés.',
+        message:
+          'Chemin non autorisé. Seuls les fichiers sous uploads/videos, uploads/images ou uploads/audio peuvent être supprimés.',
       });
     }
     const publicDirResolved = path.resolve(PUBLIC_DIR);
@@ -519,25 +578,31 @@ router.post('/image-from-base64', async (req, res) => {
     }
     const fullPath = path.join(IMAGES_DIR, filename);
     fs.writeFileSync(fullPath, finalBuffer);
+    const webpFilename = await writeWebpSibling(fullPath);
     const port = process.env.PORT || 3000;
     const host = req.get('host') || `localhost:${port}`;
     const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
     const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
     const relativePath = `/uploads/images/${filename}`;
     const fullUrl = `${baseUrl}${relativePath}`;
+    const webpRelative = webpFilename ? `/uploads/images/${webpFilename}` : undefined;
     res.json({
       success: true,
       message: 'Image enregistrée (upload)',
       image: {
         url: fullUrl,
         path: relativePath,
+        ...(webpRelative && {
+          webpPath: webpRelative,
+          webpUrl: `${baseUrl}${webpRelative}`,
+        }),
       },
     });
   } catch (error) {
     console.error('Upload image-from-base64 error:', error);
     res.status(500).json({
       success: false,
-      message: process.env.NODE_ENV === 'development' ? error.message : 'Erreur lors de l\'enregistrement de l\'image.',
+      message: process.env.NODE_ENV === 'development' ? error.message : "Erreur lors de l'enregistrement de l'image.",
     });
   }
 });

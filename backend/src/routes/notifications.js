@@ -56,7 +56,9 @@ function normalizeNotificationBody(body) {
 // GET /api/notifications — liste publique pour l'app passagers (notifications envoyées, pas d'auth)
 // Ne renvoie jamais 500 : en cas d'erreur (DB déconnectée, etc.) on renvoie toujours 200 + { data: [], total: 0, ... }.
 function sendEmptyNotifications(res, pagination) {
-  if (res.headersSent) {return;}
+  if (res.headersSent) {
+    return;
+  }
   const page = (pagination && pagination.page) || 1;
   const limit = (pagination && pagination.limit) || 20;
   try {
@@ -80,10 +82,7 @@ router.get('/', validatePagination, handleValidationErrors, (req, res) => {
       const now = new Date();
       const query = {
         isActive: true,
-        $or: [
-          { scheduledAt: null },
-          { scheduledAt: { $lte: now } },
-        ],
+        $or: [{ scheduledAt: null }, { scheduledAt: { $lte: now } }],
       };
       const [notifications, total] = await Promise.all([
         Notification.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
@@ -114,7 +113,9 @@ router.get('/', validatePagination, handleValidationErrors, (req, res) => {
           createdAt: n.createdAt,
         };
       });
-      if (!res.headersSent) {res.json({ data: list, total, page: req.pagination.page, limit });}
+      if (!res.headersSent) {
+        res.json({ data: list, total, page: req.pagination.page, limit });
+      }
     } catch (error) {
       console.error('Get notifications error:', error);
       sendEmptyNotifications(res, pagination);
@@ -135,7 +136,8 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ message: 'Database unavailable' });
     }
-    const firstKey = normalized.translations && (normalized.translations.fr ? 'fr' : Object.keys(normalized.translations)[0]);
+    const firstKey =
+      normalized.translations && (normalized.translations.fr ? 'fr' : Object.keys(normalized.translations)[0]);
     const firstContent = firstKey && normalized.translations[firstKey];
     const notification = await Notification.create({
       translations: normalized.translations,
@@ -172,51 +174,62 @@ function resolveTitleMessage(n, preferLang = 'fr') {
   return { title, message };
 }
 
-router.get('/all', authMiddleware, adminMiddleware, validateNotificationsAdminPagination, handleValidationErrors, async (req, res) => {
-  try {
-    const { limit } = req.pagination;
-    if (mongoose.connection.readyState !== 1) {
-      return res.json([]);
-    }
-    const notifications = await Notification.find()
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
+router.get(
+  '/all',
+  authMiddleware,
+  adminMiddleware,
+  validateNotificationsAdminPagination,
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const { limit } = req.pagination;
+      if (mongoose.connection.readyState !== 1) {
+        return res.json([]);
+      }
+      const notifications = await Notification.find().sort({ createdAt: -1 }).limit(limit).lean();
 
-    const now = new Date();
-    const list = notifications.map((n) => {
-      const { title, message } = resolveTitleMessage(n);
-      return {
-        ...n,
-        _id: n._id != null ? String(n._id) : n._id,
-        title,
-        message,
-        status: n.scheduledAt == null || n.scheduledAt <= now ? 'sent' : 'scheduled',
-      };
-    });
-    res.json(list);
-  } catch (error) {
-    console.error('Get all notifications error:', error);
-    res.status(500).json({ message: 'Server error' });
+      const now = new Date();
+      const list = notifications.map((n) => {
+        const { title, message } = resolveTitleMessage(n);
+        return {
+          ...n,
+          _id: n._id != null ? String(n._id) : n._id,
+          title,
+          message,
+          status: n.scheduledAt == null || n.scheduledAt <= now ? 'sent' : 'scheduled',
+        };
+      });
+      res.json(list);
+    } catch (error) {
+      console.error('Get all notifications error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
   }
-});
+);
 
 // DELETE /api/notifications/:id — supprimer une notification (admin)
-router.delete('/:id', authMiddleware, adminMiddleware, validateMongoId('id'), handleValidationErrors, async (req, res) => {
-  try {
-    const idStr = req.params.id;
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ message: 'Database unavailable' });
+router.delete(
+  '/:id',
+  authMiddleware,
+  adminMiddleware,
+  validateMongoId('id'),
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const idStr = req.params.id;
+      if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({ message: 'Database unavailable' });
+      }
+      const deleted = await Notification.findByIdAndDelete(idStr);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Notification introuvable' });
+      }
+      res.json({ message: 'Notification supprimée', _id: idStr });
+    } catch (error) {
+      console.error('Delete notification error:', error);
+      res.status(500).json({ message: 'Server error' });
     }
-    const deleted = await Notification.findByIdAndDelete(idStr);
-    if (!deleted) {
-      return res.status(404).json({ message: 'Notification introuvable' });
-    }
-    res.json({ message: 'Notification supprimée', _id: idStr });
-  } catch (error) {
-    console.error('Delete notification error:', error);
-    res.status(500).json({ message: 'Server error' });
   }
-});
+);
 
 module.exports = router;

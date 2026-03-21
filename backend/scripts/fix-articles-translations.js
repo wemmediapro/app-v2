@@ -21,9 +21,7 @@ async function fixArticlesTranslations() {
 
     let updated = 0;
     for (const doc of articles) {
-      const translations = doc.translations && typeof doc.translations === 'object'
-        ? { ...doc.translations }
-        : {};
+      const translations = doc.translations && typeof doc.translations === 'object' ? { ...doc.translations } : {};
 
       // Compléter translations.fr à partir des champs principaux (toujours à jour)
       const fr = translations.fr || {};
@@ -35,7 +33,9 @@ async function fixArticlesTranslations() {
 
       // Conserver les autres langues existantes, ajouter des objets vides pour les manquantes
       for (const code of LANG_CODES) {
-        if (code === 'fr') {continue;}
+        if (code === 'fr') {
+          continue;
+        }
         const t = translations[code];
         if (t && typeof t === 'object' && (t.title || t.excerpt || t.content)) {
           translations[code] = {
@@ -48,10 +48,7 @@ async function fixArticlesTranslations() {
         }
       }
 
-      await Article.updateOne(
-        { _id: doc._id },
-        { $set: { translations } },
-      );
+      await Article.updateOne({ _id: doc._id }, { $set: { translations } });
       updated++;
       console.log(`  ✓ ${doc._id} — "${(doc.title || '').slice(0, 50)}..."`);
     }

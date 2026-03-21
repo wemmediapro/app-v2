@@ -102,12 +102,12 @@ cd dashboard && npm run build
 
 ## 4. Récapitulatif des flux
 
-| Élément        | Rôle |
-|---------------|------|
-| **DNS**       | Déjà en place : A @ → 187.77.168.205, CNAME www → travelstream.fr |
-| **Nginx**     | `server_name travelstream.fr www.travelstream.fr` ; proxy vers backend (3000) et frontend (5173) / dashboard (5174) |
-| **Backend**   | `FRONTEND_URL` avec les origines du domaine ; `API_BASE_URL=https://travelstream.fr` |
-| **Frontend**  | Même domaine = pas de variable d’env obligatoire ; build / preview selon votre choix de déploiement |
+| Élément      | Rôle                                                                                                                |
+| ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| **DNS**      | Déjà en place : A @ → 187.77.168.205, CNAME www → travelstream.fr                                                   |
+| **Nginx**    | `server_name travelstream.fr www.travelstream.fr` ; proxy vers backend (3000) et frontend (5173) / dashboard (5174) |
+| **Backend**  | `FRONTEND_URL` avec les origines du domaine ; `API_BASE_URL=https://travelstream.fr`                                |
+| **Frontend** | Même domaine = pas de variable d’env obligatoire ; build / preview selon votre choix de déploiement                 |
 
 ---
 

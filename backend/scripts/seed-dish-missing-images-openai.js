@@ -20,7 +20,10 @@ const config = require('../src/config');
 const MONGODB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/gnv_onboard';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const API_BASE_URL = (process.env.API_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
-const SEED_SECRET = process.env.SEED_SCRIPT_SECRET || process.env.SEED_SECRET || (process.env.NODE_ENV !== 'production' ? 'dev-seed' : '');
+const SEED_SECRET =
+  process.env.SEED_SCRIPT_SECRET ||
+  process.env.SEED_SECRET ||
+  (process.env.NODE_ENV !== 'production' ? 'dev-seed' : '');
 const IMAGES_DIR = config.paths.images;
 
 function slug(str) {
@@ -35,7 +38,9 @@ function slug(str) {
 
 /** Extrait le nom de fichier d'un path type /uploads/images/dish-xxx.png */
 function filenameFromImagePath(imagePath) {
-  if (!imagePath || typeof imagePath !== 'string') {return null;}
+  if (!imagePath || typeof imagePath !== 'string') {
+    return null;
+  }
   const p = imagePath.replace(/\\/g, '/').trim();
   const match = p.match(/\/uploads\/images\/([^/]+)$/i) || p.match(/\/([^/]+)$/);
   return match ? match[1] : null;
@@ -44,7 +49,9 @@ function filenameFromImagePath(imagePath) {
 /** Vérifie si le fichier image existe sur le disque */
 function imageFileExists(imagePath) {
   const name = filenameFromImagePath(imagePath);
-  if (!name) {return false;}
+  if (!name) {
+    return false;
+  }
   const fullPath = path.join(IMAGES_DIR, name);
   return fs.existsSync(fullPath);
 }
@@ -57,7 +64,19 @@ function buildDishImagePrompt(dishName, category, description) {
     style = 'elegant dessert on a plate, sweet, appetizing';
   } else if (cat.includes('entrée') || cat.includes('appetizer') || cat.includes('starter') || cat.includes('entree')) {
     style = 'appetizer starter dish on a plate, fresh';
-  } else if (cat.includes('boisson') || cat.includes('beverage') || cat.includes('cocktail') || cat.includes('drink') || cat.includes('café') || cat.includes('cafe') || cat.includes('soda') || cat.includes('vin') || cat.includes('wine') || cat.includes('jus') || cat.includes('juice')) {
+  } else if (
+    cat.includes('boisson') ||
+    cat.includes('beverage') ||
+    cat.includes('cocktail') ||
+    cat.includes('drink') ||
+    cat.includes('café') ||
+    cat.includes('cafe') ||
+    cat.includes('soda') ||
+    cat.includes('vin') ||
+    cat.includes('wine') ||
+    cat.includes('jus') ||
+    cat.includes('juice')
+  ) {
     style = 'professional photo of a drink in a glass, beverage, refreshing, clean background, no text';
   } else {
     style = 'main course dish on a plate, restaurant quality, savory';
@@ -78,11 +97,15 @@ async function generateAndUploadDishImage(openai, prompt, filename) {
     style: 'natural',
   });
   const img = response.data?.[0];
-  if (!img?.b64_json) {throw new Error('Pas d\'image retournée par OpenAI');}
+  if (!img?.b64_json) {
+    throw new Error("Pas d'image retournée par OpenAI");
+  }
 
   const uploadUrl = `${API_BASE_URL}/api/upload/image-from-base64`;
   const headers = { 'Content-Type': 'application/json' };
-  if (SEED_SECRET) {headers['X-Seed-Secret'] = SEED_SECRET;}
+  if (SEED_SECRET) {
+    headers['X-Seed-Secret'] = SEED_SECRET;
+  }
 
   const res = await fetch(uploadUrl, {
     method: 'POST',
@@ -96,9 +119,13 @@ async function generateAndUploadDishImage(openai, prompt, filename) {
   }
   const data = await res.json();
   const url = data?.image?.url || data?.image?.path;
-  if (!url) {throw new Error('Réponse upload sans image.url/path');}
+  if (!url) {
+    throw new Error('Réponse upload sans image.url/path');
+  }
   let pathRel = data.image.path || url.replace(/^https?:\/\/[^/]+/, '');
-  if (!pathRel.startsWith('/')) {pathRel = '/' + pathRel;}
+  if (!pathRel.startsWith('/')) {
+    pathRel = '/' + pathRel;
+  }
   return pathRel;
 }
 
@@ -108,7 +135,9 @@ async function main() {
     process.exit(1);
   }
   if (!SEED_SECRET && process.env.NODE_ENV === 'production') {
-    console.error('❌ SEED_SCRIPT_SECRET (ou SEED_SECRET) manquant en production pour POST /api/upload/image-from-base64.');
+    console.error(
+      '❌ SEED_SCRIPT_SECRET (ou SEED_SECRET) manquant en production pour POST /api/upload/image-from-base64.'
+    );
     process.exit(1);
   }
 
@@ -135,8 +164,12 @@ async function main() {
     for (let j = 0; j < menu.length; j++) {
       const item = menu[j];
       const imgPath = item.image || '';
-      if (!imgPath || !imgPath.includes('/uploads/')) {continue;}
-      if (imageFileExists(imgPath)) {continue;}
+      if (!imgPath || !imgPath.includes('/uploads/')) {
+        continue;
+      }
+      if (imageFileExists(imgPath)) {
+        continue;
+      }
       missing.push({
         restaurantId: r._id,
         restaurantName: r.name,
@@ -145,7 +178,8 @@ async function main() {
         itemName: item.name,
         itemCategory: item.category,
         itemDescription: item.description,
-        expectedFilename: filenameFromImagePath(imgPath) || `dish-${r._id.toString().slice(-6)}-${j + 1}-${slug(item.name)}.png`,
+        expectedFilename:
+          filenameFromImagePath(imgPath) || `dish-${r._id.toString().slice(-6)}-${j + 1}-${slug(item.name)}.png`,
       });
     }
   }
@@ -170,10 +204,7 @@ async function main() {
       const dishFilename = m.expectedFilename;
       console.log(`   [${i + 1}/${missing.length}] ${label} ...`);
       const pathRel = await generateAndUploadDishImage(openai, prompt, dishFilename);
-      await Restaurant.updateOne(
-        { _id: m.restaurantId, 'menu.id': m.itemId },
-        { $set: { 'menu.$.image': pathRel } },
-      );
+      await Restaurant.updateOne({ _id: m.restaurantId, 'menu.id': m.itemId }, { $set: { 'menu.$.image': pathRel } });
       console.log(`      ✅ Enregistré: ${pathRel}`);
       ok++;
     } catch (e) {

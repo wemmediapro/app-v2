@@ -3,12 +3,7 @@
  */
 const request = require('supertest');
 const express = require('express');
-const {
-  profileValidation,
-  loginValidation,
-  handleValidationErrors,
-  strongPassword,
-} = require('../validation');
+const { profileValidation, loginValidation, handleValidationErrors, strongPassword } = require('../validation');
 
 const app = express();
 app.use(express.json());
@@ -37,10 +32,7 @@ describe('validation middleware', () => {
     });
 
     it('accepte dateOfBirth ISO 8601', async () => {
-      const res = await request(app)
-        .put('/profile')
-        .send({ dateOfBirth: '1990-01-15' })
-        .expect(200);
+      const res = await request(app).put('/profile').send({ dateOfBirth: '1990-01-15' }).expect(200);
       expect(res.body).toEqual({ ok: true });
     });
 
@@ -56,55 +48,40 @@ describe('validation middleware', () => {
             path: 'firstName',
             msg: expect.stringMatching(/50/),
           }),
-        ]),
+        ])
       );
     });
 
     it('rejette dateOfBirth invalide', async () => {
-      const res = await request(app)
-        .put('/profile')
-        .send({ dateOfBirth: 'not-a-date' })
-        .expect(400);
+      const res = await request(app).put('/profile').send({ dateOfBirth: 'not-a-date' }).expect(400);
       expect(res.body.errors).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             path: 'dateOfBirth',
           }),
-        ]),
+        ])
       );
     });
 
     it('rejette preferences non objet', async () => {
-      const res = await request(app)
-        .put('/profile')
-        .send({ preferences: 'string' })
-        .expect(400);
+      const res = await request(app).put('/profile').send({ preferences: 'string' }).expect(400);
       expect(res.body.errors.some((e) => e.path === 'preferences')).toBe(true);
     });
   });
 
   describe('loginValidation', () => {
     it('rejette sans email', async () => {
-      const res = await request(app)
-        .post('/login')
-        .send({ password: 'secret123' })
-        .expect(400);
+      const res = await request(app).post('/login').send({ password: 'secret123' }).expect(400);
       expect(res.body.errors.some((e) => e.path === 'email')).toBe(true);
     });
 
     it('rejette sans password', async () => {
-      const res = await request(app)
-        .post('/login')
-        .send({ email: 'u@test.com' })
-        .expect(400);
+      const res = await request(app).post('/login').send({ email: 'u@test.com' }).expect(400);
       expect(res.body.errors.some((e) => e.path === 'password')).toBe(true);
     });
 
     it('accepte email + password valides', async () => {
-      const res = await request(app)
-        .post('/login')
-        .send({ email: 'u@test.com', password: 'secret123' })
-        .expect(200);
+      const res = await request(app).post('/login').send({ email: 'u@test.com', password: 'secret123' }).expect(200);
       expect(res.body).toEqual({ ok: true });
     });
   });

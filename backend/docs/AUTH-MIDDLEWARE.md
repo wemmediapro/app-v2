@@ -19,7 +19,7 @@ Toutes les routes API sont sous `backend/src/routes/` et utilisent ce middleware
 
 ## Récap
 
-| Fichier de route       | Importer                          | Comportement        |
-|------------------------|-----------------------------------|---------------------|
-| `backend/src/routes/*` | `require('../middleware/auth')`   | JWT + User lookup   |
-| Socket.io (server.js)  | `verifyToken` depuis **src**      | Decode seul (pas DB)|
+| Fichier de route       | Importer                        | Comportement         |
+| ---------------------- | ------------------------------- | -------------------- |
+| `backend/src/routes/*` | `require('../middleware/auth')` | JWT + User lookup    |
+| Socket.io (server.js)  | `verifyToken` depuis **src**    | Decode seul (pas DB) |

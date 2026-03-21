@@ -14,7 +14,9 @@ jest.mock('../../models/User', () => {
       ...data,
       _id: data?._id || '507f1f77bcf86cd799439011',
       save: mockSave,
-      toObject() { return { ...this }; },
+      toObject() {
+        return { ...this };
+      },
       comparePassword: mockComparePassword,
     };
   }
@@ -31,14 +33,24 @@ jest.mock('../../services/auditService', () => ({ logAction: jest.fn().mockResol
 
 /** Chaîne Mongoose findById().select().lean() ou findById().select() / findById() pour les routes */
 function mockFindByIdChain(userDoc) {
-  const doc = { ...userDoc, toObject: function () { return { ...this }; }, save: mockSave };
+  const doc = {
+    ...userDoc,
+    toObject: function () {
+      return { ...this };
+    },
+    save: mockSave,
+  };
   const chain = {
     lean: jest.fn().mockResolvedValue(doc),
-    then(resolve, reject) { return Promise.resolve(doc).then(resolve, reject); },
+    then(resolve, reject) {
+      return Promise.resolve(doc).then(resolve, reject);
+    },
   };
   return {
     select: jest.fn().mockReturnValue(chain),
-    then(resolve, reject) { return Promise.resolve(doc).then(resolve, reject); },
+    then(resolve, reject) {
+      return Promise.resolve(doc).then(resolve, reject);
+    },
   };
 }
 
@@ -126,10 +138,7 @@ describe('API Auth', () => {
 
     it('retourne 401 si utilisateur non trouvé ou mot de passe invalide', async () => {
       User.findOne.mockReturnValue(mockFindOneChain(null));
-      await request(app)
-        .post('/api/auth/login')
-        .send({ email: 'unknown@test.com', password: 'wrong' })
-        .expect(401);
+      await request(app).post('/api/auth/login').send({ email: 'unknown@test.com', password: 'wrong' }).expect(401);
     });
 
     it('retourne 200 + cookie authToken (SEC-4: pas de token dans le body)', async () => {
@@ -161,16 +170,11 @@ describe('API Auth', () => {
 
   describe('GET /api/auth/me', () => {
     it('retourne 401 sans token', async () => {
-      await request(app)
-        .get('/api/auth/me')
-        .expect(401);
+      await request(app).get('/api/auth/me').expect(401);
     });
 
     it('retourne 401 avec token invalide', async () => {
-      await request(app)
-        .get('/api/auth/me')
-        .set('Authorization', 'Bearer invalid')
-        .expect(401);
+      await request(app).get('/api/auth/me').set('Authorization', 'Bearer invalid').expect(401);
     });
 
     it('retourne 200 + user avec token valide', async () => {
@@ -184,19 +188,14 @@ describe('API Auth', () => {
         mustChangePassword: false,
       };
       User.findById.mockReturnValue(mockFindByIdChain(fakeUser));
-      const res = await request(app)
-        .get('/api/auth/me')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+      const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`).expect(200);
       expect(res.body).toHaveProperty('email', 'u@test.com');
     });
   });
 
   describe('POST /api/auth/logout', () => {
     it('retourne 200 et message de déconnexion', async () => {
-      const res = await request(app)
-        .post('/api/auth/logout')
-        .expect(200);
+      const res = await request(app).post('/api/auth/logout').expect(200);
       expect(res.body).toHaveProperty('message');
       expect(res.body.message).toMatch(/logout|déconnexion|success/i);
     });
@@ -204,19 +203,14 @@ describe('API Auth', () => {
 
   describe('POST /api/auth/refresh', () => {
     it('retourne 401 sans token', async () => {
-      await request(app)
-        .post('/api/auth/refresh')
-        .expect(401);
+      await request(app).post('/api/auth/refresh').expect(401);
     });
 
     it('retourne 200 + cookie authToken (SEC-4: pas de token dans le body)', async () => {
       const token = generateToken({ id: '507f1f77bcf86cd799439011', email: 'u@test.com', role: 'user' });
       const fakeUser = { _id: '507f1f77bcf86cd799439011', email: 'u@test.com', role: 'user', isActive: true };
       User.findById.mockReturnValue(mockFindByIdChain(fakeUser));
-      const res = await request(app)
-        .post('/api/auth/refresh')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+      const res = await request(app).post('/api/auth/refresh').set('Authorization', `Bearer ${token}`).expect(200);
       expect(res.body).not.toHaveProperty('token');
       expect(res.headers['set-cookie']).toBeDefined();
       expect(res.headers['set-cookie'].some((c) => c.startsWith('authToken='))).toBe(true);
@@ -226,10 +220,7 @@ describe('API Auth', () => {
 
   describe('PUT /api/auth/profile', () => {
     it('retourne 401 sans token', async () => {
-      await request(app)
-        .put('/api/auth/profile')
-        .send({ firstName: 'New' })
-        .expect(401);
+      await request(app).put('/api/auth/profile').send({ firstName: 'New' }).expect(401);
     });
 
     it('retourne 200 et user mis à jour avec token valide', async () => {

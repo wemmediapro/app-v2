@@ -40,8 +40,22 @@ const categories = [
 // Contenu type "chaînes" par catégorie (pour la liste + panneau détail)
 const channelByCategory = {
   webtv: [
-    { id: '1', name: 'GNV Live', views: '12K', live: true, hd: true, desc: 'Retransmission en direct des événements à bord.' },
-    { id: '2', name: 'Info Traversée', views: '8K', live: true, hd: false, desc: 'Informations voyage et escales en temps réel.' },
+    {
+      id: '1',
+      name: 'GNV Live',
+      views: '12K',
+      live: true,
+      hd: true,
+      desc: 'Retransmission en direct des événements à bord.',
+    },
+    {
+      id: '2',
+      name: 'Info Traversée',
+      views: '8K',
+      live: true,
+      hd: false,
+      desc: 'Informations voyage et escales en temps réel.',
+    },
     { id: '3', name: 'Divertissement', views: '25K', live: false, hd: true, desc: 'Films et séries en continu.' },
   ],
   movies: [
@@ -49,27 +63,23 @@ const channelByCategory = {
     { id: '2', name: 'Séries', views: '32K', hd: true, desc: 'Séries et épisodes en streaming.' },
   ],
   radio: [
-    { id: '1', name: 'GNV Radio', views: '850K', live: true, desc: 'Musique et programmes sélectionnés pour la traversée.' },
+    {
+      id: '1',
+      name: 'GNV Radio',
+      views: '850K',
+      live: true,
+      desc: 'Musique et programmes sélectionnés pour la traversée.',
+    },
     { id: '2', name: 'Ambiance Lounge', views: '120K', live: true, desc: 'Ambiance détente et world music.' },
   ],
-  magazine: [
-    { id: '1', name: 'Magazine GNV', views: '18K', desc: 'Articles, actualités et bons plans voyage.' },
-  ],
-  restaurant: [
-    { id: '1', name: 'Carte des restaurants', views: '22K', desc: 'Menus, horaires et réservations.' },
-  ],
-  shop: [
-    { id: '1', name: 'Boutique à bord', views: '9K', desc: 'Souvenirs et shopping duty-free.' },
-  ],
-  shipmap: [
-    { id: '1', name: 'Plan du bateau', views: '55K', desc: 'Ponts, équipements et services.' },
-  ],
+  magazine: [{ id: '1', name: 'Magazine GNV', views: '18K', desc: 'Articles, actualités et bons plans voyage.' }],
+  restaurant: [{ id: '1', name: 'Carte des restaurants', views: '22K', desc: 'Menus, horaires et réservations.' }],
+  shop: [{ id: '1', name: 'Boutique à bord', views: '9K', desc: 'Souvenirs et shopping duty-free.' }],
+  shipmap: [{ id: '1', name: 'Plan du bateau', views: '55K', desc: 'Ponts, équipements et services.' }],
   enfant: [
     { id: '1', name: 'Espace Enfants', views: '14K', desc: 'Activités et divertissements pour les plus jeunes.' },
   ],
-  chat: [
-    { id: '1', name: 'Messagerie', views: '5K', desc: 'Échangez avec l’équipage et les autres passagers.' },
-  ],
+  chat: [{ id: '1', name: 'Messagerie', views: '5K', desc: 'Échangez avec l’équipage et les autres passagers.' }],
 };
 
 const bottomNavItems = [
@@ -103,7 +113,8 @@ export default function AppWeb() {
       localStorage.setItem(NOTIFICATIONS_LAST_OPEN_KEY, String(Date.now()));
     } catch (_) {}
     const lang = language === 'fr' ? 'fr' : language === 'en' ? 'en' : 'fr';
-    apiService.getNotifications(`limit=20&lang=${lang}&_=${Date.now()}`)
+    apiService
+      .getNotifications(`limit=20&lang=${lang}&_=${Date.now()}`)
       .then((r) => {
         const raw = r?.data;
         const list = Array.isArray(raw)
@@ -124,7 +135,8 @@ export default function AppWeb() {
     if (showNotificationsPanel) return;
     const lang = language === 'fr' ? 'fr' : language === 'en' ? 'en' : 'fr';
     const fetchUnread = () => {
-      apiService.getNotifications(`limit=50&lang=${lang}&_=${Date.now()}`)
+      apiService
+        .getNotifications(`limit=50&lang=${lang}&_=${Date.now()}`)
         .then((r) => {
           const raw = r?.data;
           const list = Array.isArray(raw)
@@ -235,7 +247,10 @@ export default function AppWeb() {
             >
               <Bell size={20} />
               {notificationsUnreadCount > 0 && (
-                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full ring-2 ring-slate-900" aria-hidden="true" />
+                <span
+                  className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full ring-2 ring-slate-900"
+                  aria-hidden="true"
+                />
               )}
             </button>
             <AnimatePresence>
@@ -261,8 +276,17 @@ export default function AppWeb() {
                         {notificationsList.map((n) => (
                           <li key={n._id} className="p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-left">
                             <p className="font-medium text-white text-sm">{n.title || 'Sans titre'}</p>
-                            {n.message ? <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{n.message}</p> : null}
-                            {n.createdAt ? <p className="text-xs text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString(language === 'en' ? 'en-GB' : 'fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</p> : null}
+                            {n.message ? (
+                              <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{n.message}</p>
+                            ) : null}
+                            {n.createdAt ? (
+                              <p className="text-xs text-slate-500 mt-1">
+                                {new Date(n.createdAt).toLocaleString(language === 'en' ? 'en-GB' : 'fr-FR', {
+                                  dateStyle: 'short',
+                                  timeStyle: 'short',
+                                })}
+                              </p>
+                            ) : null}
                           </li>
                         ))}
                       </ul>
@@ -272,16 +296,32 @@ export default function AppWeb() {
               )}
             </AnimatePresence>
           </div>
-          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" aria-label={t('common.brightness')}>
+          <button
+            type="button"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+            aria-label={t('common.brightness')}
+          >
             <Sun size={20} />
           </button>
-          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 hidden sm:block" aria-label={t('common.search')}>
+          <button
+            type="button"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 hidden sm:block"
+            aria-label={t('common.search')}
+          >
             <Search size={20} />
           </button>
-          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 hidden sm:block" aria-label={t('common.settings')}>
+          <button
+            type="button"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 hidden sm:block"
+            aria-label={t('common.settings')}
+          >
             <Settings size={20} />
           </button>
-          <button type="button" className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" aria-label={t('common.help')}>
+          <button
+            type="button"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+            aria-label={t('common.help')}
+          >
             <HelpCircle size={20} />
           </button>
           <div className="ml-1">
@@ -317,11 +357,12 @@ export default function AppWeb() {
                     <button
                       key={cat.key}
                       type="button"
-                      onClick={() => { setActiveCategory(cat.key); setMenuOpen(false); }}
+                      onClick={() => {
+                        setActiveCategory(cat.key);
+                        setMenuOpen(false);
+                      }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                        isActive
-                          ? 'bg-blue-600 text-white'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                        isActive ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                       }`}
                     >
                       <Icon size={22} className="flex-shrink-0" />
@@ -351,7 +392,10 @@ export default function AppWeb() {
                     <button
                       key={cat.key}
                       type="button"
-                      onClick={() => { setActiveCategory(cat.key); setMenuOpen(false); }}
+                      onClick={() => {
+                        setActiveCategory(cat.key);
+                        setMenuOpen(false);
+                      }}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
                         isActive ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
                       }`}
@@ -425,9 +469,7 @@ export default function AppWeb() {
                   </div>
                   <div className="absolute top-3 left-3 flex gap-2">
                     {selectedChannel.live && (
-                      <span className="px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">
-                        Live
-                      </span>
+                      <span className="px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">Live</span>
                     )}
                     {selectedChannel.hd && (
                       <span className="px-2 py-1 rounded-md text-xs font-semibold bg-slate-600/90 text-slate-200">
@@ -439,9 +481,7 @@ export default function AppWeb() {
                     <h3 className="text-xl font-bold text-white">{selectedChannel.name}</h3>
                   </div>
                 </div>
-                <p className="mt-4 text-slate-300 text-sm md:text-base leading-relaxed">
-                  {selectedChannel.desc}
-                </p>
+                <p className="mt-4 text-slate-300 text-sm md:text-base leading-relaxed">{selectedChannel.desc}</p>
                 <a
                   href={`/?#${activeCategory}`}
                   className="mt-6 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors"

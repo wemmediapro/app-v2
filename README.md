@@ -12,6 +12,7 @@ Application complète pour la gestion des services à bord du navire GNV Excelsi
 ## 🚢 Fonctionnalités
 
 ### Frontend (Application Passagers)
+
 - **Accueil** : Vue d'ensemble des services disponibles
 - **Radio GNV** : Lecteur audio avec stations en direct
 - **Films & Séries** : Catalogue de contenus multimédias
@@ -24,6 +25,7 @@ Application complète pour la gestion des services à bord du navire GNV Excelsi
 - **Support** : Système de feedback et réclamations
 
 ### Backend API
+
 - **Authentification** : JWT avec gestion des rôles
 - **Gestion des utilisateurs** : CRUD complet
 - **Restaurants** : API pour menus et promotions
@@ -32,6 +34,7 @@ Application complète pour la gestion des services à bord du navire GNV Excelsi
 - **Sécurité** : Rate limiting, validation, CORS
 
 ### Dashboard Administrateur
+
 - **Tableau de bord** : Statistiques en temps réel
 - **Gestion des utilisateurs** : Administration complète
 - **Restaurants** : Gestion des menus et promotions
@@ -42,12 +45,14 @@ Application complète pour la gestion des services à bord du navire GNV Excelsi
 ## 🛠️ Technologies
 
 ### Frontend
+
 - **React 18** avec Vite
 - **Tailwind CSS** pour le styling
 - **Framer Motion** pour les animations
 - **Lucide React** pour les icônes
 
 ### Backend
+
 - **Node.js** avec Express
 - **MongoDB** avec Mongoose
 - **JWT** pour l'authentification
@@ -56,6 +61,7 @@ Application complète pour la gestion des services à bord du navire GNV Excelsi
 - **Bcrypt** pour le hachage des mots de passe
 
 ### Dashboard
+
 - **React 18** avec Vite
 - **React Router** pour la navigation
 - **Recharts** pour les graphiques
@@ -65,11 +71,13 @@ Application complète pour la gestion des services à bord du navire GNV Excelsi
 ## 🚀 Installation
 
 ### Prérequis
+
 - Node.js 22+ (aligné avec GitHub Actions)
 - MongoDB (local ou Atlas)
 - npm ou yarn
 
 ### Installation automatique
+
 ```bash
 ./setup.sh
 ```
@@ -77,12 +85,14 @@ Application complète pour la gestion des services à bord du navire GNV Excelsi
 ### Installation manuelle
 
 1. **Cloner le projet**
+
 ```bash
 git clone <repository-url>
 cd gnv_onboard_app
 ```
 
 2. **Installer les dépendances**
+
 ```bash
 # Frontend
 npm install
@@ -97,6 +107,7 @@ npm install
 ```
 
 3. **Configuration**
+
 ```bash
 # Backend
 cp backend/env.example backend/.env
@@ -109,6 +120,7 @@ echo "VITE_API_URL=http://localhost:3000/api" > dashboard/.env
 ## 🏃‍♂️ Démarrage
 
 ### Développement
+
 ```bash
 # Terminal 1 - Backend
 cd backend
@@ -123,6 +135,7 @@ npm run dev
 ```
 
 ### Production
+
 ```bash
 # Build
 npm run build
@@ -142,8 +155,8 @@ cd backend && npm start
 
 - **Frontend** : http://localhost:5173
 - **Dashboard** : http://localhost:3001
-- **Backend API** : http://localhost:3000
-- **Documentation API** : http://localhost:3000/api/health
+- **Backend API** : http://localhost:3000 — REST versionné sous **`/api/v1`** (alias **`/api`** pour rétrocompatibilité)
+- **Health (liveness)** : http://localhost:3000/api/v1/health · **Swagger** : http://localhost:3000/api-docs (si activé)
 
 ## 🔑 Connexion administrateur
 
@@ -187,6 +200,7 @@ gnv_onboard_app/
 ## 🔧 Configuration
 
 ### Variables d'environnement Backend
+
 ```env
 PORT=3000
 NODE_ENV=development
@@ -202,6 +216,7 @@ REDIS_URI=redis://localhost:6379
 En production : `JWT_SECRET` (≥ 32 caractères), `ADMIN_PASSWORD` et `MONGODB_URI` sont obligatoires.
 
 ### Variables d'environnement Dashboard
+
 ```env
 VITE_API_URL=http://localhost:3000/api
 ```
@@ -209,32 +224,38 @@ VITE_API_URL=http://localhost:3000/api
 ## 📈 API Endpoints
 
 ### Authentification
+
 - `POST /api/auth/register` - Inscription
 - `POST /api/auth/login` - Connexion
 - `GET /api/auth/me` - Profil utilisateur
 - `PUT /api/auth/profile` - Mise à jour profil
 
 ### Utilisateurs
+
 - `GET /api/users` - Liste des utilisateurs
 - `GET /api/users/:id` - Détails utilisateur
 
 ### Restaurants
+
 - `GET /api/restaurants` - Liste des restaurants
 - `GET /api/restaurants/:id` - Détails restaurant
 - `POST /api/restaurants` - Créer restaurant (Admin)
 - `PUT /api/restaurants/:id` - Modifier restaurant (Admin)
 
 ### Messages
+
 - `GET /api/messages` - Conversations
 - `GET /api/messages/:userId` - Messages avec utilisateur
 - `POST /api/messages` - Envoyer message
 
 ### Feedback
+
 - `POST /api/feedback` - Soumettre feedback
 - `GET /api/feedback` - Mes feedbacks
 - `GET /api/feedback/admin/all` - Tous les feedbacks (Admin)
 
 ### Admin
+
 - `GET /api/admin/dashboard` - Statistiques dashboard
 - `GET /api/admin/users` - Gestion utilisateurs
 - `PUT /api/admin/users/:id` - Modifier utilisateur
@@ -242,6 +263,7 @@ VITE_API_URL=http://localhost:3000/api
 ## 🎨 Design System
 
 ### Couleurs
+
 - **Primaire** : Bleu (#3B82F6)
 - **Secondaire** : Cyan (#06B6D4)
 - **Succès** : Vert (#10B981)
@@ -249,6 +271,7 @@ VITE_API_URL=http://localhost:3000/api
 - **Erreur** : Rouge (#EF4444)
 
 ### Typographie
+
 - **Police** : Inter (sans-serif)
 - **Tailles** : text-xs à text-6xl
 - **Poids** : font-normal à font-bold
@@ -280,6 +303,7 @@ npm test
 Ce projet est configuré pour un déploiement automatisé via GitHub.
 
 #### Prérequis
+
 - Un compte GitHub
 - Un compte Vercel (gratuit)
 - Un compte Railway ou Render (gratuit pour commencer)
@@ -339,6 +363,7 @@ git push -u origin master
      - **Build Command** : `npm install`
 
 4. **Variables d'environnement** :
+
    ```
    PORT=3000
    NODE_ENV=production
@@ -386,6 +411,7 @@ git push -u origin master
 #### 5. Déploiement automatique
 
 Une fois configuré :
+
 - **Push sur GitHub** → Déploiement automatique sur Vercel et Railway/Render
 - **Pull Requests** → Prévisualisation automatique
 - **Branches** → Environnements de staging automatiques
@@ -418,6 +444,7 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 ## 📞 Support
 
 Pour toute question ou problème :
+
 - **Email** : support@gnv.com
 - **Documentation** : [Wiki du projet]
 - **Issues** : [GitHub Issues]

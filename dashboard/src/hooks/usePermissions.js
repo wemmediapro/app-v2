@@ -19,14 +19,18 @@ export function usePermissions(user) {
   }, [user]);
 
   return useMemo(() => {
-    const role = resolvedUser?.role === 'admin' || resolvedUser?.role === 'crew' || resolvedUser?.role === 'passenger'
-      ? resolvedUser.role
-      : 'admin';
+    const role =
+      resolvedUser?.role === 'admin' || resolvedUser?.role === 'crew' || resolvedUser?.role === 'passenger'
+        ? resolvedUser.role
+        : 'admin';
     const accessByRole = getAccessByRole();
     const roleAccess = accessByRole[role] || accessByRole.admin;
-    const access = resolvedUser?.allowedModules && typeof resolvedUser.allowedModules === 'object' && Object.keys(resolvedUser.allowedModules).length > 0
-      ? resolvedUser.allowedModules
-      : roleAccess;
+    const access =
+      resolvedUser?.allowedModules &&
+      typeof resolvedUser.allowedModules === 'object' &&
+      Object.keys(resolvedUser.allowedModules).length > 0
+        ? resolvedUser.allowedModules
+        : roleAccess;
 
     const can = (moduleId) => !!access[moduleId];
     return { can, role };

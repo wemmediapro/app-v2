@@ -16,7 +16,13 @@ const CATEGORIES = ['Actualités', 'Voyage', 'Culture', 'Gastronomie', 'Divertis
 const LANGS = ['en', 'es', 'it', 'de', 'ar'];
 
 function slug(str) {
-  return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '').toLowerCase().slice(0, 30);
+  return String(str)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/(^-|-$)/g, '')
+    .toLowerCase()
+    .slice(0, 30);
 }
 
 function imageUrlForArticle(index, title) {
@@ -54,7 +60,9 @@ Génère exactement ${count} articles. Chaque article doit avoir:
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) {throw new Error('Réponse OpenAI vide');}
+  if (!raw) {
+    throw new Error('Réponse OpenAI vide');
+  }
   const data = JSON.parse(raw);
   const list = data.articles || data.items || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list : [];
@@ -134,7 +142,9 @@ async function seedMagazine() {
     console.log('\n✅ Seed magazine multilingue terminé. Total articles:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) {console.error(err.response.data);}
+    if (err.response?.data) {
+      console.error(err.response.data);
+    }
     process.exit(1);
   } finally {
     await mongoose.disconnect();

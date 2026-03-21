@@ -14,7 +14,11 @@ const client = BASE.startsWith('https') ? https : http;
 
 function get(urlStr) {
   const u = new URL(urlStr);
-  const opts = { hostname: u.hostname, port: u.port || (u.protocol === 'https:' ? 443 : 80), path: u.pathname + u.search };
+  const opts = {
+    hostname: u.hostname,
+    port: u.port || (u.protocol === 'https:' ? 443 : 80),
+    path: u.pathname + u.search,
+  };
   return new Promise((resolve, reject) => {
     const req = client.get(opts, (res) => {
       let body = '';
@@ -69,9 +73,12 @@ async function main() {
       const list = ep.key ? data?.[ep.key] : data;
       const isArray = Array.isArray(list);
       const count = isArray ? list.length : 0;
-      const fromDb = health.mongodb === 'connected' && isArray && list.length > 0
-        ? 'base de données'
-        : (isArray && list.length > 0 ? 'données (fallback ou cache)' : 'vide (MongoDB déconnecté ou collection vide)');
+      const fromDb =
+        health.mongodb === 'connected' && isArray && list.length > 0
+          ? 'base de données'
+          : isArray && list.length > 0
+            ? 'données (fallback ou cache)'
+            : 'vide (MongoDB déconnecté ou collection vide)';
       console.log(`2. ${ep.name}`);
       console.log(`   Réponse: ${isArray ? count + ' élément(s)' : 'objet'}`);
       console.log(`   Source: ${fromDb}`);
@@ -85,7 +92,7 @@ async function main() {
 
   if (health.mongodb !== 'connected') {
     console.log('---');
-    console.log('Pour que l\'application récupère les données depuis MongoDB :');
+    console.log("Pour que l'application récupère les données depuis MongoDB :");
     console.log('  1. Démarrez MongoDB (voir backend/MONGODB.md)');
     console.log('  2. Redémarrez le backend si besoin');
     console.log('  3. Relancez: node scripts/verify-database.js', BASE);

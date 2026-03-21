@@ -17,7 +17,17 @@ const auditLogSchema = new mongoose.Schema(
     action: {
       type: String,
       required: true,
-      enum: ['login', 'logout', 'create-user', 'update-user', 'delete-user', 'admin-action', 'update', 'delete', 'create'],
+      enum: [
+        'login',
+        'logout',
+        'create-user',
+        'update-user',
+        'delete-user',
+        'admin-action',
+        'update',
+        'delete',
+        'create',
+      ],
       index: true,
     },
     resource: {
@@ -64,7 +74,7 @@ const auditLogSchema = new mongoose.Schema(
   {
     timestamps: true,
     collection: 'auditlogs',
-  },
+  }
 );
 
 // Index composites pour requêtes fréquentes (userId + timestamp, action + timestamp)

@@ -44,7 +44,9 @@ async function checkFfmpeg() {
  * @returns {Promise<{ hlsUrl: string, playlistPath: string }|null>} - URL relative et chemin de la playlist, ou null si échec
  */
 async function encodeToHls(inputPath) {
-  if (!fs.existsSync(inputPath)) {return null;}
+  if (!fs.existsSync(inputPath)) {
+    return null;
+  }
 
   const available = await checkFfmpeg();
   if (!available) {
@@ -67,19 +69,32 @@ async function encodeToHls(inputPath) {
   const segmentPattern = path.join(outputDir, 'segment_%03d.ts');
 
   const args = [
-    '-i', inputPath,
-    '-vf', `scale=${HLS_WIDTH}:${HLS_HEIGHT}:force_original_aspect_ratio=decrease,pad=${HLS_WIDTH}:${HLS_HEIGHT}:(ow-iw)/2:(oh-ih)/2`,
-    '-c:v', 'libx264',
-    '-preset', 'fast',
-    '-crf', '23',
-    '-maxrate', VIDEO_BITRATE,
-    '-bufsize', '1600k',
-    '-c:a', 'aac',
-    '-b:a', AUDIO_BITRATE,
-    '-hls_time', String(HLS_SEGMENT_DURATION),
-    '-hls_list_size', '0',
-    '-hls_segment_filename', segmentPattern,
-    '-f', 'hls',
+    '-i',
+    inputPath,
+    '-vf',
+    `scale=${HLS_WIDTH}:${HLS_HEIGHT}:force_original_aspect_ratio=decrease,pad=${HLS_WIDTH}:${HLS_HEIGHT}:(ow-iw)/2:(oh-ih)/2`,
+    '-c:v',
+    'libx264',
+    '-preset',
+    'fast',
+    '-crf',
+    '23',
+    '-maxrate',
+    VIDEO_BITRATE,
+    '-bufsize',
+    '1600k',
+    '-c:a',
+    'aac',
+    '-b:a',
+    AUDIO_BITRATE,
+    '-hls_time',
+    String(HLS_SEGMENT_DURATION),
+    '-hls_list_size',
+    '0',
+    '-hls_segment_filename',
+    segmentPattern,
+    '-f',
+    'hls',
     '-y',
     playlistPath,
   ];
@@ -100,11 +115,14 @@ async function encodeToHls(inputPath) {
  * Le nom du dossier HLS est le basename du fichier (sans extension), caractères spéciaux remplacés par _.
  */
 function getHlsUrlFromVideoUrl(videoUrl) {
-  if (!videoUrl || typeof videoUrl !== 'string') {return null;}
+  if (!videoUrl || typeof videoUrl !== 'string') {
+    return null;
+  }
   const trimmed = videoUrl.trim();
-  const match = trimmed.match(/\/uploads\/videos\/([^/]+?)(\.\w+)?$/i) ||
-                trimmed.match(/\/videos\/([^/]+?)(\.\w+)?$/i);
-  if (!match) {return null;}
+  const match = trimmed.match(/\/uploads\/videos\/([^/]+?)(\.\w+)?$/i) || trimmed.match(/\/videos\/([^/]+?)(\.\w+)?$/i);
+  if (!match) {
+    return null;
+  }
   const filename = match[1];
   const base = path.basename(filename, path.extname(filename));
   const safeName = base.replace(/[^a-zA-Z0-9_-]/g, '_');

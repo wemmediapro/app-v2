@@ -5,14 +5,14 @@ import httpProxy from 'http-proxy';
 const proxy = httpProxy.createProxyServer({
   target: 'http://localhost:5173',
   changeOrigin: true,
-  ws: true
+  ws: true,
 });
 
 const server = createServer((req, res) => {
   // Accepter toutes les requêtes sans vérification du host
   proxy.web(req, res, {
     target: 'http://localhost:5173',
-    changeOrigin: true
+    changeOrigin: true,
   });
 });
 
@@ -25,7 +25,7 @@ proxy.on('error', (err, req, res) => {
   console.error('Proxy error:', err);
   if (!res.headersSent) {
     res.writeHead(500, {
-      'Content-Type': 'text/plain'
+      'Content-Type': 'text/plain',
     });
     res.end('Proxy error');
   }
@@ -37,4 +37,3 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Le tunnel doit pointer vers le port ${PORT}`);
   console.log(`📱 URL locale: http://localhost:${PORT}`);
 });
-

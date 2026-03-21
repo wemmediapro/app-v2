@@ -40,8 +40,12 @@ router.get('/', authMiddleware, async (req, res) => {
 
     const query = { user: req.user.id };
 
-    if (status) {query.status = status;}
-    if (type) {query.type = type;}
+    if (status) {
+      query.status = status;
+    }
+    if (type) {
+      query.type = type;
+    }
 
     const feedback = await Feedback.find(query)
       .sort({ createdAt: -1 })
@@ -108,17 +112,16 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const allowedUpdates = ['title', 'description', 'rating'];
     const updates = {};
 
-    allowedUpdates.forEach(field => {
+    allowedUpdates.forEach((field) => {
       if (req.body[field] !== undefined) {
         updates[field] = req.body[field];
       }
     });
 
-    const updatedFeedback = await Feedback.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true, runValidators: true },
-    );
+    const updatedFeedback = await Feedback.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+      runValidators: true,
+    });
 
     res.json({
       message: 'Feedback updated successfully',
@@ -139,9 +142,15 @@ router.get('/admin/all', authMiddleware, adminMiddleware, async (req, res) => {
 
     const query = {};
 
-    if (status) {query.status = status;}
-    if (priority) {query.priority = priority;}
-    if (type) {query.type = type;}
+    if (status) {
+      query.status = status;
+    }
+    if (priority) {
+      query.priority = priority;
+    }
+    if (type) {
+      query.type = type;
+    }
 
     const feedback = await Feedback.find(query)
       .sort({ createdAt: -1 })
@@ -172,16 +181,20 @@ router.put('/admin/:id', authMiddleware, adminMiddleware, async (req, res) => {
     const { status, priority, assignedTo, response } = req.body;
 
     const updates = {};
-    if (status) {updates.status = status;}
-    if (priority) {updates.priority = priority;}
-    if (assignedTo) {updates.assignedTo = assignedTo;}
-    if (response) {updates.response = response;}
+    if (status) {
+      updates.status = status;
+    }
+    if (priority) {
+      updates.priority = priority;
+    }
+    if (assignedTo) {
+      updates.assignedTo = assignedTo;
+    }
+    if (response) {
+      updates.response = response;
+    }
 
-    const feedback = await Feedback.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true, runValidators: true },
-    );
+    const feedback = await Feedback.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
 
     if (!feedback) {
       return res.status(404).json({ message: 'Feedback not found' });
@@ -198,5 +211,3 @@ router.put('/admin/:id', authMiddleware, adminMiddleware, async (req, res) => {
 });
 
 module.exports = router;
-
-

@@ -48,7 +48,8 @@ Chaque article doit avoir en français :
 - tags (array de 3-5 strings)
 - translations (object) avec clés "en", "es", "it", "de", "ar", chaque valeur = { title, excerpt, content } dans cette langue.`;
 
-  const userPrompt = 'Génère 12 articles sur le Maroc (Marrakech, Fès, Tanger, gastronomie, désert, ferry GNV, culture, etc.), en français avec traductions en, es, it, de, ar. Réponse : uniquement le JSON avec la clé "articles".';
+  const userPrompt =
+    'Génère 12 articles sur le Maroc (Marrakech, Fès, Tanger, gastronomie, désert, ferry GNV, culture, etc.), en français avec traductions en, es, it, de, ar. Réponse : uniquement le JSON avec la clé "articles".';
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -61,7 +62,9 @@ Chaque article doit avoir en français :
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) {throw new Error('Réponse OpenAI vide');}
+  if (!raw) {
+    throw new Error('Réponse OpenAI vide');
+  }
   const data = JSON.parse(raw);
   const list = data.articles || data.items || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list.slice(0, 12) : [];
@@ -142,7 +145,9 @@ async function run() {
     console.log('\n✅ Terminé. Nouveaux articles:', created, '| Total en base:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) {console.error(err.response.data);}
+    if (err.response?.data) {
+      console.error(err.response.data);
+    }
     process.exit(1);
   } finally {
     await mongoose.disconnect();

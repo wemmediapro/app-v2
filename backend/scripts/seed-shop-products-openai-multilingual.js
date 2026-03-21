@@ -20,7 +20,17 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const API_BASE_URL = (process.env.API_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
 const SEED_SECRET = process.env.SEED_SCRIPT_SECRET || process.env.SEED_SECRET || '';
 
-const CATEGORIES = ['souvenirs', 'fashion', 'accessories', 'food', 'beverages', 'electronics', 'books', 'toys', 'dutyfree'];
+const CATEGORIES = [
+  'souvenirs',
+  'fashion',
+  'accessories',
+  'food',
+  'beverages',
+  'electronics',
+  'books',
+  'toys',
+  'dutyfree',
+];
 const NUM_PRODUCTS = 20;
 
 const BACKEND_ROOT = path.join(__dirname, '..');
@@ -62,35 +72,55 @@ Réponse : UNIQUEMENT un objet JSON valide, sans texte avant ou après :
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Génère exactement ${NUM_PRODUCTS} produits pour la boutique ferry (souvenirs, mode, accessoires, nourriture, boissons, électronique, livres, jouets, duty-free). Variété des catégories. Format JSON avec clé "products".` },
+      {
+        role: 'user',
+        content: `Génère exactement ${NUM_PRODUCTS} produits pour la boutique ferry (souvenirs, mode, accessoires, nourriture, boissons, électronique, livres, jouets, duty-free). Variété des catégories. Format JSON avec clé "products".`,
+      },
     ],
     response_format: { type: 'json_object' },
     temperature: 0.7,
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) {throw new Error('Réponse OpenAI vide');}
+  if (!raw) {
+    throw new Error('Réponse OpenAI vide');
+  }
   let data;
   try {
     data = JSON.parse(raw);
   } catch (e) {
     const match = raw.match(/\{[\s\S]*\}/);
-    if (match) {data = JSON.parse(match[0]);} else {throw new Error('JSON invalide');}
+    if (match) {
+      data = JSON.parse(match[0]);
+    } else {
+      throw new Error('JSON invalide');
+    }
   }
   const products = data.products || data;
-  if (!Array.isArray(products) || products.length === 0) {throw new Error('Aucun produit dans la réponse');}
+  if (!Array.isArray(products) || products.length === 0) {
+    throw new Error('Aucun produit dans la réponse');
+  }
 
   return products.slice(0, NUM_PRODUCTS).map((p) => {
     const cat = CATEGORIES.includes(p.category) ? p.category : CATEGORIES[0];
     const price = Math.max(0, parseFloat(p.price) || 9.99);
     const originalPrice = p.originalPrice != null ? Math.max(0, parseFloat(p.originalPrice)) : undefined;
     return {
-      name: String(p.name || '').trim().slice(0, 120),
-      description: String(p.description || '').trim().slice(0, 600),
+      name: String(p.name || '')
+        .trim()
+        .slice(0, 120),
+      description: String(p.description || '')
+        .trim()
+        .slice(0, 600),
       category: cat,
       price: Math.round(price * 100) / 100,
       originalPrice: originalPrice != null ? Math.round(originalPrice * 100) / 100 : undefined,
-      tags: Array.isArray(p.tags) ? p.tags.map((t) => String(t).trim()).filter(Boolean).slice(0, 8) : [],
+      tags: Array.isArray(p.tags)
+        ? p.tags
+            .map((t) => String(t).trim())
+            .filter(Boolean)
+            .slice(0, 8)
+        : [],
       brand: p.brand ? String(p.brand).trim().slice(0, 50) : undefined,
     };
   });
@@ -100,17 +130,18 @@ function buildProductImagePrompt(product) {
   const name = product.name || 'Product';
   const category = product.category || 'souvenirs';
   const desc = (product.description || '').slice(0, 120);
-  const style = {
-    souvenirs: 'souvenir gift item, ferry cruise themed',
-    fashion: 'fashion clothing item, clean product shot',
-    accessories: 'accessory product, lifestyle',
-    food: 'food product, packaged or gourmet',
-    beverages: 'beverage bottle or drink, professional',
-    electronics: 'electronic device, modern tech product',
-    books: 'book or magazine, cover visible',
-    toys: 'toy or game product, family friendly',
-    dutyfree: 'duty free product, perfume or luxury',
-  }[category] || 'product for cruise ferry shop';
+  const style =
+    {
+      souvenirs: 'souvenir gift item, ferry cruise themed',
+      fashion: 'fashion clothing item, clean product shot',
+      accessories: 'accessory product, lifestyle',
+      food: 'food product, packaged or gourmet',
+      beverages: 'beverage bottle or drink, professional',
+      electronics: 'electronic device, modern tech product',
+      books: 'book or magazine, cover visible',
+      toys: 'toy or game product, family friendly',
+      dutyfree: 'duty free product, perfume or luxury',
+    }[category] || 'product for cruise ferry shop';
   return `Professional product photography: ${name}. ${style}. ${desc ? desc + '.' : ''} White or neutral background, clean, high quality, no text overlay. Single product centered. Suitable for e-commerce.`;
 }
 
@@ -130,7 +161,9 @@ async function generateAndSaveImage(openai, product, index) {
     style: 'natural',
   });
   const img = response.data?.[0];
-  if (!img?.b64_json) {throw new Error('Pas d’image retournée par OpenAI');}
+  if (!img?.b64_json) {
+    throw new Error('Pas d’image retournée par OpenAI');
+  }
 
   const safeName = slug(product.name) || `product-${index + 1}`;
   const filename = `shop-product-${index + 1}-${safeName}.png`;
@@ -141,7 +174,9 @@ async function generateAndSaveImage(openai, product, index) {
   if (health?.ok) {
     const uploadUrl = `${API_BASE_URL}/api/upload/image-from-base64`;
     const headers = { 'Content-Type': 'application/json' };
-    if (SEED_SECRET) {headers['X-Seed-Secret'] = SEED_SECRET;}
+    if (SEED_SECRET) {
+      headers['X-Seed-Secret'] = SEED_SECRET;
+    }
     const res = await fetch(uploadUrl, {
       method: 'POST',
       headers,
@@ -150,11 +185,15 @@ async function generateAndSaveImage(openai, product, index) {
     if (res.ok) {
       const data = await res.json();
       const pathRel = data?.image?.path || (data?.image?.url || '').replace(/^https?:\/\/[^/]+/, '');
-      if (pathRel) {return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;}
+      if (pathRel) {
+        return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;
+      }
     }
   }
 
-  if (!fs.existsSync(IMAGES_DIR)) {fs.mkdirSync(IMAGES_DIR, { recursive: true });}
+  if (!fs.existsSync(IMAGES_DIR)) {
+    fs.mkdirSync(IMAGES_DIR, { recursive: true });
+  }
   const fullPath = path.join(IMAGES_DIR, withExt);
   fs.writeFileSync(fullPath, Buffer.from(img.b64_json, 'base64'));
   return `/uploads/images/${withExt}`;
@@ -217,7 +256,9 @@ async function run() {
     console.log(`\n✅ Terminé. ${created}/${productsFr.length} produits ajoutés (multilingues + images).`);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) {console.error(err.response.data);}
+    if (err.response?.data) {
+      console.error(err.response.data);
+    }
     process.exit(1);
   } finally {
     await mongoose.disconnect();

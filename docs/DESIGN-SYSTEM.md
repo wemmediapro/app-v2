@@ -7,35 +7,39 @@ Document de référence pour harmoniser les couleurs, la typographie et les espa
 ## 1. Palette de couleurs
 
 ### Primaire (marque GNV)
-| Usage        | App passagers      | Dashboard          | Token suggéré |
-|-------------|--------------------|--------------------|---------------|
-| Principal   | `#264FFF`          | `blue-600` / `cyan-600` | `--gnv-primary` |
-| Hover       | `#264FFF` + brightness | `blue-700` / `cyan-700` | — |
-| Fond clair  | `#F0F8FF`         | `blue-50`          | `--gnv-primary-bg` |
+
+| Usage      | App passagers          | Dashboard               | Token suggéré      |
+| ---------- | ---------------------- | ----------------------- | ------------------ |
+| Principal  | `#264FFF`              | `blue-600` / `cyan-600` | `--gnv-primary`    |
+| Hover      | `#264FFF` + brightness | `blue-700` / `cyan-700` | —                  |
+| Fond clair | `#F0F8FF`              | `blue-50`               | `--gnv-primary-bg` |
 
 ### Texte
-| Contexte    | Classe(s)                    | Contraste (recommandé ≥ 4,5:1) |
-|------------|------------------------------|---------------------------------|
-| Titre      | `text-slate-900` / `text-gray-900` | Fort |
-| Corps      | `text-slate-700` / `text-gray-700` | Bon |
-| Secondaire | `text-slate-600` / `text-gray-600` | Bon |
-| Tertiaire  | `text-slate-500` / `text-gray-500` | À limiter sur fond clair |
-| Placeholder| `placeholder:text-slate-500`  | Suffisant sur blanc |
+
+| Contexte    | Classe(s)                          | Contraste (recommandé ≥ 4,5:1) |
+| ----------- | ---------------------------------- | ------------------------------ |
+| Titre       | `text-slate-900` / `text-gray-900` | Fort                           |
+| Corps       | `text-slate-700` / `text-gray-700` | Bon                            |
+| Secondaire  | `text-slate-600` / `text-gray-600` | Bon                            |
+| Tertiaire   | `text-slate-500` / `text-gray-500` | À limiter sur fond clair       |
+| Placeholder | `placeholder:text-slate-500`       | Suffisant sur blanc            |
 
 ### Fond
-| Contexte     | App passagers      | Dashboard   |
-|-------------|--------------------|-------------|
-| Page        | `bg-gray-50` / dégradés | `bg-gray-50` |
-| Carte       | `bg-white` + bordure    | `bg-white` + `border-gray-200` |
-| Survol      | `bg-slate-50` / `hover:bg-white` | `hover:bg-gray-50` |
+
+| Contexte | App passagers                    | Dashboard                      |
+| -------- | -------------------------------- | ------------------------------ |
+| Page     | `bg-gray-50` / dégradés          | `bg-gray-50`                   |
+| Carte    | `bg-white` + bordure             | `bg-white` + `border-gray-200` |
+| Survol   | `bg-slate-50` / `hover:bg-white` | `hover:bg-gray-50`             |
 
 ### Sémantique
-| Type     | Couleur        | Exemple        |
-|----------|----------------|----------------|
-| Succès   | `green-600`    | Confirmation   |
-| Erreur   | `red-600`      | Message d’erreur |
-| Alerte   | `amber-500`    | Bandeau offline, avertissement |
-| Info     | `blue-600`     | Liens, états actifs |
+
+| Type   | Couleur     | Exemple                        |
+| ------ | ----------- | ------------------------------ |
+| Succès | `green-600` | Confirmation                   |
+| Erreur | `red-600`   | Message d’erreur               |
+| Alerte | `amber-500` | Bandeau offline, avertissement |
+| Info   | `blue-600`  | Liens, états actifs            |
 
 ---
 
@@ -64,19 +68,23 @@ Hiérarchie : un seul niveau de titre principal par écran, sous-titres et corps
 ## 4. Composants réutilisables
 
 ### Boutons
+
 - **Primaire** : `bg-[#264FFF]` ou dégradé `from-blue-600 to-cyan-600`, `text-white`, `rounded-xl`, `py-3` `px-4` ou `px-5`, `font-medium` / `font-semibold`, `focus:ring-2 focus:ring-offset-2`.
 - **Secondaire** : bordure `border-gray-300` ou `border-slate-200`, fond blanc ou gris clair, même padding et rayons.
 - **Icône seul** : cible tactile ≥ 44×44px sur mobile (`min-h-[44px] min-w-[44px]`), `p-2` sur desktop.
 
 ### Cartes
+
 - `bg-white`, `rounded-xl`, `shadow-sm`, `border border-gray-200` (ou `border-slate-200`).
 - Padding : `p-4` à `p-6`.
 
 ### Champs de formulaire
+
 - `border border-gray-300` (ou `border-slate-200`), `rounded-xl`, `px-4 py-3`, `focus:ring-2 focus:ring-blue-500 focus:border-transparent`.
 - Label au-dessus : `block text-sm font-medium text-gray-700 mb-1.5`.
 
 ### Accessibilité
+
 - Tous les boutons icône : `aria-label` explicite.
 - Modales : `role="dialog"`, `aria-modal="true"`, `aria-labelledby` si titre présent.
 - Messages d’erreur : `role="alert"` ou `aria-live="assertive"`.

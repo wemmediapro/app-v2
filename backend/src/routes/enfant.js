@@ -19,19 +19,40 @@ const AGE_RANGE_SUFFIX = {
 };
 
 function localizeActivity(doc, lang) {
-  if (!doc) {return doc;}
-  const obj = { ...doc, _id: doc._id?.toString(), image: doc.imageUrl || doc.image, isFeatured: doc.isFeatured || false };
+  if (!doc) {
+    return doc;
+  }
+  const obj = {
+    ...doc,
+    _id: doc._id?.toString(),
+    image: doc.imageUrl || doc.image,
+    isFeatured: doc.isFeatured || false,
+  };
   if (lang && doc.translations && doc.translations[lang]) {
     const t = doc.translations[lang];
-    if (t.name) {obj.name = t.name;}
-    if (t.description !== undefined) {obj.description = t.description;}
-    if (t.ageRange) {obj.ageRange = t.ageRange;} else if (doc.ageRange && AGE_RANGE_SUFFIX[lang]) {
-      obj.ageRange = String(doc.ageRange).replace(/\s*ans\s*$/i, AGE_RANGE_SUFFIX[lang]).trim();
+    if (t.name) {
+      obj.name = t.name;
     }
-    if (t.schedule) {obj.schedule = t.schedule;}
-    if (Array.isArray(t.features) && t.features.length > 0) {obj.features = t.features;}
+    if (t.description !== undefined) {
+      obj.description = t.description;
+    }
+    if (t.ageRange) {
+      obj.ageRange = t.ageRange;
+    } else if (doc.ageRange && AGE_RANGE_SUFFIX[lang]) {
+      obj.ageRange = String(doc.ageRange)
+        .replace(/\s*ans\s*$/i, AGE_RANGE_SUFFIX[lang])
+        .trim();
+    }
+    if (t.schedule) {
+      obj.schedule = t.schedule;
+    }
+    if (Array.isArray(t.features) && t.features.length > 0) {
+      obj.features = t.features;
+    }
   } else if (lang && AGE_RANGE_SUFFIX[lang] && doc.ageRange && /ans\s*$/i.test(String(doc.ageRange))) {
-    obj.ageRange = String(doc.ageRange).replace(/\s*ans\s*$/i, AGE_RANGE_SUFFIX[lang]).trim();
+    obj.ageRange = String(doc.ageRange)
+      .replace(/\s*ans\s*$/i, AGE_RANGE_SUFFIX[lang])
+      .trim();
   }
   return obj;
 }
@@ -42,7 +63,7 @@ router.get('/activities', async (req, res) => {
     const { lang } = req.query;
     if (mongoose.connection.readyState === 1) {
       const activities = await EnfantActivity.find({}).lean().sort({ createdAt: -1 });
-      return res.json(activities.map(doc => localizeActivity(doc, lang)));
+      return res.json(activities.map((doc) => localizeActivity(doc, lang)));
     }
     res.json([]);
   } catch (error) {
@@ -57,7 +78,9 @@ router.get('/activities/:id', async (req, res) => {
     const { lang } = req.query;
     if (mongoose.connection.readyState === 1) {
       const activity = await EnfantActivity.findById(req.params.id).lean();
-      if (!activity) {return res.status(404).json({ message: 'Activité non trouvée' });}
+      if (!activity) {
+        return res.status(404).json({ message: 'Activité non trouvée' });
+      }
       return res.json(localizeActivity(activity, lang));
     }
     return res.status(404).json({ message: 'Activité non trouvée' });
@@ -80,9 +103,9 @@ router.post('/activities', authMiddleware, adminMiddleware, async (req, res) => 
       category: body.category,
       description: body.description,
       ageRange: body.ageRange || '0-12 ans',
-      duration: typeof body.duration === 'number' ? `${body.duration} min` : (body.duration || '60 min'),
+      duration: typeof body.duration === 'number' ? `${body.duration} min` : body.duration || '60 min',
       location: body.location,
-      capacity: typeof body.capacity === 'number' ? String(body.capacity) : (body.capacity || '20'),
+      capacity: typeof body.capacity === 'number' ? String(body.capacity) : body.capacity || '20',
       price: body.price || 0,
       schedule: body.schedule,
       instructor: body.instructor,
@@ -116,12 +139,22 @@ router.put('/activities/:id', authMiddleware, adminMiddleware, async (req, res) 
     const body = req.body;
     const updates = { ...body };
     delete updates._id;
-    if (typeof updates.duration === 'number') {updates.duration = `${updates.duration} min`;}
-    if (typeof updates.capacity === 'number') {updates.capacity = String(updates.capacity);}
-    if (updates.image) {updates.imageUrl = updates.image;}
-    if (updates.translations && typeof updates.translations !== 'object') {delete updates.translations;}
+    if (typeof updates.duration === 'number') {
+      updates.duration = `${updates.duration} min`;
+    }
+    if (typeof updates.capacity === 'number') {
+      updates.capacity = String(updates.capacity);
+    }
+    if (updates.image) {
+      updates.imageUrl = updates.image;
+    }
+    if (updates.translations && typeof updates.translations !== 'object') {
+      delete updates.translations;
+    }
     const activity = await EnfantActivity.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
-    if (!activity) {return res.status(404).json({ message: 'Activité non trouvée' });}
+    if (!activity) {
+      return res.status(404).json({ message: 'Activité non trouvée' });
+    }
     const doc = activity.toObject();
     res.json({ ...doc, _id: doc._id?.toString(), image: doc.imageUrl });
   } catch (error) {
@@ -139,13 +172,17 @@ router.post('/activities/:id/translate', authMiddleware, adminMiddleware, async 
     }
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return res.status(400).json({ message: 'OPENAI_API_KEY manquant. Définissez-le dans backend/.env pour utiliser la traduction OpenAI.' });
+      return res.status(400).json({
+        message: 'OPENAI_API_KEY manquant. Définissez-le dans backend/.env pour utiliser la traduction OpenAI.',
+      });
     }
     const OpenAI = require('openai').default;
     const openai = new OpenAI({ apiKey });
 
     const activity = await EnfantActivity.findById(req.params.id).lean();
-    if (!activity) {return res.status(404).json({ message: 'Activité non trouvée' });}
+    if (!activity) {
+      return res.status(404).json({ message: 'Activité non trouvée' });
+    }
 
     const nameFr = activity.name || '';
     const descriptionFr = activity.description || '';
@@ -153,12 +190,21 @@ router.post('/activities/:id/translate', authMiddleware, adminMiddleware, async 
     const trFr = activity.translations?.fr || {};
     const ageRangeFr = trFr.ageRange || activity.ageRange || '';
     const scheduleFr = trFr.schedule || activity.schedule || '';
-    const featuresFr = Array.isArray(trFr.features) && trFr.features.length > 0
-      ? trFr.features
-      : (Array.isArray(activity.features) ? activity.features : []);
+    const featuresFr =
+      Array.isArray(trFr.features) && trFr.features.length > 0
+        ? trFr.features
+        : Array.isArray(activity.features)
+          ? activity.features
+          : [];
 
     const generated = await generateTranslationsForEnfant(
-      openai, nameFr, descriptionFr, category, ageRangeFr, scheduleFr, featuresFr,
+      openai,
+      nameFr,
+      descriptionFr,
+      category,
+      ageRangeFr,
+      scheduleFr,
+      featuresFr
     );
 
     const existing = activity.translations && typeof activity.translations === 'object' ? activity.translations : {};
@@ -167,10 +213,7 @@ router.post('/activities/:id/translate', authMiddleware, adminMiddleware, async 
       merged[lang] = { ...(merged[lang] || {}), ...data };
     }
 
-    await EnfantActivity.updateOne(
-      { _id: activity._id },
-      { $set: { translations: merged } },
-    );
+    await EnfantActivity.updateOne({ _id: activity._id }, { $set: { translations: merged } });
     const updated = await EnfantActivity.findById(activity._id).lean();
     const doc = { ...updated, _id: updated._id?.toString(), image: updated.imageUrl };
     res.json(doc);
@@ -188,7 +231,9 @@ router.delete('/activities/:id', authMiddleware, adminMiddleware, async (req, re
       return res.status(503).json({ message: 'Base de données indisponible. Mode démo actif.' });
     }
     const activity = await EnfantActivity.findByIdAndDelete(req.params.id);
-    if (!activity) {return res.status(404).json({ message: 'Activité non trouvée' });}
+    if (!activity) {
+      return res.status(404).json({ message: 'Activité non trouvée' });
+    }
     res.json({ message: 'Activité supprimée' });
   } catch (error) {
     console.error('Delete enfant activity error:', error);

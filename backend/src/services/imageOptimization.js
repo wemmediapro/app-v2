@@ -211,7 +211,9 @@ async function optimizeImageInPlaceAggressive(inputPath, options = {}) {
   if (ext === '.png' && tryConvertPngToJpeg) {
     try {
       let p = sharp(inputPath);
-      if (shouldResize) {p = p.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });}
+      if (shouldResize) {
+        p = p.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });
+      }
       const jpegBuffer = await p.jpeg({ quality: jpegQuality, mozjpeg: true }).toBuffer();
       if (jpegBuffer.length < bestSize && jpegBuffer.length < sizeBefore) {
         bestSize = jpegBuffer.length;
@@ -225,7 +227,9 @@ async function optimizeImageInPlaceAggressive(inputPath, options = {}) {
 
   if (ext === '.jpg' || ext === '.jpeg') {
     let p = sharp(inputPath);
-    if (shouldResize) {p = p.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });}
+    if (shouldResize) {
+      p = p.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });
+    }
     const buf = await p.jpeg({ quality: jpegQuality, mozjpeg: true }).toBuffer();
     if (buf.length < bestSize) {
       bestSize = buf.length;
@@ -235,7 +239,9 @@ async function optimizeImageInPlaceAggressive(inputPath, options = {}) {
   }
 
   pipeline = sharp(inputPath);
-  if (shouldResize) {pipeline = pipeline.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });}
+  if (shouldResize) {
+    pipeline = pipeline.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });
+  }
   if (ext === '.png') {
     const pngOpts = { compressionLevel: 9 };
     try {
@@ -282,11 +288,35 @@ async function optimizeImageInPlaceAggressive(inputPath, options = {}) {
   return { sizeBefore, sizeAfter: bestSize };
 }
 
+/**
+ * Génère un fichier .webp à côté d’une image JPEG/PNG (même nom de base).
+ * @param {string} absolutePath - Chemin absolu du fichier optimisé (.jpg / .jpeg / .png)
+ * @returns {Promise<string|null>} basename du .webp ou null si ignoré / échec
+ */
+async function writeWebpSibling(absolutePath) {
+  if (!absolutePath || !fs.existsSync(absolutePath)) {
+    return null;
+  }
+  const ext = (path.extname(absolutePath) || '').toLowerCase();
+  if (!['.jpg', '.jpeg', '.png'].includes(ext)) {
+    return null;
+  }
+  const webpPath = path.join(path.dirname(absolutePath), `${path.basename(absolutePath, ext)}.webp`);
+  try {
+    await sharp(absolutePath).webp({ quality: WEBP_QUALITY }).toFile(webpPath);
+    return path.basename(webpPath);
+  } catch (e) {
+    console.warn('writeWebpSibling:', e.message);
+    return null;
+  }
+}
+
 module.exports = {
   optimizeImage,
   optimizeImageBuffer,
   optimizeImageInPlace,
   optimizeImageInPlaceAggressive,
+  writeWebpSibling,
   MAX_WIDTH,
   JPEG_QUALITY,
   JPEG_QUALITY_AGGRESSIVE,

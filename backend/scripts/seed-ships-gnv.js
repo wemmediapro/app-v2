@@ -31,7 +31,9 @@ if (!Array.isArray(rawShips) || rawShips.length === 0) {
 
 /** Dérive un slug à partir du nom (ex: "GNV Excelsior" -> "excelsior") */
 function nameToSlug(name) {
-  if (!name || typeof name !== 'string') {return '';}
+  if (!name || typeof name !== 'string') {
+    return '';
+  }
   return name
     .replace(/\bGNV\s+/i, '')
     .trim()
@@ -60,7 +62,9 @@ const SHIPS = rawShips.map((s) => {
     status: 'En service',
     route: s.route || null,
     facilities: ['Restaurants', 'Bar', 'Boutique', 'WiFi', 'Cabines'],
-    routes: s.route ? [{ from: s.route.split(' - ')[0] || '', to: s.route.split(' - ')[1] || '', duration: '', frequency: '' }] : [],
+    routes: s.route
+      ? [{ from: s.route.split(' - ')[0] || '', to: s.route.split(' - ')[1] || '', duration: '', frequency: '' }]
+      : [],
     isActive: true,
   };
 });
@@ -70,11 +74,7 @@ async function run() {
   await mongoose.connect(MONGODB_URI);
   console.log('Upsert des navires GNV (source: data/ships.json)...');
   for (const s of SHIPS) {
-    await Ship.findOneAndUpdate(
-      { slug: s.slug },
-      { $set: s },
-      { upsert: true, new: true },
-    );
+    await Ship.findOneAndUpdate({ slug: s.slug }, { $set: s }, { upsert: true, new: true });
     console.log('  ', s.name);
   }
   const count = await Ship.countDocuments({});

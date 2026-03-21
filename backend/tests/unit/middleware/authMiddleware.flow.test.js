@@ -46,9 +46,7 @@ describe('authMiddleware (flux)', () => {
     const next = jest.fn();
     await authMiddleware(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'INVALID_TOKEN' }),
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_TOKEN' }));
   });
 
   it('401 TokenExpiredError', async () => {
@@ -62,9 +60,7 @@ describe('authMiddleware (flux)', () => {
     const next = jest.fn();
     await authMiddleware(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'TOKEN_EXPIRED' }),
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'TOKEN_EXPIRED' }));
   });
 
   it('401 si token révoqué (Redis blacklist)', async () => {
@@ -79,9 +75,7 @@ describe('authMiddleware (flux)', () => {
     const next = jest.fn();
     await authMiddleware(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'TOKEN_REVOKED' }),
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'TOKEN_REVOKED' }));
   });
 
   it('401 INVALID_TOKEN_TYPE si JWT typ 2fa_challenge', async () => {
@@ -89,7 +83,7 @@ describe('authMiddleware (flux)', () => {
     const challenge = jwt.sign(
       { typ: '2fa_challenge', id: '507f1f77bcf86cd799439011', sub: '507f1f77bcf86cd799439011' },
       secret,
-      { expiresIn: '5m' },
+      { expiresIn: '5m' }
     );
     const req = {
       originalUrl: '/api/users',
@@ -100,9 +94,7 @@ describe('authMiddleware (flux)', () => {
     const next = jest.fn();
     await authMiddleware(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'INVALID_TOKEN_TYPE' }),
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_TOKEN_TYPE' }));
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -124,7 +116,9 @@ describe('authMiddleware (flux)', () => {
       url: '/api/users',
       cookies: {},
       header(n) {
-        if (n === 'Authorization') {return `Bearer ${token}`;}
+        if (n === 'Authorization') {
+          return `Bearer ${token}`;
+        }
         return '';
       },
       get(name) {
@@ -167,11 +161,15 @@ describe('authMiddleware (flux)', () => {
       originalUrl: '/api/users',
       cookies: {},
       header(n) {
-        if (n === 'Authorization') {return `Bearer ${token}`;}
+        if (n === 'Authorization') {
+          return `Bearer ${token}`;
+        }
         return '';
       },
       get(name) {
-        if (name === 'X-2FA-Token' || name === 'x-2fa-token') {return totp;}
+        if (name === 'X-2FA-Token' || name === 'x-2fa-token') {
+          return totp;
+        }
         return this.header(name);
       },
     };
@@ -225,15 +223,15 @@ describe('authMiddleware (flux)', () => {
     const next = jest.fn();
     await authMiddleware(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'ACCOUNT_DEACTIVATED' }),
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'ACCOUNT_DEACTIVATED' }));
   });
 
   it('utilise le cache Redis utilisateur si présent', async () => {
     cacheManager.isConnected = true;
     cacheManager.get.mockImplementation(async (key) => {
-      if (String(key).startsWith('blacklist:')) {return null;}
+      if (String(key).startsWith('blacklist:')) {
+        return null;
+      }
       if (String(key).startsWith('auth:user:')) {
         return { _id: '507f1f77bcf86cd799439011', email: 'cached@test.com', role: 'user', isActive: true };
       }

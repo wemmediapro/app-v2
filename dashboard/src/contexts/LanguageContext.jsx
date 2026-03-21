@@ -14,7 +14,7 @@ const translations = {
   ar: arTranslations,
   es: esTranslations,
   it: itTranslations,
-  de: deTranslations
+  de: deTranslations,
 };
 
 export const LanguageProvider = ({ children }) => {
@@ -31,28 +31,31 @@ export const LanguageProvider = ({ children }) => {
     document.documentElement.setAttribute('dir', language === 'ar' ? 'rtl' : 'ltr');
   }, [language]);
 
-  const t = useCallback((key, params = {}) => {
-    const keys = key.split('.');
-    let value = translations[language];
-    
-    for (const k of keys) {
-      value = value?.[k];
-    }
-    
-    if (value === undefined) {
-      console.warn(`Translation missing for key: ${key} in language: ${language}`);
-      return key;
-    }
-    
-    // Replace parameters in translation
-    if (typeof value === 'string' && Object.keys(params).length > 0) {
-      return value.replace(/\{\{(\w+)\}\}/g, (match, paramKey) => {
-        return params[paramKey] !== undefined ? params[paramKey] : match;
-      });
-    }
-    
-    return value;
-  }, [language]);
+  const t = useCallback(
+    (key, params = {}) => {
+      const keys = key.split('.');
+      let value = translations[language];
+
+      for (const k of keys) {
+        value = value?.[k];
+      }
+
+      if (value === undefined) {
+        console.warn(`Translation missing for key: ${key} in language: ${language}`);
+        return key;
+      }
+
+      // Replace parameters in translation
+      if (typeof value === 'string' && Object.keys(params).length > 0) {
+        return value.replace(/\{\{(\w+)\}\}/g, (match, paramKey) => {
+          return params[paramKey] !== undefined ? params[paramKey] : match;
+        });
+      }
+
+      return value;
+    },
+    [language]
+  );
 
   const changeLanguage = useCallback((lang) => {
     setLanguage(lang);
@@ -60,11 +63,7 @@ export const LanguageProvider = ({ children }) => {
 
   const contextValue = useMemo(() => ({ language, changeLanguage, t }), [language, t, changeLanguage]);
 
-  return (
-    <LanguageContext.Provider value={contextValue}>
-      {children}
-    </LanguageContext.Provider>
-  );
+  return <LanguageContext.Provider value={contextValue}>{children}</LanguageContext.Provider>;
 };
 
 export const useLanguage = () => {
@@ -74,7 +73,3 @@ export const useLanguage = () => {
   }
   return context;
 };
-
-
-
-

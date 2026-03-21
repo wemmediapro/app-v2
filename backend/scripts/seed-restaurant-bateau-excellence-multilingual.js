@@ -17,7 +17,14 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const SHIP_ID = '7';
 const SHIP_NAME = 'GNV Excellent';
 
-const RESTAURANT_TYPES = ['Restaurant à la carte', 'Restaurant Self-Service', 'Café & Snacks', 'Pizzeria saisonnière', 'Steakhouse', 'Room Service'];
+const RESTAURANT_TYPES = [
+  'Restaurant à la carte',
+  'Restaurant Self-Service',
+  'Café & Snacks',
+  'Pizzeria saisonnière',
+  'Steakhouse',
+  'Room Service',
+];
 const CATEGORIES = ['french', 'fastfood', 'dessert', 'seafood'];
 const LANGS = ['fr', 'en', 'es', 'it', 'de', 'ar'];
 
@@ -72,7 +79,8 @@ Règles :
 - Chaque restaurant a au moins 8 plats (entrées, plats, desserts, boissons). Le tableau "menu" dans translations doit avoir exactement le même nombre d’éléments que "menu" du restaurant, dans le même ordre.
 - Pour chaque langue (fr, en, es, it, de, ar), fournis name, description du restaurant et menu = tableau de { name, description } pour chaque plat.`;
 
-  const userPrompt = 'Génère 2 restaurants pour le Bateau GNV Excellent avec des menus complets et les traductions dans les 6 langues (fr, en, es, it, de, ar). Utilise le contexte réel GNV (à la carte, self-service, pizzeria, style italien/méditerranéen). Réponse : uniquement l\'objet JSON avec la clé "restaurants".';
+  const userPrompt =
+    'Génère 2 restaurants pour le Bateau GNV Excellent avec des menus complets et les traductions dans les 6 langues (fr, en, es, it, de, ar). Utilise le contexte réel GNV (à la carte, self-service, pizzeria, style italien/méditerranéen). Réponse : uniquement l\'objet JSON avec la clé "restaurants".';
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -85,7 +93,9 @@ Règles :
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) {throw new Error('Réponse OpenAI vide');}
+  if (!raw) {
+    throw new Error('Réponse OpenAI vide');
+  }
   const data = JSON.parse(raw);
   const list = data.restaurants || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list : [];
@@ -120,24 +130,53 @@ async function seedRestaurantBateauExcellence() {
       const rating = typeof r.rating === 'number' ? Math.min(5, Math.max(0, r.rating)) : 4.5;
       const priceRange = ['€', '€€', '€€€', '€€€€'].includes(r.priceRange) ? r.priceRange : '€€';
       const openingHours = (r.openingHours || '08h00 - 22h00').trim();
-      const specialties = Array.isArray(r.specialties) ? r.specialties.slice(0, 8).map(s => String(s).trim()) : [];
+      const specialties = Array.isArray(r.specialties) ? r.specialties.slice(0, 8).map((s) => String(s).trim()) : [];
 
-      const menu = (r.menu || []).map((item, idx) => ({
-        id: typeof item.id === 'number' ? item.id : idx + 1,
-        name: (item.name || `Plat ${idx + 1}`).trim(),
-        description: (item.description || '').trim() || 'Délicieuse préparation maison.',
-        price: typeof item.price === 'number' ? Math.max(0, item.price) : 12.9,
-        category: (item.category || 'Plats').trim(),
-        isPopular: Boolean(item.isPopular),
-        allergens: Array.isArray(item.allergens) ? item.allergens.map(String) : [],
-        image: `https://picsum.photos/seed/gnv-menu-${i}-${idx}/400/300`,
-      })).filter(m => m.name);
+      const menu = (r.menu || [])
+        .map((item, idx) => ({
+          id: typeof item.id === 'number' ? item.id : idx + 1,
+          name: (item.name || `Plat ${idx + 1}`).trim(),
+          description: (item.description || '').trim() || 'Délicieuse préparation maison.',
+          price: typeof item.price === 'number' ? Math.max(0, item.price) : 12.9,
+          category: (item.category || 'Plats').trim(),
+          isPopular: Boolean(item.isPopular),
+          allergens: Array.isArray(item.allergens) ? item.allergens.map(String) : [],
+          image: `https://picsum.photos/seed/gnv-menu-${i}-${idx}/400/300`,
+        }))
+        .filter((m) => m.name);
 
       if (menu.length === 0) {
         menu.push(
-          { id: 1, name: 'Plat du jour', description: 'Selon arrivage', price: 14.9, category: 'Plats', isPopular: true, allergens: [], image: 'https://picsum.photos/seed/gnv-menu/400/300' },
-          { id: 2, name: 'Salade méditerranéenne', description: 'Quinoa, feta, olives', price: 10.5, category: 'Entrées', isPopular: false, allergens: ['lactose'], image: 'https://picsum.photos/seed/gnv-menu/400/300' },
-          { id: 3, name: 'Dessert du chef', description: 'Sélection du jour', price: 6.5, category: 'Desserts', isPopular: true, allergens: [], image: 'https://picsum.photos/seed/gnv-menu/400/300' },
+          {
+            id: 1,
+            name: 'Plat du jour',
+            description: 'Selon arrivage',
+            price: 14.9,
+            category: 'Plats',
+            isPopular: true,
+            allergens: [],
+            image: 'https://picsum.photos/seed/gnv-menu/400/300',
+          },
+          {
+            id: 2,
+            name: 'Salade méditerranéenne',
+            description: 'Quinoa, feta, olives',
+            price: 10.5,
+            category: 'Entrées',
+            isPopular: false,
+            allergens: ['lactose'],
+            image: 'https://picsum.photos/seed/gnv-menu/400/300',
+          },
+          {
+            id: 3,
+            name: 'Dessert du chef',
+            description: 'Sélection du jour',
+            price: 6.5,
+            category: 'Desserts',
+            isPopular: true,
+            allergens: [],
+            image: 'https://picsum.photos/seed/gnv-menu/400/300',
+          }
         );
       }
 
@@ -146,7 +185,9 @@ async function seedRestaurantBateauExcellence() {
       const rawTranslations = r.translations || {};
       for (const lang of LANGS) {
         const t = rawTranslations[lang];
-        if (!t) {continue;}
+        if (!t) {
+          continue;
+        }
         const entry = {
           name: (t.name || name).trim().slice(0, 200),
           description: (t.description || description).trim().slice(0, 2000),
@@ -158,8 +199,9 @@ async function seedRestaurantBateauExcellence() {
           }));
         } else if (Array.isArray(t.menu)) {
           entry.menu = menu.map((m, idx) => ({
-            name: (t.menu[idx] && t.menu[idx].name) ? t.menu[idx].name.trim().slice(0, 200) : m.name,
-            description: (t.menu[idx] && t.menu[idx].description) ? t.menu[idx].description.trim().slice(0, 500) : m.description,
+            name: t.menu[idx] && t.menu[idx].name ? t.menu[idx].name.trim().slice(0, 200) : m.name,
+            description:
+              t.menu[idx] && t.menu[idx].description ? t.menu[idx].description.trim().slice(0, 500) : m.description,
           }));
         }
         translations[lang] = entry;
@@ -169,7 +211,7 @@ async function seedRestaurantBateauExcellence() {
         translations.fr = {
           name: name.slice(0, 200),
           description: description.slice(0, 2000),
-          menu: menu.map(m => ({ name: m.name, description: m.description })),
+          menu: menu.map((m) => ({ name: m.name, description: m.description })),
         };
       }
 
@@ -199,7 +241,9 @@ async function seedRestaurantBateauExcellence() {
     console.log('\n✅ Seed restaurant Bateau Excellence (multilingue) terminé. Restaurants sur ce bateau:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) {console.error(err.response.data);}
+    if (err.response?.data) {
+      console.error(err.response.data);
+    }
     process.exit(1);
   } finally {
     await mongoose.disconnect();

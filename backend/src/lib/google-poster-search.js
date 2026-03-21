@@ -22,9 +22,7 @@ async function fetchPosterUrlFromGoogle(title) {
     return null;
   }
 
-  const query = typeof title === 'string' && title.trim()
-    ? `${title.trim()} movie poster`
-    : 'movie poster';
+  const query = typeof title === 'string' && title.trim() ? `${title.trim()} movie poster` : 'movie poster';
   const qs = new URLSearchParams({
     key: apiKey,
     cx,
@@ -39,7 +37,9 @@ async function fetchPosterUrlFromGoogle(title) {
   return new Promise((resolve) => {
     const req = https.get(url, (res) => {
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
       res.on('end', () => {
         try {
           const json = JSON.parse(data);

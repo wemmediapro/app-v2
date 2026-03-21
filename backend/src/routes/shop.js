@@ -6,30 +6,51 @@ const Product = require('../models/Product');
 const Promotion = require('../models/Promotion');
 const { safeRegexSearch } = require('../utils/regex-escape');
 const shopFallback = require('../lib/shop-fallback');
+const cacheManager = require('../lib/cache-manager');
 
 const router = express.Router();
 
+async function invalidateShopListCache() {
+  if (cacheManager.isConnected) {
+    await cacheManager.delPattern('list:shop:*');
+  }
+}
+
 const PRODUCT_TYPE_ENUM = ['physical', 'digital', 'service'];
 function normalizeProductType(v) {
-  if (!v || typeof v !== 'string') {return 'physical';}
+  if (!v || typeof v !== 'string') {
+    return 'physical';
+  }
   const t = v.trim().toLowerCase();
   return PRODUCT_TYPE_ENUM.includes(t) ? t : 'physical';
 }
 
 // Applique la langue demandée (name, description). Langues: en, es, it, de, ar. Pour fr ou non fourni, champs principaux renvoyés.
 function localizeProduct(doc, lang) {
-  if (!doc) {return doc;}
+  if (!doc) {
+    return doc;
+  }
   const code = (lang && String(lang).trim().toLowerCase()) || null;
-  const out = { ...doc, id: doc._id?.toString(), imageUrl: doc.images?.[0]?.url || doc.images?.[0] || '', image: doc.images?.[0]?.url || doc.images?.[0] || '' };
+  const out = {
+    ...doc,
+    id: doc._id?.toString(),
+    imageUrl: doc.images?.[0]?.url || doc.images?.[0] || '',
+    image: doc.images?.[0]?.url || doc.images?.[0] || '',
+  };
   if (code && doc.translations && doc.translations[code]) {
     const t = doc.translations[code];
-    if (t.name) {out.name = t.name;}
-    if (t.description) {out.description = t.description;}
+    if (t.name) {
+      out.name = t.name;
+    }
+    if (t.description) {
+      out.description = t.description;
+    }
   }
   return out;
 }
 
 // Get all products (MongoDB) — ?lang= pour contenu localisé
+// Cache Redis 120s pour listes publiques (sans Authorization) — voir cache-manager TTL list:shop:
 router.get('/', optionalAuth, validatePagination, async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
@@ -37,11 +58,35 @@ router.get('/', optionalAuth, validatePagination, async (req, res) => {
       return res.status(200).json(items);
     }
     const { category, page = 1, limit = 20, lang, all } = req.query;
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 20;
+    const langNorm = (lang && String(lang).trim()) || '';
+    const catNorm = (category && String(category).trim()) || '';
+    const allNorm = all === '1' ? '1' : '0';
+
+    if (!req.get('Authorization')) {
+      const cacheKey = `list:shop:${catNorm}:${pageNum}:${limitNum}:${langNorm}:${allNorm}`;
+      const cached = await cacheManager.get(cacheKey);
+      if (cached) {
+        return res.json(cached);
+      }
+    }
+
     const query = all === '1' ? {} : { isActive: true };
-    if (category && category !== 'all') {query.category = category;}
-    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
-    const list = await Product.find(query).sort({ isFeatured: -1, createdAt: -1 }).skip(skip).limit(parseInt(limit, 10) || 20).lean();
-    const items = list.map(doc => localizeProduct(doc, lang));
+    if (category && category !== 'all') {
+      query.category = category;
+    }
+    const skip = (pageNum - 1) * limitNum;
+    const list = await Product.find(query)
+      .sort({ isFeatured: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+    const items = list.map((doc) => localizeProduct(doc, lang));
+    if (!req.get('Authorization')) {
+      const cacheKey = `list:shop:${catNorm}:${pageNum}:${limitNum}:${langNorm}:${allNorm}`;
+      await cacheManager.set(cacheKey, items);
+    }
     res.json(items);
   } catch (error) {
     console.error('Get products error:', error);
@@ -71,10 +116,13 @@ router.post('/', authMiddleware, adminMiddleware, productCreateValidation, async
     } else if (body.imageUrl) {
       body.images = [{ url: body.imageUrl, alt: body.name, isPrimary: true }];
     }
-    if (body.translations && typeof body.translations !== 'object') {delete body.translations;}
+    if (body.translations && typeof body.translations !== 'object') {
+      delete body.translations;
+    }
     body.type = normalizeProductType(body.type);
     const product = await Product.create(body);
     const doc = product.toObject ? product.toObject() : product;
+    await invalidateShopListCache();
     return res.status(201).json(localizeProduct(doc));
   } catch (error) {
     console.error('Create product error:', error);
@@ -104,10 +152,15 @@ router.put('/:id', authMiddleware, adminMiddleware, productUpdateValidation, asy
     } else if (body.imageUrl) {
       body.images = [{ url: body.imageUrl, alt: body.name || '', isPrimary: true }];
     }
-    if (body.translations && typeof body.translations !== 'object') {delete body.translations;}
+    if (body.translations && typeof body.translations !== 'object') {
+      delete body.translations;
+    }
     body.type = normalizeProductType(body.type);
     const updated = await Product.findByIdAndUpdate(id, { $set: body }, { new: true }).lean();
-    if (!updated) {return res.status(404).json({ message: 'Product not found' });}
+    if (!updated) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    await invalidateShopListCache();
     return res.json(localizeProduct(updated));
   } catch (error) {
     console.error('Update product error:', error);
@@ -125,7 +178,10 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
     const deleted = await Product.findByIdAndDelete(req.params.id);
-    if (!deleted) {return res.status(404).json({ message: 'Product not found' });}
+    if (!deleted) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    await invalidateShopListCache();
     return res.json({ message: 'Product deleted' });
   } catch (error) {
     console.error('Delete product error:', error);
@@ -175,9 +231,16 @@ router.get('/search/query', optionalAuth, async (req, res) => {
     } else {
       return res.json({ products: [] });
     }
-    if (category && category !== 'all') {query.category = category;}
+    if (category && category !== 'all') {
+      query.category = category;
+    }
     const list = await Product.find(query).limit(50).lean();
-    const products_result = list.map(doc => ({ ...doc, id: doc._id?.toString(), imageUrl: doc.images?.[0]?.url || '', image: doc.images?.[0]?.url || '' }));
+    const products_result = list.map((doc) => ({
+      ...doc,
+      id: doc._id?.toString(),
+      imageUrl: doc.images?.[0]?.url || '',
+      image: doc.images?.[0]?.url || '',
+    }));
     res.json({ products: products_result });
   } catch (error) {
     console.error('Search products error:', error);
@@ -196,10 +259,20 @@ router.get('/promotions', optionalAuth, async (req, res) => {
       return res.status(200).json(shopFallback.getPromotions());
     }
     const list = await Promotion.find({}).sort({ createdAt: -1 }).lean();
-    const items = list.map(doc => {
+    const items = list.map((doc) => {
       const d = { ...doc, id: doc._id?.toString() };
-      if (doc.validFrom) {d.validFrom = typeof doc.validFrom === 'string' ? doc.validFrom : doc.validFrom.toISOString?.()?.slice(0, 10) || doc.validFrom;}
-      if (doc.validUntil) {d.validUntil = typeof doc.validUntil === 'string' ? doc.validUntil : doc.validUntil.toISOString?.()?.slice(0, 10) || doc.validUntil;}
+      if (doc.validFrom) {
+        d.validFrom =
+          typeof doc.validFrom === 'string'
+            ? doc.validFrom
+            : doc.validFrom.toISOString?.()?.slice(0, 10) || doc.validFrom;
+      }
+      if (doc.validUntil) {
+        d.validUntil =
+          typeof doc.validUntil === 'string'
+            ? doc.validUntil
+            : doc.validUntil.toISOString?.()?.slice(0, 10) || doc.validUntil;
+      }
       return d;
     });
     res.json(items);
@@ -219,13 +292,23 @@ router.post('/promotions', authMiddleware, adminMiddleware, async (req, res) => 
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
     const body = { ...req.body };
-    if (body.validFrom && typeof body.validFrom === 'string') {body.validFrom = new Date(body.validFrom);}
-    if (body.validUntil && typeof body.validUntil === 'string') {body.validUntil = new Date(body.validUntil);}
+    if (body.validFrom && typeof body.validFrom === 'string') {
+      body.validFrom = new Date(body.validFrom);
+    }
+    if (body.validUntil && typeof body.validUntil === 'string') {
+      body.validUntil = new Date(body.validUntil);
+    }
     const promo = await Promotion.create(body);
     const doc = promo.toObject ? promo.toObject() : promo;
     const out = { ...doc, id: doc._id?.toString() };
-    if (out.validFrom) {out.validFrom = typeof out.validFrom === 'string' ? out.validFrom : out.validFrom.toISOString?.()?.slice(0, 10);}
-    if (out.validUntil) {out.validUntil = typeof out.validUntil === 'string' ? out.validUntil : out.validUntil.toISOString?.()?.slice(0, 10);}
+    if (out.validFrom) {
+      out.validFrom = typeof out.validFrom === 'string' ? out.validFrom : out.validFrom.toISOString?.()?.slice(0, 10);
+    }
+    if (out.validUntil) {
+      out.validUntil =
+        typeof out.validUntil === 'string' ? out.validUntil : out.validUntil.toISOString?.()?.slice(0, 10);
+    }
+    await invalidateShopListCache();
     return res.status(201).json(out);
   } catch (error) {
     console.error('Create promotion error:', error);
@@ -247,13 +330,25 @@ router.put('/promotions/:id', authMiddleware, adminMiddleware, async (req, res) 
     delete body._id;
     delete body.id;
     delete body.createdAt;
-    if (body.validFrom && typeof body.validFrom === 'string') {body.validFrom = new Date(body.validFrom);}
-    if (body.validUntil && typeof body.validUntil === 'string') {body.validUntil = new Date(body.validUntil);}
+    if (body.validFrom && typeof body.validFrom === 'string') {
+      body.validFrom = new Date(body.validFrom);
+    }
+    if (body.validUntil && typeof body.validUntil === 'string') {
+      body.validUntil = new Date(body.validUntil);
+    }
     const updated = await Promotion.findByIdAndUpdate(id, { $set: body }, { new: true }).lean();
-    if (!updated) {return res.status(404).json({ message: 'Promotion not found' });}
+    if (!updated) {
+      return res.status(404).json({ message: 'Promotion not found' });
+    }
     const out = { ...updated, id: updated._id?.toString() };
-    if (out.validFrom) {out.validFrom = typeof out.validFrom === 'string' ? out.validFrom : out.validFrom.toISOString?.()?.slice(0, 10);}
-    if (out.validUntil) {out.validUntil = typeof out.validUntil === 'string' ? out.validUntil : out.validUntil.toISOString?.()?.slice(0, 10);}
+    if (out.validFrom) {
+      out.validFrom = typeof out.validFrom === 'string' ? out.validFrom : out.validFrom.toISOString?.()?.slice(0, 10);
+    }
+    if (out.validUntil) {
+      out.validUntil =
+        typeof out.validUntil === 'string' ? out.validUntil : out.validUntil.toISOString?.()?.slice(0, 10);
+    }
+    await invalidateShopListCache();
     return res.json(out);
   } catch (error) {
     console.error('Update promotion error:', error);
@@ -271,7 +366,10 @@ router.delete('/promotions/:id', authMiddleware, adminMiddleware, async (req, re
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
     const deleted = await Promotion.findByIdAndDelete(req.params.id);
-    if (!deleted) {return res.status(404).json({ message: 'Promotion not found' });}
+    if (!deleted) {
+      return res.status(404).json({ message: 'Promotion not found' });
+    }
+    await invalidateShopListCache();
     return res.json({ message: 'Promotion deleted' });
   } catch (error) {
     console.error('Delete promotion error:', error);
@@ -287,12 +385,16 @@ router.get('/:id', optionalAuth, async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       const doc = shopFallback.getProductById(req.params.id, req.query.lang);
-      if (!doc) {return res.status(404).json({ message: 'Product not found' });}
+      if (!doc) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
       return res.json(doc);
     }
     const { lang } = req.query;
     const doc = await Product.findOne({ _id: req.params.id }).lean();
-    if (!doc) {return res.status(404).json({ message: 'Product not found' });}
+    if (!doc) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
     res.json(localizeProduct(doc, lang));
   } catch (error) {
     console.error('Get product error:', error);
@@ -390,7 +492,7 @@ router.post('/orders/create', authenticateToken, async (req, res) => {
       id: Date.now().toString(),
       userId: req.user._id,
       items,
-      total: items.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+      total: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
       status: 'pending',
       createdAt: new Date(),
       shippingAddress,

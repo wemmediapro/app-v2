@@ -11,7 +11,9 @@ class DatabaseManager {
     this.retryCount = 0;
     // 0 ou non défini = reconnexion illimitée (MongoDB ne s'arrête pas de réessayer)
     this.maxRetries = parseInt(process.env.MONGODB_RECONNECT_MAX_RETRIES, 10);
-    if (Number.isNaN(this.maxRetries)) {this.maxRetries = 0;}
+    if (Number.isNaN(this.maxRetries)) {
+      this.maxRetries = 0;
+    }
     this.retryDelay = parseInt(process.env.MONGODB_RECONNECT_DELAY_MS, 10) || 5000;
     this.retryDelayMax = parseInt(process.env.MONGODB_RECONNECT_DELAY_MAX_MS, 10) || 60000;
     this.reconnectTimer = null;
@@ -77,7 +79,9 @@ class DatabaseManager {
    * Détecte le type de serveur MongoDB depuis l'URI
    */
   detectServerType(uri) {
-    if (!uri) {return 'unknown';}
+    if (!uri) {
+      return 'unknown';
+    }
 
     if (uri.includes('mongodb+srv://')) {
       return 'atlas';
@@ -122,7 +126,9 @@ class DatabaseManager {
       if (retryUnlimited || this.retryCount < this.maxRetries) {
         this.scheduleReconnect(uri);
       } else {
-        console.error(`🛑 Nombre max de tentatives (${this.maxRetries}) atteint. Redémarrez le backend pour réessayer.`);
+        console.error(
+          `🛑 Nombre max de tentatives (${this.maxRetries}) atteint. Redémarrez le backend pour réessayer.`
+        );
       }
       return false;
     }
@@ -147,7 +153,9 @@ class DatabaseManager {
     connection.on('disconnected', () => {
       this.connectionState = 'disconnected';
       console.warn('⚠️  MongoDB: Déconnecté — reconnexion automatique en cours...');
-      if (this.uri) {this.scheduleReconnect(this.uri);}
+      if (this.uri) {
+        this.scheduleReconnect(this.uri);
+      }
     });
 
     connection.on('reconnected', () => {
@@ -169,7 +177,9 @@ class DatabaseManager {
     const delay = Math.min(this.retryDelay * this.retryCount, this.retryDelayMax);
     const label = this.maxRetries <= 0 ? `${this.retryCount}` : `${this.retryCount}/${this.maxRetries}`;
     console.log(`🔄 Reconnexion MongoDB dans ${delay / 1000}s (tentative ${label})...`);
-    if (this.reconnectTimer) {clearTimeout(this.reconnectTimer);}
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+    }
     this.reconnectTimer = setTimeout(() => this.connect(uri), delay);
   }
 

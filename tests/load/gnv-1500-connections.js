@@ -35,10 +35,7 @@ const WS_URL = API_URL.replace(/^http/, 'ws') + '/socket.io/?EIO=4&transport=web
 const JWT = __ENV.GNV_JWT || '';
 const USER_ID = __ENV.GNV_USER_ID || '';
 
-const IS_CI =
-  __ENV.LOAD_PROFILE === 'ci' ||
-  __ENV.CI === 'true' ||
-  __ENV.GITHUB_ACTIONS === 'true';
+const IS_CI = __ENV.LOAD_PROFILE === 'ci' || __ENV.CI === 'true' || __ENV.GITHUB_ACTIONS === 'true';
 
 const TARGET_VUS = IS_CI ? 100 : 1500;
 const STAGES = IS_CI
@@ -101,63 +98,59 @@ function runSocketSession(durationSec) {
   let joinSent = false;
   let canSend = false;
 
-  const res = ws.connect(
-    WS_URL,
-    { headers: { Origin: WS_ORIGIN } },
-    (socket) => {
-      socket.on('open', () => {});
+  const res = ws.connect(WS_URL, { headers: { Origin: WS_ORIGIN } }, (socket) => {
+    socket.on('open', () => {});
 
-      socket.on('message', (raw) => {
-        const msg = String(raw);
-        const h = msg[0];
-        if (h === '0') {
-          socket.send(connectNs);
-          return;
-        }
-        if (msg.startsWith('40')) {
-          if (!joinSent) {
-            joinSent = true;
-            socket.send(joinPacket);
-            socket.setTimeout(() => {
-              canSend = true;
-            }, 400);
-          }
-          return;
-        }
-        if (h === '2') {
-          socket.send('3');
-        }
-      });
-
-      socket.on('error', () => {
-        wsConnectFailures.add(1);
-      });
-
-      function scheduleSend() {
-        if (Date.now() >= deadline) {
-          socket.close();
-          return;
-        }
-        if (canSend) {
-          socket.send(
-            `42${JSON.stringify([
-              'send-message',
-              {
-                room,
-                content: `k6-${__VU}-${Date.now()}`,
-                text: 'load',
-              },
-            ])}`
-          );
-          wsMessageOk.add(1);
-        }
-        const delay = 3000 + Math.random() * 2000;
-        socket.setTimeout(scheduleSend, delay);
+    socket.on('message', (raw) => {
+      const msg = String(raw);
+      const h = msg[0];
+      if (h === '0') {
+        socket.send(connectNs);
+        return;
       }
+      if (msg.startsWith('40')) {
+        if (!joinSent) {
+          joinSent = true;
+          socket.send(joinPacket);
+          socket.setTimeout(() => {
+            canSend = true;
+          }, 400);
+        }
+        return;
+      }
+      if (h === '2') {
+        socket.send('3');
+      }
+    });
 
-      socket.setTimeout(scheduleSend, 1500);
+    socket.on('error', () => {
+      wsConnectFailures.add(1);
+    });
+
+    function scheduleSend() {
+      if (Date.now() >= deadline) {
+        socket.close();
+        return;
+      }
+      if (canSend) {
+        socket.send(
+          `42${JSON.stringify([
+            'send-message',
+            {
+              room,
+              content: `k6-${__VU}-${Date.now()}`,
+              text: 'load',
+            },
+          ])}`
+        );
+        wsMessageOk.add(1);
+      }
+      const delay = 3000 + Math.random() * 2000;
+      socket.setTimeout(scheduleSend, delay);
     }
-  );
+
+    socket.setTimeout(scheduleSend, 1500);
+  });
 
   if (res && res.status !== 101) {
     wsConnectFailures.add(1);

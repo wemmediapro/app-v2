@@ -19,7 +19,9 @@ const auditService = require('../services/auditService');
 const { auditContext } = require('../middleware/auditLog');
 
 async function invalidateAuthUserCache(userId) {
-  if (!userId || !cacheManager.isConnected) {return;}
+  if (!userId || !cacheManager.isConnected) {
+    return;
+  }
   try {
     await cacheManager.del(`auth:user:${userId}`);
   } catch (_) {
@@ -30,8 +32,12 @@ async function invalidateAuthUserCache(userId) {
 // [SEC-1/PERF-1] Hash bcrypt admin pré-calculé une fois au premier login (évite bcrypt.hash à chaque requête)
 let cachedAdminPasswordHash = null;
 async function getAdminPasswordHash(adminPassword) {
-  if (!adminPassword) {return null;}
-  if (cachedAdminPasswordHash !== null) {return cachedAdminPasswordHash;}
+  if (!adminPassword) {
+    return null;
+  }
+  if (cachedAdminPasswordHash !== null) {
+    return cachedAdminPasswordHash;
+  }
   cachedAdminPasswordHash = await bcrypt.hash(adminPassword, 12);
   return cachedAdminPasswordHash;
 }
@@ -48,7 +54,7 @@ const loginLimiter = rateLimit({
 const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
-  message: { message: 'Trop de tentatives d\'inscription. Réessayez dans 15 minutes.' },
+  message: { message: "Trop de tentatives d'inscription. Réessayez dans 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -58,8 +64,12 @@ const router = express.Router();
 /** Option secure du cookie : true seulement si la requête arrive en HTTPS (évite 401 sur dashboard en HTTP). */
 function isSecureRequest(req) {
   const proto = req.get('X-Forwarded-Proto');
-  if (proto === 'https') {return true;}
-  if (proto === 'http') {return false;}
+  if (proto === 'https') {
+    return true;
+  }
+  if (proto === 'http') {
+    return false;
+  }
   return !!req.secure;
 }
 
@@ -132,68 +142,79 @@ function getCookieOptions(req) {
  *       500:
  *         $ref: '#/components/schemas/Error'
  */
-router.post('/register', authMiddleware, adminMiddleware, auditContext, registerLimiter, registerValidation, async (req, res) => {
-  try {
-    const { firstName, lastName, email, password, phone, cabinNumber, country, dateOfBirth } = req.body;
+router.post(
+  '/register',
+  authMiddleware,
+  adminMiddleware,
+  auditContext,
+  registerLimiter,
+  registerValidation,
+  async (req, res) => {
+    try {
+      const { firstName, lastName, email, password, phone, cabinNumber, country, dateOfBirth } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists with this email' });
-    }
+      // Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: 'User already exists with this email' });
+      }
 
-    // C3 : new User() + save() → mot de passe hashé par le hook pre('save') du modèle User (bcrypt).
-    const user = new User({
-      firstName,
-      lastName,
-      email,
-      password,
-      phone,
-      cabinNumber,
-      country: country || undefined,
-      dateOfBirth: dateOfBirth || undefined,
-    });
+      // C3 : new User() + save() → mot de passe hashé par le hook pre('save') du modèle User (bcrypt).
+      const user = new User({
+        firstName,
+        lastName,
+        email,
+        password,
+        phone,
+        cabinNumber,
+        country: country || undefined,
+        dateOfBirth: dateOfBirth || undefined,
+      });
 
-    await user.save();
+      await user.save();
 
-    await auditService.logAction({
-      userId: req.user._id,
-      action: 'create-user',
-      resource: 'user',
-      resourceId: user._id,
-      changes: { after: { email: user.email, role: user.role } },
-      ipAddress: req.auditContext?.ipAddress,
-      userAgent: req.auditContext?.userAgent,
-    });
+      await auditService.logAction({
+        userId: req.user._id,
+        action: 'create-user',
+        resource: 'user',
+        resourceId: user._id,
+        changes: { after: { email: user.email, role: user.role } },
+        ipAddress: req.auditContext?.ipAddress,
+        userAgent: req.auditContext?.userAgent,
+      });
 
-    // [SEC-4] JWT uniquement dans le cookie httpOnly, pas dans le body
-    const token = generateToken({
-      id: user._id,
-      email: user.email,
-      role: user.role,
-    });
-    res.cookie('authToken', token, getCookieOptions(req));
-
-    res.status(201).json({
-      message: 'User registered successfully',
-      user: {
+      // [SEC-4] JWT uniquement dans le cookie httpOnly, pas dans le body
+      const token = generateToken({
         id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
         email: user.email,
         role: user.role,
-        cabinNumber: user.cabinNumber,
-        country: user.country,
-        dateOfBirth: user.dateOfBirth,
-        phone: user.phone,
-        userData: user.userData || { favorites: { magazineIds: [], restaurantIds: [], enfantIds: [], watchlist: [], shopItems: [] }, playbackPositions: {} },
-      },
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ message: 'Server error during registration' });
+      });
+      res.cookie('authToken', token, getCookieOptions(req));
+
+      res.status(201).json({
+        message: 'User registered successfully',
+        user: {
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          cabinNumber: user.cabinNumber,
+          country: user.country,
+          dateOfBirth: user.dateOfBirth,
+          phone: user.phone,
+          userData: user.userData || {
+            favorites: { magazineIds: [], restaurantIds: [], enfantIds: [], watchlist: [], shopItems: [] },
+            playbackPositions: {},
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ message: 'Server error during registration' });
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -280,7 +301,7 @@ router.post('/login', auditContext, loginLimiter, loginValidation, async (req, r
     if (!user) {
       // C3 / P2 : auto-création admin — comparaison uniquement via bcrypt.compare (jamais === en clair).
       // User créé avec mot de passe en clair puis save() → pre('save') bcrypt du modèle hash avant persistance.
-      const envPasswordMatches = adminPasswordHash && await bcrypt.compare(password, adminPasswordHash);
+      const envPasswordMatches = adminPasswordHash && (await bcrypt.compare(password, adminPasswordHash));
       if (email.trim().toLowerCase() === effectiveAdminEmail && envPasswordMatches) {
         const adminUser = new User({
           firstName: 'Admin',
@@ -325,7 +346,8 @@ router.post('/login', auditContext, loginLimiter, loginValidation, async (req, r
 
       // C3 / P3 : comparaison toujours via bcrypt.compare / user.comparePassword, jamais timing ou === en clair.
       const isPasswordValid = await user.comparePassword(password);
-      const envPasswordMatch = (user.role === 'admin' && adminPasswordHash && await bcrypt.compare(password, adminPasswordHash));
+      const envPasswordMatch =
+        user.role === 'admin' && adminPasswordHash && (await bcrypt.compare(password, adminPasswordHash));
       if (!isPasswordValid && !envPasswordMatch) {
         logFailedLogin(email, 'invalid_password', req);
         await auditService.logAction({
@@ -343,7 +365,7 @@ router.post('/login', auditContext, loginLimiter, loginValidation, async (req, r
     }
 
     const fresh = await User.findById(user._id).select(
-      'role twoFactorEnabled firstName lastName email phone cabinNumber country dateOfBirth preferences allowedModules mustChangePassword userData',
+      'role twoFactorEnabled firstName lastName email phone cabinNumber country dateOfBirth preferences allowedModules mustChangePassword userData'
     );
     if (!fresh) {
       logFailedLogin(email, 'user_not_found', req);
@@ -362,8 +384,7 @@ router.post('/login', auditContext, loginLimiter, loginValidation, async (req, r
         });
       }
       const secureUser = await User.findById(user._id).select('+twoFactorSecret +twoFactorBackupCodes');
-      const okTotp =
-        secureUser.twoFactorSecret && authService.verifyTOTPToken(secureUser.twoFactorSecret, tfa);
+      const okTotp = secureUser.twoFactorSecret && authService.verifyTOTPToken(secureUser.twoFactorSecret, tfa);
       const backupRes = okTotp ? { valid: false } : await authService.validateBackupCode(secureUser, tfa);
       if (!okTotp && !backupRes.valid) {
         logFailedLogin(email, 'invalid_2fa', req);
@@ -386,7 +407,7 @@ router.post('/login', auditContext, loginLimiter, loginValidation, async (req, r
     }
 
     const userForLogin = await User.findById(user._id).select(
-      'firstName lastName email role phone cabinNumber country dateOfBirth preferences allowedModules mustChangePassword userData twoFactorEnabled',
+      'firstName lastName email role phone cabinNumber country dateOfBirth preferences allowedModules mustChangePassword userData twoFactorEnabled'
     );
     userForLogin.lastLogin = new Date();
     await userForLogin.save();
@@ -430,11 +451,10 @@ router.post('/login', auditContext, loginLimiter, loginValidation, async (req, r
         allowedModules: userForLogin.allowedModules,
         mustChangePassword: !!userForLogin.mustChangePassword,
         twoFactorEnabled: !!userForLogin.twoFactorEnabled,
-        userData:
-          userForLogin.userData || {
-            favorites: { magazineIds: [], restaurantIds: [], enfantIds: [], watchlist: [], shopItems: [] },
-            playbackPositions: {},
-          },
+        userData: userForLogin.userData || {
+          favorites: { magazineIds: [], restaurantIds: [], enfantIds: [], watchlist: [], shopItems: [] },
+          playbackPositions: {},
+        },
       },
     });
   } catch (error) {
@@ -480,7 +500,7 @@ router.post('/2fa/complete-login', auditContext, loginLimiter, async (req, res) 
     }
     const userId = decoded.sub || decoded.id;
     const user = await User.findById(userId).select(
-      '+twoFactorSecret +twoFactorBackupCodes role email firstName lastName phone cabinNumber country dateOfBirth preferences allowedModules mustChangePassword userData twoFactorEnabled isActive',
+      '+twoFactorSecret +twoFactorBackupCodes role email firstName lastName phone cabinNumber country dateOfBirth preferences allowedModules mustChangePassword userData twoFactorEnabled isActive'
     );
     if (!user || !user.isActive) {
       return res.status(401).json({ message: 'Utilisateur introuvable ou inactif' });
@@ -545,11 +565,10 @@ router.post('/2fa/complete-login', auditContext, loginLimiter, async (req, res) 
         allowedModules: user.allowedModules,
         mustChangePassword: !!user.mustChangePassword,
         twoFactorEnabled: true,
-        userData:
-          user.userData || {
-            favorites: { magazineIds: [], restaurantIds: [], enfantIds: [], watchlist: [], shopItems: [] },
-            playbackPositions: {},
-          },
+        userData: user.userData || {
+          favorites: { magazineIds: [], restaurantIds: [], enfantIds: [], watchlist: [], shopItems: [] },
+          playbackPositions: {},
+        },
       },
     });
   } catch (error) {
@@ -563,7 +582,9 @@ router.post('/2fa/complete-login', auditContext, loginLimiter, async (req, res) 
 // @access  Private admin
 router.post('/2fa/setup', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const u = await User.findById(req.user.id).select('+twoFactorPendingSecret +twoFactorPendingBackupHashes email twoFactorEnabled');
+    const u = await User.findById(req.user.id).select(
+      '+twoFactorPendingSecret +twoFactorPendingBackupHashes email twoFactorEnabled'
+    );
     if (u.twoFactorEnabled) {
       return res.status(400).json({ message: 'Le 2FA est déjà activé pour ce compte.' });
     }
@@ -681,7 +702,9 @@ router.post('/refresh', authMiddleware, (req, res) => {
       email: req.user.email,
       role: req.user.role,
     };
-    if (dec.mfa === true) {payload.mfa = true;}
+    if (dec.mfa === true) {
+      payload.mfa = true;
+    }
     const newToken = generateToken(payload);
     res.cookie('authToken', newToken, getCookieOptions(req));
     res.json({ message: 'Token refreshed' });
@@ -727,13 +750,27 @@ router.put('/profile', authMiddleware, profileValidation, async (req, res) => {
     }
 
     // Update fields (email cannot be changed)
-    if (firstName !== undefined) {user.firstName = firstName;}
-    if (lastName !== undefined) {user.lastName = lastName;}
-    if (phone !== undefined) {user.phone = phone;}
-    if (cabinNumber !== undefined) {user.cabinNumber = cabinNumber;}
-    if (country !== undefined) {user.country = country;}
-    if (dateOfBirth !== undefined) {user.dateOfBirth = dateOfBirth;}
-    if (preferences) {user.preferences = { ...user.preferences, ...preferences };}
+    if (firstName !== undefined) {
+      user.firstName = firstName;
+    }
+    if (lastName !== undefined) {
+      user.lastName = lastName;
+    }
+    if (phone !== undefined) {
+      user.phone = phone;
+    }
+    if (cabinNumber !== undefined) {
+      user.cabinNumber = cabinNumber;
+    }
+    if (country !== undefined) {
+      user.country = country;
+    }
+    if (dateOfBirth !== undefined) {
+      user.dateOfBirth = dateOfBirth;
+    }
+    if (preferences) {
+      user.preferences = { ...user.preferences, ...preferences };
+    }
 
     await user.save();
 
@@ -798,7 +835,11 @@ router.get('/user-data', authMiddleware, async (req, res) => {
     }
     const data = user.userData || {};
     const favorites = data.favorites || {
-      magazineIds: [], restaurantIds: [], enfantIds: [], watchlist: [], shopItems: [],
+      magazineIds: [],
+      restaurantIds: [],
+      enfantIds: [],
+      watchlist: [],
+      shopItems: [],
     };
     const playbackPositions = data.playbackPositions || {};
     res.json({ favorites, playbackPositions });
@@ -851,6 +892,3 @@ router.put('/user-data', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
-
-
-

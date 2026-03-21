@@ -25,10 +25,7 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
     const conversations = await Message.aggregate([
       {
         $match: {
-          $or: [
-            { sender: req.user.id },
-            { receiver: req.user.id },
-          ],
+          $or: [{ sender: req.user.id }, { receiver: req.user.id }],
         },
       },
       {
@@ -37,21 +34,14 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
       {
         $group: {
           _id: {
-            $cond: [
-              { $eq: ['$sender', req.user.id] },
-              '$receiver',
-              '$sender',
-            ],
+            $cond: [{ $eq: ['$sender', req.user.id] }, '$receiver', '$sender'],
           },
           lastMessage: { $first: '$$ROOT' },
           unreadCount: {
             $sum: {
               $cond: [
                 {
-                  $and: [
-                    { $eq: ['$receiver', req.user.id] },
-                    { $eq: ['$isRead', false] },
-                  ],
+                  $and: [{ $eq: ['$receiver', req.user.id] }, { $eq: ['$isRead', false] }],
                 },
                 1,
                 0,
@@ -129,22 +119,24 @@ router.get(
 
       if (isEmail) {
         const safe = sanitizeSearchString(qTrimmed);
-        if (safe) {searchQuery.email = { $regex: safe, $options: 'i' };}
+        if (safe) {
+          searchQuery.email = { $regex: safe, $options: 'i' };
+        }
       } else if (isPhone) {
         const safe = sanitizeSearchString(phoneNumber);
-        if (safe) {searchQuery.phone = { $regex: safe, $options: 'i' };}
+        if (safe) {
+          searchQuery.phone = { $regex: safe, $options: 'i' };
+        }
       }
 
-      const users = await User.find(searchQuery)
-        .select('firstName lastName email phone cabinNumber avatar')
-        .limit(10);
+      const users = await User.find(searchQuery).select('firstName lastName email phone cabinNumber avatar').limit(10);
 
       res.json(users);
     } catch (error) {
       console.error('Search users error:', error);
       res.status(500).json({ message: 'Server error' });
     }
-  },
+  }
 );
 
 // @route   GET /api/messages/:userId
@@ -182,7 +174,7 @@ router.get(
         {
           isRead: true,
           readAt: new Date(),
-        },
+        }
       );
 
       res.json(messages.reverse());
@@ -190,7 +182,7 @@ router.get(
       console.error('Get messages error:', error);
       res.status(500).json({ message: 'Server error' });
     }
-  },
+  }
 );
 
 // @route   POST /api/messages
@@ -201,7 +193,12 @@ router.post(
   authMiddleware,
   [
     body('receiver').isMongoId().withMessage('Invalid receiver id'),
-    body('content').trim().notEmpty().withMessage('Content is required').isLength({ max: 1000 }).withMessage('Content too long'),
+    body('content')
+      .trim()
+      .notEmpty()
+      .withMessage('Content is required')
+      .isLength({ max: 1000 })
+      .withMessage('Content too long'),
     body('type').optional().isIn(['text', 'image', 'file']),
     body('attachments').optional().isArray(),
     body('clientSyncId').optional().isString().isLength({ min: 1, max: 128 }).withMessage('clientSyncId invalide'),
@@ -273,9 +270,7 @@ router.post(
       console.error('Send message error:', error);
       res.status(500).json({ message: 'Server error' });
     }
-  },
+  }
 );
 
 module.exports = router;
-
-

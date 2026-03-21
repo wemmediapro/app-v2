@@ -42,7 +42,8 @@ function App() {
 
   // Auth par cookie httpOnly : vérifier la session au chargement (pas de lecture du token en JS)
   useEffect(() => {
-    authService.getProfile()
+    authService
+      .getProfile()
       .then((res) => {
         if (res.data?.role === 'admin') {
           setUser(res.data);
@@ -86,8 +87,8 @@ function App() {
       <BoatConfigProvider>
         <Router basename="/dashboard" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AppRoutes user={user} onLogout={handleLogout} onLogin={handleLogin} isAuthenticated={isAuthenticated} />
-        <Toaster position="top-right" />
-      </Router>
+          <Toaster position="top-right" />
+        </Router>
       </BoatConfigProvider>
     </LanguageProvider>
   );
@@ -98,44 +99,62 @@ function AppRoutes({ user, onLogout, onLogin, isAuthenticated }) {
   const isMobileView = useIsMobileView();
   return (
     <Routes>
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={onLogin} />} />
-      <Route path="/*" element={!isAuthenticated ? (
-        <Navigate to="/login" replace />
-      ) : (
-        <div className="min-h-screen bg-gray-50 min-w-0">
-          <Sidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isMobileView={isMobileView} />
-          <div className={isMobileView ? 'min-w-0' : 'pl-64 min-w-0'}>
-            <Header user={user} onLogout={onLogout} onMenuClick={() => setSidebarOpen(true)} showHamburger={isMobileView} />
-            <main className="p-4 sm:p-6 lg:p-8 min-w-0 overflow-x-auto">
-              <div className="max-w-[1440px] mx-auto w-full">
-                <Breadcrumb />
-                <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/statistics" element={<Statistics />} />
-                <Route path="/users" element={<Users />} />
-                <Route path="/radio" element={<Radio />} />
-                <Route path="/library" element={<Library />} />
-                <Route path="/movies" element={<Movies />} />
-                <Route path="/magazine" element={<Magazine />} />
-                <Route path="/webtv" element={<WebTV />} />
-                <Route path="/bibliotheque" element={<Bibliotheque />} />
-                <Route path="/restaurants" element={<Restaurants />} />
-                <Route path="/enfant" element={<Enfant />} />
-                <Route path="/shipmap" element={<ShipMap />} />
-                <Route path="/shop" element={<Shop />} />
-                <Route path="/banners" element={<Banners />} />
-                <Route path="/ads" element={<Ads />} />
-                <Route path="/messages" element={<Notifications />} />
-                <Route path="/connexions" element={<Connexions />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/settings/connection" element={<Connexions />} />
-                </Routes>
+      <Route
+        path="/login"
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={onLogin} />}
+      />
+      <Route
+        path="/*"
+        element={
+          !isAuthenticated ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <div className="min-h-screen bg-gray-50 min-w-0">
+              <Sidebar
+                user={user}
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+                isMobileView={isMobileView}
+              />
+              <div className={isMobileView ? 'min-w-0' : 'pl-64 min-w-0'}>
+                <Header
+                  user={user}
+                  onLogout={onLogout}
+                  onMenuClick={() => setSidebarOpen(true)}
+                  showHamburger={isMobileView}
+                />
+                <main className="p-4 sm:p-6 lg:p-8 min-w-0 overflow-x-auto">
+                  <div className="max-w-[1440px] mx-auto w-full">
+                    <Breadcrumb />
+                    <Routes>
+                      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/statistics" element={<Statistics />} />
+                      <Route path="/users" element={<Users />} />
+                      <Route path="/radio" element={<Radio />} />
+                      <Route path="/library" element={<Library />} />
+                      <Route path="/movies" element={<Movies />} />
+                      <Route path="/magazine" element={<Magazine />} />
+                      <Route path="/webtv" element={<WebTV />} />
+                      <Route path="/bibliotheque" element={<Bibliotheque />} />
+                      <Route path="/restaurants" element={<Restaurants />} />
+                      <Route path="/enfant" element={<Enfant />} />
+                      <Route path="/shipmap" element={<ShipMap />} />
+                      <Route path="/shop" element={<Shop />} />
+                      <Route path="/banners" element={<Banners />} />
+                      <Route path="/ads" element={<Ads />} />
+                      <Route path="/messages" element={<Notifications />} />
+                      <Route path="/connexions" element={<Connexions />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/settings/connection" element={<Connexions />} />
+                    </Routes>
+                  </div>
+                </main>
               </div>
-            </main>
-          </div>
-        </div>
-      )} />
+            </div>
+          )
+        }
+      />
     </Routes>
   );
 }

@@ -1,12 +1,44 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, FolderOpen, Plus, Edit, Trash2, 
-  Search, Play, Pause, X, Save, Clock, List, BarChart3, Volume2, VolumeX, 
-  Copy, CheckCircle, AlertCircle, GripVertical, Trash, Music, FileAudio,
-  Calendar as CalendarIcon, Repeat, ArrowUp, ArrowDown, Clock as ClockIcon,
-  History, Zap, Settings, MoreVertical, Image as ImageIcon, Upload
+import {
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  FolderOpen,
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Play,
+  Pause,
+  X,
+  Save,
+  Clock,
+  List,
+  BarChart3,
+  Volume2,
+  VolumeX,
+  Copy,
+  CheckCircle,
+  AlertCircle,
+  GripVertical,
+  Trash,
+  Music,
+  FileAudio,
+  Calendar as CalendarIcon,
+  Repeat,
+  ArrowUp,
+  ArrowDown,
+  Clock as ClockIcon,
+  History,
+  Zap,
+  Settings,
+  MoreVertical,
+  Image as ImageIcon,
+  Upload,
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -16,12 +48,12 @@ import toast from 'react-hot-toast';
 const Radio = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  
+
   // Navigation
   const [showProgrammingView, setShowProgrammingView] = useState(false); // Afficher la vue programmation ou la liste des stations
   const [activeSection, setActiveSection] = useState('programs'); // 'programs', 'planning', 'breaks', 'daily-generation', 'history'
   const [schedulingExpanded, setSchedulingExpanded] = useState(true);
-  
+
   // Stations
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +70,7 @@ const Radio = () => {
     isActive: true,
     sourceType: 'playlist',
     playlistId: '',
-    translations: emptyTranslations()
+    translations: emptyTranslations(),
   });
   // Playlists locales (Bibliothèque MP3) pour diffusion 100% offline
   const [localPlaylists, setLocalPlaylists] = useState(() => {
@@ -48,7 +80,7 @@ const Radio = () => {
       return [];
     }
   });
-  
+
   // Programs
   const [programs, setPrograms] = useState([]);
   const [showProgramModal, setShowProgramModal] = useState(false);
@@ -65,9 +97,9 @@ const Radio = () => {
     daysOfWeek: [],
     isRepeating: false,
     isActive: true,
-    tags: []
+    tags: [],
   });
-  
+
   // Planning
   const [planningView, setPlanningView] = useState('week'); // 'day', 'week', 'month'
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -84,22 +116,22 @@ const Radio = () => {
     title: '',
     date: '',
     startTime: '',
-    duration: 15
+    duration: 15,
   });
-  
+
   // Breaks
   const [breaks, setBreaks] = useState([]);
-  
+
   // Daily Generation
   const [dailyGeneration, setDailyGeneration] = useState({
     enabled: false,
     time: '00:00',
-    template: null
+    template: null,
   });
-  
+
   // History
   const [history, setHistory] = useState([]);
-  
+
   // Upload logo
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoLoadError, setLogoLoadError] = useState(false);
@@ -126,7 +158,7 @@ const Radio = () => {
     duration: 0,
     daysOfWeek: [],
     isRepeating: false,
-    isActive: true
+    isActive: true,
   });
   const [radioUploading, setRadioUploading] = useState(false);
   const [radioUploadProgress, setRadioUploadProgress] = useState(null); // 0-100 pendant l'upload, null sinon
@@ -140,8 +172,13 @@ const Radio = () => {
   const radioPreviewAudioRef = useRef(null);
   const radioDragSourceIndexRef = useRef(null); // index de l'élément en cours de déplacement (souris)
   const daysOfWeekRadio = [
-    { value: '0', label: 'Dim' }, { value: '1', label: 'Lun' }, { value: '2', label: 'Mar' },
-    { value: '3', label: 'Mer' }, { value: '4', label: 'Jeu' }, { value: '5', label: 'Ven' }, { value: '6', label: 'Sam' }
+    { value: '0', label: 'Dim' },
+    { value: '1', label: 'Lun' },
+    { value: '2', label: 'Mar' },
+    { value: '3', label: 'Mer' },
+    { value: '4', label: 'Jeu' },
+    { value: '5', label: 'Ven' },
+    { value: '6', label: 'Sam' },
   ];
 
   // Bibliothèque MP3
@@ -151,8 +188,12 @@ const Radio = () => {
   });
 
   const apiBaseUrl = import.meta.env.VITE_API_URL
-    ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
-    : (import.meta.env.DEV ? 'http://localhost:3000' : (typeof window !== 'undefined' ? '' : ''));
+    ? import.meta.env.VITE_API_URL.replace(/\/api(\/v1)?\/?$/i, '')
+    : import.meta.env.DEV
+      ? 'http://localhost:3000'
+      : typeof window !== 'undefined'
+        ? ''
+        : '';
   /** URL affichable pour le logo (toujours passer par l'origine API). Normalise les URLs complètes vers le path pour utiliser la base actuelle. */
   const logoUrl = (logo) => {
     if (!logo || typeof logo !== 'string') return null;
@@ -185,7 +226,8 @@ const Radio = () => {
   useEffect(() => {
     if (!showLibraryPickerRadio) return;
     setMediaLibraryLoading(true);
-    apiService.getMediaLibrary()
+    apiService
+      .getMediaLibrary()
       .then((res) => {
         const data = res?.data;
         if (data?.success && Array.isArray(data.media)) {
@@ -211,7 +253,8 @@ const Radio = () => {
   }, []);
 
   useEffect(() => {
-    apiService.healthCheck()
+    apiService
+      .healthCheck()
       .then((res) => setDbConnected(res.data?.mongodb === 'connected'))
       .catch(() => setDbConnected(false));
   }, []);
@@ -230,16 +273,17 @@ const Radio = () => {
     try {
       const raw = localStorage.getItem('playlists');
       const list = raw ? JSON.parse(raw) : [];
-      if (list.some(p => p.id === 'playlist_demo')) return;
+      if (list.some((p) => p.id === 'playlist_demo')) return;
       const demo = {
         id: 'playlist_demo',
         name: 'Démo Radio',
-        description: 'Playlist de démo pour diffusion 100% offline. Assignez-la à une station et ajoutez des programmes (upload MP3 direct).',
+        description:
+          'Playlist de démo pour diffusion 100% offline. Assignez-la à une station et ajoutez des programmes (upload MP3 direct).',
         files: [],
         color: '#7ED321',
         type: 'manual',
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
       const next = [...list, demo];
       localStorage.setItem('playlists', JSON.stringify(next));
@@ -251,7 +295,7 @@ const Radio = () => {
     try {
       setLoading(true);
       const response = await apiService.getRadioStations('all=1');
-      const data = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
       setStations(Array.isArray(data) ? data : []);
       if (data && data.length > 0) {
         setSelectedStation(data[0]);
@@ -271,7 +315,7 @@ const Radio = () => {
     try {
       await apiService.updateRadioStation(id, { isActive: !station.isActive });
       toast.success(station.isActive ? t('radio.stationDeactivated') : t('radio.stationActivated'));
-      setStations(prev => prev.map(s => (s.id || s._id) === id ? { ...s, isActive: !s.isActive } : s));
+      setStations((prev) => prev.map((s) => ((s.id || s._id) === id ? { ...s, isActive: !s.isActive } : s)));
     } catch (err) {
       toast.error(err.response?.data?.message || t('common.errorUpdate'));
     }
@@ -282,7 +326,7 @@ const Radio = () => {
     const id = station.id || station._id;
     try {
       await apiService.deleteRadioStation(id);
-      setStations(prev => prev.filter(s => (s.id || s._id) !== id));
+      setStations((prev) => prev.filter((s) => (s.id || s._id) !== id));
       toast.success(t('radio.stationDeleted'));
     } catch (err) {
       toast.error(err.response?.data?.message || t('common.errorUpdate'));
@@ -298,9 +342,20 @@ const Radio = () => {
 
   const resetRadioNewProgram = () => {
     setRadioNewProgram({
-      title: '', description: '', artist: '', startTime: '', endTime: '',
+      title: '',
+      description: '',
+      artist: '',
+      startTime: '',
+      endTime: '',
       order: radioPrograms.length,
-      type: 'music', mp3File: null, streamUrl: '', duration: 0, fileName: '', daysOfWeek: [], isRepeating: false, isActive: true
+      type: 'music',
+      mp3File: null,
+      streamUrl: '',
+      duration: 0,
+      fileName: '',
+      daysOfWeek: [],
+      isRepeating: false,
+      isActive: true,
     });
   };
 
@@ -320,9 +375,12 @@ const Radio = () => {
     }
     // Chemins relatifs : en production toujours utiliser l'origine de la page (évite lecture impossible sur la version hébergée)
     const path = streamUrl.startsWith('/') ? streamUrl : `/${streamUrl}`;
-    const origin = (typeof window !== 'undefined' && window.location?.origin)
-      ? window.location.origin
-      : (apiBaseUrl ? apiBaseUrl.replace(/\/api\/?$/, '') : '');
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : apiBaseUrl
+          ? apiBaseUrl.replace(/\/api(\/v1)?\/?$/i, '')
+          : '';
     return `${origin.replace(/\/$/, '')}${path}`;
   };
 
@@ -341,10 +399,13 @@ const Radio = () => {
       return;
     }
     audio.src = url;
-    audio.play().then(() => setPlayingRadioProgramIndex(index)).catch(() => {
-      toast.error(t('radio.cannotPlayAudio'));
-      setPlayingRadioProgramIndex(null);
-    });
+    audio
+      .play()
+      .then(() => setPlayingRadioProgramIndex(index))
+      .catch(() => {
+        toast.error(t('radio.cannotPlayAudio'));
+        setPlayingRadioProgramIndex(null);
+      });
   };
 
   const stopRadioPreview = () => {
@@ -356,11 +417,11 @@ const Radio = () => {
   };
 
   const toggleDayOfWeekRadio = (dayValue) => {
-    setRadioNewProgram(prev => ({
+    setRadioNewProgram((prev) => ({
       ...prev,
       daysOfWeek: prev.daysOfWeek.includes(dayValue)
-        ? prev.daysOfWeek.filter(d => d !== dayValue)
-        : [...prev.daysOfWeek, dayValue]
+        ? prev.daysOfWeek.filter((d) => d !== dayValue)
+        : [...prev.daysOfWeek, dayValue],
     }));
   };
 
@@ -376,15 +437,18 @@ const Radio = () => {
       toast.error(t('radio.fileTooLarge'));
       return;
     }
-    setRadioNewProgram(prev => ({ ...prev, mp3File: file }));
+    setRadioNewProgram((prev) => ({ ...prev, mp3File: file }));
     const audio = document.createElement('audio');
     audio.preload = 'metadata';
     audio.onloadedmetadata = () => {
       const dur = Math.round(audio.duration);
-      setRadioNewProgram(prev => ({
+      setRadioNewProgram((prev) => ({
         ...prev,
         duration: dur,
-        endTime: (radioAutoCalcEndTime && prev.startTime && dur) ? computeEndTimeFromStartAndDuration(prev.startTime, dur) : prev.endTime
+        endTime:
+          radioAutoCalcEndTime && prev.startTime && dur
+            ? computeEndTimeFromStartAndDuration(prev.startTime, dur)
+            : prev.endTime,
       }));
     };
     audio.src = URL.createObjectURL(file);
@@ -393,12 +457,12 @@ const Radio = () => {
     try {
       const result = await apiService.uploadAudio(file, (percent) => setRadioUploadProgress(percent));
       if (result?.success && result?.audio?.url) {
-        setRadioNewProgram(prev => ({ ...prev, streamUrl: result.audio.url }));
+        setRadioNewProgram((prev) => ({ ...prev, streamUrl: result.audio.url }));
         toast.success(t('radio.audioFileSaved'));
       }
     } catch (err) {
       toast.error(err.response?.data?.message || t('radio.uploadAudioError'));
-      setRadioNewProgram(prev => ({ ...prev, mp3File: null }));
+      setRadioNewProgram((prev) => ({ ...prev, mp3File: null }));
     } finally {
       setRadioUploading(false);
       setRadioUploadProgress(null);
@@ -406,8 +470,12 @@ const Radio = () => {
   };
 
   const removeAudioRadio = () => {
-    setRadioNewProgram(prev => ({
-      ...prev, mp3File: null, streamUrl: '', duration: 0, fileName: ''
+    setRadioNewProgram((prev) => ({
+      ...prev,
+      mp3File: null,
+      streamUrl: '',
+      duration: 0,
+      fileName: '',
     }));
   };
 
@@ -415,15 +483,16 @@ const Radio = () => {
   const handleSelectFromLibraryRadio = (item) => {
     const streamUrlToUse = item.path || item.url || '';
     const applySelection = (durationSeconds) => {
-      setRadioNewProgram(prev => ({
+      setRadioNewProgram((prev) => ({
         ...prev,
         mp3File: null,
         streamUrl: streamUrlToUse,
         duration: durationSeconds || 0,
         fileName: item.name || '',
-        endTime: radioAutoCalcEndTime && prev.startTime && durationSeconds
-          ? computeEndTimeFromStartAndDuration(prev.startTime, durationSeconds)
-          : prev.endTime
+        endTime:
+          radioAutoCalcEndTime && prev.startTime && durationSeconds
+            ? computeEndTimeFromStartAndDuration(prev.startTime, durationSeconds)
+            : prev.endTime,
       }));
       setShowLibraryPickerRadio(false);
       setLibraryPickLoadingPath(null);
@@ -436,7 +505,11 @@ const Radio = () => {
     }
 
     setLibraryPickLoadingPath(item.path || item.url);
-    const audioUrl = item.url || (streamUrlToUse.startsWith('http') ? streamUrlToUse : `${apiBaseUrl}${streamUrlToUse.startsWith('/') ? '' : '/'}${streamUrlToUse}`);
+    const audioUrl =
+      item.url ||
+      (streamUrlToUse.startsWith('http')
+        ? streamUrlToUse
+        : `${apiBaseUrl}${streamUrlToUse.startsWith('/') ? '' : '/'}${streamUrlToUse}`);
     const audio = document.createElement('audio');
     audio.preload = 'metadata';
     audio.onloadedmetadata = () => {
@@ -459,8 +532,8 @@ const Radio = () => {
       toast.error(t('radio.addMp3OrLibrary'));
       return;
     }
-    let streamUrl = radioNewProgram.streamUrl;
-    let duration = radioNewProgram.duration;
+    const streamUrl = radioNewProgram.streamUrl;
+    const duration = radioNewProgram.duration;
     if (radioNewProgram.mp3File && !streamUrl) {
       if (radioUploading) {
         toast.error(t('radio.waitForUpload'));
@@ -480,19 +553,32 @@ const Radio = () => {
       type: radioNewProgram.type || 'music',
       isActive: radioNewProgram.isActive !== false,
       startTime: radioNewProgram.startTime || '',
-      endTime: radioAutoCalcEndTime && radioNewProgram.startTime && radioNewProgram.duration
-        ? computeEndTimeFromStartAndDuration(radioNewProgram.startTime, radioNewProgram.duration)
-        : (radioNewProgram.endTime || ''),
+      endTime:
+        radioAutoCalcEndTime && radioNewProgram.startTime && radioNewProgram.duration
+          ? computeEndTimeFromStartAndDuration(radioNewProgram.startTime, radioNewProgram.duration)
+          : radioNewProgram.endTime || '',
       daysOfWeek: radioNewProgram.daysOfWeek || [],
       isRepeating: radioNewProgram.isRepeating || false,
-      fileName: radioNewProgram.fileName || radioNewProgram.mp3File?.name || ''
+      fileName: radioNewProgram.fileName || radioNewProgram.mp3File?.name || '',
     };
-    setRadioPrograms(prev => {
+    setRadioPrograms((prev) => {
       const next = [...prev, program].map((p, i) => ({ ...p, order: i }));
       const nextStart = next.length >= 1 ? getProgramEndTime(next[next.length - 1]) : '';
       setRadioNewProgram({
-        title: '', description: '', artist: '', startTime: nextStart, endTime: '', order: next.length,
-        type: 'music', mp3File: null, streamUrl: '', duration: 0, fileName: '', daysOfWeek: [], isRepeating: false, isActive: true
+        title: '',
+        description: '',
+        artist: '',
+        startTime: nextStart,
+        endTime: '',
+        order: next.length,
+        type: 'music',
+        mp3File: null,
+        streamUrl: '',
+        duration: 0,
+        fileName: '',
+        daysOfWeek: [],
+        isRepeating: false,
+        isActive: true,
       });
       return next;
     });
@@ -518,12 +604,17 @@ const Radio = () => {
       daysOfWeek: prog.daysOfWeek || [],
       isRepeating: prog.isRepeating || false,
       isActive: prog.isActive !== false,
-      fileName: prog.fileName || ''
+      fileName: prog.fileName || '',
     });
   };
 
   const handleSaveEditRadioProgram = () => {
-    if (editingRadioProgramIndex == null || editingRadioProgramIndex < 0 || editingRadioProgramIndex >= radioPrograms.length) return;
+    if (
+      editingRadioProgramIndex == null ||
+      editingRadioProgramIndex < 0 ||
+      editingRadioProgramIndex >= radioPrograms.length
+    )
+      return;
     if (!radioNewProgram.title?.trim()) {
       toast.error(t('radio.enterProgramTitle'));
       return;
@@ -543,14 +634,17 @@ const Radio = () => {
       type: radioNewProgram.type || 'music',
       isActive: radioNewProgram.isActive !== false,
       startTime: radioNewProgram.startTime || '',
-      endTime: radioAutoCalcEndTime && radioNewProgram.startTime && radioNewProgram.duration
-        ? computeEndTimeFromStartAndDuration(radioNewProgram.startTime, radioNewProgram.duration)
-        : (radioNewProgram.endTime || ''),
+      endTime:
+        radioAutoCalcEndTime && radioNewProgram.startTime && radioNewProgram.duration
+          ? computeEndTimeFromStartAndDuration(radioNewProgram.startTime, radioNewProgram.duration)
+          : radioNewProgram.endTime || '',
       daysOfWeek: radioNewProgram.daysOfWeek || [],
       isRepeating: radioNewProgram.isRepeating || false,
-      fileName: radioNewProgram.fileName || ''
+      fileName: radioNewProgram.fileName || '',
     };
-    setRadioPrograms(prev => prev.map((p, i) => (i === editingRadioProgramIndex ? updated : p)).map((p, i) => ({ ...p, order: i })));
+    setRadioPrograms((prev) =>
+      prev.map((p, i) => (i === editingRadioProgramIndex ? updated : p)).map((p, i) => ({ ...p, order: i }))
+    );
     resetRadioNewProgram();
     setEditingRadioProgramIndex(null);
     toast.success(t('radio.programUpdated'));
@@ -564,8 +658,10 @@ const Radio = () => {
   const computeEndTimeFromStartAndDuration = (startTime, durationSeconds) => {
     if (!startTime || durationSeconds == null || durationSeconds <= 0) return '';
     const parts = startTime.trim().split(':').map(Number);
-    const h = parts[0] || 0, m = parts[1] || 0, s = parts[2] || 0;
-    let total = h * 3600 + m * 60 + s + Math.round(durationSeconds);
+    const h = parts[0] || 0,
+      m = parts[1] || 0,
+      s = parts[2] || 0;
+    const total = h * 3600 + m * 60 + s + Math.round(durationSeconds);
     const outH = Math.floor(total / 3600) % 24;
     const outM = Math.floor((total % 3600) / 60);
     return `${String(outH).padStart(2, '0')}:${String(outM).padStart(2, '0')}`;
@@ -593,11 +689,11 @@ const Radio = () => {
   // Calendrier programmation radio : programmes répétés par jour de la semaine
   const getProgramsForRadioDate = (date) => {
     const dayOfWeek = String(date.getDay());
-    return radioPrograms.filter(p => {
+    return radioPrograms.filter((p) => {
       if (p.isActive === false) return false;
       if (!p.isRepeating || !Array.isArray(p.daysOfWeek) || p.daysOfWeek.length === 0) return false;
       // Accepter daysOfWeek en string ou number (API peut renvoyer l'un ou l'autre)
-      const normalized = p.daysOfWeek.map(d => String(d));
+      const normalized = p.daysOfWeek.map((d) => String(d));
       return normalized.includes(dayOfWeek);
     });
   };
@@ -630,7 +726,15 @@ const Radio = () => {
     return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
   };
 
-  const radioCalendarDaysOfWeek = [{ short: 'Lun' }, { short: 'Mar' }, { short: 'Mer' }, { short: 'Jeu' }, { short: 'Ven' }, { short: 'Sam' }, { short: 'Dim' }];
+  const radioCalendarDaysOfWeek = [
+    { short: 'Lun' },
+    { short: 'Mar' },
+    { short: 'Mer' },
+    { short: 'Jeu' },
+    { short: 'Ven' },
+    { short: 'Sam' },
+    { short: 'Dim' },
+  ];
 
   // Recalculer l'heure de fin dès que début ou durée change (sécurité en plus des onChange)
   useEffect(() => {
@@ -641,8 +745,14 @@ const Radio = () => {
     if (!start || dur <= 0) return;
     const computed = computeEndTimeFromStartAndDuration(start, dur);
     if (!computed) return;
-    setRadioNewProgram(prev => (prev.endTime === computed ? prev : { ...prev, endTime: computed }));
-  }, [showRadioProgramModal, radioAutoCalcEndTime, radioNewProgram.startTime, radioNewProgram.duration, radioNewProgram.endTime]);
+    setRadioNewProgram((prev) => (prev.endTime === computed ? prev : { ...prev, endTime: computed }));
+  }, [
+    showRadioProgramModal,
+    radioAutoCalcEndTime,
+    radioNewProgram.startTime,
+    radioNewProgram.duration,
+    radioNewProgram.endTime,
+  ]);
 
   const renderPrograms = () => {
     return (
@@ -670,11 +780,11 @@ const Radio = () => {
                     streamUrl: p.streamUrl || '',
                     isActive: p.isActive !== false,
                     daysOfWeek: Array.isArray(p.daysOfWeek) ? p.daysOfWeek : [],
-                    order: i
+                    order: i,
                   }));
                   try {
                     await apiService.updateRadioStation(id, { schedule });
-                    setSelectedStation(prev => prev ? { ...prev, schedule } : null);
+                    setSelectedStation((prev) => (prev ? { ...prev, schedule } : null));
                     toast.success(t('radio.programmingSaved'));
                   } catch (err) {
                     toast.error(err.response?.data?.message || t('radio.errorSaving'));
@@ -703,9 +813,9 @@ const Radio = () => {
                   daysOfWeek: [],
                   isRepeating: false,
                   isActive: true,
-                  tags: []
+                  tags: [],
                 });
-              setShowProgramModal(true);
+                setShowProgramModal(true);
               }}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
@@ -735,13 +845,27 @@ const Radio = () => {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Title
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Days
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Duration
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -749,18 +873,27 @@ const Radio = () => {
                     <tr key={program.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{program.title}</div>
-                        {program.description && (
-                          <div className="text-sm text-gray-500">{program.description}</div>
-                        )}
+                        {program.description && <div className="text-sm text-gray-500">{program.description}</div>}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          program.type === 'music' ? 'bg-green-100 text-green-800' :
-                          program.type === 'ad' ? 'bg-amber-100 text-amber-800' :
-                          program.type === 'jingle' ? 'bg-purple-100 text-purple-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {program.type === 'music' ? 'Musique' : program.type === 'ad' ? 'Pub' : program.type === 'jingle' ? 'Jingle' : 'Programme'}
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            program.type === 'music'
+                              ? 'bg-green-100 text-green-800'
+                              : program.type === 'ad'
+                                ? 'bg-amber-100 text-amber-800'
+                                : program.type === 'jingle'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {program.type === 'music'
+                            ? 'Musique'
+                            : program.type === 'ad'
+                              ? 'Pub'
+                              : program.type === 'jingle'
+                                ? 'Jingle'
+                                : 'Programme'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -775,11 +908,11 @@ const Radio = () => {
                         {formatDuration(program.duration)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          program.isActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            program.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
                           {program.isActive ? t('common.active') : t('common.inactive')}
                         </span>
                       </td>
@@ -797,7 +930,7 @@ const Radio = () => {
                           </button>
                           <button
                             onClick={() => {
-                              setPrograms(prev => prev.filter(p => p.id !== program.id));
+                              setPrograms((prev) => prev.filter((p) => p.id !== program.id));
                               toast.success(t('radio.programDeleted'));
                             }}
                             className="text-red-600 hover:text-red-900"
@@ -860,13 +993,13 @@ const Radio = () => {
     const start = new Date(currentWeekStart);
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
-    
+
     const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
     const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
     const startDay = start.getDate();
     const endDay = end.getDate();
     const year = start.getFullYear();
-    
+
     if (startMonth === endMonth) {
       return `${startMonth} ${startDay} - ${endDay}, ${year}`;
     }
@@ -874,7 +1007,7 @@ const Radio = () => {
   };
 
   const getTimeSlotsForDay = (date) => {
-    return timeSlots.filter(slot => {
+    return timeSlots.filter((slot) => {
       if (!slot.date) return false;
       const slotDate = new Date(slot.date);
       return slotDate.toDateString() === date.toDateString();
@@ -902,9 +1035,7 @@ const Radio = () => {
     const weekDays = getWeekDays();
     const timeSlotsList = getTimeSlots();
     const today = new Date();
-    const selectedDay = weekDays.find(day => 
-      day.toDateString() === today.toDateString()
-    ) || weekDays[3]; // Par défaut jeudi
+    const selectedDay = weekDays.find((day) => day.toDateString() === today.toDateString()) || weekDays[3]; // Par défaut jeudi
 
     return (
       <div className="space-y-6">
@@ -1009,17 +1140,12 @@ const Radio = () => {
                   {weekDays.map((day, dayIndex) => {
                     const daySlots = getTimeSlotsForDay(day);
                     return (
-                      <div
-                        key={dayIndex}
-                        className="border-r border-gray-200 last:border-r-0 relative"
-                      >
+                      <div key={dayIndex} className="border-r border-gray-200 last:border-r-0 relative">
                         {timeSlotsList.map((slot, slotIndex) => (
-                          <div
-                            key={slotIndex}
-                            className="h-[60px] border-b border-gray-100 relative"
-                          >
+                          <div key={slotIndex} className="h-[60px] border-b border-gray-100 relative">
                             {daySlots.map((programSlot, programIndex) => {
-                              const endTime = programSlot.endTime || getEndTime(programSlot.startTime, programSlot.duration || 15);
+                              const endTime =
+                                programSlot.endTime || getEndTime(programSlot.startTime, programSlot.duration || 15);
                               if (
                                 slot.time >= programSlot.startTime &&
                                 slot.time < endTime &&
@@ -1033,7 +1159,7 @@ const Radio = () => {
                                     style={{
                                       top: `${position.top}px`,
                                       height: `${position.height}px`,
-                                      minHeight: '30px'
+                                      minHeight: '30px',
                                     }}
                                   >
                                     <div className="w-2 h-2 bg-red-600 rounded-full absolute -left-1 top-1/2 -translate-y-1/2"></div>
@@ -1216,7 +1342,10 @@ const Radio = () => {
             <div>
               <p className="font-medium text-blue-900">Mode fichier (sans MongoDB)</p>
               <p className="text-sm text-blue-800 mt-1">
-                Les stations sont enregistrées dans <code className="bg-blue-100 px-1 rounded">backend/data/radio.json</code>. Vous pouvez créer et modifier les stations normalement. Pour utiliser MongoDB (recommandé en production), démarrez MongoDB puis redémarrez le backend.
+                Les stations sont enregistrées dans{' '}
+                <code className="bg-blue-100 px-1 rounded">backend/data/radio.json</code>. Vous pouvez créer et modifier
+                les stations normalement. Pour utiliser MongoDB (recommandé en production), démarrez MongoDB puis
+                redémarrez le backend.
               </p>
             </div>
           </div>
@@ -1244,7 +1373,7 @@ const Radio = () => {
                   isActive: true,
                   sourceType: 'playlist',
                   playlistId: '',
-                  translations: emptyTranslations()
+                  translations: emptyTranslations(),
                 });
                 setShowStationModal(true);
               }}
@@ -1262,11 +1391,21 @@ const Radio = () => {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('radio.columnStation')}</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('radio.columnGenre')}</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('radio.columnStatus')}</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('radio.columnListeners')}</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.actions')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('radio.columnStation')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('radio.columnGenre')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('radio.columnStatus')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('radio.columnListeners')}
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('common.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -1308,9 +1447,7 @@ const Radio = () => {
                           )}
                           <div>
                             <div className="text-sm font-medium text-gray-900">{station.name}</div>
-                            {station.description && (
-                              <div className="text-sm text-gray-500">{station.description}</div>
-                            )}
+                            {station.description && <div className="text-sm text-gray-500">{station.description}</div>}
                           </div>
                         </div>
                       </td>
@@ -1321,11 +1458,11 @@ const Radio = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-wrap gap-1">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            station.isActive
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              station.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
                             {station.isActive ? t('common.active') : t('common.inactive')}
                           </span>
                           {station.playlistId && (
@@ -1354,15 +1491,30 @@ const Radio = () => {
                             whileTap={{ scale: 0.95 }}
                             onClick={() => {
                               setStationForPrograms(station);
-                              const progs = (station.programs || []).map((p, i) => ({ ...p, id: p.id || `prog_${i}`, order: i }));
+                              const progs = (station.programs || []).map((p, i) => ({
+                                ...p,
+                                id: p.id || `prog_${i}`,
+                                order: i,
+                              }));
                               setRadioPrograms(progs);
                               setLibraryForRadio(mp3Library);
                               const newOrder = progs.length;
                               const startFromPrev = newOrder >= 1 ? getProgramEndTime(progs[newOrder - 1]) : '';
                               setRadioNewProgram({
-                                title: '', description: '', artist: '', startTime: startFromPrev, endTime: '',
+                                title: '',
+                                description: '',
+                                artist: '',
+                                startTime: startFromPrev,
+                                endTime: '',
                                 order: newOrder,
-                                type: 'music', mp3File: null, streamUrl: '', duration: 0, fileName: '', daysOfWeek: [], isRepeating: false, isActive: true
+                                type: 'music',
+                                mp3File: null,
+                                streamUrl: '',
+                                duration: 0,
+                                fileName: '',
+                                daysOfWeek: [],
+                                isRepeating: false,
+                                isActive: true,
                               });
                               setShowLibraryPickerRadio(false);
                               setShowRadioProgramModal(true);
@@ -1387,7 +1539,10 @@ const Radio = () => {
                                 isActive: station.isActive !== undefined ? station.isActive : true,
                                 sourceType: 'playlist',
                                 playlistId: station.playlistId || '',
-                                translations: station.translations && typeof station.translations === 'object' ? { ...emptyTranslations(), ...station.translations } : emptyTranslations()
+                                translations:
+                                  station.translations && typeof station.translations === 'object'
+                                    ? { ...emptyTranslations(), ...station.translations }
+                                    : emptyTranslations(),
                               });
                               setShowStationModal(true);
                             }}
@@ -1426,10 +1581,8 @@ const Radio = () => {
     }
     return (
       <>
-        <div className="space-y-6 p-6">
-          {renderStationsList()}
-        </div>
-        
+        <div className="space-y-6 p-6">{renderStationsList()}</div>
+
         {/* Modal Nouvelle station / Modifier — interface moderne */}
         {showStationModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
@@ -1469,7 +1622,7 @@ const Radio = () => {
                       isActive: true,
                       sourceType: 'playlist',
                       playlistId: '',
-                      translations: emptyTranslations()
+                      translations: emptyTranslations(),
                     });
                   }}
                   className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
@@ -1481,7 +1634,9 @@ const Radio = () => {
 
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.contentAddedByLanguage')}</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('common.contentAddedByLanguage')}
+                  </label>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {LANG_LIST.map(({ code, label }) => (
                       <button
@@ -1499,16 +1654,20 @@ const Radio = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.stationName')} *</label>
                       <input
                         type="text"
-                        value={activeLang === 'fr' ? newStation.name : (newStation.translations?.[activeLang]?.name ?? '')}
-                        onChange={(e) => activeLang === 'fr'
-                          ? setNewStation({ ...newStation, name: e.target.value })
-                          : setNewStation({
-                              ...newStation,
-                              translations: {
-                                ...newStation.translations,
-                                [activeLang]: { ...newStation.translations?.[activeLang], name: e.target.value }
-                              }
-                            })}
+                        value={
+                          activeLang === 'fr' ? newStation.name : (newStation.translations?.[activeLang]?.name ?? '')
+                        }
+                        onChange={(e) =>
+                          activeLang === 'fr'
+                            ? setNewStation({ ...newStation, name: e.target.value })
+                            : setNewStation({
+                                ...newStation,
+                                translations: {
+                                  ...newStation.translations,
+                                  [activeLang]: { ...newStation.translations?.[activeLang], name: e.target.value },
+                                },
+                              })
+                        }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Nom de la station..."
                       />
@@ -1516,16 +1675,25 @@ const Radio = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.description')}</label>
                       <textarea
-                        value={activeLang === 'fr' ? newStation.description : (newStation.translations?.[activeLang]?.description ?? '')}
-                        onChange={(e) => activeLang === 'fr'
-                          ? setNewStation({ ...newStation, description: e.target.value })
-                          : setNewStation({
-                              ...newStation,
-                              translations: {
-                                ...newStation.translations,
-                                [activeLang]: { ...newStation.translations?.[activeLang], description: e.target.value }
-                              }
-                            })}
+                        value={
+                          activeLang === 'fr'
+                            ? newStation.description
+                            : (newStation.translations?.[activeLang]?.description ?? '')
+                        }
+                        onChange={(e) =>
+                          activeLang === 'fr'
+                            ? setNewStation({ ...newStation, description: e.target.value })
+                            : setNewStation({
+                                ...newStation,
+                                translations: {
+                                  ...newStation.translations,
+                                  [activeLang]: {
+                                    ...newStation.translations?.[activeLang],
+                                    description: e.target.value,
+                                  },
+                                },
+                              })
+                        }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         rows={3}
                         placeholder="Description de la station..."
@@ -1566,7 +1734,9 @@ const Radio = () => {
                             onLoad={() => setLogoLoadError(false)}
                           />
                         ) : null}
-                        <div className={`flex flex-col items-center gap-1 text-gray-400 ${newStation.logo && logoUrl(newStation.logo) && !logoLoadError ? 'hidden w-0 h-0 overflow-hidden' : 'w-full h-full justify-center'}`}>
+                        <div
+                          className={`flex flex-col items-center gap-1 text-gray-400 ${newStation.logo && logoUrl(newStation.logo) && !logoLoadError ? 'hidden w-0 h-0 overflow-hidden' : 'w-full h-full justify-center'}`}
+                        >
                           <ImageIcon size={28} />
                           <span className="text-xs">{logoLoadError ? 'Image introuvable' : 'Logo'}</span>
                         </div>
@@ -1574,7 +1744,10 @@ const Radio = () => {
                       {newStation.logo && (
                         <button
                           type="button"
-                          onClick={() => { setNewStation(prev => ({ ...prev, logo: '' })); setLogoLoadError(false); }}
+                          onClick={() => {
+                            setNewStation((prev) => ({ ...prev, logo: '' }));
+                            setLogoLoadError(false);
+                          }}
                           className="text-xs text-red-600 hover:text-red-700"
                         >
                           Supprimer le logo
@@ -1622,19 +1795,20 @@ const Radio = () => {
                                     path = url;
                                   }
                                 }
-                                const toStore = (typeof path === 'string' && path.trim())
-                                  ? path.trim()
-                                  : (typeof url === 'string' && url.startsWith('http')
-                                    ? url
-                                    : `${apiBaseUrl}${(url || '').toString().startsWith('/') ? url : `/${url || ''}`}`);
-                                setNewStation(prev => ({ ...prev, logo: toStore }));
+                                const toStore =
+                                  typeof path === 'string' && path.trim()
+                                    ? path.trim()
+                                    : typeof url === 'string' && url.startsWith('http')
+                                      ? url
+                                      : `${apiBaseUrl}${(url || '').toString().startsWith('/') ? url : `/${url || ''}`}`;
+                                setNewStation((prev) => ({ ...prev, logo: toStore }));
                                 setLogoLoadError(false);
                                 toast.success('Logo enregistré');
                               } else {
                                 toast.error('Réponse serveur invalide');
                               }
                             } catch (err) {
-                              const msg = err.response?.data?.message || 'Erreur lors de l\'upload de l\'image.';
+                              const msg = err.response?.data?.message || "Erreur lors de l'upload de l'image.";
                               toast.error(msg);
                             } finally {
                               setLogoUploading(false);
@@ -1679,7 +1853,7 @@ const Radio = () => {
                       isActive: true,
                       sourceType: 'playlist',
                       playlistId: '',
-                      translations: emptyTranslations()
+                      translations: emptyTranslations(),
                     });
                   }}
                   className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-white hover:border-slate-300 transition-colors"
@@ -1689,7 +1863,7 @@ const Radio = () => {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                    onClick={async () => {
+                  onClick={async () => {
                     if (!newStation.name.trim()) {
                       toast.error(t('radio.enterStationName'));
                       return;
@@ -1710,17 +1884,19 @@ const Radio = () => {
                       isActive: newStation.isActive,
                       streamUrl: '',
                       playlistId: newStation.playlistId,
-                      translations
+                      translations,
                     };
                     try {
                       if (editingStation) {
                         const id = editingStation.id || editingStation._id;
                         const { data } = await apiService.updateRadioStation(id, payload);
-                        setStations(prev => prev.map(s => (s.id || s._id) === id ? { ...data, id: data.id || data._id } : s));
+                        setStations((prev) =>
+                          prev.map((s) => ((s.id || s._id) === id ? { ...data, id: data.id || data._id } : s))
+                        );
                         toast.success(t('radio.stationUpdated'));
                       } else {
                         const { data } = await apiService.createRadioStation(payload);
-                        setStations(prev => [...prev, { ...data, id: data.id || data._id, listeners: 0 }]);
+                        setStations((prev) => [...prev, { ...data, id: data.id || data._id, listeners: 0 }]);
                         toast.success(t('radio.stationCreated'));
                       }
                       setShowStationModal(false);
@@ -1728,7 +1904,17 @@ const Radio = () => {
                       setLogoUploading(false);
                       setLogoLoadError(false);
                       setActiveLang('fr');
-                      setNewStation({ name: '', description: '', genre: '', streamUrl: '', logo: '', isActive: true, sourceType: 'playlist', playlistId: '', translations: emptyTranslations() });
+                      setNewStation({
+                        name: '',
+                        description: '',
+                        genre: '',
+                        streamUrl: '',
+                        logo: '',
+                        isActive: true,
+                        sourceType: 'playlist',
+                        playlistId: '',
+                        translations: emptyTranslations(),
+                      });
                     } catch (err) {
                       toast.error(err.response?.data?.message || t('radio.errorSaveStation'));
                     }
@@ -1757,8 +1943,21 @@ const Radio = () => {
               className="relative bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
             >
               <div className="p-4 border-b border-gray-200 flex items-center justify-between shrink-0">
-                <h3 className="text-xl font-bold text-gray-900">{t('radio.programming')} — {stationForPrograms.name}</h3>
-                <button onClick={() => { setShowRadioProgramModal(false); setStationForPrograms(null); setRadioPrograms([]); setShowLibraryPickerRadio(false); resetRadioNewProgram(); setEditingRadioProgramIndex(null); stopRadioPreview(); }} className="p-2 hover:bg-gray-100 rounded-lg">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {t('radio.programming')} — {stationForPrograms.name}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowRadioProgramModal(false);
+                    setStationForPrograms(null);
+                    setRadioPrograms([]);
+                    setShowLibraryPickerRadio(false);
+                    resetRadioNewProgram();
+                    setEditingRadioProgramIndex(null);
+                    stopRadioPreview();
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
                   <X size={20} />
                 </button>
               </div>
@@ -1770,7 +1969,11 @@ const Radio = () => {
                       <FolderOpen size={20} className="text-purple-600" />
                       {t('radio.chooseFromLibraryMedia')}
                     </h4>
-                    <button type="button" onClick={() => setShowLibraryPickerRadio(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setShowLibraryPickerRadio(false)}
+                      className="p-2 hover:bg-gray-100 rounded-lg"
+                    >
                       <X size={20} />
                     </button>
                   </div>
@@ -1783,10 +1986,15 @@ const Radio = () => {
                     ) : mediaLibraryAudio.length === 0 ? (
                       <div className="text-center py-8">
                         <p className="text-gray-500 mb-4">Aucun fichier audio dans la bibliothèque média.</p>
-                        <p className="text-sm text-gray-600 mb-4">Uploadez des MP3 depuis la page Bibliothèque média (uploads/audio sur le serveur).</p>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Uploadez des MP3 depuis la page Bibliothèque média (uploads/audio sur le serveur).
+                        </p>
                         <button
                           type="button"
-                          onClick={() => { setShowLibraryPickerRadio(false); navigate('/bibliotheque'); }}
+                          onClick={() => {
+                            setShowLibraryPickerRadio(false);
+                            navigate('/bibliotheque');
+                          }}
                           className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                         >
                           Ouvrir la bibliothèque média
@@ -1795,13 +2003,20 @@ const Radio = () => {
                     ) : (
                       <ul className="space-y-2">
                         {mediaLibraryAudio.map((item) => (
-                          <li key={item.path || item.url} className="flex items-center justify-between gap-3 p-3 bg-gray-50 hover:bg-purple-50 rounded-lg border border-gray-200">
+                          <li
+                            key={item.path || item.url}
+                            className="flex items-center justify-between gap-3 p-3 bg-gray-50 hover:bg-purple-50 rounded-lg border border-gray-200"
+                          >
                             <div className="min-w-0 flex-1">
                               <p className="font-medium text-gray-900 truncate">{item.name || 'Sans titre'}</p>
                               <p className="text-xs text-gray-500">
                                 {item.duration != null && item.duration > 0 ? formatDuration(item.duration) : ''}
-                                {item.size != null && (item.duration == null || item.duration <= 0) ? `${(item.size / 1024).toFixed(1)} Ko` : ''}
-                                {item.size != null && item.duration != null && item.duration > 0 ? ` · ${(item.size / 1024).toFixed(1)} Ko` : ''}
+                                {item.size != null && (item.duration == null || item.duration <= 0)
+                                  ? `${(item.size / 1024).toFixed(1)} Ko`
+                                  : ''}
+                                {item.size != null && item.duration != null && item.duration > 0
+                                  ? ` · ${(item.size / 1024).toFixed(1)} Ko`
+                                  : ''}
                               </p>
                             </div>
                             <button
@@ -1828,506 +2043,621 @@ const Radio = () => {
               )}
               {/* Zone scrollable : formulaire + stats + liste/calendrier */}
               <div className="flex-1 min-h-0 overflow-y-auto flex flex-col relative">
-              {/* Formulaire ajout programme (même logique que WebTV : nom, heure début/fin, ordre, description, upload MP3 direct) */}
-              <div className="p-4 border-b border-gray-200 bg-gradient-to-br from-gray-50 to-purple-50 space-y-4 shrink-0">
-                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <Music size={18} className="text-purple-600" />
-                  {t('radio.addProgramUploadLibrary')}
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.titleRequired')}</label>
-                    <input
-                      type="text"
-                      value={radioNewProgram.title}
-                      onChange={(e) => setRadioNewProgram(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      placeholder={t('radio.placeholderTitle')}
-                    />
+                {/* Formulaire ajout programme (même logique que WebTV : nom, heure début/fin, ordre, description, upload MP3 direct) */}
+                <div className="p-4 border-b border-gray-200 bg-gradient-to-br from-gray-50 to-purple-50 space-y-4 shrink-0">
+                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <Music size={18} className="text-purple-600" />
+                    {t('radio.addProgramUploadLibrary')}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.titleRequired')}</label>
+                      <input
+                        type="text"
+                        value={radioNewProgram.title}
+                        onChange={(e) => setRadioNewProgram((prev) => ({ ...prev, title: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        placeholder={t('radio.placeholderTitle')}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.artist')}</label>
+                      <input
+                        type="text"
+                        value={radioNewProgram.artist}
+                        onChange={(e) => setRadioNewProgram((prev) => ({ ...prev, artist: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        placeholder={t('radio.placeholderArtist')}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.artist')}</label>
-                    <input
-                      type="text"
-                      value={radioNewProgram.artist}
-                      onChange={(e) => setRadioNewProgram(prev => ({ ...prev, artist: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      placeholder={t('radio.placeholderArtist')}
-                    />
+                  <p className="text-xs text-gray-600 mb-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                    {t('radio.orderInstructions')}
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {radioNewProgram.order >= 1 ? t('radio.startTimeAuto') : t('radio.startTime')}
+                      </label>
+                      <input
+                        type="time"
+                        value={radioNewProgram.startTime}
+                        readOnly={radioNewProgram.order >= 1}
+                        onChange={(e) => {
+                          if (radioNewProgram.order >= 1) return;
+                          const start = e.target.value;
+                          setRadioNewProgram((prev) => {
+                            const end =
+                              radioAutoCalcEndTime && prev.duration && start
+                                ? computeEndTimeFromStartAndDuration(start, prev.duration)
+                                : prev.endTime;
+                            return { ...prev, startTime: start, endTime: end };
+                          });
+                        }}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 ${radioNewProgram.order >= 1 ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''}`}
+                        title={radioNewProgram.order >= 1 ? t('radio.startTimeTitleAuto') : ''}
+                      />
+                      {radioNewProgram.order >= 1 && (
+                        <p className="text-xs text-gray-500 mt-0.5">{t('radio.startTimeHintPrev')}</p>
+                      )}
+                      {radioNewProgram.order === 0 && (
+                        <p className="text-xs text-gray-500 mt-0.5">{t('radio.startTimeHintManual')}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.endTimeAuto')}</label>
+                      <input
+                        type="time"
+                        value={radioNewProgram.endTime}
+                        onChange={(e) =>
+                          !radioAutoCalcEndTime && setRadioNewProgram((prev) => ({ ...prev, endTime: e.target.value }))
+                        }
+                        readOnly={radioAutoCalcEndTime}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 ${radioAutoCalcEndTime ? 'bg-gray-100 text-gray-600' : ''}`}
+                        title={radioAutoCalcEndTime ? t('radio.endTimeTitleAuto') : ''}
+                      />
+                      <p className="text-xs text-gray-500 mt-0.5">{t('radio.endTimeHint')}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.orderLabel')}</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={radioNewProgram.order}
+                        onChange={(e) => {
+                          const newOrder = Math.max(0, parseInt(e.target.value, 10) || 0);
+                          const startFromPrev = newOrder >= 1 ? getStartTimeFromPreviousProgram(newOrder) : '';
+                          setRadioNewProgram((prev) => {
+                            const start = newOrder >= 1 ? startFromPrev : prev.startTime;
+                            const end =
+                              radioAutoCalcEndTime && prev.duration && start
+                                ? computeEndTimeFromStartAndDuration(start, prev.duration)
+                                : prev.endTime;
+                            return { ...prev, order: newOrder, startTime: start, endTime: end };
+                          });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        title={t('radio.orderTitleHint')}
+                      />
+                      <p className="text-xs text-gray-500 mt-0.5">{t('radio.orderHint')}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.typeLabel')}</label>
+                      <select
+                        value={radioNewProgram.type}
+                        onChange={(e) => setRadioNewProgram((prev) => ({ ...prev, type: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="music">{t('radio.typeMusic')}</option>
+                        <option value="ad">{t('radio.typeAd')}</option>
+                        <option value="jingle">{t('radio.typeJingle')}</option>
+                        <option value="program">{t('radio.typeProgram')}</option>
+                      </select>
+                    </div>
                   </div>
-                </div>
-                <p className="text-xs text-gray-600 mb-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-                  {t('radio.orderInstructions')}
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {radioNewProgram.order >= 1 ? t('radio.startTimeAuto') : t('radio.startTime')}
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={radioAutoCalcEndTime}
+                        onChange={(e) => setRadioAutoCalcEndTime(e.target.checked)}
+                        className="w-4 h-4 text-purple-600 rounded"
+                      />
+                      <span className="text-sm text-gray-700">{t('radio.calcEndTime')}</span>
                     </label>
-                    <input
-                      type="time"
-                      value={radioNewProgram.startTime}
-                      readOnly={radioNewProgram.order >= 1}
-                      onChange={(e) => {
-                        if (radioNewProgram.order >= 1) return;
-                        const start = e.target.value;
-                        setRadioNewProgram(prev => {
-                          const end = (radioAutoCalcEndTime && prev.duration && start) ? computeEndTimeFromStartAndDuration(start, prev.duration) : prev.endTime;
-                          return { ...prev, startTime: start, endTime: end };
-                        });
-                      }}
-                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 ${radioNewProgram.order >= 1 ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''}`}
-                      title={radioNewProgram.order >= 1 ? t('radio.startTimeTitleAuto') : ''}
-                    />
-                    {radioNewProgram.order >= 1 && (
-                      <p className="text-xs text-gray-500 mt-0.5">{t('radio.startTimeHintPrev')}</p>
-                    )}
-                    {radioNewProgram.order === 0 && (
-                      <p className="text-xs text-gray-500 mt-0.5">{t('radio.startTimeHintManual')}</p>
-                    )}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.endTimeAuto')}</label>
-                    <input
-                      type="time"
-                      value={radioNewProgram.endTime}
-                      onChange={(e) => !radioAutoCalcEndTime && setRadioNewProgram(prev => ({ ...prev, endTime: e.target.value }))}
-                      readOnly={radioAutoCalcEndTime}
-                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 ${radioAutoCalcEndTime ? 'bg-gray-100 text-gray-600' : ''}`}
-                      title={radioAutoCalcEndTime ? t('radio.endTimeTitleAuto') : ''}
-                    />
-                    <p className="text-xs text-gray-500 mt-0.5">{t('radio.endTimeHint')}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.orderLabel')}</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={radioNewProgram.order}
-                      onChange={(e) => {
-                        const newOrder = Math.max(0, parseInt(e.target.value, 10) || 0);
-                        const startFromPrev = newOrder >= 1 ? getStartTimeFromPreviousProgram(newOrder) : '';
-                        setRadioNewProgram(prev => {
-                          const start = newOrder >= 1 ? startFromPrev : prev.startTime;
-                          const end = (radioAutoCalcEndTime && prev.duration && start) ? computeEndTimeFromStartAndDuration(start, prev.duration) : prev.endTime;
-                          return { ...prev, order: newOrder, startTime: start, endTime: end };
-                        });
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      title={t('radio.orderTitleHint')}
-                    />
-                    <p className="text-xs text-gray-500 mt-0.5">{t('radio.orderHint')}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('radio.typeLabel')}</label>
-                    <select
-                      value={radioNewProgram.type}
-                      onChange={(e) => setRadioNewProgram(prev => ({ ...prev, type: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="music">{t('radio.typeMusic')}</option>
-                      <option value="ad">{t('radio.typeAd')}</option>
-                      <option value="jingle">{t('radio.typeJingle')}</option>
-                      <option value="program">{t('radio.typeProgram')}</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 flex-wrap">
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      checked={radioAutoCalcEndTime}
-                      onChange={(e) => setRadioAutoCalcEndTime(e.target.checked)}
+                      id="radioProgRepeating"
+                      checked={radioNewProgram.isRepeating}
+                      onChange={(e) => setRadioNewProgram((prev) => ({ ...prev, isRepeating: e.target.checked }))}
                       className="w-4 h-4 text-purple-600 rounded"
                     />
-                    <span className="text-sm text-gray-700">{t('radio.calcEndTime')}</span>
-                  </label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="radioProgRepeating"
-                    checked={radioNewProgram.isRepeating}
-                    onChange={(e) => setRadioNewProgram(prev => ({ ...prev, isRepeating: e.target.checked }))}
-                    className="w-4 h-4 text-purple-600 rounded"
-                  />
-                  <label htmlFor="radioProgRepeating" className="text-sm text-gray-700">{t('radio.repeatDays')}</label>
-                </div>
-                {radioNewProgram.isRepeating && (
-                  <div className="flex flex-wrap gap-2">
-                    {daysOfWeekRadio.map((d) => (
-                      <button
-                        key={d.value}
-                        type="button"
-                        onClick={() => toggleDayOfWeekRadio(d.value)}
-                        className={`px-2 py-1 rounded text-sm ${radioNewProgram.daysOfWeek.includes(d.value) ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                      >
-                        {d.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div className="border-t border-gray-200 pt-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <span className="flex items-center gap-2"><FileAudio size={18} className="text-purple-600" /> {t('radio.mp3UploadOrLibrary')}</span>
-                  </label>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <label className="flex-1 min-w-[200px] cursor-pointer">
-                      <div className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-lg ${radioNewProgram.mp3File || radioNewProgram.streamUrl ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white hover:border-purple-400'}`}>
-                        <FileAudio size={24} className={radioNewProgram.mp3File || radioNewProgram.streamUrl ? 'text-green-600' : 'text-gray-400'} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {radioNewProgram.mp3File?.name || radioNewProgram.fileName || (radioNewProgram.streamUrl ? t('radio.fileSaved') : t('radio.clickToChooseMp3'))}
-                          </p>
-                          {radioNewProgram.duration > 0 && <p className="text-xs text-gray-500">{formatDuration(radioNewProgram.duration)}</p>}
-                        </div>
-                        <Upload size={18} className="text-gray-500" />
-                      </div>
-                      <input type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" onChange={handleAudioUploadRadio} className="hidden" disabled={radioUploading} />
+                    <label htmlFor="radioProgRepeating" className="text-sm text-gray-700">
+                      {t('radio.repeatDays')}
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowLibraryPickerRadio(true)}
-                      className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-purple-300 rounded-lg bg-purple-50 hover:bg-purple-100 hover:border-purple-400 text-purple-700 font-medium text-sm transition-colors"
-                    >
-                      <FolderOpen size={20} />
-                      {t('radio.chooseFromLibrary')}
-                    </button>
-                    {(radioNewProgram.mp3File || radioNewProgram.streamUrl) && (
-                      <button type="button" onClick={removeAudioRadio} className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title={t('radio.removeFile')}>
-                        <Trash2 size={18} />
-                      </button>
-                    )}
                   </div>
-                  {radioUploading && (
-                    <div className="mt-2 space-y-1">
-                      <div className="flex items-center justify-between text-xs text-amber-700">
-                        <span>{t('radio.uploadInProgress')}</span>
-                        <span>{radioUploadProgress != null ? `${radioUploadProgress} %` : '…'}</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-300 ease-out"
-                          style={{ width: `${radioUploadProgress ?? 0}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <motion.button
-                  type="button"
-                  disabled={radioUploading || !radioNewProgram.title?.trim() || (editingRadioProgramIndex == null && !radioNewProgram.streamUrl && !radioNewProgram.mp3File)}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  onClick={editingRadioProgramIndex != null ? handleSaveEditRadioProgram : handleAddRadioProgram}
-                  className={`w-full py-2 rounded-lg font-medium flex items-center justify-center gap-2 ${editingRadioProgramIndex != null ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-purple-600 text-white hover:bg-purple-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {editingRadioProgramIndex != null ? (
-                    <>
-                      <Save size={18} />
-                      {t('common.saveChanges')}
-                    </>
-                  ) : (
-                    <>
-                      <Plus size={18} />
-                      {t('radio.addProgramButton')}
-                    </>
-                  )}
-                </motion.button>
-                {editingRadioProgramIndex != null && (
-                  <button
-                    type="button"
-                    onClick={() => { setEditingRadioProgramIndex(null); resetRadioNewProgram(); }}
-                    className="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                  >
-                    {t('radio.cancelEdit')}
-                  </button>
-                )}
-              </div>
-              {/* Statistiques de programmation */}
-              <div className="px-4 py-3 bg-gradient-to-r from-purple-50 via-blue-50 to-purple-50 border-b border-gray-200">
-                <div className="flex items-center gap-3 mb-3">
-                  <BarChart3 size={18} className="text-purple-600" />
-                  <h3 className="text-base font-semibold text-gray-900">{t('radio.programmingStats')}</h3>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-white rounded-lg p-3 border border-gray-200 text-center shadow-sm">
-                    <p className="text-2xl font-bold text-gray-900">{radioPrograms.length}</p>
-                    <p className="text-xs text-gray-600 mt-0.5 flex items-center justify-center gap-1">
-                      <List size={12} />
-                      {t('radio.statsTotal')}
-                    </p>
-                  </div>
-                  <div className="bg-white rounded-lg p-3 border border-green-200 text-center shadow-sm">
-                    <p className="text-2xl font-bold text-green-600">{radioPrograms.filter(p => p.isActive !== false).length}</p>
-                    <p className="text-xs text-gray-600 mt-0.5 flex items-center justify-center gap-1">
-                      <CheckCircle size={12} />
-                      {t('radio.activePrograms')}
-                    </p>
-                  </div>
-                  <div className="bg-white rounded-lg p-3 border border-blue-200 text-center shadow-sm">
-                    <p className="text-2xl font-bold text-blue-600">
-                      {formatDuration(radioPrograms.reduce((sum, p) => sum + (p.duration || 0), 0))}
-                    </p>
-                    <p className="text-xs text-gray-600 mt-0.5 flex items-center justify-center gap-1">
-                      <Clock size={12} />
-                      {t('radio.totalDuration')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Toggle Liste / Calendrier */}
-              <div className="px-4 py-2 border-b border-gray-200 bg-white flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRadioProgramViewMode('list')}
-                    className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm ${
-                      radioProgramViewMode === 'list' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    <List size={16} />
-                    {t('radio.listView')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRadioProgramViewMode('calendar')}
-                    className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm ${
-                      radioProgramViewMode === 'calendar' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    <Calendar size={16} />
-                    {t('radio.calendarView')}
-                  </button>
-                </div>
-                {radioProgramViewMode === 'calendar' && (
-                  <button
-                    type="button"
-                    onClick={() => { const now = new Date(); setRadioCalendarDate(now); setRadioSelectedDate(now); }}
-                    className="px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-                  >
-                    {t('radio.today')}
-                  </button>
-                )}
-              </div>
-
-              {/* Vue Calendrier */}
-              {radioProgramViewMode === 'calendar' && (
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <button type="button" onClick={() => setRadioCalendarDate(d => new Date(d.getFullYear(), d.getMonth() - 1))} className="p-2 hover:bg-gray-100 rounded-lg">
-                        <ChevronLeft size={18} />
-                      </button>
-                      <span className="font-semibold text-gray-900 capitalize">{formatRadioMonthYear(radioCalendarDate)}</span>
-                      <button type="button" onClick={() => setRadioCalendarDate(d => new Date(d.getFullYear(), d.getMonth() + 1))} className="p-2 hover:bg-gray-100 rounded-lg">
-                        <ChevronRight size={18} />
-                      </button>
-                    </div>
-                    <span className="text-sm text-gray-500">{radioPrograms.filter(p => p.isActive !== false).length} {t('radio.programsActiveCount')}</span>
-                  </div>
-                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm pt-1">
-                    <div className="grid grid-cols-7 border-b border-gray-200 min-h-[2.5rem] shrink-0">
-                      {radioCalendarDaysOfWeek.map((d) => (
-                        <div key={d.short} className="min-h-[2.5rem] flex items-center justify-center py-2.5 text-xs font-semibold text-gray-600 bg-gray-50 border-r border-gray-200 last:border-r-0">{d.short}</div>
+                  {radioNewProgram.isRepeating && (
+                    <div className="flex flex-wrap gap-2">
+                      {daysOfWeekRadio.map((d) => (
+                        <button
+                          key={d.value}
+                          type="button"
+                          onClick={() => toggleDayOfWeekRadio(d.value)}
+                          className={`px-2 py-1 rounded text-sm ${radioNewProgram.daysOfWeek.includes(d.value) ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                        >
+                          {d.label}
+                        </button>
                       ))}
                     </div>
-                    <div className="grid grid-cols-7">
-                      {getRadioCalendarDays(radioCalendarDate).map((day, idx) => {
-                        const dayProgs = getProgramsForRadioDate(day.date);
-                        const isSelected = radioSelectedDate.toDateString() === day.date.toDateString();
-                        return (
-                          <div
-                            key={day.date.toISOString()}
-                            onClick={() => setRadioSelectedDate(day.date)}
-                            className={`min-h-[80px] border-r border-b border-gray-200 p-1.5 cursor-pointer text-sm ${
-                              day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'
-                            } ${isSelected ? 'ring-2 ring-purple-500 bg-purple-50' : ''} ${day.isToday ? 'bg-blue-50' : ''} hover:bg-gray-50`}
-                          >
-                            <span className={day.isCurrentMonth ? (day.isToday ? 'text-blue-600 font-bold' : 'text-gray-900') : 'text-gray-400'}>{day.date.getDate()}</span>
-                            {dayProgs.length > 0 && (
-                              <span className="ml-1 px-1 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-semibold">{dayProgs.length}</span>
+                  )}
+                  <div className="border-t border-gray-200 pt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <span className="flex items-center gap-2">
+                        <FileAudio size={18} className="text-purple-600" /> {t('radio.mp3UploadOrLibrary')}
+                      </span>
+                    </label>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <label className="flex-1 min-w-[200px] cursor-pointer">
+                        <div
+                          className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-lg ${radioNewProgram.mp3File || radioNewProgram.streamUrl ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white hover:border-purple-400'}`}
+                        >
+                          <FileAudio
+                            size={24}
+                            className={
+                              radioNewProgram.mp3File || radioNewProgram.streamUrl ? 'text-green-600' : 'text-gray-400'
+                            }
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {radioNewProgram.mp3File?.name ||
+                                radioNewProgram.fileName ||
+                                (radioNewProgram.streamUrl ? t('radio.fileSaved') : t('radio.clickToChooseMp3'))}
+                            </p>
+                            {radioNewProgram.duration > 0 && (
+                              <p className="text-xs text-gray-500">{formatDuration(radioNewProgram.duration)}</p>
                             )}
-                            <div className="mt-1 space-y-0.5 max-h-[52px] overflow-y-auto">
-                              {dayProgs.slice(0, 2).map((p) => (
-                                <div key={p.id} className="px-1 py-0.5 bg-purple-100 rounded text-xs truncate" title={p.title}>{p.title}</div>
-                              ))}
-                              {dayProgs.length > 2 && <div className="text-xs text-gray-500">+{dayProgs.length - 2}</div>}
-                            </div>
                           </div>
-                        );
-                      })}
+                          <Upload size={18} className="text-gray-500" />
+                        </div>
+                        <input
+                          type="file"
+                          accept="audio/*,.mp3,.wav,.ogg,.m4a"
+                          onChange={handleAudioUploadRadio}
+                          className="hidden"
+                          disabled={radioUploading}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowLibraryPickerRadio(true)}
+                        className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-purple-300 rounded-lg bg-purple-50 hover:bg-purple-100 hover:border-purple-400 text-purple-700 font-medium text-sm transition-colors"
+                      >
+                        <FolderOpen size={20} />
+                        {t('radio.chooseFromLibrary')}
+                      </button>
+                      {(radioNewProgram.mp3File || radioNewProgram.streamUrl) && (
+                        <button
+                          type="button"
+                          onClick={removeAudioRadio}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                          title={t('radio.removeFile')}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
+                    {radioUploading && (
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center justify-between text-xs text-amber-700">
+                          <span>{t('radio.uploadInProgress')}</span>
+                          <span>{radioUploadProgress != null ? `${radioUploadProgress} %` : '…'}</span>
+                        </div>
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-300 ease-out"
+                            style={{ width: `${radioUploadProgress ?? 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <motion.button
+                    type="button"
+                    disabled={
+                      radioUploading ||
+                      !radioNewProgram.title?.trim() ||
+                      (editingRadioProgramIndex == null && !radioNewProgram.streamUrl && !radioNewProgram.mp3File)
+                    }
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={editingRadioProgramIndex != null ? handleSaveEditRadioProgram : handleAddRadioProgram}
+                    className={`w-full py-2 rounded-lg font-medium flex items-center justify-center gap-2 ${editingRadioProgramIndex != null ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-purple-600 text-white hover:bg-purple-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {editingRadioProgramIndex != null ? (
+                      <>
+                        <Save size={18} />
+                        {t('common.saveChanges')}
+                      </>
+                    ) : (
+                      <>
+                        <Plus size={18} />
+                        {t('radio.addProgramButton')}
+                      </>
+                    )}
+                  </motion.button>
+                  {editingRadioProgramIndex != null && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingRadioProgramIndex(null);
+                        resetRadioNewProgram();
+                      }}
+                      className="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                    >
+                      {t('radio.cancelEdit')}
+                    </button>
+                  )}
+                </div>
+                {/* Statistiques de programmation */}
+                <div className="px-4 py-3 bg-gradient-to-r from-purple-50 via-blue-50 to-purple-50 border-b border-gray-200">
+                  <div className="flex items-center gap-3 mb-3">
+                    <BarChart3 size={18} className="text-purple-600" />
+                    <h3 className="text-base font-semibold text-gray-900">{t('radio.programmingStats')}</h3>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-white rounded-lg p-3 border border-gray-200 text-center shadow-sm">
+                      <p className="text-2xl font-bold text-gray-900">{radioPrograms.length}</p>
+                      <p className="text-xs text-gray-600 mt-0.5 flex items-center justify-center gap-1">
+                        <List size={12} />
+                        {t('radio.statsTotal')}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 border border-green-200 text-center shadow-sm">
+                      <p className="text-2xl font-bold text-green-600">
+                        {radioPrograms.filter((p) => p.isActive !== false).length}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-0.5 flex items-center justify-center gap-1">
+                        <CheckCircle size={12} />
+                        {t('radio.activePrograms')}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 border border-blue-200 text-center shadow-sm">
+                      <p className="text-2xl font-bold text-blue-600">
+                        {formatDuration(radioPrograms.reduce((sum, p) => sum + (p.duration || 0), 0))}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-0.5 flex items-center justify-center gap-1">
+                        <Clock size={12} />
+                        {t('radio.totalDuration')}
+                      </p>
                     </div>
                   </div>
-                  {radioSelectedDate && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                        Programmes le {radioSelectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} (répétés)
-                      </h4>
-                      {getProgramsForRadioDate(radioSelectedDate).length === 0 ? (
-                        <p className="text-sm text-gray-500">Aucun programme répété ce jour.</p>
+                </div>
+
+                {/* Toggle Liste / Calendrier */}
+                <div className="px-4 py-2 border-b border-gray-200 bg-white flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRadioProgramViewMode('list')}
+                      className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm ${
+                        radioProgramViewMode === 'list'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <List size={16} />
+                      {t('radio.listView')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRadioProgramViewMode('calendar')}
+                      className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm ${
+                        radioProgramViewMode === 'calendar'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <Calendar size={16} />
+                      {t('radio.calendarView')}
+                    </button>
+                  </div>
+                  {radioProgramViewMode === 'calendar' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const now = new Date();
+                        setRadioCalendarDate(now);
+                        setRadioSelectedDate(now);
+                      }}
+                      className="px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                    >
+                      {t('radio.today')}
+                    </button>
+                  )}
+                </div>
+
+                {/* Vue Calendrier */}
+                {radioProgramViewMode === 'calendar' && (
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setRadioCalendarDate((d) => new Date(d.getFullYear(), d.getMonth() - 1))}
+                          className="p-2 hover:bg-gray-100 rounded-lg"
+                        >
+                          <ChevronLeft size={18} />
+                        </button>
+                        <span className="font-semibold text-gray-900 capitalize">
+                          {formatRadioMonthYear(radioCalendarDate)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setRadioCalendarDate((d) => new Date(d.getFullYear(), d.getMonth() + 1))}
+                          className="p-2 hover:bg-gray-100 rounded-lg"
+                        >
+                          <ChevronRight size={18} />
+                        </button>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {radioPrograms.filter((p) => p.isActive !== false).length} {t('radio.programsActiveCount')}
+                      </span>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm pt-1">
+                      <div className="grid grid-cols-7 border-b border-gray-200 min-h-[2.5rem] shrink-0">
+                        {radioCalendarDaysOfWeek.map((d) => (
+                          <div
+                            key={d.short}
+                            className="min-h-[2.5rem] flex items-center justify-center py-2.5 text-xs font-semibold text-gray-600 bg-gray-50 border-r border-gray-200 last:border-r-0"
+                          >
+                            {d.short}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-7">
+                        {getRadioCalendarDays(radioCalendarDate).map((day, idx) => {
+                          const dayProgs = getProgramsForRadioDate(day.date);
+                          const isSelected = radioSelectedDate.toDateString() === day.date.toDateString();
+                          return (
+                            <div
+                              key={day.date.toISOString()}
+                              onClick={() => setRadioSelectedDate(day.date)}
+                              className={`min-h-[80px] border-r border-b border-gray-200 p-1.5 cursor-pointer text-sm ${
+                                day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'
+                              } ${isSelected ? 'ring-2 ring-purple-500 bg-purple-50' : ''} ${day.isToday ? 'bg-blue-50' : ''} hover:bg-gray-50`}
+                            >
+                              <span
+                                className={
+                                  day.isCurrentMonth
+                                    ? day.isToday
+                                      ? 'text-blue-600 font-bold'
+                                      : 'text-gray-900'
+                                    : 'text-gray-400'
+                                }
+                              >
+                                {day.date.getDate()}
+                              </span>
+                              {dayProgs.length > 0 && (
+                                <span className="ml-1 px-1 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-semibold">
+                                  {dayProgs.length}
+                                </span>
+                              )}
+                              <div className="mt-1 space-y-0.5 max-h-[52px] overflow-y-auto">
+                                {dayProgs.slice(0, 2).map((p) => (
+                                  <div
+                                    key={p.id}
+                                    className="px-1 py-0.5 bg-purple-100 rounded text-xs truncate"
+                                    title={p.title}
+                                  >
+                                    {p.title}
+                                  </div>
+                                ))}
+                                {dayProgs.length > 2 && (
+                                  <div className="text-xs text-gray-500">+{dayProgs.length - 2}</div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    {radioSelectedDate && (
+                      <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                          Programmes le{' '}
+                          {radioSelectedDate.toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                          })}{' '}
+                          (répétés)
+                        </h4>
+                        {getProgramsForRadioDate(radioSelectedDate).length === 0 ? (
+                          <p className="text-sm text-gray-500">Aucun programme répété ce jour.</p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {getProgramsForRadioDate(radioSelectedDate).map((p) => (
+                              <li key={p.id} className="flex items-center justify-between text-sm">
+                                <span className="font-medium">{p.title}</span>
+                                <span className="text-gray-500">
+                                  {p.startTime || '—'} → {p.endTime || '—'}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Vue Liste + Liste des programmes (N) */}
+                {radioProgramViewMode === 'list' && (
+                  <div className="flex flex-col">
+                    <div className="px-4 pt-3 pb-2 border-b border-gray-100 flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-2">
+                        <List size={18} className="text-gray-600" />
+                        <h3 className="text-base font-semibold text-gray-900">
+                          {t('radio.programList')} ({radioPrograms.length})
+                        </h3>
+                      </div>
+                      {radioPrograms.length > 0 && (
+                        <span className="text-xs text-gray-500">
+                          {radioPrograms.filter((p) => p.isActive !== false).length} {t('radio.activeCount')}
+                        </span>
+                      )}
+                    </div>
+                    {radioPrograms.length > 0 && (
+                      <p className="px-4 pt-2 text-xs text-gray-500 flex items-center gap-1">
+                        <GripVertical size={14} /> {t('radio.dragToReorder')}
+                      </p>
+                    )}
+                    <div className="p-4">
+                      {radioPrograms.length === 0 ? (
+                        <div className="text-center py-12 bg-gray-50 rounded-lg">
+                          <Music size={48} className="text-gray-300 mx-auto mb-4" />
+                          <p className="text-gray-500">Aucun programme</p>
+                          <p className="text-sm text-gray-400 mt-1">
+                            Ajoutez des programmes via le formulaire (upload MP3 direct).
+                          </p>
+                        </div>
                       ) : (
                         <ul className="space-y-2">
-                          {getProgramsForRadioDate(radioSelectedDate).map((p) => (
-                            <li key={p.id} className="flex items-center justify-between text-sm">
-                              <span className="font-medium">{p.title}</span>
-                              <span className="text-gray-500">{p.startTime || '—'} → {p.endTime || '—'}</span>
+                          {radioPrograms.map((prog, index) => (
+                            <li
+                              key={prog.id || index}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = 'move';
+                                setRadioDragOverIndex(index);
+                              }}
+                              onDragLeave={() => setRadioDragOverIndex(null)}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                setRadioDragOverIndex(null);
+                                const from = radioDragSourceIndexRef.current;
+                                const to = index;
+                                if (from == null || from === to) return;
+                                const next = [...radioPrograms];
+                                const [removed] = next.splice(from, 1);
+                                next.splice(to, 0, removed);
+                                setRadioPrograms(next.map((p, i) => ({ ...p, order: i })));
+                                radioDragSourceIndexRef.current = null;
+                              }}
+                              className={`flex items-center gap-2 p-3 rounded-lg border transition-colors ${
+                                radioDragOverIndex === index
+                                  ? 'bg-purple-50 border-purple-300 border-2'
+                                  : 'bg-gray-50 border-gray-100'
+                              }`}
+                            >
+                              <div
+                                draggable
+                                onDragStart={(e) => {
+                                  radioDragSourceIndexRef.current = index;
+                                  e.dataTransfer.effectAllowed = 'move';
+                                  e.dataTransfer.setData('text/plain', String(index));
+                                }}
+                                onDragEnd={() => {
+                                  setRadioDragOverIndex(null);
+                                  radioDragSourceIndexRef.current = null;
+                                }}
+                                className="flex items-center gap-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+                                title={t('radio.dragToReorder')}
+                              >
+                                <span className="text-sm font-medium text-gray-500 w-6">{index + 1}</span>
+                                <GripVertical size={16} className="text-gray-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{prog.title}</p>
+                                {prog.artist && <p className="text-sm text-gray-500 truncate">{prog.artist}</p>}
+                                {(prog.startTime || prog.endTime) && (
+                                  <p className="text-xs text-gray-400">
+                                    {prog.startTime || '—'} → {prog.endTime || '—'}
+                                  </p>
+                                )}
+                              </div>
+                              <span className="text-xs text-gray-400 shrink-0">{formatDuration(prog.duration)}</span>
+                              <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => togglePlayRadioProgram(index)}
+                                  className="flex items-center gap-1 px-2 py-1.5 text-green-600 hover:bg-green-50 rounded text-sm font-medium"
+                                  title={playingRadioProgramIndex === index ? 'Pause' : 'Play'}
+                                >
+                                  {playingRadioProgramIndex === index ? <Pause size={16} /> : <Play size={16} />}
+                                  <span className="hidden sm:inline">
+                                    {playingRadioProgramIndex === index ? 'Pause' : 'Play'}
+                                  </span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditRadioProgram(index)}
+                                  className="flex items-center gap-1 px-2 py-1.5 text-blue-600 hover:bg-blue-50 rounded text-sm font-medium"
+                                  title={t('common.edit')}
+                                >
+                                  <Edit size={16} />
+                                  <span className="hidden sm:inline">{t('common.edit')}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setRadioPrograms((prev) =>
+                                      prev.filter((_, i) => i !== index).map((p, i) => ({ ...p, order: i }))
+                                    )
+                                  }
+                                  className="flex items-center gap-1 px-2 py-1.5 text-red-500 hover:bg-red-50 rounded text-sm font-medium"
+                                  title={t('common.delete')}
+                                >
+                                  <Trash2 size={16} />
+                                  <span className="hidden sm:inline">Supprimer</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (index <= 0) return;
+                                    const next = [...radioPrograms];
+                                    [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                                    setRadioPrograms(next.map((p, i) => ({ ...p, order: i })));
+                                  }}
+                                  className="p-1.5 text-gray-500 hover:bg-gray-200 rounded"
+                                  title={t('radio.moveUp')}
+                                >
+                                  <ArrowUp size={16} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (index >= radioPrograms.length - 1) return;
+                                    const next = [...radioPrograms];
+                                    [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                                    setRadioPrograms(next.map((p, i) => ({ ...p, order: i })));
+                                  }}
+                                  className="p-1.5 text-gray-500 hover:bg-gray-200 rounded"
+                                  title={t('radio.moveDown')}
+                                >
+                                  <ArrowDown size={16} />
+                                </button>
+                              </div>
                             </li>
                           ))}
                         </ul>
                       )}
                     </div>
-                  )}
-                </div>
-              )}
-
-              {/* Vue Liste + Liste des programmes (N) */}
-              {radioProgramViewMode === 'list' && (
-              <div className="flex flex-col">
-                <div className="px-4 pt-3 pb-2 border-b border-gray-100 flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-2">
-                    <List size={18} className="text-gray-600" />
-                    <h3 className="text-base font-semibold text-gray-900">{t('radio.programList')} ({radioPrograms.length})</h3>
                   </div>
-                  {radioPrograms.length > 0 && (
-                    <span className="text-xs text-gray-500">{radioPrograms.filter(p => p.isActive !== false).length} {t('radio.activeCount')}</span>
-                  )}
-                </div>
-                {radioPrograms.length > 0 && (
-                  <p className="px-4 pt-2 text-xs text-gray-500 flex items-center gap-1">
-                    <GripVertical size={14} /> {t('radio.dragToReorder')}
-                  </p>
                 )}
-                <div className="p-4">
-                {radioPrograms.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <Music size={48} className="text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Aucun programme</p>
-                    <p className="text-sm text-gray-400 mt-1">Ajoutez des programmes via le formulaire (upload MP3 direct).</p>
-                  </div>
-                ) : (
-                  <ul className="space-y-2">
-                    {radioPrograms.map((prog, index) => (
-                      <li
-                        key={prog.id || index}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.dataTransfer.dropEffect = 'move';
-                          setRadioDragOverIndex(index);
-                        }}
-                        onDragLeave={() => setRadioDragOverIndex(null)}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          setRadioDragOverIndex(null);
-                          const from = radioDragSourceIndexRef.current;
-                          const to = index;
-                          if (from == null || from === to) return;
-                          const next = [...radioPrograms];
-                          const [removed] = next.splice(from, 1);
-                          next.splice(to, 0, removed);
-                          setRadioPrograms(next.map((p, i) => ({ ...p, order: i })));
-                          radioDragSourceIndexRef.current = null;
-                        }}
-                        className={`flex items-center gap-2 p-3 rounded-lg border transition-colors ${
-                          radioDragOverIndex === index
-                            ? 'bg-purple-50 border-purple-300 border-2'
-                            : 'bg-gray-50 border-gray-100'
-                        }`}
-                      >
-                        <div
-                          draggable
-                          onDragStart={(e) => {
-                            radioDragSourceIndexRef.current = index;
-                            e.dataTransfer.effectAllowed = 'move';
-                            e.dataTransfer.setData('text/plain', String(index));
-                          }}
-                          onDragEnd={() => {
-                            setRadioDragOverIndex(null);
-                            radioDragSourceIndexRef.current = null;
-                          }}
-                          className="flex items-center gap-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
-                          title={t('radio.dragToReorder')}
-                        >
-                          <span className="text-sm font-medium text-gray-500 w-6">{index + 1}</span>
-                          <GripVertical size={16} className="text-gray-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{prog.title}</p>
-                          {prog.artist && (
-                            <p className="text-sm text-gray-500 truncate">{prog.artist}</p>
-                          )}
-                          {(prog.startTime || prog.endTime) && (
-                            <p className="text-xs text-gray-400">{prog.startTime || '—'} → {prog.endTime || '—'}</p>
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-400 shrink-0">{formatDuration(prog.duration)}</span>
-                        <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
-                          <button
-                            type="button"
-                            onClick={() => togglePlayRadioProgram(index)}
-                            className="flex items-center gap-1 px-2 py-1.5 text-green-600 hover:bg-green-50 rounded text-sm font-medium"
-                            title={playingRadioProgramIndex === index ? 'Pause' : 'Play'}
-                          >
-                            {playingRadioProgramIndex === index ? <Pause size={16} /> : <Play size={16} />}
-                            <span className="hidden sm:inline">{playingRadioProgramIndex === index ? 'Pause' : 'Play'}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleEditRadioProgram(index)}
-                            className="flex items-center gap-1 px-2 py-1.5 text-blue-600 hover:bg-blue-50 rounded text-sm font-medium"
-                            title={t('common.edit')}
-                          >
-                            <Edit size={16} />
-                            <span className="hidden sm:inline">{t('common.edit')}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setRadioPrograms(prev => prev.filter((_, i) => i !== index).map((p, i) => ({ ...p, order: i })))}
-                            className="flex items-center gap-1 px-2 py-1.5 text-red-500 hover:bg-red-50 rounded text-sm font-medium"
-                            title={t('common.delete')}
-                          >
-                            <Trash2 size={16} />
-                            <span className="hidden sm:inline">Supprimer</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (index <= 0) return;
-                              const next = [...radioPrograms];
-                              [next[index - 1], next[index]] = [next[index], next[index - 1]];
-                              setRadioPrograms(next.map((p, i) => ({ ...p, order: i })));
-                            }}
-                            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded"
-                            title={t('radio.moveUp')}
-                          >
-                            <ArrowUp size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (index >= radioPrograms.length - 1) return;
-                              const next = [...radioPrograms];
-                              [next[index], next[index + 1]] = [next[index + 1], next[index]];
-                              setRadioPrograms(next.map((p, i) => ({ ...p, order: i })));
-                            }}
-                            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded"
-                            title={t('radio.moveDown')}
-                          >
-                            <ArrowDown size={16} />
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                </div>
-              </div>
-              )}
               </div>
               <div className="p-4 border-t border-gray-200 flex items-center justify-end gap-3 shrink-0">
                 <button
-                  onClick={() => { setShowRadioProgramModal(false); setStationForPrograms(null); setRadioPrograms([]); setShowLibraryPickerRadio(false); setEditingRadioProgramIndex(null); stopRadioPreview(); }}
+                  onClick={() => {
+                    setShowRadioProgramModal(false);
+                    setStationForPrograms(null);
+                    setRadioPrograms([]);
+                    setShowLibraryPickerRadio(false);
+                    setEditingRadioProgramIndex(null);
+                    stopRadioPreview();
+                  }}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                 >
                   {t('common.close')}
@@ -2363,7 +2693,7 @@ const Radio = () => {
                       endTime: p.endTime || '',
                       daysOfWeek: Array.isArray(p.daysOfWeek) ? p.daysOfWeek : [],
                       isRepeating: p.isRepeating || false,
-                      fileName: p.fileName || ''
+                      fileName: p.fileName || '',
                     }));
                     // Garder schedule synchronisé avec programs (format attendu par l'API / anciens consommateurs)
                     const schedule = programsToSave.map((p, i) => ({
@@ -2376,11 +2706,13 @@ const Radio = () => {
                       streamUrl: p.streamUrl,
                       isActive: p.isActive,
                       daysOfWeek: p.daysOfWeek,
-                      order: i
+                      order: i,
                     }));
                     try {
                       await apiService.updateRadioStation(id, { programs: programsToSave, schedule });
-                      setStations(prev => prev.map(s => (s.id || s._id) === id ? { ...s, programs: programsToSave, schedule } : s));
+                      setStations((prev) =>
+                        prev.map((s) => ((s.id || s._id) === id ? { ...s, programs: programsToSave, schedule } : s))
+                      );
                       setShowRadioProgramModal(false);
                       setStationForPrograms(null);
                       setRadioPrograms([]);
@@ -2452,9 +2784,7 @@ const Radio = () => {
               <button
                 onClick={() => setActiveSection('breaks')}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                  activeSection === 'breaks'
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-50'
+                  activeSection === 'breaks' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 <ClockIcon size={16} />
@@ -2518,7 +2848,11 @@ const Radio = () => {
                 {selectedStation && (
                   <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
                     {logoUrl(selectedStation.logo) ? (
-                      <img src={logoUrl(selectedStation.logo)} alt={selectedStation.name} className="w-12 h-12 rounded-xl object-cover border border-gray-200" />
+                      <img
+                        src={logoUrl(selectedStation.logo)}
+                        alt={selectedStation.name}
+                        className="w-12 h-12 rounded-xl object-cover border border-gray-200"
+                      />
                     ) : (
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                         <Music size={24} className="text-white" />
@@ -2568,7 +2902,7 @@ const Radio = () => {
                       daysOfWeek: [],
                       isRepeating: false,
                       isActive: true,
-                      tags: []
+                      tags: [],
                     });
                   }}
                   className="p-2 hover:bg-gray-100 rounded-lg"
@@ -2682,12 +3016,12 @@ const Radio = () => {
                     return;
                   }
                   if (editingProgram) {
-                    setPrograms(prev => prev.map(p => 
-                      p.id === editingProgram.id ? { ...newProgram, id: editingProgram.id } : p
-                    ));
+                    setPrograms((prev) =>
+                      prev.map((p) => (p.id === editingProgram.id ? { ...newProgram, id: editingProgram.id } : p))
+                    );
                     toast.success(t('radio.programUpdatedToast'));
                   } else {
-                    setPrograms(prev => [...prev, { ...newProgram, id: `program_${Date.now()}` }]);
+                    setPrograms((prev) => [...prev, { ...newProgram, id: `program_${Date.now()}` }]);
                     toast.success(t('radio.programCreatedToast'));
                   }
                   setShowProgramModal(false);
@@ -2704,7 +3038,7 @@ const Radio = () => {
                     daysOfWeek: [],
                     isRepeating: false,
                     isActive: true,
-                    tags: []
+                    tags: [],
                   });
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -2734,7 +3068,7 @@ const Radio = () => {
                       title: '',
                       date: '',
                       startTime: '',
-                      duration: 15
+                      duration: 15,
                     });
                   }}
                   className="p-2 hover:bg-gray-100 rounded-lg"
@@ -2796,7 +3130,7 @@ const Radio = () => {
                     title: '',
                     date: '',
                     startTime: '',
-                    duration: 15
+                    duration: 15,
                   });
                 }}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
@@ -2818,15 +3152,15 @@ const Radio = () => {
                     date: newTimeSlot.date,
                     startTime: newTimeSlot.startTime,
                     endTime: endTime,
-                    duration: newTimeSlot.duration
+                    duration: newTimeSlot.duration,
                   };
-                  setTimeSlots(prev => [...prev, newSlot]);
+                  setTimeSlots((prev) => [...prev, newSlot]);
                   setShowTimeSlotModal(false);
                   setNewTimeSlot({
                     title: '',
                     date: '',
                     startTime: '',
-                    duration: 15
+                    duration: 15,
                   });
                   toast.success('Time slot added');
                 }}
@@ -2838,7 +3172,6 @@ const Radio = () => {
           </motion.div>
         </div>
       )}
-
     </div>
   );
 };

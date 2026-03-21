@@ -1,9 +1,13 @@
 import axios from 'axios';
 
-// Même logique que apiService : en dev /api passe par le proxy Vite → backend:3000
-const API_BASE_URL = import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== ''
-  ? import.meta.env.VITE_API_URL
-  : '/api';
+function resolveApiBaseUrl() {
+  if (import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== '') {
+    return String(import.meta.env.VITE_API_URL).replace(/\/$/, '');
+  }
+  return String(import.meta.env.VITE_API_PREFIX || '/api/v1').replace(/\/$/, '');
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const authApi = axios.create({
   baseURL: API_BASE_URL,
@@ -38,7 +42,7 @@ export const authService = {
       await authApi.post('/auth/logout');
     } catch (_) {}
     localStorage.removeItem('authToken');
-  }
+  },
 };
 
 export default authService;

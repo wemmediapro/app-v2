@@ -8,33 +8,49 @@ const restaurantsFallback = require('../lib/restaurants-fallback');
 const router = express.Router();
 
 function localizeRestaurant(doc, lang) {
-  if (!doc) {return doc;}
+  if (!doc) {
+    return doc;
+  }
   const normalizedLang = (lang && String(lang).toLowerCase()) || '';
   const out = typeof doc.toObject === 'function' ? doc.toObject() : { ...doc };
-  if (!normalizedLang || !doc.translations || typeof doc.translations !== 'object') {return out;}
+  if (!normalizedLang || !doc.translations || typeof doc.translations !== 'object') {
+    return out;
+  }
   const t = doc.translations[normalizedLang] || doc.translations.fr || {};
-  if (t.name) {out.name = t.name;}
-  if (t.description) {out.description = t.description;}
-  if (t.type) {out.type = t.type;}
-  if (t.location) {out.location = t.location;}
-  if (t.openingHours) {out.openingHours = t.openingHours;}
-  if (Array.isArray(t.specialties)) {out.specialties = t.specialties;}
+  if (t.name) {
+    out.name = t.name;
+  }
+  if (t.description) {
+    out.description = t.description;
+  }
+  if (t.type) {
+    out.type = t.type;
+  }
+  if (t.location) {
+    out.location = t.location;
+  }
+  if (t.openingHours) {
+    out.openingHours = t.openingHours;
+  }
+  if (Array.isArray(t.specialties)) {
+    out.specialties = t.specialties;
+  }
   // Menu : appliquer les traductions par plat (même si les longueurs diffèrent)
   if (Array.isArray(out.menu) && Array.isArray(t.menu)) {
     out.menu = out.menu.map((item, idx) => {
       const tr = t.menu[idx];
       return {
         ...item,
-        name: (tr && tr.name) ? tr.name : item.name,
-        description: (tr && tr.description) ? tr.description : item.description,
+        name: tr && tr.name ? tr.name : item.name,
+        description: tr && tr.description ? tr.description : item.description,
       };
     });
   }
   if (Array.isArray(t.promotions) && Array.isArray(out.promotions) && t.promotions.length === out.promotions.length) {
     out.promotions = out.promotions.map((p, idx) => ({
       ...p,
-      title: (t.promotions[idx] && t.promotions[idx].title) ? t.promotions[idx].title : p.title,
-      description: (t.promotions[idx] && t.promotions[idx].description) ? t.promotions[idx].description : p.description,
+      title: t.promotions[idx] && t.promotions[idx].title ? t.promotions[idx].title : p.title,
+      description: t.promotions[idx] && t.promotions[idx].description ? t.promotions[idx].description : p.description,
     }));
   }
   return out;
@@ -86,7 +102,7 @@ router.get('/', async (req, res) => {
     }
 
     const restaurants = await Restaurant.find(query).read('secondaryPreferred').sort({ name: 1 }).lean();
-    res.json(restaurants.map(doc => localizeRestaurant(doc, lang)));
+    res.json(restaurants.map((doc) => localizeRestaurant(doc, lang)));
   } catch (error) {
     console.error('Get restaurants error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -97,8 +113,13 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
-      const restaurant = restaurantsFallback.getById(req.params.id, (req.query.lang && String(req.query.lang).toLowerCase()) || '');
-      if (!restaurant) {return res.status(404).json({ message: 'Restaurant not found' });}
+      const restaurant = restaurantsFallback.getById(
+        req.params.id,
+        (req.query.lang && String(req.query.lang).toLowerCase()) || ''
+      );
+      if (!restaurant) {
+        return res.status(404).json({ message: 'Restaurant not found' });
+      }
       return res.json(restaurant);
     }
     const restaurant = await Restaurant.findById(req.params.id).read('secondaryPreferred').lean();
@@ -116,7 +137,9 @@ router.get('/:id', async (req, res) => {
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const body = { ...req.body };
-    if (body.translations && typeof body.translations !== 'object') {delete body.translations;}
+    if (body.translations && typeof body.translations !== 'object') {
+      delete body.translations;
+    }
     const restaurant = new Restaurant(body);
     await restaurant.save();
     res.status(201).json({
@@ -126,7 +149,9 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Create restaurant error:', error);
     if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((e) => e.message).filter(Boolean);
+      const messages = Object.values(error.errors)
+        .map((e) => e.message)
+        .filter(Boolean);
       return res.status(400).json({
         message: messages.length ? messages.join('. ') : 'Données invalides',
         errors: error.errors,
@@ -142,12 +167,10 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const body = { ...req.body };
-    if (body.translations && typeof body.translations !== 'object') {delete body.translations;}
-    const restaurant = await Restaurant.findByIdAndUpdate(
-      req.params.id,
-      body,
-      { new: true, runValidators: true },
-    );
+    if (body.translations && typeof body.translations !== 'object') {
+      delete body.translations;
+    }
+    const restaurant = await Restaurant.findByIdAndUpdate(req.params.id, body, { new: true, runValidators: true });
 
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
@@ -160,7 +183,9 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Update restaurant error:', error);
     if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((e) => e.message).filter(Boolean);
+      const messages = Object.values(error.errors)
+        .map((e) => e.message)
+        .filter(Boolean);
       return res.status(400).json({
         message: messages.length ? messages.join('. ') : 'Données invalides',
         errors: error.errors,
@@ -175,11 +200,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 // @access  Private (Admin)
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const restaurant = await Restaurant.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true },
-    );
+    const restaurant = await Restaurant.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
 
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
@@ -193,5 +214,3 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 });
 
 module.exports = router;
-
-

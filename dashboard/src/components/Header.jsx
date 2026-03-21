@@ -73,6 +73,3 @@ const Header = ({ user, onLogout, onMenuClick, showHamburger = false }) => {
 };
 
 export default Header;
-
-
-

@@ -12,12 +12,15 @@ const connectionCounters = require('../lib/connectionCounters');
 
 /** Formate un navire pour la réponse API (id = slug ou _id, route = chaîne) */
 function toShipResponse(doc) {
-  if (!doc) {return null;}
+  if (!doc) {
+    return null;
+  }
   const d = doc.toObject ? doc.toObject() : { ...doc };
   const id = d.slug || (d._id && d._id.toString());
-  const routeStr = Array.isArray(d.routes) && d.routes.length > 0
-    ? `${d.routes[0].from || ''} - ${d.routes[0].to || ''}`.trim()
-    : (d.route || '');
+  const routeStr =
+    Array.isArray(d.routes) && d.routes.length > 0
+      ? `${d.routes[0].from || ''} - ${d.routes[0].to || ''}`.trim()
+      : d.route || '';
   const out = { ...d, id, _id: d._id && d._id.toString(), route: routeStr };
   if (d.passengers != null || d.capacityVehicles != null || d.capacityCabins != null) {
     out.capacity = {
@@ -48,7 +51,9 @@ router.get('/ships', optionalAuth, async (req, res) => {
     const ships = await Ship.find(filter).read('secondaryPreferred').sort({ name: 1 }).lean();
     const data = ships.map((d) => {
       const out = toShipResponse(d);
-      if (allRequested) {out.isActive = d.isActive !== false;}
+      if (allRequested) {
+        out.isActive = d.isActive !== false;
+      }
       return out;
     });
     res.json({
@@ -116,7 +121,9 @@ router.get('/ships/:id', async (req, res) => {
 
 /** Génère un slug à partir d'un nom (pour POST ships) */
 function slugify(text) {
-  if (!text || typeof text !== 'string') {return '';}
+  if (!text || typeof text !== 'string') {
+    return '';
+  }
   return text
     .trim()
     .toLowerCase()
@@ -153,7 +160,9 @@ router.post('/ships', authMiddleware, adminMiddleware, async (req, res) => {
       });
     }
     let slug = typeof slugInput === 'string' ? slugInput.trim() : '';
-    if (!slug) {slug = slugify(name);}
+    if (!slug) {
+      slug = slugify(name);
+    }
     if (!slug) {
       return res.status(400).json({
         success: false,
@@ -163,15 +172,15 @@ router.post('/ships', authMiddleware, adminMiddleware, async (req, res) => {
     const shipType = ['Ferry', 'Cruise', 'Cargo'].includes(type) ? type : 'Ferry';
 
     const existing = await Ship.findOne({
-      $or: [
-        { name: name.trim() },
-        { slug },
-      ],
+      $or: [{ name: name.trim() }, { slug }],
     });
     if (existing) {
       return res.status(409).json({
         success: false,
-        message: existing.slug === slug ? 'Un navire avec cet identifiant (slug) existe déjà.' : 'Un navire avec ce nom existe déjà.',
+        message:
+          existing.slug === slug
+            ? 'Un navire avec cet identifiant (slug) existe déjà.'
+            : 'Un navire avec ce nom existe déjà.',
       });
     }
 
@@ -235,13 +244,17 @@ router.patch('/ships/:id', authMiddleware, adminMiddleware, async (req, res) => 
       update.capacity = capacity;
     } else if (capacity !== undefined && capacity !== null && capacity !== '') {
       const capacityNum = parseInt(capacity, 10);
-      if (!Number.isNaN(capacityNum) && capacityNum >= 0) {update.capacity = capacityNum;}
+      if (!Number.isNaN(capacityNum) && capacityNum >= 0) {
+        update.capacity = capacityNum;
+      }
     }
     if (maxConnections === null || maxConnections === undefined || maxConnections === '') {
       update.maxConnections = null;
     } else {
       const maxConn = typeof maxConnections === 'number' ? maxConnections : parseInt(maxConnections, 10);
-      if (maxConn != null && !Number.isNaN(maxConn) && maxConn >= 0) {update.maxConnections = maxConn;}
+      if (maxConn != null && !Number.isNaN(maxConn) && maxConn >= 0) {
+        update.maxConnections = maxConn;
+      }
     }
     if (typeof isActive === 'boolean') {
       update.isActive = isActive;
@@ -254,14 +267,8 @@ router.patch('/ships/:id', authMiddleware, adminMiddleware, async (req, res) => 
       });
     }
 
-    const query = mongoose.Types.ObjectId.isValid(id) && id.length === 24
-      ? { _id: id }
-      : { slug: id };
-    const updated = await Ship.findOneAndUpdate(
-      query,
-      { $set: update },
-      { new: true },
-    ).lean();
+    const query = mongoose.Types.ObjectId.isValid(id) && id.length === 24 ? { _id: id } : { slug: id };
+    const updated = await Ship.findOneAndUpdate(query, { $set: update }, { new: true }).lean();
 
     if (updated) {
       const out = toShipResponse(updated);
@@ -305,14 +312,8 @@ router.delete('/ships/:id', authMiddleware, adminMiddleware, async (req, res) =>
       });
     }
     const { id } = req.params;
-    const query = mongoose.Types.ObjectId.isValid(id) && id.length === 24
-      ? { _id: id }
-      : { slug: id };
-    const updated = await Ship.findOneAndUpdate(
-      query,
-      { $set: { isActive: false } },
-      { new: true },
-    ).lean();
+    const query = mongoose.Types.ObjectId.isValid(id) && id.length === 24 ? { _id: id } : { slug: id };
+    const updated = await Ship.findOneAndUpdate(query, { $set: { isActive: false } }, { new: true }).lean();
     if (updated) {
       return res.json({
         success: true,
@@ -385,15 +386,20 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
       update.shipName = typeof shipName === 'string' ? shipName.trim() : '';
     }
     if (shipCapacity !== undefined) {
-      const val = shipCapacity === null || shipCapacity === '' ? null : (typeof shipCapacity === 'number' ? shipCapacity : parseInt(shipCapacity, 10));
-      update.shipCapacity = (val != null && !Number.isNaN(val) && val >= 0) ? val : null;
+      const val =
+        shipCapacity === null || shipCapacity === ''
+          ? null
+          : typeof shipCapacity === 'number'
+            ? shipCapacity
+            : parseInt(shipCapacity, 10);
+      update.shipCapacity = val != null && !Number.isNaN(val) && val >= 0 ? val : null;
     }
     if (shipInfo !== undefined) {
       update.shipInfo = typeof shipInfo === 'string' ? shipInfo.trim() : '';
     }
     if (shipId !== undefined) {
       const id = typeof shipId === 'number' ? shipId : parseInt(shipId, 10);
-      update.shipId = (id >= 1 && !Number.isNaN(id)) ? id : 7;
+      update.shipId = id >= 1 && !Number.isNaN(id) ? id : 7;
     }
     if (Object.keys(update).length === 0) {
       return res.status(400).json({ success: false, message: 'Aucune modification fournie' });
@@ -401,7 +407,7 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
     const config = await LocalServerConfig.findOneAndUpdate(
       { id: 'local' },
       { $set: update },
-      { new: true, upsert: true },
+      { new: true, upsert: true }
     ).lean();
     res.json({
       success: true,
@@ -429,9 +435,12 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
  */
 router.get('/connection-limit', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const currentConnections = typeof connectionCounters.getTotalCountAsync === 'function'
-      ? await connectionCounters.getTotalCountAsync()
-      : (connectionCounters.getTotalCount ? connectionCounters.getTotalCount() : 0);
+    const currentConnections =
+      typeof connectionCounters.getTotalCountAsync === 'function'
+        ? await connectionCounters.getTotalCountAsync()
+        : connectionCounters.getTotalCount
+          ? connectionCounters.getTotalCount()
+          : 0;
     let maxConnections = null;
     if (mongoose.connection.readyState === 1) {
       const config = await LocalServerConfig.findOne({ id: 'local' }).lean();
@@ -462,20 +471,28 @@ router.patch('/connection-limit', authMiddleware, adminMiddleware, async (req, r
       return res.status(503).json({ success: false, message: 'Base de données indisponible' });
     }
     const { maxConnections } = req.body;
-    const value = (maxConnections === null || maxConnections === undefined || maxConnections === '')
-      ? null
-      : (typeof maxConnections === 'number' ? maxConnections : parseInt(maxConnections, 10));
+    const value =
+      maxConnections === null || maxConnections === undefined || maxConnections === ''
+        ? null
+        : typeof maxConnections === 'number'
+          ? maxConnections
+          : parseInt(maxConnections, 10);
     if (value !== null && (Number.isNaN(value) || value < 0)) {
-      return res.status(400).json({ success: false, message: 'maxConnections doit être un nombre positif ou null (illimité)' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'maxConnections doit être un nombre positif ou null (illimité)' });
     }
     const config = await LocalServerConfig.findOneAndUpdate(
       { id: 'local' },
       { $set: { maxConnections: value } },
-      { new: true, upsert: true },
+      { new: true, upsert: true }
     ).lean();
-    const currentConnections = typeof connectionCounters.getTotalCountAsync === 'function'
-      ? await connectionCounters.getTotalCountAsync()
-      : (connectionCounters.getTotalCount ? connectionCounters.getTotalCount() : 0);
+    const currentConnections =
+      typeof connectionCounters.getTotalCountAsync === 'function'
+        ? await connectionCounters.getTotalCountAsync()
+        : connectionCounters.getTotalCount
+          ? connectionCounters.getTotalCount()
+          : 0;
     res.json({
       success: true,
       data: {

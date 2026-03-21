@@ -22,15 +22,16 @@ Ce document décrit les spécifications matérielles (hardware) et logicielles (
 
 #### **Configuration Minimale Recommandée**
 
-| Composant | Spécification | Justification |
-|-----------|---------------|---------------|
-| **CPU** | 12-16 cœurs (3.0+ GHz) | PM2 clustering + MongoDB + Redis nécessitent plusieurs cœurs |
-| **RAM** | 32-48 GB | Répartition: ~16GB MongoDB, ~8GB Redis, ~8GB Node.js/PM2, ~8GB système |
-| **Disque** | 1 TB SSD (NVMe recommandé) | Base de données MongoDB + logs + fichiers uploadés + OS |
-| **Réseau** | 1 Gbps (minimum) | 2000 connexions simultanées nécessitent une bande passante élevée |
-| **Connexions** | 10,000+ connexions TCP simultanées | Support des connexions Socket.io |
+| Composant      | Spécification                      | Justification                                                          |
+| -------------- | ---------------------------------- | ---------------------------------------------------------------------- |
+| **CPU**        | 12-16 cœurs (3.0+ GHz)             | PM2 clustering + MongoDB + Redis nécessitent plusieurs cœurs           |
+| **RAM**        | 32-48 GB                           | Répartition: ~16GB MongoDB, ~8GB Redis, ~8GB Node.js/PM2, ~8GB système |
+| **Disque**     | 1 TB SSD (NVMe recommandé)         | Base de données MongoDB + logs + fichiers uploadés + OS                |
+| **Réseau**     | 1 Gbps (minimum)                   | 2000 connexions simultanées nécessitent une bande passante élevée      |
+| **Connexions** | 10,000+ connexions TCP simultanées | Support des connexions Socket.io                                       |
 
 **Répartition Mémoire Recommandée**:
+
 - MongoDB: 16 GB (cache WiredTiger)
 - Redis: 8 GB (maxmemory)
 - Node.js/PM2: 8 GB (clustering)
@@ -39,14 +40,15 @@ Ce document décrit les spécifications matérielles (hardware) et logicielles (
 
 #### **Configuration Optimale (Production)**
 
-| Composant | Spécification | Justification |
-|-----------|---------------|---------------|
-| **CPU** | 16-24 cœurs (3.5+ GHz) | AMD EPYC ou Intel Xeon pour meilleures performances |
-| **RAM** | 64-96 GB DDR4/DDR5 ECC | Plus de RAM = meilleur cache MongoDB et Redis |
-| **Disque** | 2 TB NVMe SSD | RAID 1 pour redondance (recommandé) |
-| **Réseau** | 10 Gbps | Support de 50,000+ connexions simultanées |
+| Composant  | Spécification          | Justification                                       |
+| ---------- | ---------------------- | --------------------------------------------------- |
+| **CPU**    | 16-24 cœurs (3.5+ GHz) | AMD EPYC ou Intel Xeon pour meilleures performances |
+| **RAM**    | 64-96 GB DDR4/DDR5 ECC | Plus de RAM = meilleur cache MongoDB et Redis       |
+| **Disque** | 2 TB NVMe SSD          | RAID 1 pour redondance (recommandé)                 |
+| **Réseau** | 10 Gbps                | Support de 50,000+ connexions simultanées           |
 
 **Répartition Mémoire Optimale**:
+
 - MongoDB: 32 GB (cache WiredTiger)
 - Redis: 16 GB (maxmemory)
 - Node.js/PM2: 16 GB (clustering)
@@ -70,6 +72,7 @@ Ce document décrit les spécifications matérielles (hardware) et logicielles (
 ```
 
 **Alternatives acceptables:**
+
 - Debian 12 (Bookworm)
 - CentOS Stream 9
 - RHEL 9
@@ -101,7 +104,8 @@ Installation: npm install -g pm2
 Commande: pm2 --version
 ```
 
-**Configuration**: 
+**Configuration**:
+
 - Mode cluster avec `max` instances (utilise tous les cœurs CPU)
 - Auto-restart activé
 - Logs rotatifs
@@ -115,12 +119,14 @@ Architecture: Replica Set (recommandé pour production)
 ```
 
 **Configuration minimale**:
+
 - WiredTiger Storage Engine
 - Journal activé
 - Index optimisés
 - Connection pool: 100-200 connexions
 
 **Fichier de configuration MongoDB** (`/etc/mongod.conf`):
+
 ```yaml
 storage:
   dbPath: /var/lib/mongodb
@@ -128,7 +134,7 @@ storage:
     enabled: true
   wiredTiger:
     engineConfig:
-      cacheSizeGB: 16  # Ajuster selon RAM disponible (50% max recommandé)
+      cacheSizeGB: 16 # Ajuster selon RAM disponible (50% max recommandé)
       journalCompressor: snappy
       directoryForIndexes: false
 
@@ -140,7 +146,7 @@ systemLog:
 
 net:
   port: 27017
-  bindIp: 127.0.0.1  # Localhost uniquement sur serveur unique
+  bindIp: 127.0.0.1 # Localhost uniquement sur serveur unique
   maxIncomingConnections: 2000
 
 processManagement:
@@ -161,6 +167,7 @@ Port: 6379 (par défaut)
 ```
 
 **Configuration Redis** (`/etc/redis/redis.conf`):
+
 ```conf
 # Mémoire (ajuster selon RAM disponible)
 maxmemory 8gb
@@ -192,6 +199,7 @@ Installation: Via package manager
 ```
 
 **Configuration Nginx** (`/etc/nginx/sites-available/gnv-app`):
+
 ```nginx
 # Backend - PM2 gère le clustering, Nginx pointe vers le port principal
 upstream backend {
@@ -239,7 +247,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-        
+
         # Timeouts pour WebSocket
         proxy_read_timeout 3600s;
         proxy_send_timeout 3600s;
@@ -289,6 +297,7 @@ sudo certbot --nginx -d votre-domaine.com
 ### Limites Système (ulimit)
 
 **Fichier**: `/etc/security/limits.conf`
+
 ```conf
 # Limites pour l'utilisateur Node.js
 * soft nofile 65536
@@ -298,6 +307,7 @@ sudo certbot --nginx -d votre-domaine.com
 ```
 
 **Fichier**: `/etc/sysctl.conf`
+
 ```conf
 # Optimisations réseau pour connexions élevées
 net.core.somaxconn = 4096
@@ -316,6 +326,7 @@ vm.dirty_background_ratio = 2
 ```
 
 **Application des modifications**:
+
 ```bash
 sudo sysctl -p
 ```
@@ -323,6 +334,7 @@ sudo sysctl -p
 ### Variables d'Environnement
 
 **Fichier**: `.env.production`
+
 ```env
 # Application
 NODE_ENV=production
@@ -365,6 +377,7 @@ UPLOAD_DIR=/var/www/gnv-app/uploads
 ### Outils Recommandés
 
 1. **PM2 Monitoring**
+
    ```bash
    pm2 install pm2-logrotate
    pm2 set pm2-logrotate:max_size 10M
@@ -377,6 +390,7 @@ UPLOAD_DIR=/var/www/gnv-app/uploads
    - MongoDB Atlas Monitoring (si cloud)
 
 3. **Redis Monitoring**
+
    ```bash
    redis-cli --latency
    redis-cli INFO stats
@@ -465,12 +479,14 @@ sudo systemctl restart nginx
 ### Outils de Test
 
 1. **Artillery.js** (recommandé)
+
    ```bash
    npm install -g artillery
    artillery quick --count 2000 --num 10 http://localhost:3000
    ```
 
 2. **Apache Bench (ab)**
+
    ```bash
    ab -n 10000 -c 2000 http://localhost:3000/
    ```
@@ -503,6 +519,7 @@ sudo systemctl restart nginx
 ### Recommandations
 
 1. **Firewall (UFW)**
+
    ```bash
    sudo ufw allow 22/tcp    # SSH
    sudo ufw allow 80/tcp    # HTTP
@@ -511,11 +528,13 @@ sudo systemctl restart nginx
    ```
 
 2. **Fail2Ban**
+
    ```bash
    sudo apt install fail2ban
    ```
 
 3. **Mises à jour automatiques**
+
    ```bash
    sudo apt install unattended-upgrades
    ```

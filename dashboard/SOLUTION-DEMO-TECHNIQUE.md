@@ -15,6 +15,7 @@ Cette solution technique propose plusieurs méthodes pour exposer votre applicat
 ### Option 1: Localtunnel (Gratuit, Recommandé pour démo rapide)
 
 **Avantages:**
+
 - ✅ Gratuit
 - ✅ Installation simple
 - ✅ Pas de compte requis
@@ -22,6 +23,7 @@ Cette solution technique propose plusieurs méthodes pour exposer votre applicat
 - ⚠️ Peut demander un mot de passe
 
 **Utilisation:**
+
 ```bash
 cd dashboard
 ./demo-localtunnel.sh
@@ -30,6 +32,7 @@ cd dashboard
 ### Option 2: Ngrok (Professionnel, URL fixe)
 
 **Avantages:**
+
 - ✅ URL fixe avec compte gratuit
 - ✅ Interface web de monitoring
 - ✅ Pas de mot de passe par défaut
@@ -37,6 +40,7 @@ cd dashboard
 - ⚠️ Limite de connexions simultanées (gratuit)
 
 **Utilisation:**
+
 ```bash
 cd dashboard
 ./demo-ngrok.sh
@@ -45,6 +49,7 @@ cd dashboard
 ### Option 3: Cloudflare Tunnel (cloudflared) (Gratuit, Professionnel)
 
 **Avantages:**
+
 - ✅ Gratuit et illimité
 - ✅ Pas de limite de connexions
 - ✅ Très rapide
@@ -52,6 +57,7 @@ cd dashboard
 - ⚠️ URL change à chaque démarrage (gratuit)
 
 **Utilisation:**
+
 ```bash
 cd dashboard
 ./demo-cloudflare.sh
@@ -60,12 +66,14 @@ cd dashboard
 ### Option 4: Serveur Local (Même réseau)
 
 **Avantages:**
+
 - ✅ Pas de limite
 - ✅ Très rapide
 - ✅ Pas de mot de passe
 - ⚠️ Nécessite d'être sur le même réseau
 
 **Utilisation:**
+
 ```bash
 cd dashboard
 npm run dev:tunnel
@@ -101,17 +109,18 @@ VITE_DEMO_MODE=true
 
 ## 🛠️ Scripts Disponibles
 
-| Script | Description | Commande |
-|--------|-------------|----------|
-| `demo-complete.sh` | Solution automatique complète | `./demo-complete.sh` |
-| `demo-localtunnel.sh` | Tunnel avec localtunnel | `./demo-localtunnel.sh` |
-| `demo-ngrok.sh` | Tunnel avec ngrok | `./demo-ngrok.sh` |
-| `demo-cloudflare.sh` | Tunnel avec cloudflared | `./demo-cloudflare.sh` |
-| `demo-local.sh` | Serveur local uniquement | `./demo-local.sh` |
+| Script                | Description                   | Commande                |
+| --------------------- | ----------------------------- | ----------------------- |
+| `demo-complete.sh`    | Solution automatique complète | `./demo-complete.sh`    |
+| `demo-localtunnel.sh` | Tunnel avec localtunnel       | `./demo-localtunnel.sh` |
+| `demo-ngrok.sh`       | Tunnel avec ngrok             | `./demo-ngrok.sh`       |
+| `demo-cloudflare.sh`  | Tunnel avec cloudflared       | `./demo-cloudflare.sh`  |
+| `demo-local.sh`       | Serveur local uniquement      | `./demo-local.sh`       |
 
 ## 🔍 Dépannage
 
 ### Le serveur ne démarre pas
+
 ```bash
 # Vérifier que le port 5173 est libre
 lsof -i :5173
@@ -121,6 +130,7 @@ kill -9 $(lsof -t -i:5173)
 ```
 
 ### Le tunnel ne fonctionne pas
+
 ```bash
 # Vérifier la connexion internet
 ping 8.8.8.8
@@ -130,28 +140,31 @@ curl http://localhost:5173
 ```
 
 ### Problèmes de CORS
+
 Si vous rencontrez des erreurs CORS, vérifiez que le backend autorise les requêtes depuis votre URL de tunnel.
 
 ## 📊 Comparaison des Solutions
 
-| Solution | Gratuit | URL Fixe | Mot de passe | Limite | Vitesse |
-|----------|---------|----------|--------------|--------|---------|
-| Localtunnel | ✅ | ❌ | ⚠️ | Non | Moyenne |
-| Ngrok | ✅* | ✅* | ❌ | Oui* | Rapide |
-| Cloudflare | ✅ | ❌ | ❌ | Non | Très rapide |
-| Local | ✅ | ✅ | ❌ | Non | Très rapide |
+| Solution    | Gratuit | URL Fixe | Mot de passe | Limite | Vitesse     |
+| ----------- | ------- | -------- | ------------ | ------ | ----------- |
+| Localtunnel | ✅      | ❌       | ⚠️           | Non    | Moyenne     |
+| Ngrok       | ✅\*    | ✅\*     | ❌           | Oui\*  | Rapide      |
+| Cloudflare  | ✅      | ❌       | ❌           | Non    | Très rapide |
+| Local       | ✅      | ✅       | ❌           | Non    | Très rapide |
 
-*Gratuit avec limitations, payant pour fonctionnalités avancées
+\*Gratuit avec limitations, payant pour fonctionnalités avancées
 
 ## 🎬 Workflow Recommandé pour Démo
 
 1. **Préparation:**
+
    ```bash
    cd dashboard
    npm install
    ```
 
 2. **Démarrage:**
+
    ```bash
    ./demo-complete.sh
    ```
@@ -175,12 +188,7 @@ Si vous rencontrez des erreurs CORS, vérifiez que le backend autorise les requ�
 ## 📞 Support
 
 En cas de problème, vérifiez:
+
 1. Les logs dans le terminal
 2. Le fichier `demo.log` (si généré)
 3. La documentation spécifique à chaque outil
-
-
-
-
-
-

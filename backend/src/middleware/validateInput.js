@@ -40,8 +40,13 @@ const validatePagination = createValidatePagination({ defaultLimit: 20 });
  * Échappe les caractères regex spéciaux, trim, max 100 caractères (recherche sûre $regex).
  */
 const sanitizeSearchString = (str) => {
-  if (!str || typeof str !== 'string') {return '';}
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim().slice(0, 100);
+  if (!str || typeof str !== 'string') {
+    return '';
+  }
+  return str
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .trim()
+    .slice(0, 100);
 };
 
 /** À placer après des chaînes express-validator ; avec validateMongoId seul, résultat vide → next(). */

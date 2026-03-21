@@ -29,8 +29,12 @@ const ShipMap = () => {
 
   const emptyNameByLocale = () => ({ fr: '', en: '', es: '', it: '', de: '', ar: '' });
   const normalizeServiceItem = (s) => {
-    if (typeof s === 'string') return { name: s, icon: '', openingHours: '', nameByLocale: { ...emptyNameByLocale(), fr: s } };
-    const nbl = (s?.nameByLocale && typeof s.nameByLocale === 'object') ? { ...emptyNameByLocale(), ...s.nameByLocale } : { ...emptyNameByLocale(), fr: s?.name ?? '' };
+    if (typeof s === 'string')
+      return { name: s, icon: '', openingHours: '', nameByLocale: { ...emptyNameByLocale(), fr: s } };
+    const nbl =
+      s?.nameByLocale && typeof s.nameByLocale === 'object'
+        ? { ...emptyNameByLocale(), ...s.nameByLocale }
+        : { ...emptyNameByLocale(), fr: s?.name ?? '' };
     return { name: s?.name ?? '', icon: s?.icon ?? '', openingHours: s?.openingHours ?? '', nameByLocale: nbl };
   };
   const [activeLang, setActiveLang] = useState('fr');
@@ -144,7 +148,10 @@ const ShipMap = () => {
     if (!s) return;
     setForm((prev) => ({
       ...prev,
-      services: [...(prev.services || []), { name: s, icon: '', openingHours: '', nameByLocale: { ...emptyNameByLocale(), fr: s } }],
+      services: [
+        ...(prev.services || []),
+        { name: s, icon: '', openingHours: '', nameByLocale: { ...emptyNameByLocale(), fr: s } },
+      ],
     }));
     setNewService('');
   };
@@ -172,7 +179,12 @@ const ShipMap = () => {
     setForm((prev) => ({
       ...prev,
       services: (prev.services || []).map((svc, i) =>
-        i === index ? { ...normalizeServiceItem(svc), nameByLocale: { ...(svc.nameByLocale || emptyNameByLocale()), [lang]: value } } : normalizeServiceItem(svc)
+        i === index
+          ? {
+              ...normalizeServiceItem(svc),
+              nameByLocale: { ...(svc.nameByLocale || emptyNameByLocale()), [lang]: value },
+            }
+          : normalizeServiceItem(svc)
       ),
     }));
   };
@@ -209,7 +221,10 @@ const ShipMap = () => {
     const shipId = form.shipId ? Number(form.shipId) : 1;
 
     const nameByLocale = { ...(form.nameByLocale || {}), fr: frName };
-    const descriptionByLocale = { ...(form.descriptionByLocale || {}), fr: (form.descriptionByLocale?.fr ?? form.description)?.trim() || '' };
+    const descriptionByLocale = {
+      ...(form.descriptionByLocale || {}),
+      fr: (form.descriptionByLocale?.fr ?? form.description)?.trim() || '',
+    };
     const payload = {
       name: frName,
       type: form.type,
@@ -296,16 +311,33 @@ const ShipMap = () => {
       {/* Stats compactes */}
       <div className="flex flex-wrap gap-3">
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100"><Layers size={18} className="text-slate-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('shipmap.totalDecks')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{filteredDecks.length}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
+            <Layers size={18} className="text-slate-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('shipmap.totalDecks')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{filteredDecks.length}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50"><Ship size={18} className="text-emerald-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('shipmap.totalCapacity')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{totalCapacity}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
+            <Ship size={18} className="text-emerald-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('shipmap.totalCapacity')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{totalCapacity}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50"><Map size={18} className="text-violet-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('shipmap.deckTypesCount')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{new Set(filteredDecks.map((d) => d.type)).size}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
+            <Map size={18} className="text-violet-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('shipmap.deckTypesCount')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">
+              {new Set(filteredDecks.map((d) => d.type)).size}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -335,29 +367,57 @@ const ShipMap = () => {
             <div className="p-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-medium text-slate-800 truncate flex-1 text-sm">{deck.name}</h3>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 shrink-0">{deck.type}</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 shrink-0">
+                  {deck.type}
+                </span>
               </div>
-              <p className="text-xs text-slate-500 mt-1 flex items-center gap-1"><Ship size={12} />{deck.shipName}</p>
+              <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                <Ship size={12} />
+                {deck.shipName}
+              </p>
             </div>
             <div className="p-3">
               {deck.description && <p className="text-xs text-slate-600 line-clamp-2 mb-2">{deck.description}</p>}
               <div className="flex flex-wrap gap-1.5 text-[11px] text-slate-500 mb-2">
                 {deck.area && <span className="px-2 py-0.5 bg-slate-100 rounded">{deck.area}</span>}
-                {deck.capacity != null && deck.capacity > 0 && <span className="px-2 py-0.5 bg-slate-100 rounded">{deck.capacity} {t('shipmap.capacityPersons')}</span>}
+                {deck.capacity != null && deck.capacity > 0 && (
+                  <span className="px-2 py-0.5 bg-slate-100 rounded">
+                    {deck.capacity} {t('shipmap.capacityPersons')}
+                  </span>
+                )}
               </div>
               {deck.services?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
                   {deck.services.slice(0, 3).map((s, i) => {
                     const name = typeof s === 'string' ? s : s?.name;
                     const hours = typeof s === 'object' && s?.openingHours ? ` · ${s.openingHours}` : '';
-                    return <span key={i} className="text-[11px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded">{name}{hours}</span>;
+                    return (
+                      <span key={i} className="text-[11px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded">
+                        {name}
+                        {hours}
+                      </span>
+                    );
                   })}
-                  {deck.services.length > 3 && <span className="text-[11px] text-slate-400">+{deck.services.length - 3}</span>}
+                  {deck.services.length > 3 && (
+                    <span className="text-[11px] text-slate-400">+{deck.services.length - 3}</span>
+                  )}
                 </div>
               )}
               <div className="flex gap-1 pt-2 border-t border-slate-100">
-                <button onClick={() => openEditModal(deck)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-xs font-medium"><Edit size={14} /><span className="hidden sm:inline">{t('common.edit')}</span></button>
-                <button onClick={() => handleDelete(deck)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs font-medium"><Trash2 size={14} /><span className="hidden sm:inline">{t('common.delete')}</span></button>
+                <button
+                  onClick={() => openEditModal(deck)}
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-xs font-medium"
+                >
+                  <Edit size={14} />
+                  <span className="hidden sm:inline">{t('common.edit')}</span>
+                </button>
+                <button
+                  onClick={() => handleDelete(deck)}
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs font-medium"
+                >
+                  <Trash2 size={14} />
+                  <span className="hidden sm:inline">{t('common.delete')}</span>
+                </button>
               </div>
             </div>
           </motion.div>
@@ -366,9 +426,13 @@ const ShipMap = () => {
 
       {filteredDecks.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl border border-slate-200/80 bg-white">
-          <div className="rounded-2xl bg-slate-100 p-6 mb-4"><Map size={40} className="text-slate-400" /></div>
+          <div className="rounded-2xl bg-slate-100 p-6 mb-4">
+            <Map size={40} className="text-slate-400" />
+          </div>
           <p className="text-slate-600 font-medium">{t('shipmap.searchDeckPlaceholder')}</p>
-          <button onClick={openAddModal} className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium text-sm">{t('shipmap.addPlan')}</button>
+          <button onClick={openAddModal} className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium text-sm">
+            {t('shipmap.addPlan')}
+          </button>
         </div>
       )}
 
@@ -376,7 +440,9 @@ const ShipMap = () => {
       {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-plan-title"
@@ -403,7 +469,12 @@ const ShipMap = () => {
                   </p>
                 </div>
               </div>
-              <button type="button" onClick={() => setShowModal(false)} className="p-2.5 hover:bg-white/80 rounded-xl transition-colors text-gray-500 hover:text-gray-700" aria-label={t('common.close')}>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="p-2.5 hover:bg-white/80 rounded-xl transition-colors text-gray-500 hover:text-gray-700"
+                aria-label={t('common.close')}
+              >
                 <X size={22} />
               </button>
             </div>
@@ -458,9 +529,16 @@ const ShipMap = () => {
                       onChange={(e) => {
                         const v = e.target.value;
                         if (activeLang === 'fr') {
-                          setForm((p) => ({ ...p, description: v, descriptionByLocale: { ...(p.descriptionByLocale || {}), fr: v } }));
+                          setForm((p) => ({
+                            ...p,
+                            description: v,
+                            descriptionByLocale: { ...(p.descriptionByLocale || {}), fr: v },
+                          }));
                         } else {
-                          setForm((p) => ({ ...p, descriptionByLocale: { ...(p.descriptionByLocale || {}), [activeLang]: v } }));
+                          setForm((p) => ({
+                            ...p,
+                            descriptionByLocale: { ...(p.descriptionByLocale || {}), [activeLang]: v },
+                          }));
                         }
                       }}
                       placeholder={t('shipmap.descriptionPlaceholder')}
@@ -495,13 +573,15 @@ const ShipMap = () => {
                       {(form.services || []).map((s, i) => {
                         const svc = normalizeServiceItem(s);
                         const apiBase = import.meta.env?.VITE_API_BASE_URL || '';
-                        const iconSrc = svc.icon && (svc.icon.startsWith('http') ? svc.icon : `${apiBase.replace(/\/$/, '')}${svc.icon.startsWith('/') ? '' : '/'}${svc.icon}`);
-                        const serviceNameForLang = svc.nameByLocale?.[activeLang] ?? (activeLang === 'fr' ? (svc.name ?? '') : '');
+                        const iconSrc =
+                          svc.icon &&
+                          (svc.icon.startsWith('http')
+                            ? svc.icon
+                            : `${apiBase.replace(/\/$/, '')}${svc.icon.startsWith('/') ? '' : '/'}${svc.icon}`);
+                        const serviceNameForLang =
+                          svc.nameByLocale?.[activeLang] ?? (activeLang === 'fr' ? (svc.name ?? '') : '');
                         return (
-                          <div
-                            key={i}
-                            className="flex flex-col gap-2 p-3 bg-white border border-gray-200 rounded-xl"
-                          >
+                          <div key={i} className="flex flex-col gap-2 p-3 bg-white border border-gray-200 rounded-xl">
                             <div className="flex flex-wrap items-center gap-2">
                               <div className="flex items-center gap-2 min-w-0 flex-1">
                                 {svc.icon ? (
@@ -566,70 +646,62 @@ const ShipMap = () => {
               </section>
               {/* Suite du formulaire */}
               <section className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('shipmap.deckTypeRequired')}
-                </label>
-                <select
-                  value={form.type}
-                  onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {DECK_TYPES.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {t(opt.labelKey)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('shipmap.assignShip')}
-                </label>
-                <div className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-700 flex items-center gap-2">
-                  <Ship size={18} className="text-slate-500 shrink-0" />
-                  {form.shipName || boatConfig.shipName || t('settings.shipName')}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">{t('settings.boatConfigSubtitle')}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('shipmap.area')}
+                    {t('shipmap.deckTypeRequired')}
                   </label>
-                  <input
-                    type="text"
-                    value={form.area}
-                    onChange={(e) => setForm((p) => ({ ...p, area: e.target.value }))}
-                    placeholder={t('shipmap.areaPlaceholder')}
+                  <select
+                    value={form.type}
+                    onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  >
+                    {DECK_TYPES.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {t(opt.labelKey)}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('shipmap.capacity')}
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={form.capacity}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, capacity: parseInt(e.target.value, 10) || 0 }))
-                    }
-                    placeholder={t('shipmap.capacityPlaceholder')}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('shipmap.assignShip')}</label>
+                  <div className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-700 flex items-center gap-2">
+                    <Ship size={18} className="text-slate-500 shrink-0" />
+                    {form.shipName || boatConfig.shipName || t('settings.shipName')}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">{t('settings.boatConfigSubtitle')}</p>
                 </div>
-              </div>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">{t('common.active')}</span>
-              </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('shipmap.area')}</label>
+                    <input
+                      type="text"
+                      value={form.area}
+                      onChange={(e) => setForm((p) => ({ ...p, area: e.target.value }))}
+                      placeholder={t('shipmap.areaPlaceholder')}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('shipmap.capacity')}</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.capacity}
+                      onChange={(e) => setForm((p) => ({ ...p, capacity: parseInt(e.target.value, 10) || 0 }))}
+                      placeholder={t('shipmap.capacityPlaceholder')}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={form.isActive}
+                    onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">{t('common.active')}</span>
+                </label>
               </section>
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
@@ -639,10 +711,7 @@ const ShipMap = () => {
               >
                 {t('common.cancel')}
               </button>
-              <button
-                onClick={handleSubmit}
-                className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
-              >
+              <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
                 {editingDeck ? t('shipmap.updatePlanButton') : t('shipmap.addPlanButton')}
               </button>
             </div>

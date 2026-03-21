@@ -14,8 +14,9 @@ const IMG = 'https://picsum.photos/800/400';
 const articles = [
   {
     title: 'Escales en Méditerranée : les incontournables',
-    excerpt: 'Découvrez les plus belles escales de nos traversées entre l\'Italie, la France et l\'Espagne.',
-    content: 'La Méditerranée offre une multitude de destinations magnifiques. De Barcelone à Tunis en passant par Palerme, chaque escale a son charme. Nous vous guidons à travers les must-see de la saison.',
+    excerpt: "Découvrez les plus belles escales de nos traversées entre l'Italie, la France et l'Espagne.",
+    content:
+      'La Méditerranée offre une multitude de destinations magnifiques. De Barcelone à Tunis en passant par Palerme, chaque escale a son charme. Nous vous guidons à travers les must-see de la saison.',
     category: 'Voyage',
     author: 'Marie Dupont',
     imageUrl: IMG,
@@ -30,7 +31,8 @@ const articles = [
   {
     title: 'Cuisine à bord : les secrets de nos chefs',
     excerpt: 'Rencontre avec les chefs des restaurants du bord et leurs recettes signature.',
-    content: 'Nos chefs travaillent avec des produits frais et des recettes inspirées des régions traversées. Découvrez comment ils composent les menus et quels plats ne pas manquer.',
+    content:
+      'Nos chefs travaillent avec des produits frais et des recettes inspirées des régions traversées. Découvrez comment ils composent les menus et quels plats ne pas manquer.',
     category: 'Gastronomie',
     author: 'Jean Martin',
     imageUrl: IMG,
@@ -45,7 +47,8 @@ const articles = [
   {
     title: 'Activités à bord : sport et bien-être',
     excerpt: 'Tout ce que vous pouvez faire pendant la traversée pour rester actif.',
-    content: 'Piscine, salle de sport, spa, animations pour enfants… Le navire regorge d\'activités pour tous les âges. Voici le programme type d\'une journée à bord.',
+    content:
+      "Piscine, salle de sport, spa, animations pour enfants… Le navire regorge d'activités pour tous les âges. Voici le programme type d'une journée à bord.",
     category: 'Lifestyle',
     author: 'Sophie Leroy',
     imageUrl: IMG,
@@ -60,7 +63,8 @@ const articles = [
   {
     title: 'Actualités de la compagnie : nouvelles destinations',
     excerpt: 'Prochaines ouvertures et nouveautés pour la saison à venir.',
-    content: 'La compagnie annonce de nouvelles liaisons et des améliorations à bord. Résumé des annonces et des dates à retenir.',
+    content:
+      'La compagnie annonce de nouvelles liaisons et des améliorations à bord. Résumé des annonces et des dates à retenir.',
     category: 'Actualités',
     author: 'Rédaction GNV',
     imageUrl: IMG,
@@ -75,7 +79,8 @@ const articles = [
   {
     title: 'Culture et patrimoine des villes portuaires',
     excerpt: 'Palerme, Tunis, Barcelone : un aperçu culturel de nos escales.',
-    content: 'Chaque port d\'escale recèle un patrimoine unique. Monuments, musées et traditions à ne pas manquer lors de vos escales.',
+    content:
+      "Chaque port d'escale recèle un patrimoine unique. Monuments, musées et traditions à ne pas manquer lors de vos escales.",
     category: 'Culture',
     author: 'Pierre Bernard',
     imageUrl: IMG,
@@ -163,10 +168,46 @@ const restaurantsWithMenus = [
     openingHours: '19h00 - 23h00',
     specialties: ['Entrecôte', 'Saumon', 'Fruits de mer'],
     menu: [
-      { id: 1, name: 'Entrecôte grillée 300g', description: 'Servie avec frites maison et sauce au poivre', price: 24.9, category: 'Plats', isPopular: true, allergens: ['gluten'], image: IMG },
-      { id: 2, name: 'Saumon atlantique', description: 'Pavé de saumon, légumes de saison', price: 22.5, category: 'Plats', isPopular: true, allergens: [], image: IMG },
-      { id: 3, name: 'Salade César', description: 'Poulet grillé, parmesan, croûtons', price: 14.9, category: 'Entrées', isPopular: false, allergens: ['gluten', 'lactose'], image: IMG },
-      { id: 4, name: 'Tiramisu maison', description: 'Recette traditionnelle italienne', price: 8.5, category: 'Desserts', isPopular: true, allergens: ['lactose', 'œuf'], image: IMG },
+      {
+        id: 1,
+        name: 'Entrecôte grillée 300g',
+        description: 'Servie avec frites maison et sauce au poivre',
+        price: 24.9,
+        category: 'Plats',
+        isPopular: true,
+        allergens: ['gluten'],
+        image: IMG,
+      },
+      {
+        id: 2,
+        name: 'Saumon atlantique',
+        description: 'Pavé de saumon, légumes de saison',
+        price: 22.5,
+        category: 'Plats',
+        isPopular: true,
+        allergens: [],
+        image: IMG,
+      },
+      {
+        id: 3,
+        name: 'Salade César',
+        description: 'Poulet grillé, parmesan, croûtons',
+        price: 14.9,
+        category: 'Entrées',
+        isPopular: false,
+        allergens: ['gluten', 'lactose'],
+        image: IMG,
+      },
+      {
+        id: 4,
+        name: 'Tiramisu maison',
+        description: 'Recette traditionnelle italienne',
+        price: 8.5,
+        category: 'Desserts',
+        isPopular: true,
+        allergens: ['lactose', 'œuf'],
+        image: IMG,
+      },
     ],
     isActive: true,
   },
@@ -183,10 +224,46 @@ const restaurantsWithMenus = [
     openingHours: '07h00 - 22h00',
     specialties: ['Buffet', 'Pâtes', 'Grill'],
     menu: [
-      { id: 1, name: 'Formule déjeuner', description: 'Plat du jour + dessert + boisson', price: 15.9, category: 'Formules', isPopular: true, allergens: [], image: IMG },
-      { id: 2, name: 'Pâtes fraîches', description: 'Au choix : bolognaise, carbonara ou pesto', price: 11.9, category: 'Plats', isPopular: true, allergens: ['gluten'], image: IMG },
-      { id: 3, name: 'Burger classique', description: 'Steak, salade, tomate, oignons', price: 12.5, category: 'Plats', isPopular: true, allergens: ['gluten'], image: IMG },
-      { id: 4, name: 'Café + viennoiserie', description: 'Café ou thé + croissant ou pain au chocolat', price: 5.9, category: 'Snacks', isPopular: false, allergens: ['gluten'], image: IMG },
+      {
+        id: 1,
+        name: 'Formule déjeuner',
+        description: 'Plat du jour + dessert + boisson',
+        price: 15.9,
+        category: 'Formules',
+        isPopular: true,
+        allergens: [],
+        image: IMG,
+      },
+      {
+        id: 2,
+        name: 'Pâtes fraîches',
+        description: 'Au choix : bolognaise, carbonara ou pesto',
+        price: 11.9,
+        category: 'Plats',
+        isPopular: true,
+        allergens: ['gluten'],
+        image: IMG,
+      },
+      {
+        id: 3,
+        name: 'Burger classique',
+        description: 'Steak, salade, tomate, oignons',
+        price: 12.5,
+        category: 'Plats',
+        isPopular: true,
+        allergens: ['gluten'],
+        image: IMG,
+      },
+      {
+        id: 4,
+        name: 'Café + viennoiserie',
+        description: 'Café ou thé + croissant ou pain au chocolat',
+        price: 5.9,
+        category: 'Snacks',
+        isPopular: false,
+        allergens: ['gluten'],
+        image: IMG,
+      },
     ],
     isActive: true,
   },
@@ -203,10 +280,46 @@ const restaurantsWithMenus = [
     openingHours: '24h/24',
     specialties: ['Café', 'Pâtisseries', 'Sandwiches'],
     menu: [
-      { id: 1, name: 'Cappuccino', description: 'Café italien avec mousse de lait', price: 3.5, category: 'Boissons', isPopular: true, allergens: ['lactose'], image: IMG },
-      { id: 2, name: 'Sandwich club', description: 'Poulet, bacon, salade, tomate', price: 7.9, category: 'Snacks', isPopular: true, allergens: ['gluten'], image: IMG },
-      { id: 3, name: 'Croissant beurre', description: 'Viennoiserie fraîche', price: 2.9, category: 'Pâtisseries', isPopular: false, allergens: ['gluten'], image: IMG },
-      { id: 4, name: 'Salade fraîcheur', description: 'Quinoa, avocat, tomates cerises', price: 9.5, category: 'Snacks', isPopular: false, allergens: [], image: IMG },
+      {
+        id: 1,
+        name: 'Cappuccino',
+        description: 'Café italien avec mousse de lait',
+        price: 3.5,
+        category: 'Boissons',
+        isPopular: true,
+        allergens: ['lactose'],
+        image: IMG,
+      },
+      {
+        id: 2,
+        name: 'Sandwich club',
+        description: 'Poulet, bacon, salade, tomate',
+        price: 7.9,
+        category: 'Snacks',
+        isPopular: true,
+        allergens: ['gluten'],
+        image: IMG,
+      },
+      {
+        id: 3,
+        name: 'Croissant beurre',
+        description: 'Viennoiserie fraîche',
+        price: 2.9,
+        category: 'Pâtisseries',
+        isPopular: false,
+        allergens: ['gluten'],
+        image: IMG,
+      },
+      {
+        id: 4,
+        name: 'Salade fraîcheur',
+        description: 'Quinoa, avocat, tomates cerises',
+        price: 9.5,
+        category: 'Snacks',
+        isPopular: false,
+        allergens: [],
+        image: IMG,
+      },
     ],
     isActive: true,
   },
@@ -229,7 +342,11 @@ async function run() {
     console.log('\n🎉 Seed terminé : magazine, shop et menus en base.');
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.code === 11000) {console.error('   (Doublon possible : SKU ou données déjà présentes. Supprimez les anciennes données ou changez les SKU.)');}
+    if (err.code === 11000) {
+      console.error(
+        '   (Doublon possible : SKU ou données déjà présentes. Supprimez les anciennes données ou changez les SKU.)'
+      );
+    }
     process.exit(1);
   } finally {
     await mongoose.disconnect();

@@ -35,13 +35,15 @@ export default function Breadcrumb() {
 
   // Sur la page d'accueil du dashboard, n'afficher qu'un seul libellé
   const isDashboardHome = segments.length === 1 && segments[0] === 'dashboard';
-  const displayItems = isDashboardHome ? [] : segments.map((segment, index) => {
-    const path = '/' + segments.slice(0, index + 1).join('/');
-    const labelKey = pathToLabel[segment];
-    const label = labelKey ? t(labelKey) : segment.charAt(0).toUpperCase() + segment.slice(1);
-    const isLast = index === segments.length - 1;
-    return { path, label, isLast };
-  });
+  const displayItems = isDashboardHome
+    ? []
+    : segments.map((segment, index) => {
+        const path = '/' + segments.slice(0, index + 1).join('/');
+        const labelKey = pathToLabel[segment];
+        const label = labelKey ? t(labelKey) : segment.charAt(0).toUpperCase() + segment.slice(1);
+        const isLast = index === segments.length - 1;
+        return { path, label, isLast };
+      });
 
   return (
     <nav aria-label={t('common.breadcrumb')} className="mb-6 min-w-0 overflow-hidden">

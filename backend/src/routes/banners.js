@@ -11,15 +11,21 @@ const Banner = require('../models/Banner');
 const bannersFallback = require('../lib/banners-fallback');
 
 function localizeBanner(doc, lang) {
-  if (!doc) {return doc;}
+  if (!doc) {
+    return doc;
+  }
   const out = { ...doc, _id: doc._id?.toString() };
   if (lang && doc.translations && typeof doc.translations === 'object') {
     const fallbackLangs = [lang, 'fr', 'en'].filter((l, i, a) => a.indexOf(l) === i);
     for (const l of fallbackLangs) {
       const t = doc.translations[l];
       if (t) {
-        if (t.title) {out.title = t.title;}
-        if (t.description !== undefined) {out.description = t.description;}
+        if (t.title) {
+          out.title = t.title;
+        }
+        if (t.description !== undefined) {
+          out.description = t.description;
+        }
         break;
       }
     }
@@ -31,7 +37,12 @@ function localizeBanner(doc, lang) {
 router.get('/', async (req, res) => {
   try {
     const { lang, page } = req.query;
-    const langStr = typeof lang === 'string' ? lang.trim() : (Array.isArray(lang) && lang[0] != null) ? String(lang[0]).trim() : undefined;
+    const langStr =
+      typeof lang === 'string'
+        ? lang.trim()
+        : Array.isArray(lang) && lang[0] != null
+          ? String(lang[0]).trim()
+          : undefined;
     if (mongoose.connection.readyState !== 1) {
       return res.json(bannersFallback.getAll(langStr, page));
     }
@@ -39,13 +50,10 @@ router.get('/', async (req, res) => {
       const query = { isActive: { $ne: false } };
       if (page && String(page).trim()) {
         const pageId = String(page).trim().toLowerCase();
-        query.$or = [
-          { pages: { $size: 0 } },
-          { pages: pageId },
-        ];
+        query.$or = [{ pages: { $size: 0 } }, { pages: pageId }];
       }
       const banners = await Banner.find(query).read('secondaryPreferred').sort({ order: 1, createdAt: -1 }).lean();
-      return res.json(banners.map(doc => localizeBanner(doc, langStr)));
+      return res.json(banners.map((doc) => localizeBanner(doc, langStr)));
     }
     return res.json([]);
   } catch (error) {
@@ -61,7 +69,7 @@ router.get('/all', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
     const banners = await Banner.find().sort({ order: 1, createdAt: -1 }).lean();
-    return res.json(banners.map(doc => ({ ...doc, _id: doc._id?.toString() })));
+    return res.json(banners.map((doc) => ({ ...doc, _id: doc._id?.toString() })));
   } catch (error) {
     console.error('Get all banners error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -74,13 +82,11 @@ router.post('/:id/impression', async (req, res) => {
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
-    const banner = await Banner.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { impressions: 1 } },
-      { new: true },
-    ).lean();
-    if (!banner) {return res.status(404).json({ message: 'Bannière non trouvée' });}
-    res.json({ ok: true, impressions: (banner.impressions || 0) });
+    const banner = await Banner.findByIdAndUpdate(req.params.id, { $inc: { impressions: 1 } }, { new: true }).lean();
+    if (!banner) {
+      return res.status(404).json({ message: 'Bannière non trouvée' });
+    }
+    res.json({ ok: true, impressions: banner.impressions || 0 });
   } catch (error) {
     console.error('Banner impression error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -93,13 +99,11 @@ router.post('/:id/click', async (req, res) => {
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
-    const banner = await Banner.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { clicks: 1 } },
-      { new: true },
-    ).lean();
-    if (!banner) {return res.status(404).json({ message: 'Bannière non trouvée' });}
-    res.json({ ok: true, clicks: (banner.clicks || 0) });
+    const banner = await Banner.findByIdAndUpdate(req.params.id, { $inc: { clicks: 1 } }, { new: true }).lean();
+    if (!banner) {
+      return res.status(404).json({ message: 'Bannière non trouvée' });
+    }
+    res.json({ ok: true, clicks: banner.clicks || 0 });
   } catch (error) {
     console.error('Banner click error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -112,12 +116,16 @@ router.get('/:id', async (req, res) => {
     const { lang } = req.query;
     if (mongoose.connection.readyState !== 1) {
       const banner = bannersFallback.getById(req.params.id, lang);
-      if (!banner) {return res.status(404).json({ message: 'Bannière non trouvée' });}
+      if (!banner) {
+        return res.status(404).json({ message: 'Bannière non trouvée' });
+      }
       return res.json(banner);
     }
     if (mongoose.connection.readyState === 1) {
       const banner = await Banner.findById(req.params.id).lean();
-      if (!banner) {return res.status(404).json({ message: 'Bannière non trouvée' });}
+      if (!banner) {
+        return res.status(404).json({ message: 'Bannière non trouvée' });
+      }
       return res.json(localizeBanner(banner, lang));
     }
     return res.status(404).json({ message: 'Bannière non trouvée' });
@@ -158,7 +166,9 @@ router.post('/', authMiddleware, adminMiddleware, bannerValidation, async (req, 
     res.status(201).json({ ...doc, _id: doc._id?.toString() });
   } catch (error) {
     console.error('Create banner error:', error);
-    res.status(500).json({ message: process.env.NODE_ENV === 'development' ? (error.message || 'Server error') : 'Server error' });
+    res
+      .status(500)
+      .json({ message: process.env.NODE_ENV === 'development' ? error.message || 'Server error' : 'Server error' });
   }
 });
 
@@ -171,16 +181,26 @@ router.put('/:id', authMiddleware, adminMiddleware, bannerValidation, async (req
     }
     const updates = { ...req.body };
     delete updates._id;
-    if (updates.startDate) {updates.startDate = new Date(updates.startDate);}
-    if (updates.endDate) {updates.endDate = new Date(updates.endDate);}
-    if (updates.translations && typeof updates.translations !== 'object') {delete updates.translations;}
+    if (updates.startDate) {
+      updates.startDate = new Date(updates.startDate);
+    }
+    if (updates.endDate) {
+      updates.endDate = new Date(updates.endDate);
+    }
+    if (updates.translations && typeof updates.translations !== 'object') {
+      delete updates.translations;
+    }
     const banner = await Banner.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
-    if (!banner) {return res.status(404).json({ message: 'Bannière non trouvée' });}
+    if (!banner) {
+      return res.status(404).json({ message: 'Bannière non trouvée' });
+    }
     const doc = banner.toObject();
     res.json({ ...doc, _id: doc._id?.toString() });
   } catch (error) {
     console.error('Update banner error:', error);
-    res.status(500).json({ message: process.env.NODE_ENV === 'development' ? (error.message || 'Server error') : 'Server error' });
+    res
+      .status(500)
+      .json({ message: process.env.NODE_ENV === 'development' ? error.message || 'Server error' : 'Server error' });
   }
 });
 
@@ -192,7 +212,9 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(503).json({ message: 'Base de données indisponible. Mode démo actif.' });
     }
     const banner = await Banner.findByIdAndDelete(req.params.id);
-    if (!banner) {return res.status(404).json({ message: 'Bannière non trouvée' });}
+    if (!banner) {
+      return res.status(404).json({ message: 'Bannière non trouvée' });
+    }
     res.json({ message: 'Bannière supprimée' });
   } catch (error) {
     console.error('Delete banner error:', error);

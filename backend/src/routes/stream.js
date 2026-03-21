@@ -53,7 +53,11 @@ function setStreamHeaders(res, contentType, options = {}) {
 
 function pipeWithErrorHandling(stream, res, errMessage = 'Erreur lecture média') {
   stream.on('error', (err) => {
-    if (!res.headersSent) {res.status(500).json({ message: errMessage });} else {res.destroy();}
+    if (!res.headersSent) {
+      res.status(500).json({ message: errMessage });
+    } else {
+      res.destroy();
+    }
   });
   res.on('close', () => stream.destroy());
   stream.pipe(res);
@@ -74,7 +78,9 @@ async function streamFile(req, res, filePath, mimeMap, next, notFoundMessage = '
     stat = await fsp.stat(filePath);
   } catch (e) {
     if (e.code === 'ENOENT') {
-      if (typeof next === 'function') {return next();}
+      if (typeof next === 'function') {
+        return next();
+      }
       return res.status(404).json({ message: notFoundMessage });
     }
     throw e;
@@ -103,19 +109,31 @@ async function streamFile(req, res, filePath, mimeMap, next, notFoundMessage = '
   if (!hasRange) {
     const ifNoneMatch = req.headers['if-none-match'];
     const ifModifiedSince = req.headers['if-modified-since'];
-    if ((ifNoneMatch && ifNoneMatch.trim() === etag) || (ifModifiedSince && new Date(ifModifiedSince).getTime() >= stat.mtimeMs)) {
+    if (
+      (ifNoneMatch && ifNoneMatch.trim() === etag) ||
+      (ifModifiedSince && new Date(ifModifiedSince).getTime() >= stat.mtimeMs)
+    ) {
       res.removeHeader('Content-Length');
       return res.status(304).end();
     }
   }
 
   if (hasRange) {
-    const parts = range.replace(/bytes=/, '').trim().split('-');
+    const parts = range
+      .replace(/bytes=/, '')
+      .trim()
+      .split('-');
     let start = parseInt(parts[0], 10);
     let end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-    if (Number.isNaN(start)) {start = 0;}
-    if (Number.isNaN(end) || end >= fileSize) {end = fileSize - 1;}
-    if (start < 0) {start = 0;}
+    if (Number.isNaN(start)) {
+      start = 0;
+    }
+    if (Number.isNaN(end) || end >= fileSize) {
+      end = fileSize - 1;
+    }
+    if (start < 0) {
+      start = 0;
+    }
     if (start > end) {
       res.setHeader('Content-Range', `bytes */${fileSize}`);
       return res.status(416).json({ message: 'Plage demandée invalide' });
@@ -156,7 +174,9 @@ const streamVideoHandler = async (req, res) => {
   try {
     await streamFile(req, res, filePath, MIME_TYPES_VIDEO, null, 'Vidéo non trouvée');
   } catch (err) {
-    if (!res.headersSent) {res.status(500).json({ message: 'Erreur lecture vidéo' });}
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Erreur lecture vidéo' });
+    }
   }
 };
 router.get('/video/:filename', streamVideoHandler);
@@ -168,14 +188,20 @@ router.head('/video/:filename', streamVideoHandler);
  */
 async function videoStreamMiddleware(req, res, next) {
   const match = (req.url || req.path || '').match(/^\/videos\/([^/]+)$/);
-  if ((req.method !== 'GET' && req.method !== 'HEAD') || !match) {return next();}
+  if ((req.method !== 'GET' && req.method !== 'HEAD') || !match) {
+    return next();
+  }
   const filename = match[1];
-  if (!filename || filename.includes('..')) {return next();}
+  if (!filename || filename.includes('..')) {
+    return next();
+  }
   const filePath = path.join(VIDEOS_DIR, filename);
   try {
     await streamFile(req, res, filePath, MIME_TYPES_VIDEO, next, 'Vidéo non trouvée');
   } catch (err) {
-    if (!res.headersSent) {next(err);}
+    if (!res.headersSent) {
+      next(err);
+    }
   }
 }
 
@@ -184,14 +210,20 @@ async function videoStreamMiddleware(req, res, next) {
  */
 async function audioStreamMiddleware(req, res, next) {
   const match = (req.url || req.path || '').match(/^\/audio\/([^/]+)$/);
-  if ((req.method !== 'GET' && req.method !== 'HEAD') || !match) {return next();}
+  if ((req.method !== 'GET' && req.method !== 'HEAD') || !match) {
+    return next();
+  }
   const filename = match[1];
-  if (!filename || filename.includes('..')) {return next();}
+  if (!filename || filename.includes('..')) {
+    return next();
+  }
   const filePath = path.join(AUDIO_DIR, filename);
   try {
     await streamFile(req, res, filePath, MIME_TYPES_AUDIO, next, 'Fichier audio non trouvé');
   } catch (err) {
-    if (!res.headersSent) {next(err);}
+    if (!res.headersSent) {
+      next(err);
+    }
   }
 }
 

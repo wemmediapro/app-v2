@@ -11,7 +11,7 @@ const Login = ({ onLogin }) => {
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ const Login = ({ onLogin }) => {
     if (errorMessage) setErrorMessage('');
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -33,7 +33,7 @@ const Login = ({ onLogin }) => {
 
     try {
       const response = await authService.login(formData);
-      
+
       if (response.data.user.role === 'admin') {
         onLogin(response.data.token, response.data.user);
         toast.success('Connexion réussie !');
@@ -44,7 +44,9 @@ const Login = ({ onLogin }) => {
         toast.error(msg);
       }
     } catch (error) {
-      const isNetworkError = !error.response && (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED' || error.message?.includes('Network Error'));
+      const isNetworkError =
+        !error.response &&
+        (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED' || error.message?.includes('Network Error'));
       if (isNetworkError) {
         const displayMsg = 'Serveur inaccessible. Démarrez le backend (dans backend/ : npm run dev).';
         setErrorMessage(displayMsg);
@@ -55,7 +57,7 @@ const Login = ({ onLogin }) => {
       const is503 = error.response?.status === 503;
       const msg = error.response?.data?.message || error.response?.data?.error || '';
       setConfigRequired(!!(import.meta.env.DEV && is503 && msg.includes('ADMIN_EMAIL')));
-      const displayMsg = msg.trim() || 'Erreur de connexion. Vérifiez l\'email et le mot de passe.';
+      const displayMsg = msg.trim() || "Erreur de connexion. Vérifiez l'email et le mot de passe.";
       setErrorMessage(displayMsg);
       toast.error(displayMsg);
     } finally {
@@ -65,11 +67,7 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center p-4 sm:p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -163,7 +161,9 @@ const Login = ({ onLogin }) => {
           {import.meta.env.DEV && configRequired && (
             <div className="mt-6 p-4 bg-amber-50/80 rounded-xl border border-amber-200">
               <h3 className="text-sm font-medium text-amber-900 mb-2">Configuration requise</h3>
-              <p className="text-xs text-amber-800">Définissez ADMIN_EMAIL et ADMIN_PASSWORD dans backend/config.env, puis redémarrez le backend.</p>
+              <p className="text-xs text-amber-800">
+                Définissez ADMIN_EMAIL et ADMIN_PASSWORD dans backend/config.env, puis redémarrez le backend.
+              </p>
             </div>
           )}
         </motion.div>

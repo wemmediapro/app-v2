@@ -62,9 +62,9 @@ describe('Routes critiques', () => {
           sort: jest.fn().mockReturnValue({
             skip: jest.fn().mockReturnValue({
               limit: jest.fn().mockReturnValue({
-                lean: jest.fn().mockResolvedValue([
-                  { firstName: 'A', lastName: 'B', email: 'a@b.com', cabinNumber: '1' },
-                ]),
+                lean: jest
+                  .fn()
+                  .mockResolvedValue([{ firstName: 'A', lastName: 'B', email: 'a@b.com', cabinNumber: '1' }]),
               }),
             }),
           }),

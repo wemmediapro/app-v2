@@ -70,22 +70,32 @@ Répartis les 10 articles sur des catégories variées. Thèmes : traversée, es
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) {throw new Error('Réponse OpenAI vide');}
+  if (!raw) {
+    throw new Error('Réponse OpenAI vide');
+  }
 
   let data;
   try {
     data = JSON.parse(raw);
   } catch (e) {
     const match = raw.match(/\[[\s\S]*\]/);
-    if (match) {data = JSON.parse(match[0]);} else {throw new Error('Impossible de parser le JSON OpenAI: ' + raw.slice(0, 200));}
+    if (match) {
+      data = JSON.parse(match[0]);
+    } else {
+      throw new Error('Impossible de parser le JSON OpenAI: ' + raw.slice(0, 200));
+    }
   }
 
   let list = Array.isArray(data) ? data : null;
   if (!list && data && typeof data === 'object') {
     list = data.articles || data.items || data.list;
-    if (!Array.isArray(list)) {list = Object.values(data).find(Array.isArray) || [];}
+    if (!Array.isArray(list)) {
+      list = Object.values(data).find(Array.isArray) || [];
+    }
   }
-  if (!Array.isArray(list) || list.length === 0) {throw new Error('Aucun article dans la réponse');}
+  if (!Array.isArray(list) || list.length === 0) {
+    throw new Error('Aucun article dans la réponse');
+  }
   return list.slice(0, 10);
 }
 
@@ -148,7 +158,9 @@ async function seedMagazine() {
     console.log('\n✅ Seed magazine OpenAI terminé. Total articles en base:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) {console.error(err.response.data);}
+    if (err.response?.data) {
+      console.error(err.response.data);
+    }
     process.exit(1);
   } finally {
     await mongoose.disconnect();

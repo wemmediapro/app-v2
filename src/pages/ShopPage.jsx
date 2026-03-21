@@ -4,17 +4,22 @@
  */
 import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Ship, Clock, Award, Search, ChevronDown, ChevronRight, Heart, Trash2, ChevronLeft, X } from 'lucide-react';
+import {
+  ShoppingBag,
+  Ship,
+  Clock,
+  Award,
+  Search,
+  ChevronDown,
+  ChevronRight,
+  Heart,
+  Trash2,
+  ChevronLeft,
+  X,
+} from 'lucide-react';
 import { useShop } from '../hooks/useShop';
 
-export default function ShopPage({
-  t,
-  language,
-  setPage,
-  shopFavorites,
-  setShopFavorites,
-  favoritesStorageSuffix,
-}) {
+export default function ShopPage({ t, language, setPage, shopFavorites, setShopFavorites, favoritesStorageSuffix }) {
   const {
     shopProducts,
     shopPromotions,
@@ -33,23 +38,37 @@ export default function ShopPage({
     setSelectedProductImageIndex,
   } = useShop(language, t);
 
-  const isShopFavorite = useCallback((productId) => shopFavorites.some(p => p.id === productId), [shopFavorites]);
-  const toggleShopFavorite = useCallback((product) => {
-    const key = `shopFavorites_${favoritesStorageSuffix}`;
-    setShopFavorites(prev => {
-      const next = prev.some(p => p.id === product.id) ? prev.filter(p => p.id !== product.id) : [...prev, { ...product }];
-      if (favoritesStorageSuffix === 'guest') try { localStorage.setItem(key, JSON.stringify(next)); } catch (_) {}
-      return next;
-    });
-  }, [favoritesStorageSuffix, setShopFavorites]);
-  const removeFromShopFavorites = useCallback((productId) => {
-    const key = `shopFavorites_${favoritesStorageSuffix}`;
-    setShopFavorites(prev => {
-      const next = prev.filter(p => p.id !== productId);
-      if (favoritesStorageSuffix === 'guest') try { localStorage.setItem(key, JSON.stringify(next)); } catch (_) {}
-      return next;
-    });
-  }, [favoritesStorageSuffix, setShopFavorites]);
+  const isShopFavorite = useCallback((productId) => shopFavorites.some((p) => p.id === productId), [shopFavorites]);
+  const toggleShopFavorite = useCallback(
+    (product) => {
+      const key = `shopFavorites_${favoritesStorageSuffix}`;
+      setShopFavorites((prev) => {
+        const next = prev.some((p) => p.id === product.id)
+          ? prev.filter((p) => p.id !== product.id)
+          : [...prev, { ...product }];
+        if (favoritesStorageSuffix === 'guest')
+          try {
+            localStorage.setItem(key, JSON.stringify(next));
+          } catch (_) {}
+        return next;
+      });
+    },
+    [favoritesStorageSuffix, setShopFavorites]
+  );
+  const removeFromShopFavorites = useCallback(
+    (productId) => {
+      const key = `shopFavorites_${favoritesStorageSuffix}`;
+      setShopFavorites((prev) => {
+        const next = prev.filter((p) => p.id !== productId);
+        if (favoritesStorageSuffix === 'guest')
+          try {
+            localStorage.setItem(key, JSON.stringify(next));
+          } catch (_) {}
+        return next;
+      });
+    },
+    [favoritesStorageSuffix, setShopFavorites]
+  );
 
   const closeModal = () => {
     setPage('home');
@@ -68,7 +87,10 @@ export default function ShopPage({
     >
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6 sm:space-y-8">
         <header className="space-y-4">
-          <div className="rounded-2xl p-4 sm:p-5 shadow-md border border-blue-200/50" style={{ backgroundColor: '#264FFF' }}>
+          <div
+            className="rounded-2xl p-4 sm:p-5 shadow-md border border-blue-200/50"
+            style={{ backgroundColor: '#264FFF' }}
+          >
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-white/20 border border-white/30 flex-shrink-0 backdrop-blur-sm">
                 <ShoppingBag size={24} className="text-white sm:w-6 sm:h-6" strokeWidth={1.75} />
@@ -106,7 +128,12 @@ export default function ShopPage({
           </div>
 
           <div className="relative">
-            <label htmlFor="shop-category" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{t('shop.categoryLabel')}</label>
+            <label
+              htmlFor="shop-category"
+              className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5"
+            >
+              {t('shop.categoryLabel')}
+            </label>
             <select
               id="shop-category"
               value={selectedShopCategory}
@@ -119,7 +146,10 @@ export default function ShopPage({
                 </option>
               ))}
             </select>
-            <ChevronDown size={20} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <ChevronDown
+              size={20}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+            />
           </div>
         </header>
 
@@ -133,14 +163,33 @@ export default function ShopPage({
 
         {shopPromotions.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold text-slate-500 tracking-widest uppercase">{t('shop.currentPromos')}</h2>
+            <h2 className="text-sm font-semibold text-slate-500 tracking-widest uppercase">
+              {t('shop.currentPromos')}
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {shopPromotions.map((promo) => {
-                const promoTitle = (promo.translations && promo.translations[language] && promo.translations[language].title) ? promo.translations[language].title : (promo.title || '');
-                const promoDesc = (promo.translations && promo.translations[language] && promo.translations[language].description) ? promo.translations[language].description : (promo.description || '');
-                const discountLabel = promo.discountType === 'percentage' ? `-${promo.discountValue || 0}%` : `-${promo.discountValue || 0}€`;
-                const validFrom = promo.validFrom ? (typeof promo.validFrom === 'string' ? promo.validFrom.slice(0, 10) : promo.validFrom.toISOString?.()?.slice(0, 10)) : '';
-                const validUntil = promo.validUntil ? (typeof promo.validUntil === 'string' ? promo.validUntil.slice(0, 10) : promo.validUntil.toISOString?.()?.slice(0, 10)) : '';
+                const promoTitle =
+                  promo.translations && promo.translations[language] && promo.translations[language].title
+                    ? promo.translations[language].title
+                    : promo.title || '';
+                const promoDesc =
+                  promo.translations && promo.translations[language] && promo.translations[language].description
+                    ? promo.translations[language].description
+                    : promo.description || '';
+                const discountLabel =
+                  promo.discountType === 'percentage'
+                    ? `-${promo.discountValue || 0}%`
+                    : `-${promo.discountValue || 0}€`;
+                const validFrom = promo.validFrom
+                  ? typeof promo.validFrom === 'string'
+                    ? promo.validFrom.slice(0, 10)
+                    : promo.validFrom.toISOString?.()?.slice(0, 10)
+                  : '';
+                const validUntil = promo.validUntil
+                  ? typeof promo.validUntil === 'string'
+                    ? promo.validUntil.slice(0, 10)
+                    : promo.validUntil.toISOString?.()?.slice(0, 10)
+                  : '';
                 return (
                   <div
                     key={promo.id || promo._id}
@@ -166,74 +215,104 @@ export default function ShopPage({
         {shopProducts.some((product) => product.isFeatured) && (
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-500 tracking-widest uppercase">{t('shop.featuredTitle')}</h2>
+              <h2 className="text-sm font-semibold text-slate-500 tracking-widest uppercase">
+                {t('shop.featuredTitle')}
+              </h2>
               <span className="text-xs text-slate-500">{t('shop.featuredSubtitle')}</span>
             </div>
             <div className="space-y-2.5">
-              {shopProducts.filter((product) => product.isFeatured).map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  role="button"
-                  tabIndex={0}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => {
-                    setSelectedProduct(product);
-                    setSelectedProductImageIndex(0);
-                  }}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedProduct(product); setSelectedProductImageIndex(0); } }}
-                  whileTap={{ scale: 0.99 }}
-                  className="w-full text-left rounded-2xl bg-white border border-slate-200/80 p-3 sm:p-4 shadow-sm hover:shadow hover:border-slate-300/80 transition-all flex gap-3 sm:gap-4 items-center group cursor-pointer"
-                >
-                  <div className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-100">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextElementSibling.style.display = 'flex';
-                      }}
-                    />
-                    <div className="absolute inset-0 hidden items-center justify-center bg-slate-200">
-                      <Ship size={24} className="text-slate-500" />
+              {shopProducts
+                .filter((product) => product.isFeatured)
+                .map((product, index) => (
+                  <motion.div
+                    key={product.id}
+                    role="button"
+                    tabIndex={0}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setSelectedProductImageIndex(0);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedProduct(product);
+                        setSelectedProductImageIndex(0);
+                      }
+                    }}
+                    whileTap={{ scale: 0.99 }}
+                    className="w-full text-left rounded-2xl bg-white border border-slate-200/80 p-3 sm:p-4 shadow-sm hover:shadow hover:border-slate-300/80 transition-all flex gap-3 sm:gap-4 items-center group cursor-pointer"
+                  >
+                    <div className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-100">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextElementSibling.style.display = 'flex';
+                        }}
+                      />
+                      <div className="absolute inset-0 hidden items-center justify-center bg-slate-200">
+                        <Ship size={24} className="text-slate-500" />
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">{getProductTypeLabel(product.type)}</span>
-                      {product.tag && (
-                        <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">{product.tag}</span>
-                      )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">
+                          {getProductTypeLabel(product.type)}
+                        </span>
+                        {product.tag && (
+                          <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                            {product.tag}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 leading-snug">{product.name}</h3>
+                      <div className="flex items-baseline gap-2 mt-1">
+                        <span className="text-base font-bold text-slate-900">{product.price.toFixed(2)}€</span>
+                        {product.originalPrice > product.price && (
+                          <span className="text-xs text-slate-500 line-through">
+                            {product.originalPrice.toFixed(2)}€
+                          </span>
+                        )}
+                        {product.discount > 0 && (
+                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                            -{product.discount}%
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 leading-snug">{product.name}</h3>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-base font-bold text-slate-900">{product.price.toFixed(2)}€</span>
-                      {product.originalPrice > product.price && (
-                        <span className="text-xs text-slate-500 line-through">{product.originalPrice.toFixed(2)}€</span>
-                      )}
-                      {product.discount > 0 && (
-                        <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">-{product.discount}%</span>
-                      )}
+                    <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleShopFavorite(product);
+                        }}
+                        className={`p-2 rounded-xl transition-colors ${
+                          isShopFavorite(product.id)
+                            ? 'bg-rose-50 text-rose-500'
+                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'
+                        }`}
+                      >
+                        <Heart
+                          size={18}
+                          className={isShopFavorite(product.id) ? 'fill-current' : ''}
+                          strokeWidth={1.75}
+                        />
+                      </button>
+                      <ChevronRight
+                        size={18}
+                        className="text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all"
+                      />
                     </div>
-                  </div>
-                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); toggleShopFavorite(product); }}
-                      className={`p-2 rounded-xl transition-colors ${
-                        isShopFavorite(product.id) ? 'bg-rose-50 text-rose-500' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-600'
-                      }`}
-                    >
-                      <Heart size={18} className={isShopFavorite(product.id) ? 'fill-current' : ''} strokeWidth={1.75} />
-                    </button>
-                    <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
             </div>
           </section>
         )}
@@ -241,11 +320,14 @@ export default function ShopPage({
         <section className="space-y-4">
           <div className="flex items-baseline justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-slate-500 tracking-widest uppercase">{t('shop.catalogueTitle')}</h2>
+              <h2 className="text-sm font-semibold text-slate-500 tracking-widest uppercase">
+                {t('shop.catalogueTitle')}
+              </h2>
               <p className="text-xs text-slate-500 mt-0.5">{t('shop.catalogueSubtitle')}</p>
             </div>
             <span className="shrink-0 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
-              {shopLoading ? '…' : `${filteredShopProducts.length}`} produit{filteredShopProducts.length !== 1 ? 's' : ''}
+              {shopLoading ? '…' : `${filteredShopProducts.length}`} produit
+              {filteredShopProducts.length !== 1 ? 's' : ''}
             </span>
           </div>
           {shopLoading ? (
@@ -275,7 +357,10 @@ export default function ShopPage({
                   className="group bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow hover:border-slate-300/80 overflow-hidden transition-all duration-200"
                 >
                   <button
-                    onClick={() => { setSelectedProduct(product); setSelectedProductImageIndex(0); }}
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setSelectedProductImageIndex(0);
+                    }}
                     className="w-full text-left block"
                   >
                     <div className="relative aspect-[3/4] sm:aspect-[4/3] bg-slate-100 overflow-hidden">
@@ -294,16 +379,24 @@ export default function ShopPage({
                         <Ship size={32} className="text-slate-500" />
                       </div>
                       <div className="absolute top-2 left-2 flex flex-col gap-1">
-                        <span className="rounded-md bg-white/95 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">{getProductTypeLabel(product.type)}</span>
+                        <span className="rounded-md bg-white/95 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                          {getProductTypeLabel(product.type)}
+                        </span>
                         {product.tag && (
-                          <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">{product.tag}</span>
+                          <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                            {product.tag}
+                          </span>
                         )}
                       </div>
                       <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
                         {product.discount > 0 && (
-                          <span className="rounded-md bg-red-500 text-white px-1.5 py-0.5 text-[10px] font-bold">-{product.discount}%</span>
+                          <span className="rounded-md bg-red-500 text-white px-1.5 py-0.5 text-[10px] font-bold">
+                            -{product.discount}%
+                          </span>
                         )}
-                        <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium ${product.isAvailable ? 'bg-emerald-500/90 text-white' : 'bg-slate-600 text-white'}`}>
+                        <span
+                          className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium ${product.isAvailable ? 'bg-emerald-500/90 text-white' : 'bg-slate-600 text-white'}`}
+                        >
                           {product.isAvailable ? 'Dispo' : 'Rupture'}
                         </span>
                       </div>
@@ -322,21 +415,31 @@ export default function ShopPage({
                     {product.features && product.features.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {product.features.slice(0, 2).map((feature, idx) => (
-                          <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 text-[10px] font-medium border border-slate-100">
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 text-[10px] font-medium border border-slate-100"
+                          >
                             {feature}
                           </span>
                         ))}
                       </div>
                     )}
                     <button
-                      onClick={(e) => { e.stopPropagation(); toggleShopFavorite(product); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleShopFavorite(product);
+                      }}
                       className={`w-full py-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
                         isShopFavorite(product.id)
                           ? 'bg-rose-50 text-rose-600 border border-rose-200'
                           : 'bg-slate-100 text-slate-700 border border-slate-200/80 hover:bg-slate-200/80'
                       }`}
                     >
-                      <Heart size={14} className={isShopFavorite(product.id) ? 'fill-current' : ''} strokeWidth={1.75} />
+                      <Heart
+                        size={14}
+                        className={isShopFavorite(product.id) ? 'fill-current' : ''}
+                        strokeWidth={1.75}
+                      />
                       {isShopFavorite(product.id) ? t('shop.removeFromFavorites') : t('shop.addToFavorites')}
                     </button>
                   </div>
@@ -354,7 +457,9 @@ export default function ShopPage({
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-slate-900">{t('shop.myFavorites')}</h3>
-                <p className="text-xs text-slate-500">{shopFavorites.length} produit{shopFavorites.length !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-slate-500">
+                  {shopFavorites.length} produit{shopFavorites.length !== 1 ? 's' : ''}
+                </p>
               </div>
             </div>
             <div className="p-3 space-y-2">
@@ -401,7 +506,9 @@ export default function ShopPage({
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
           style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-          onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeModal();
+          }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="product-detail-title"
@@ -420,9 +527,11 @@ export default function ShopPage({
             <div className="relative flex-shrink-0">
               <div className="relative h-56 sm:h-64 bg-slate-100 min-h-[220px]">
                 <img
-                  src={selectedProduct.gallery && selectedProduct.gallery.length > 0
-                    ? selectedProduct.gallery[selectedProductImageIndex]
-                    : selectedProduct.image}
+                  src={
+                    selectedProduct.gallery && selectedProduct.gallery.length > 0
+                      ? selectedProduct.gallery[selectedProductImageIndex]
+                      : selectedProduct.image
+                  }
                   alt={selectedProduct.name}
                   className="w-full h-full object-cover object-center"
                   onError={(e) => {
@@ -440,7 +549,9 @@ export default function ShopPage({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedProductImageIndex(prev => prev === 0 ? selectedProduct.gallery.length - 1 : prev - 1);
+                        setSelectedProductImageIndex((prev) =>
+                          prev === 0 ? selectedProduct.gallery.length - 1 : prev - 1
+                        );
                       }}
                       className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 p-2.5 sm:p-2 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center bg-white/95 rounded-full text-slate-700 shadow-md hover:bg-white transition-colors"
                       aria-label={t('common.imagePrevious')}
@@ -451,7 +562,9 @@ export default function ShopPage({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedProductImageIndex(prev => prev === selectedProduct.gallery.length - 1 ? 0 : prev + 1);
+                        setSelectedProductImageIndex((prev) =>
+                          prev === selectedProduct.gallery.length - 1 ? 0 : prev + 1
+                        );
                       }}
                       className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 p-2.5 sm:p-2 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center bg-white/95 rounded-full text-slate-700 shadow-md hover:bg-white transition-colors"
                       aria-label={t('common.imageNext')}
@@ -463,7 +576,10 @@ export default function ShopPage({
                         <button
                           key={`gallery-dot-${index}`}
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); setSelectedProductImageIndex(index); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedProductImageIndex(index);
+                          }}
                           className={`h-1.5 rounded-full transition-all flex-shrink-0 ${
                             index === selectedProductImageIndex ? 'bg-white w-6' : 'bg-white/60 w-1.5 hover:bg-white/80'
                           }`}
@@ -482,16 +598,23 @@ export default function ShopPage({
                   <X size={20} className="sm:w-[18px] sm:h-[18px]" />
                 </button>
                 <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-4 pt-6 sm:pt-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                  <h2 id="product-detail-title" className="text-lg sm:text-lg font-semibold text-white mb-1.5 line-clamp-2 leading-snug drop-shadow-sm">
+                  <h2
+                    id="product-detail-title"
+                    className="text-lg sm:text-lg font-semibold text-white mb-1.5 line-clamp-2 leading-snug drop-shadow-sm"
+                  >
                     {selectedProduct.name}
                   </h2>
                   <div className="flex flex-wrap items-center gap-2 text-white/95">
                     <span className="text-base sm:text-base font-bold">{selectedProduct.price.toFixed(2)}€</span>
                     {selectedProduct.originalPrice > selectedProduct.price && (
-                      <span className="text-sm line-through opacity-90">{selectedProduct.originalPrice.toFixed(2)}€</span>
+                      <span className="text-sm line-through opacity-90">
+                        {selectedProduct.originalPrice.toFixed(2)}€
+                      </span>
                     )}
                     {selectedProduct.discount > 0 && (
-                      <span className="text-[10px] font-bold bg-red-500 text-white px-2 py-1 rounded">-{selectedProduct.discount}%</span>
+                      <span className="text-[10px] font-bold bg-red-500 text-white px-2 py-1 rounded">
+                        -{selectedProduct.discount}%
+                      </span>
                     )}
                   </div>
                 </div>
@@ -504,7 +627,9 @@ export default function ShopPage({
                       type="button"
                       onClick={() => setSelectedProductImageIndex(index)}
                       className={`shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border-2 transition-all ${
-                        index === selectedProductImageIndex ? 'border-slate-900 ring-2 ring-slate-300 ring-offset-1' : 'border-slate-200 hover:border-slate-300'
+                        index === selectedProductImageIndex
+                          ? 'border-slate-900 ring-2 ring-slate-300 ring-offset-1'
+                          : 'border-slate-200 hover:border-slate-300'
                       }`}
                     >
                       <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
@@ -513,17 +638,25 @@ export default function ShopPage({
                 </div>
               )}
             </div>
-            <div className="p-4 sm:p-5 pb-8 sm:pb-5 overflow-y-auto flex-1 min-h-0 space-y-4 sm:space-y-5 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div
+              className="p-4 sm:p-5 pb-8 sm:pb-5 overflow-y-auto flex-1 min-h-0 space-y-4 sm:space-y-5 overscroll-contain"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
               <div>
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Description</h3>
                 <p className="text-sm sm:text-sm text-slate-600 leading-relaxed">{selectedProduct.description}</p>
               </div>
               {selectedProduct.features && selectedProduct.features.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Caractéristiques</h4>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                    Caractéristiques
+                  </h4>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedProduct.features.map((feature, index) => (
-                      <span key={index} className="px-2.5 py-1.5 sm:py-1 bg-slate-100 text-slate-700 text-xs font-medium rounded-lg border border-slate-200/80">
+                      <span
+                        key={index}
+                        className="px-2.5 py-1.5 sm:py-1 bg-slate-100 text-slate-700 text-xs font-medium rounded-lg border border-slate-200/80"
+                      >
                         {feature}
                       </span>
                     ))}
@@ -535,7 +668,10 @@ export default function ShopPage({
                   <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Spécifications</h4>
                   <div className="space-y-1.5">
                     {Object.entries(selectedProduct.specifications).map(([key, value]) => (
-                      <div key={key} className="flex justify-between text-sm py-2 sm:py-1.5 border-b border-slate-100 last:border-0 gap-2">
+                      <div
+                        key={key}
+                        className="flex justify-between text-sm py-2 sm:py-1.5 border-b border-slate-100 last:border-0 gap-2"
+                      >
                         <span className="text-slate-500 capitalize flex-shrink-0">{key}</span>
                         <span className="font-medium text-slate-800 text-right break-words">{value}</span>
                       </div>
@@ -547,13 +683,17 @@ export default function ShopPage({
                 <div className="rounded-2xl bg-slate-50 border border-slate-200/80 p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-slate-500">Prix</span>
-                    <span className="text-xl sm:text-2xl font-bold text-slate-900">{selectedProduct.price.toFixed(2)}€</span>
+                    <span className="text-xl sm:text-2xl font-bold text-slate-900">
+                      {selectedProduct.price.toFixed(2)}€
+                    </span>
                   </div>
                   {selectedProduct.originalPrice > selectedProduct.price && (
                     <p className="text-xs text-slate-500 line-through">{selectedProduct.originalPrice.toFixed(2)}€</p>
                   )}
                   <div className="flex items-center justify-between text-xs text-slate-500 mt-2 pt-2 border-t border-slate-200/80">
-                    <span className="flex items-center gap-1"><Ship size={12} /> Stock</span>
+                    <span className="flex items-center gap-1">
+                      <Ship size={12} /> Stock
+                    </span>
                     <span className="font-medium text-slate-700">{selectedProduct.stock} unités</span>
                   </div>
                 </div>
@@ -566,7 +706,11 @@ export default function ShopPage({
                       : 'bg-slate-900 text-white hover:bg-slate-800 border-2 border-slate-900'
                   }`}
                 >
-                  <Heart size={18} className={isShopFavorite(selectedProduct.id) ? 'fill-current' : ''} strokeWidth={1.75} />
+                  <Heart
+                    size={18}
+                    className={isShopFavorite(selectedProduct.id) ? 'fill-current' : ''}
+                    strokeWidth={1.75}
+                  />
                   {isShopFavorite(selectedProduct.id) ? t('shop.removeFromFavorites') : t('shop.addToFavorites')}
                 </button>
                 <p className="flex items-center justify-center gap-1.5 text-xs text-slate-500">

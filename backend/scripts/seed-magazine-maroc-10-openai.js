@@ -17,7 +17,13 @@ const CATEGORIES = ['Actualités', 'Voyage', 'Culture', 'Gastronomie', 'Divertis
 const LANGS = ['fr', 'en', 'es', 'it', 'de', 'ar'];
 
 function slug(str) {
-  return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '').toLowerCase().slice(0, 30);
+  return String(str)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/(^-|-$)/g, '')
+    .toLowerCase()
+    .slice(0, 30);
 }
 
 function imageUrlForArticle(index, title) {
@@ -56,7 +62,9 @@ Chaque article doit avoir:
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) {throw new Error('Réponse OpenAI vide');}
+  if (!raw) {
+    throw new Error('Réponse OpenAI vide');
+  }
   const data = JSON.parse(raw);
   const list = data.articles || data.items || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list.slice(0, count) : [];
@@ -98,7 +106,8 @@ async function seedMarocMagazine() {
 
       const translations = {};
       for (const code of LANGS) {
-        const t = a.translations?.[code] || (code === 'fr' ? { title: a.title, excerpt: a.excerpt, content: a.content } : null);
+        const t =
+          a.translations?.[code] || (code === 'fr' ? { title: a.title, excerpt: a.excerpt, content: a.content } : null);
         if (t && (t.title || t.excerpt || t.content)) {
           translations[code] = {
             title: (t.title || title).slice(0, 200),
@@ -140,7 +149,9 @@ async function seedMarocMagazine() {
     console.log('\n✅ Seed terminé : 10 articles sur le Maroc insérés (chaque langue en base). Total articles:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) {console.error(err.response.data);}
+    if (err.response?.data) {
+      console.error(err.response.data);
+    }
     process.exit(1);
   } finally {
     await mongoose.disconnect();

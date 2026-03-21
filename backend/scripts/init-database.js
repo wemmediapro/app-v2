@@ -31,7 +31,8 @@ const Banner = require('../models/Banner');
 const Deck = require('../models/Shipmap');
 
 // Même URI que le backend : DATABASE_URL (ancienne base) ou MONGODB_URI (local)
-const MONGODB_URI = process.env.DATABASE_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017/gnv_onboard?directConnection=true';
+const MONGODB_URI =
+  process.env.DATABASE_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017/gnv_onboard?directConnection=true';
 
 async function connectDB() {
   try {
@@ -63,7 +64,9 @@ async function createAdminUser() {
 
     if (!adminEmail) {
       console.error('CRITICAL: ADMIN_EMAIL must be set in config.env (no default email).');
-      if (isProduction) {throw new Error('ADMIN_EMAIL required');}
+      if (isProduction) {
+        throw new Error('ADMIN_EMAIL required');
+      }
       return null;
     }
 
@@ -113,7 +116,7 @@ async function createAdminUser() {
     console.log(
       mustChangePassword
         ? '✅ Compte admin créé avec mot de passe temporaire — changez-le au premier login.'
-        : '✅ Compte admin créé (ADMIN_EMAIL / ADMIN_PASSWORD depuis config.env).',
+        : '✅ Compte admin créé (ADMIN_EMAIL / ADMIN_PASSWORD depuis config.env).'
     );
     return admin;
   } catch (error) {
@@ -463,7 +466,7 @@ async function createMovies() {
 async function createFeedbacks(users) {
   try {
     if (users.length < 2) {
-      console.log('ℹ️  Pas assez d\'utilisateurs pour créer des feedbacks');
+      console.log("ℹ️  Pas assez d'utilisateurs pour créer des feedbacks");
       return [];
     }
 
@@ -515,7 +518,7 @@ async function createFeedbacks(users) {
 async function createMessages(users) {
   try {
     if (users.length < 2) {
-      console.log('ℹ️  Pas assez d\'utilisateurs pour créer des messages');
+      console.log("ℹ️  Pas assez d'utilisateurs pour créer des messages");
       return [];
     }
 
@@ -639,8 +642,8 @@ async function createProducts() {
         description: 'Mug en céramique avec logo GNV Excelsior',
         type: 'Souvenir officiel',
         category: 'souvenirs',
-        price: 12.90,
-        originalPrice: 15.90,
+        price: 12.9,
+        originalPrice: 15.9,
         discount: 19,
         stock: 25,
         sku: 'MUG-GNV-001',
@@ -683,13 +686,15 @@ async function createWebTVChannels() {
         isActive: true,
         quality: 'HD',
         language: 'fr',
-        schedule: [{
-          day: 'monday',
-          programs: [
-            { title: 'Matin Info', startTime: '08:00', endTime: '09:00', description: 'Actualités du matin' },
-            { title: 'Midi Actualités', startTime: '12:00', endTime: '13:00', description: 'Actualités de midi' },
-          ],
-        }],
+        schedule: [
+          {
+            day: 'monday',
+            programs: [
+              { title: 'Matin Info', startTime: '08:00', endTime: '09:00', description: 'Actualités du matin' },
+              { title: 'Midi Actualités', startTime: '12:00', endTime: '13:00', description: 'Actualités de midi' },
+            ],
+          },
+        ],
       },
       {
         name: 'GNV Sports',
@@ -968,7 +973,7 @@ async function initDatabase() {
 
     process.exit(0);
   } catch (error) {
-    console.error('\n❌ Erreur lors de l\'initialisation:', error);
+    console.error("\n❌ Erreur lors de l'initialisation:", error);
     process.exit(1);
   }
 }
@@ -979,4 +984,3 @@ if (require.main === module) {
 }
 
 module.exports = { initDatabase };
-

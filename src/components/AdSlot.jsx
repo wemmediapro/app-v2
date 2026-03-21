@@ -14,9 +14,7 @@ function AdSlot({ adUrl, skipAfterPercent = 0, onComplete, onError, t }) {
   const [canSkip, setCanSkip] = useState(skipAfterPercent <= 0);
   const skipTriggeredRef = useRef(false);
 
-  const resolvedUrl = adUrl
-    ? (getStreamingVideoUrl(adUrl) || (adUrl.startsWith('http') ? adUrl : null))
-    : null;
+  const resolvedUrl = adUrl ? getStreamingVideoUrl(adUrl) || (adUrl.startsWith('http') ? adUrl : null) : null;
   const hlsUrl = resolvedUrl ? getHlsUrlFromVideoUrl(resolvedUrl) : null;
   const isHls = !!hlsUrl;
 

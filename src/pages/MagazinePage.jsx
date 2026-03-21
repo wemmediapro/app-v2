@@ -47,7 +47,12 @@ export default function MagazinePage({
         </header>
 
         {magazineLoading && (
-          <div className="rounded-2xl bg-white/80 backdrop-blur border border-slate-100 shadow-sm overflow-hidden" role="status" aria-live="polite" aria-label={t('magazine.loading')}>
+          <div
+            className="rounded-2xl bg-white/80 backdrop-blur border border-slate-100 shadow-sm overflow-hidden"
+            role="status"
+            aria-live="polite"
+            aria-label={t('magazine.loading')}
+          >
             <div className="p-5 sm:p-6 space-y-4">
               <div className="flex gap-3">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-200 animate-pulse shrink-0" />
@@ -75,7 +80,10 @@ export default function MagazinePage({
         )}
 
         {!magazineLoading && magazineError && (
-          <div className="rounded-2xl bg-amber-50 border border-amber-200 px-5 py-6 sm:py-8 text-center shadow-sm" role="alert">
+          <div
+            className="rounded-2xl bg-amber-50 border border-amber-200 px-5 py-6 sm:py-8 text-center shadow-sm"
+            role="alert"
+          >
             <p className="text-amber-800 font-semibold">{t('magazine.unableToLoad')}</p>
             <p className="text-sm text-amber-700 mt-2">{magazineError}</p>
             {!magazineError.includes('Trop de requêtes') && (
@@ -83,7 +91,7 @@ export default function MagazinePage({
             )}
             <button
               type="button"
-              onClick={() => setMagazineRetryTrigger(prev => prev + 1)}
+              onClick={() => setMagazineRetryTrigger((prev) => prev + 1)}
               className="mt-4 px-5 py-2.5 rounded-xl bg-amber-200 text-amber-900 font-medium text-sm hover:bg-amber-300 transition-colors min-h-[44px]"
             >
               {t('magazine.retry')}
@@ -99,7 +107,9 @@ export default function MagazinePage({
           >
             <p className="text-xs font-semibold uppercase tracking-widest opacity-95">{t('magazine.urgent')}</p>
             <p className="mt-1.5 text-sm font-bold leading-snug line-clamp-2">{breakingNews[0].title}</p>
-            <p className="mt-1 text-xs text-white/85">{breakingNews[0].publishDate} · {breakingNews[0].readTime}</p>
+            <p className="mt-1 text-xs text-white/85">
+              {breakingNews[0].publishDate} · {breakingNews[0].readTime}
+            </p>
           </button>
         )}
 
@@ -140,16 +150,21 @@ export default function MagazinePage({
               <div className="px-4 sm:px-5 py-4 sm:py-5 space-y-3">
                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                   <span className="px-2.5 py-1 rounded-full bg-[#264FFF]/10 text-[#264FFF] font-semibold uppercase tracking-wide">
-                    {magazineCategories.find(cat => cat.id === featuredArticles[0].category)?.name || featuredArticles[0].category}
+                    {magazineCategories.find((cat) => cat.id === featuredArticles[0].category)?.name ||
+                      featuredArticles[0].category}
                   </span>
                   <span>{featuredArticles[0].publishDate}</span>
                   <span>·</span>
                   <span>{featuredArticles[0].readTime}</span>
                 </div>
-                <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">{featuredArticles[0].title}</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
+                  {featuredArticles[0].title}
+                </h2>
                 <p className="text-sm text-slate-600 leading-relaxed line-clamp-2">{featuredArticles[0].excerpt}</p>
                 <div className="flex items-center justify-between pt-1 gap-3">
-                  <span className="text-xs font-medium text-slate-500 truncate">{t('magazine.by')} {featuredArticles[0].author}</span>
+                  <span className="text-xs font-medium text-slate-500 truncate">
+                    {t('magazine.by')} {featuredArticles[0].author}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setSelectedArticle(featuredArticles[0])}
@@ -167,17 +182,25 @@ export default function MagazinePage({
           <section className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
               <h2 className="text-base font-bold text-slate-800">
-                {filteredArticles.length > 0 ? `${t('magazine.articles')} (${filteredArticles.length})` : t('magazine.noArticles')}
+                {filteredArticles.length > 0
+                  ? `${t('magazine.articles')} (${filteredArticles.length})`
+                  : t('magazine.noArticles')}
               </h2>
               {filteredArticles.length > 0 && featuredArticles.length > 0 && (
-                <span className="text-xs text-slate-500">{featuredArticles.length} {t('magazine.featuredCount')}</span>
+                <span className="text-xs text-slate-500">
+                  {featuredArticles.length} {t('magazine.featuredCount')}
+                </span>
               )}
             </div>
             {filteredArticles.length === 0 ? (
               <div className="text-center py-14 sm:py-16 bg-white rounded-2xl border border-slate-100 shadow-sm px-4">
                 <BookOpen size={40} className="text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-600 font-medium">{magazineError ? t('magazine.loadFailed') : t('magazine.noArticles')}</p>
-                <p className="text-sm text-slate-500 mt-1">{magazineError ? t('magazine.checkBackend') : t('magazine.modifySearch')}</p>
+                <p className="text-slate-600 font-medium">
+                  {magazineError ? t('magazine.loadFailed') : t('magazine.noArticles')}
+                </p>
+                <p className="text-sm text-slate-500 mt-1">
+                  {magazineError ? t('magazine.checkBackend') : t('magazine.modifySearch')}
+                </p>
               </div>
             ) : (
               <motion.div
@@ -213,11 +236,13 @@ export default function MagazinePage({
                       </div>
                       <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 text-slate-700 text-xs font-medium shadow-sm backdrop-blur-sm">
                         <BookOpen size={12} className="text-slate-500" strokeWidth={2} />
-                        {magazineCategories.find(cat => cat.id === article.category)?.name || article.category}
+                        {magazineCategories.find((cat) => cat.id === article.category)?.name || article.category}
                       </span>
                     </div>
                     <div className="p-4">
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 line-clamp-2 leading-snug">{article.title}</h3>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 line-clamp-2 leading-snug">
+                        {article.title}
+                      </h3>
                       <p className="text-sm text-slate-500 mt-2 line-clamp-2">{article.excerpt}</p>
                       <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-slate-500">
                         <span className="inline-flex items-center gap-1">
@@ -249,7 +274,11 @@ export default function MagazinePage({
         )}
 
         {selectedArticle && (
-          <article className="rounded-2xl bg-white shadow-xl border border-slate-100 overflow-hidden" role="article" aria-label={selectedArticle.title}>
+          <article
+            className="rounded-2xl bg-white shadow-xl border border-slate-100 overflow-hidden"
+            role="article"
+            aria-label={selectedArticle.title}
+          >
             <div className="relative aspect-[16/9] sm:aspect-[2/1] bg-slate-200 overflow-hidden">
               <img
                 src={getPosterUrl(selectedArticle.image) || selectedArticle.image}
@@ -268,7 +297,10 @@ export default function MagazinePage({
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
               <button
                 type="button"
-                onClick={() => { setPage('magazine'); setSelectedArticle(null); }}
+                onClick={() => {
+                  setPage('magazine');
+                  setSelectedArticle(null);
+                }}
                 className="absolute top-4 left-4 z-10 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-white text-slate-800 shadow-lg ring-2 ring-black/10 hover:bg-slate-50 hover:shadow-xl transition-all duration-200 active:scale-95"
                 aria-label={t('magazine.backToList')}
               >
@@ -278,13 +310,18 @@ export default function MagazinePage({
             <div className="px-4 sm:px-6 lg:px-8 pt-5 pb-4">
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-3">
                 <span className="px-2.5 py-1 rounded-full bg-[#264FFF]/10 text-[#264FFF] font-semibold uppercase tracking-wide">
-                  {magazineCategories.find(cat => cat.id === selectedArticle.category)?.name || selectedArticle.category}
+                  {magazineCategories.find((cat) => cat.id === selectedArticle.category)?.name ||
+                    selectedArticle.category}
                 </span>
                 {selectedArticle.isFeatured && (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">⭐ {t('magazine.featuredBadge')}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">
+                    ⭐ {t('magazine.featuredBadge')}
+                  </span>
                 )}
                 {selectedArticle.isBreaking && (
-                  <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-semibold">{t('magazine.urgent')}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-semibold">
+                    {t('magazine.urgent')}
+                  </span>
                 )}
                 <span>{selectedArticle.publishDate}</span>
                 <span>·</span>
@@ -317,7 +354,10 @@ export default function MagazinePage({
             <div className="px-4 sm:px-6 lg:px-8 pb-6">
               <div className="max-w-[65ch] article-content text-[15px] sm:text-base text-slate-600 leading-[1.7]">
                 {selectedArticle.content && /<(?:\w+|figure|video|iframe)/i.test(selectedArticle.content) ? (
-                  <div className="whitespace-pre-line [&_.article-inline-image]:my-4 [&_.article-inline-video]:my-4 [&_video]:max-w-full [&_iframe]:max-w-full [&_img]:rounded-lg" dangerouslySetInnerHTML={{ __html: sanitizeArticleContent(selectedArticle.content) }} />
+                  <div
+                    className="whitespace-pre-line [&_.article-inline-image]:my-4 [&_.article-inline-video]:my-4 [&_video]:max-w-full [&_iframe]:max-w-full [&_img]:rounded-lg"
+                    dangerouslySetInnerHTML={{ __html: sanitizeArticleContent(selectedArticle.content) }}
+                  />
                 ) : (
                   <p className="whitespace-pre-line">{selectedArticle.content}</p>
                 )}
@@ -343,8 +383,13 @@ export default function MagazinePage({
                   onClick={() => toggleMagazineFavorite(selectedArticle)}
                   className={`flex-1 flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-semibold transition-colors min-h-[48px] ${isMagazineFavorite(selectedArticle?.id ?? selectedArticle?._id) ? 'border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-100' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
                 >
-                  <Heart size={20} className={isMagazineFavorite(selectedArticle?.id ?? selectedArticle?._id) ? 'fill-current' : ''} />
-                  {isMagazineFavorite(selectedArticle?.id ?? selectedArticle?._id) ? t('magazine.removeFromFavorites') : t('magazine.addToFavorites')}
+                  <Heart
+                    size={20}
+                    className={isMagazineFavorite(selectedArticle?.id ?? selectedArticle?._id) ? 'fill-current' : ''}
+                  />
+                  {isMagazineFavorite(selectedArticle?.id ?? selectedArticle?._id)
+                    ? t('magazine.removeFromFavorites')
+                    : t('magazine.addToFavorites')}
                 </button>
               </div>
             </div>

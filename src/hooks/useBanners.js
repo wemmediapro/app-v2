@@ -17,17 +17,20 @@ function resolveBannerUrl(u, origin) {
 export function useBanners(page, language) {
   const bannerPageId = page === 'restaurant' ? 'restaurants' : page;
   const [homeBanners, setHomeBanners] = useState([]);
-  const [bannerViewWidth, setBannerViewWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 1024,
-  );
+  const [bannerViewWidth, setBannerViewWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
   const [bannerIndex, setBannerIndex] = useState(0);
 
-  const getBannerImageUrl = useCallback((banner, w) => {
-    const w2 = w ?? bannerViewWidth;
-    if (w2 < 768) return resolveBannerUrl(banner.imageMobile, BACKEND_ORIGIN) || resolveBannerUrl(banner.image, BACKEND_ORIGIN);
-    if (w2 < 1024) return resolveBannerUrl(banner.imageTablet, BACKEND_ORIGIN) || resolveBannerUrl(banner.image, BACKEND_ORIGIN);
-    return resolveBannerUrl(banner.image, BACKEND_ORIGIN);
-  }, [bannerViewWidth]);
+  const getBannerImageUrl = useCallback(
+    (banner, w) => {
+      const w2 = w ?? bannerViewWidth;
+      if (w2 < 768)
+        return resolveBannerUrl(banner.imageMobile, BACKEND_ORIGIN) || resolveBannerUrl(banner.image, BACKEND_ORIGIN);
+      if (w2 < 1024)
+        return resolveBannerUrl(banner.imageTablet, BACKEND_ORIGIN) || resolveBannerUrl(banner.image, BACKEND_ORIGIN);
+      return resolveBannerUrl(banner.image, BACKEND_ORIGIN);
+    },
+    [bannerViewWidth]
+  );
 
   // Chargement bannières depuis l'API (cache 1 min)
   useEffect(() => {
@@ -39,7 +42,8 @@ export function useBanners(page, language) {
       return;
     }
     let cancelled = false;
-    apiService.getBanners(`lang=${language}&page=${bannerPageId}`)
+    apiService
+      .getBanners(`lang=${language}&page=${bannerPageId}`)
       .then((res) => {
         if (cancelled || !res?.data) return;
         const list = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
@@ -47,7 +51,9 @@ export function useBanners(page, language) {
         const active = list
           .filter((b) => {
             if (b.isActive === false) return false;
-            const pos = String(b.position || '').toLowerCase().replace(/\s+/g, '-');
+            const pos = String(b.position || '')
+              .toLowerCase()
+              .replace(/\s+/g, '-');
             return homePositions.includes(pos);
           })
           .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || new Date(b.startDate || 0) - new Date(a.startDate || 0));
@@ -55,8 +61,12 @@ export function useBanners(page, language) {
         globalThis.__BANNERS_CACHE__[cacheKey] = { list: active, ts: Date.now() };
         setHomeBanners(active);
       })
-      .catch(() => { setHomeBanners([]); });
-    return () => { cancelled = true; };
+      .catch(() => {
+        setHomeBanners([]);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [language, bannerPageId]);
 
   // Mise à jour largeur viewport (resize)

@@ -9,7 +9,7 @@ const languages = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' }
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
 ];
 
 const LanguageSelector = () => {
@@ -25,7 +25,7 @@ const LanguageSelector = () => {
     const rect = triggerRef.current.getBoundingClientRect();
     setDropdownPosition({
       top: rect.bottom + 8,
-      right: window.innerWidth - rect.right
+      right: window.innerWidth - rect.right,
     });
   }, [isOpen]);
 
@@ -45,7 +45,7 @@ const LanguageSelector = () => {
     };
   }, [isOpen]);
 
-  const currentLanguage = languages.find(lang => lang.code === language) || languages[0];
+  const currentLanguage = languages.find((lang) => lang.code === language) || languages[0];
 
   const dropdownContent = (
     <AnimatePresence>
@@ -59,7 +59,7 @@ const LanguageSelector = () => {
             position: 'fixed',
             top: dropdownPosition.top,
             right: dropdownPosition.right,
-            width: 192
+            width: 192,
           }}
           className="bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-[99999]"
         >
@@ -77,9 +77,7 @@ const LanguageSelector = () => {
             >
               <span className="text-xl">{lang.flag}</span>
               <span className="flex-1 text-sm font-medium text-gray-700">{lang.name}</span>
-              {language === lang.code && (
-                <Check size={16} className="text-blue-600" />
-              )}
+              {language === lang.code && <Check size={16} className="text-blue-600" />}
             </button>
           ))}
         </motion.div>
@@ -111,7 +109,3 @@ const LanguageSelector = () => {
 };
 
 export default LanguageSelector;
-
-
-
-

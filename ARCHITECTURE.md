@@ -19,7 +19,7 @@ graph TB
         B[Dashboard Admin<br/>React + Vite<br/>Port 5174]
         C[Mobile/Web Browsers]
     end
-    
+
     subgraph "Backend API"
         D[Express Server<br/>Port 3000]
         E[Socket.io<br/>WebSocket]
@@ -27,24 +27,24 @@ graph TB
         G[Routes Layer]
         H[Services Layer]
     end
-    
+
     subgraph "Base de Données"
         I[(MongoDB<br/>Mongoose)]
         J[(SQLite<br/>Optionnel)]
     end
-    
+
     subgraph "Services Externes"
         K[Redis<br/>Cache & Socket.IO]
         L[GNV Scraper<br/>Données Ferry]
     end
-    
+
     A -->|HTTP/REST| D
     B -->|HTTP/REST| D
     C -->|HTTP/REST| D
     A -->|WebSocket| E
     B -->|WebSocket| E
     C -->|WebSocket| E
-    
+
     D --> F
     F --> G
     G --> H
@@ -52,7 +52,7 @@ graph TB
     H --> J
     H --> K
     H --> L
-    
+
     style A fill:#4CAF50
     style B fill:#2196F3
     style D fill:#FF9800
@@ -220,7 +220,7 @@ sequenceDiagram
     participant Route
     participant Service
     participant Database
-    
+
     Client->>Middleware: Requête HTTP
     Middleware->>Middleware: Auth Check
     Middleware->>Middleware: Validation
@@ -251,7 +251,7 @@ graph LR
     A --> M[/api/gnv]
     A --> N[/api/demo]
     A --> O[/api/health]
-    
+
     style A fill:#FF9800
     style B fill:#4CAF50
     style K fill:#F44336
@@ -266,24 +266,24 @@ erDiagram
     User ||--o{ Message : "reçoit"
     User ||--|| UserPreferences : "a"
     UserPreferences ||--|| NotificationPreferences : "a"
-    
+
     Restaurant ||--o{ MenuItem : "contient"
     Restaurant ||--o{ Promotion : "a"
-    
+
     Product ||--o{ Order : "dans"
     Order ||--|| User : "appartient"
-    
+
     Article ||--o{ Magazine : "dans"
-    
+
     Ship ||--o{ Shipmap : "a"
     Ship ||--o{ Destination : "dessert"
-    
+
     WebTVChannel ||--o{ Program : "diffuse"
-    
+
     EnfantActivity ||--|| Ship : "sur"
-    
+
     Banner ||--|| Ship : "sur"
-    
+
     User {
         string id
         string firstName
@@ -293,7 +293,7 @@ erDiagram
         string role
         boolean isActive
     }
-    
+
     Restaurant {
         string id
         string name
@@ -303,7 +303,7 @@ erDiagram
         float rating
         boolean isOpen
     }
-    
+
     Product {
         string id
         string name
@@ -311,7 +311,7 @@ erDiagram
         string category
         int stock
     }
-    
+
     Article {
         string id
         string title
@@ -335,10 +335,10 @@ graph TB
     D --> E[Pages/Components]
     E --> F[apiService]
     F --> G[Backend API]
-    
+
     E --> H[LanguageContext]
     H --> I[locales/*.json]
-    
+
     style A fill:#61DAFB
     style B fill:#61DAFB
     style G fill:#FF9800
@@ -355,11 +355,11 @@ graph TB
     E --> F[Pages]
     F --> G[apiService]
     G --> H[Backend API]
-    
+
     F --> I[Components]
     I --> J[FilterBar]
     I --> K[LanguageSelector]
-    
+
     style A fill:#61DAFB
     style B fill:#61DAFB
     style H fill:#FF9800
@@ -373,10 +373,10 @@ sequenceDiagram
     participant Context
     participant Service
     participant API
-    
+
     Component->>Context: useLanguage()
     Context-->>Component: Traductions
-    
+
     Component->>Service: apiService.get()
     Service->>API: HTTP Request
     API-->>Service: JSON Response
@@ -389,6 +389,7 @@ sequenceDiagram
 ## Technologies Utilisées
 
 ### Backend
+
 - **Runtime**: Node.js
 - **Framework**: Express.js
 - **ORM**: Mongoose (API) ; Prisma présent pour schéma et scripts (init-database-prisma), non utilisé par les routes
@@ -401,6 +402,7 @@ sequenceDiagram
 - **Logging**: Morgan
 
 ### Frontend Principal
+
 - **Framework**: React 18
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
@@ -411,6 +413,7 @@ sequenceDiagram
 - **Routing**: React Router (si nécessaire)
 
 ### Dashboard Admin
+
 - **Framework**: React 18
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
@@ -427,24 +430,24 @@ sequenceDiagram
 
 ### REST API Endpoints
 
-| Endpoint | Méthode | Description | Auth |
-|----------|---------|-------------|------|
-| `/api/health` | GET | Health check | ❌ |
-| `/api/auth/login` | POST | Connexion | ❌ |
-| `/api/auth/register` | POST | Inscription | ❌ |
-| `/api/users` | GET | Liste utilisateurs | ✅ |
-| `/api/users/:id` | GET | Détails utilisateur | ✅ |
-| `/api/restaurants` | GET | Liste restaurants | ❌ |
-| `/api/restaurants/:id` | GET | Détails restaurant | ❌ |
-| `/api/movies` | GET | Liste films | ❌ |
-| `/api/radio` | GET | Stations radio | ❌ |
-| `/api/magazine` | GET | Articles magazine | ❌ |
-| `/api/shop/products` | GET | Produits boutique | ❌ |
-| `/api/messages` | GET/POST | Messages | ✅ |
-| `/api/feedback` | GET/POST | Feedback | ✅ |
-| `/api/admin/*` | * | Routes admin | ✅ Admin |
-| `/api/analytics` | GET | Statistiques | ✅ Admin |
-| `/api/demo/*` | * | Données démo | ❌ |
+| Endpoint               | Méthode  | Description         | Auth     |
+| ---------------------- | -------- | ------------------- | -------- |
+| `/api/health`          | GET      | Health check        | ❌       |
+| `/api/auth/login`      | POST     | Connexion           | ❌       |
+| `/api/auth/register`   | POST     | Inscription         | ❌       |
+| `/api/users`           | GET      | Liste utilisateurs  | ✅       |
+| `/api/users/:id`       | GET      | Détails utilisateur | ✅       |
+| `/api/restaurants`     | GET      | Liste restaurants   | ❌       |
+| `/api/restaurants/:id` | GET      | Détails restaurant  | ❌       |
+| `/api/movies`          | GET      | Liste films         | ❌       |
+| `/api/radio`           | GET      | Stations radio      | ❌       |
+| `/api/magazine`        | GET      | Articles magazine   | ❌       |
+| `/api/shop/products`   | GET      | Produits boutique   | ❌       |
+| `/api/messages`        | GET/POST | Messages            | ✅       |
+| `/api/feedback`        | GET/POST | Feedback            | ✅       |
+| `/api/admin/*`         | \*       | Routes admin        | ✅ Admin |
+| `/api/analytics`       | GET      | Statistiques        | ✅ Admin |
+| `/api/demo/*`          | \*       | Données démo        | ❌       |
 
 ### WebSocket Events
 
@@ -457,12 +460,13 @@ graph LR
     B -->|message| A
     B -->|notification| A
     B -->|update| A
-    
+
     style A fill:#4CAF50
     style B fill:#FF9800
 ```
 
 **Événements Socket.io**:
+
 - `connection` - Connexion client
 - `join-room` - Rejoindre une salle (ferry, restaurant, etc.)
 - `send-message` - Envoyer un message
@@ -485,7 +489,7 @@ graph TB
     D --> E[Auth Middleware]
     E --> F[Validation]
     F --> G[Route Handler]
-    
+
     style B fill:#F44336
     style C fill:#F44336
     style D fill:#F44336
@@ -493,6 +497,7 @@ graph TB
 ```
 
 **Mesures de sécurité**:
+
 - ✅ Helmet.js - Headers de sécurité HTTP
 - ✅ CORS - Contrôle d'accès cross-origin
 - ✅ Rate Limiting - Limitation du taux de requêtes
@@ -517,19 +522,20 @@ graph TB
     C -->|it| G[it.json]
     C -->|ar| H[ar.json]
     C -->|de| I[de.json]
-    
+
     D --> J[Component]
     E --> J
     F --> J
     G --> J
     H --> J
     I --> J
-    
+
     style A fill:#9C27B0
     style J fill:#4CAF50
 ```
 
 **Langues supportées**:
+
 - 🇫🇷 Français (fr) - Par défaut
 - 🇬🇧 Anglais (en)
 - 🇪🇸 Espagnol (es)
@@ -550,12 +556,13 @@ graph LR
     A[DEMO_MODE=true] --> B[Backend]
     B --> C[Mock Data]
     C --> D[API Responses]
-    
+
     style A fill:#FFC107
     style C fill:#FFC107
 ```
 
 **Caractéristiques**:
+
 - ✅ Fonctionne sans MongoDB
 - ✅ Utilise des données de démonstration
 - ✅ Parfait pour le développement et les démos
@@ -569,13 +576,14 @@ graph LR
     A --> C[Redis Cache]
     A --> D[PM2 Cluster]
     D --> E[Load Balancing]
-    
+
     style A fill:#4CAF50
     style B fill:#9C27B0
     style C fill:#F44336
 ```
 
 **Optimisations**:
+
 - ✅ PM2 pour la gestion des processus
 - ✅ Redis pour le cache et les sessions
 - ✅ Clustering Socket.io avec Redis Adapter
@@ -596,14 +604,14 @@ graph TB
     C -->|Development| D[Local Dev]
     C -->|Staging| E[Staging Server]
     C -->|Production| F[Production Server]
-    
+
     D --> G[MongoDB Local]
     E --> H[MongoDB Atlas]
     F --> H
-    
+
     F --> I[CDN]
     F --> J[Load Balancer]
-    
+
     style A fill:#2196F3
     style F fill:#4CAF50
     style H fill:#9C27B0
@@ -627,26 +635,26 @@ graph TB
 
 ### Scripts Disponibles
 
-| Script | Description |
-|--------|-------------|
-| `start-all.sh` | Lance tous les services (backend, frontend, dashboard) |
-| `start-optimized.sh` | Démarrage optimisé avec PM2 |
-| `npm run dev` | Démarrage frontend en mode dev |
-| `npm run dev` (backend) | Démarrage backend avec nodemon |
-| `npm run build` | Build production frontend |
-| `npm run preview` | Preview build production |
+| Script                  | Description                                            |
+| ----------------------- | ------------------------------------------------------ |
+| `start-all.sh`          | Lance tous les services (backend, frontend, dashboard) |
+| `start-optimized.sh`    | Démarrage optimisé avec PM2                            |
+| `npm run dev`           | Démarrage frontend en mode dev                         |
+| `npm run dev` (backend) | Démarrage backend avec nodemon                         |
+| `npm run build`         | Build production frontend                              |
+| `npm run preview`       | Preview build production                               |
 
 ---
 
 ## Ports et URLs
 
-| Service | Port | URL |
-|---------|------|-----|
-| Backend API | 3000 | http://localhost:3000 |
-| Frontend Principal | 5173 | http://localhost:5173 |
-| Dashboard Admin | 5174 | http://localhost:5174 |
-| MongoDB | 27017 | mongodb://localhost:27017 |
-| Redis | 6379 | redis://localhost:6379 |
+| Service            | Port  | URL                       |
+| ------------------ | ----- | ------------------------- |
+| Backend API        | 3000  | http://localhost:3000     |
+| Frontend Principal | 5173  | http://localhost:5173     |
+| Dashboard Admin    | 5174  | http://localhost:5174     |
+| MongoDB            | 27017 | mongodb://localhost:27017 |
+| Redis              | 6379  | redis://localhost:6379    |
 
 ---
 
@@ -658,28 +666,28 @@ graph TB
         A[Browser]
         B[Mobile App]
     end
-    
+
     subgraph "Frontend Layer"
         C[React Frontend]
         D[React Dashboard]
     end
-    
+
     subgraph "API Layer"
         E[Express Server]
         F[Socket.io]
     end
-    
+
     subgraph "Business Layer"
         G[Routes]
         H[Services]
         I[Middleware]
     end
-    
+
     subgraph "Data Layer"
         J[(MongoDB)]
         K[(Redis Cache)]
     end
-    
+
     A --> C
     B --> C
     C --> E
@@ -691,7 +699,7 @@ graph TB
     G --> H
     H --> J
     H --> K
-    
+
     style A fill:#4CAF50
     style C fill:#61DAFB
     style E fill:#FF9800
@@ -752,8 +760,8 @@ Cette architecture modulaire et scalable permet :
 ✅ **Flexibilité** - Mode démo et production  
 ✅ **Sécurité** - Multiples couches de sécurité  
 ✅ **Internationalisation** - Support multilingue  
-✅ **Temps réel** - WebSocket pour les mises à jour instantanées  
+✅ **Temps réel** - WebSocket pour les mises à jour instantanées
 
 ---
 
-*Document généré le 6 février 2026*
+_Document généré le 6 février 2026_

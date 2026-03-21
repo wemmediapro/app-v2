@@ -6,7 +6,8 @@ const options = {
     info: {
       title: 'GNV OnBoard API',
       version: '1.0.0',
-      description: 'API REST pour l\'application GNV OnBoard - Services à bord du navire',
+      description:
+        'API REST versionnée : préfixe canonique `/api/v1`. Les mêmes routes restent disponibles sous `/api/*` (alias, rétrocompatibilité MVP).',
       contact: {
         name: 'GNV Team',
       },
@@ -98,10 +99,7 @@ const options = {
       { name: 'Health', description: 'Santé du serveur' },
     ],
   },
-  apis: [
-    './src/routes/*.js',
-    './server.js',
-  ],
+  apis: ['./src/routes/*.js', './server.js'],
 };
 
 const swaggerSpec = swaggerJsdoc(options);

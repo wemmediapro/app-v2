@@ -3,11 +3,7 @@
  */
 const express = require('express');
 const request = require('supertest');
-const {
-  validatePagination,
-  createValidatePagination,
-  handleValidationErrors,
-} = require('../validateInput');
+const { validatePagination, createValidatePagination, handleValidationErrors } = require('../validateInput');
 
 describe('validateInput middleware', () => {
   function buildApp(extra = {}) {

@@ -147,9 +147,7 @@ describe('POST /api/sync/offline-queue', () => {
       .expect(200);
 
     expect(res.body.success).toBe(true);
-    expect(res.body.skipped).toContainEqual(
-      expect.objectContaining({ clientSyncId: 'dup-id', reason: 'duplicate' }),
-    );
+    expect(res.body.skipped).toContainEqual(expect.objectContaining({ clientSyncId: 'dup-id', reason: 'duplicate' }));
     expect(res.body.merged.some((m) => m.duplicate === true)).toBe(true);
   });
 
@@ -165,9 +163,7 @@ describe('POST /api/sync/offline-queue', () => {
       })
       .expect(200);
 
-    expect(res.body.skipped).toContainEqual(
-      expect.objectContaining({ clientSyncId: 'x1', reason: 'invalid_room' }),
-    );
+    expect(res.body.skipped).toContainEqual(expect.objectContaining({ clientSyncId: 'x1', reason: 'invalid_room' }));
   });
 
   it('200 — receiver inexistant → skipped receiver_not_found', async () => {
@@ -199,7 +195,7 @@ describe('POST /api/sync/offline-queue', () => {
       .expect(200);
 
     expect(res.body.skipped).toContainEqual(
-      expect.objectContaining({ clientSyncId: 'x2', reason: 'receiver_not_found' }),
+      expect.objectContaining({ clientSyncId: 'x2', reason: 'receiver_not_found' })
     );
   });
 });

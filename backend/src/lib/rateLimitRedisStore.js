@@ -21,7 +21,9 @@ class RedisStore {
   }
 
   async connect(redisUri) {
-    if (this.client) {return this.client;}
+    if (this.client) {
+      return this.client;
+    }
     this.client = redis.createClient({ url: redisUri });
     this.client.on('error', (err) => console.warn('Rate limit Redis:', err.message));
     await this.client.connect();
@@ -55,18 +57,24 @@ class RedisStore {
   }
 
   async decrement(key) {
-    if (!this.client) {return;}
+    if (!this.client) {
+      return;
+    }
     try {
       const k = this.prefixKey(key);
       const n = await this.client.decr(k);
-      if (n <= 0) {await this.client.del(k);}
+      if (n <= 0) {
+        await this.client.del(k);
+      }
     } catch (err) {
       console.warn('Rate limit Redis decrement:', err.message);
     }
   }
 
   async resetKey(key) {
-    if (!this.client) {return;}
+    if (!this.client) {
+      return;
+    }
     try {
       await this.client.del(this.prefixKey(key));
     } catch (err) {
@@ -82,7 +90,9 @@ class RedisStore {
  * @returns {Promise<RedisStore|null>}
  */
 async function createRedisStore(redisUri, prefix = 'rl:api:') {
-  if (!redisUri) {return null;}
+  if (!redisUri) {
+    return null;
+  }
   const store = new RedisStore({ prefix });
   try {
     await store.connect(redisUri);

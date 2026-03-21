@@ -3,6 +3,7 @@
 ## Démarrage rapide
 
 ### Option 1: Script automatique (Recommandé)
+
 ```bash
 cd dashboard
 ./start-tunnel.sh
@@ -11,11 +12,13 @@ cd dashboard
 ### Option 2: Commandes manuelles
 
 1. Démarrer le serveur de développement:
+
 ```bash
 npm run dev:tunnel
 ```
 
 2. Dans un autre terminal, créer le tunnel:
+
 ```bash
 npx localtunnel --port 5173 --subdomain gnv-dashboard
 ```
@@ -34,10 +37,3 @@ npx localtunnel --port 5173 --subdomain gnv-dashboard
 ## Arrêt
 
 Appuyez sur `Ctrl+C` pour arrêter le tunnel et le serveur.
-
-
-
-
-
-
-

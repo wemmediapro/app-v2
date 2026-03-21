@@ -1,6 +1,25 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Globe, Plus, Edit, Trash2, Search, Flag, Ship, Calendar, Image, FileText, Film, Radio, BookOpen, UtensilsCrossed, ShoppingBag, X, Save } from 'lucide-react';
+import {
+  MapPin,
+  Globe,
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Flag,
+  Ship,
+  Calendar,
+  Image,
+  FileText,
+  Film,
+  Radio,
+  BookOpen,
+  UtensilsCrossed,
+  ShoppingBag,
+  X,
+  Save,
+} from 'lucide-react';
 import { apiService } from '../services/apiService';
 import toast from 'react-hot-toast';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
@@ -34,9 +53,9 @@ const Destinations = () => {
       movies: 0,
       restaurants: 0,
       shops: 0,
-      radio: 0
+      radio: 0,
     },
-    translations: emptyTranslations()
+    translations: emptyTranslations(),
   });
   const [newFacility, setNewFacility] = useState('');
   const [editFacility, setEditFacility] = useState('');
@@ -50,21 +69,21 @@ const Destinations = () => {
       country: 'Maroc',
       countryCode: 'MA',
       type: 'Port',
-      description: 'Port de Tanger, porte d\'entrée du Maroc vers l\'Europe',
+      description: "Port de Tanger, porte d'entrée du Maroc vers l'Europe",
       image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop',
       coordinates: { lat: 35.7595, lng: -5.8339 },
       facilities: ['Terminal passagers', 'Parking', 'Wi-Fi', 'Boutiques', 'Douanes', 'Restaurants'],
       routes: [
         { to: 'Barcelone', ship: 'GNV Excelsior', duration: '8h', frequency: 'Quotidien' },
-        { to: 'Gênes', ship: 'GNV Rhapsody', duration: '24h', frequency: 'Quotidien' }
+        { to: 'Gênes', ship: 'GNV Rhapsody', duration: '24h', frequency: 'Quotidien' },
       ],
       content: {
         articles: 15,
         movies: 10,
         restaurants: 4,
         shops: 6,
-        radio: 3
-      }
+        radio: 3,
+      },
     },
     {
       id: 2,
@@ -76,16 +95,14 @@ const Destinations = () => {
       image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop',
       coordinates: { lat: 35.1681, lng: -2.9336 },
       facilities: ['Terminal passagers', 'Parking', 'Wi-Fi', 'Boutiques', 'Douanes'],
-      routes: [
-        { to: 'Barcelone', ship: 'GNV Excelsior', duration: '24h', frequency: 'Quotidien' }
-      ],
+      routes: [{ to: 'Barcelone', ship: 'GNV Excelsior', duration: '24h', frequency: 'Quotidien' }],
       content: {
         articles: 12,
         movies: 8,
         restaurants: 3,
         shops: 5,
-        radio: 2
-      }
+        radio: 2,
+      },
     },
     // Tunisie
     {
@@ -100,15 +117,15 @@ const Destinations = () => {
       facilities: ['Terminal passagers', 'Parking', 'Wi-Fi', 'Boutiques', 'Restaurants'],
       routes: [
         { to: 'Gênes', ship: 'GNV Allegra', duration: '20h', frequency: 'Quotidien' },
-        { to: 'Barcelone', ship: 'GNV Rhapsody', duration: '22h', frequency: 'Quotidien' }
+        { to: 'Barcelone', ship: 'GNV Rhapsody', duration: '22h', frequency: 'Quotidien' },
       ],
       content: {
         articles: 18,
         movies: 12,
         restaurants: 5,
         shops: 7,
-        radio: 2
-      }
+        radio: 2,
+      },
     },
     {
       id: 4,
@@ -120,16 +137,14 @@ const Destinations = () => {
       image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop',
       coordinates: { lat: 34.7406, lng: 10.7603 },
       facilities: ['Terminal passagers', 'Parking', 'Wi-Fi', 'Boutiques'],
-      routes: [
-        { to: 'Gênes', ship: 'GNV Allegra', duration: '18h', frequency: 'Hebdomadaire' }
-      ],
+      routes: [{ to: 'Gênes', ship: 'GNV Allegra', duration: '18h', frequency: 'Hebdomadaire' }],
       content: {
         articles: 10,
         movies: 6,
         restaurants: 2,
         shops: 4,
-        radio: 1
-      }
+        radio: 1,
+      },
     },
     // Algérie
     {
@@ -138,21 +153,21 @@ const Destinations = () => {
       country: 'Algérie',
       countryCode: 'DZ',
       type: 'Port',
-      description: 'Port d\'Alger, capitale de l\'Algérie',
+      description: "Port d'Alger, capitale de l'Algérie",
       image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop',
       coordinates: { lat: 36.7538, lng: 3.0588 },
       facilities: ['Terminal passagers', 'Parking', 'Wi-Fi', 'Boutiques', 'Restaurants', 'Douanes'],
       routes: [
         { to: 'Barcelone', ship: 'GNV Excelsior', duration: '26h', frequency: 'Quotidien' },
-        { to: 'Marseille', ship: 'GNV Rhapsody', duration: '20h', frequency: 'Quotidien' }
+        { to: 'Marseille', ship: 'GNV Rhapsody', duration: '20h', frequency: 'Quotidien' },
       ],
       content: {
         articles: 20,
         movies: 15,
         restaurants: 6,
         shops: 8,
-        radio: 3
-      }
+        radio: 3,
+      },
     },
     {
       id: 6,
@@ -160,20 +175,18 @@ const Destinations = () => {
       country: 'Algérie',
       countryCode: 'DZ',
       type: 'Port',
-      description: 'Port d\'Oran, deuxième ville d\'Algérie',
+      description: "Port d'Oran, deuxième ville d'Algérie",
       image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop',
       coordinates: { lat: 35.6971, lng: -0.6337 },
       facilities: ['Terminal passagers', 'Parking', 'Wi-Fi', 'Boutiques'],
-      routes: [
-        { to: 'Barcelone', ship: 'GNV Allegra', duration: '24h', frequency: 'Hebdomadaire' }
-      ],
+      routes: [{ to: 'Barcelone', ship: 'GNV Allegra', duration: '24h', frequency: 'Hebdomadaire' }],
       content: {
         articles: 14,
         movies: 9,
         restaurants: 3,
         shops: 5,
-        radio: 2
-      }
+        radio: 2,
+      },
     },
     // Italie
     {
@@ -182,22 +195,22 @@ const Destinations = () => {
       country: 'Italie',
       countryCode: 'IT',
       type: 'Port',
-      description: 'Port de Gênes, capitale maritime de l\'Italie',
+      description: "Port de Gênes, capitale maritime de l'Italie",
       image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop',
       coordinates: { lat: 44.4056, lng: 8.9463 },
       facilities: ['Terminal passagers', 'Parking', 'Wi-Fi', 'Boutiques', 'Restaurants'],
       routes: [
         { to: 'Tanger', ship: 'GNV Rhapsody', duration: '24h', frequency: 'Quotidien' },
         { to: 'Tunis', ship: 'GNV Allegra', duration: '20h', frequency: 'Quotidien' },
-        { to: 'Barcelone', ship: 'GNV Excelsior', duration: '20h', frequency: 'Quotidien' }
+        { to: 'Barcelone', ship: 'GNV Excelsior', duration: '20h', frequency: 'Quotidien' },
       ],
       content: {
         articles: 22,
         movies: 16,
         restaurants: 7,
         shops: 9,
-        radio: 4
-      }
+        radio: 4,
+      },
     },
     {
       id: 8,
@@ -209,16 +222,14 @@ const Destinations = () => {
       image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop',
       coordinates: { lat: 38.1157, lng: 13.3613 },
       facilities: ['Terminal passagers', 'Parking', 'Wi-Fi', 'Boutiques', 'Restaurants'],
-      routes: [
-        { to: 'Tunis', ship: 'GNV Allegra', duration: '10h', frequency: 'Quotidien' }
-      ],
+      routes: [{ to: 'Tunis', ship: 'GNV Allegra', duration: '10h', frequency: 'Quotidien' }],
       content: {
         articles: 16,
         movies: 11,
         restaurants: 4,
         shops: 6,
-        radio: 2
-      }
+        radio: 2,
+      },
     },
     // Espagne
     {
@@ -236,15 +247,15 @@ const Destinations = () => {
         { to: 'Nador', ship: 'GNV Excelsior', duration: '24h', frequency: 'Quotidien' },
         { to: 'Alger', ship: 'GNV Excelsior', duration: '26h', frequency: 'Quotidien' },
         { to: 'Gênes', ship: 'GNV Rhapsody', duration: '20h', frequency: 'Quotidien' },
-        { to: 'Tunis', ship: 'GNV Rhapsody', duration: '22h', frequency: 'Quotidien' }
+        { to: 'Tunis', ship: 'GNV Rhapsody', duration: '22h', frequency: 'Quotidien' },
       ],
       content: {
         articles: 25,
         movies: 18,
         restaurants: 8,
         shops: 10,
-        radio: 4
-      }
+        radio: 4,
+      },
     },
     {
       id: 10,
@@ -252,21 +263,19 @@ const Destinations = () => {
       country: 'Espagne',
       countryCode: 'ES',
       type: 'Port',
-      description: 'Port de Valence, troisième ville d\'Espagne',
+      description: "Port de Valence, troisième ville d'Espagne",
       image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop',
       coordinates: { lat: 39.4699, lng: -0.3763 },
       facilities: ['Terminal passagers', 'Parking', 'Wi-Fi', 'Boutiques'],
-      routes: [
-        { to: 'Oran', ship: 'GNV Allegra', duration: '22h', frequency: 'Hebdomadaire' }
-      ],
+      routes: [{ to: 'Oran', ship: 'GNV Allegra', duration: '22h', frequency: 'Hebdomadaire' }],
       content: {
         articles: 12,
         movies: 8,
         restaurants: 3,
         shops: 5,
-        radio: 2
-      }
-    }
+        radio: 2,
+      },
+    },
   ];
 
   useEffect(() => {
@@ -283,7 +292,9 @@ const Destinations = () => {
       if (nextDest.length > 0 && !selectedDestination) {
         setSelectedDestination(nextDest[0]);
       } else if (nextDest.length > 0 && selectedDestination) {
-        const stillSelected = nextDest.find((d) => (d._id || d.id) === (selectedDestination._id || selectedDestination.id));
+        const stillSelected = nextDest.find(
+          (d) => (d._id || d.id) === (selectedDestination._id || selectedDestination.id)
+        );
         if (!stillSelected) setSelectedDestination(nextDest[0]);
       }
     } catch (error) {
@@ -314,7 +325,7 @@ const Destinations = () => {
     { name: 'Tunisie', code: 'TN' },
     { name: 'Algérie', code: 'DZ' },
     { name: 'Italie', code: 'IT' },
-    { name: 'Espagne', code: 'ES' }
+    { name: 'Espagne', code: 'ES' },
   ];
 
   const handleAddDestination = async () => {
@@ -338,20 +349,20 @@ const Destinations = () => {
         id: destinations.length + 1,
         coordinates: {
           lat: parseFloat(newDestination.coordinates.lat) || 0,
-          lng: parseFloat(newDestination.coordinates.lng) || 0
+          lng: parseFloat(newDestination.coordinates.lng) || 0,
         },
-        translations
+        translations,
       };
 
       // TODO: Appel API pour créer la destination
       // await apiService.post('/destinations', destination);
-      
+
       setDestinations([...destinations, destination]);
       setSelectedDestination(destination);
       setShowAddModal(false);
       toast.success('Destination ajoutée avec succès');
       if (Object.keys(translations).length > 1) toast.success(t('common.contentAddedByLanguage'));
-      
+
       // Réinitialiser le formulaire
       setNewDestination({
         name: '',
@@ -368,14 +379,14 @@ const Destinations = () => {
           movies: 0,
           restaurants: 0,
           shops: 0,
-          radio: 0
+          radio: 0,
         },
-        translations: emptyTranslations()
+        translations: emptyTranslations(),
       });
       setActiveLang('fr');
     } catch (error) {
-      console.error('Erreur lors de l\'ajout de la destination:', error);
-      toast.error('Erreur lors de l\'ajout de la destination');
+      console.error("Erreur lors de l'ajout de la destination:", error);
+      toast.error("Erreur lors de l'ajout de la destination");
     }
   };
 
@@ -383,7 +394,7 @@ const Destinations = () => {
     if (newFacility.trim()) {
       setNewDestination({
         ...newDestination,
-        facilities: [...newDestination.facilities, newFacility.trim()]
+        facilities: [...newDestination.facilities, newFacility.trim()],
       });
       setNewFacility('');
     }
@@ -392,15 +403,16 @@ const Destinations = () => {
   const removeFacility = (index) => {
     setNewDestination({
       ...newDestination,
-      facilities: newDestination.facilities.filter((_, i) => i !== index)
+      facilities: newDestination.facilities.filter((_, i) => i !== index),
     });
   };
 
   const handleEditDestination = (destination) => {
     setEditingDestination(destination);
-    const trans = destination.translations && typeof destination.translations === 'object'
-      ? { ...emptyTranslations(), ...destination.translations }
-      : emptyTranslations();
+    const trans =
+      destination.translations && typeof destination.translations === 'object'
+        ? { ...emptyTranslations(), ...destination.translations }
+        : emptyTranslations();
     setNewDestination({
       name: destination.name || '',
       country: destination.country || '',
@@ -410,7 +422,7 @@ const Destinations = () => {
       image: destination.image || '',
       coordinates: {
         lat: destination.coordinates?.lat?.toString() || '',
-        lng: destination.coordinates?.lng?.toString() || ''
+        lng: destination.coordinates?.lng?.toString() || '',
       },
       facilities: destination.facilities || [],
       routes: destination.routes || [],
@@ -419,9 +431,9 @@ const Destinations = () => {
         movies: 0,
         restaurants: 0,
         shops: 0,
-        radio: 0
+        radio: 0,
       },
-      translations: trans
+      translations: trans,
     });
     setEditActiveLang('fr');
     setShowEditModal(true);
@@ -448,27 +460,25 @@ const Destinations = () => {
         ...newDestination,
         coordinates: {
           lat: parseFloat(newDestination.coordinates.lat) || 0,
-          lng: parseFloat(newDestination.coordinates.lng) || 0
+          lng: parseFloat(newDestination.coordinates.lng) || 0,
         },
-        translations
+        translations,
       };
 
       // TODO: Appel API pour mettre à jour la destination
       // await apiService.put(`/destinations/${editingDestination.id}`, updatedDestination);
-      
-      setDestinations(destinations.map(dest => 
-        dest.id === editingDestination.id ? updatedDestination : dest
-      ));
-      
+
+      setDestinations(destinations.map((dest) => (dest.id === editingDestination.id ? updatedDestination : dest)));
+
       if (selectedDestination?.id === editingDestination.id) {
         setSelectedDestination(updatedDestination);
       }
-      
+
       setShowEditModal(false);
       setEditingDestination(null);
       toast.success('Destination modifiée avec succès');
       if (Object.keys(translations).length > 1) toast.success(t('common.contentAddedByLanguage'));
-      
+
       // Réinitialiser le formulaire
       setNewDestination({
         name: '',
@@ -485,9 +495,9 @@ const Destinations = () => {
           movies: 0,
           restaurants: 0,
           shops: 0,
-          radio: 0
+          radio: 0,
         },
-        translations: emptyTranslations()
+        translations: emptyTranslations(),
       });
       setEditActiveLang('fr');
     } catch (error) {
@@ -500,7 +510,7 @@ const Destinations = () => {
     if (editFacility.trim()) {
       setNewDestination({
         ...newDestination,
-        facilities: [...newDestination.facilities, editFacility.trim()]
+        facilities: [...newDestination.facilities, editFacility.trim()],
       });
       setEditFacility('');
     }
@@ -509,13 +519,14 @@ const Destinations = () => {
   const removeEditFacility = (index) => {
     setNewDestination({
       ...newDestination,
-      facilities: newDestination.facilities.filter((_, i) => i !== index)
+      facilities: newDestination.facilities.filter((_, i) => i !== index),
     });
   };
 
   // Filtrer les destinations
-  const filteredDestinations = destinations.filter(dest => {
-    const matchesSearch = dest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredDestinations = destinations.filter((dest) => {
+    const matchesSearch =
+      dest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       dest.country.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCountry = selectedCountry === 'all' || dest.country === selectedCountry;
     return matchesSearch && matchesCountry;
@@ -583,97 +594,88 @@ const Destinations = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Liste des destinations par pays */}
         <div className="lg:col-span-1 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Destinations ({filteredDestinations.length})
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Destinations ({filteredDestinations.length})</h2>
           <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto">
-            {selectedCountry === 'all' ? (
-              // Vue par pays
-              countries.map((country) => (
-                <div key={country} className="space-y-2">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg">
-                    <Flag size={16} className="text-gray-600" />
-                    <h3 className="font-semibold text-gray-900">{country}</h3>
-                    <span className="ml-auto text-sm text-gray-500">
-                      {destinationsByCountry[country].length}
-                    </span>
-                  </div>
-                  <div className="space-y-2 pl-4">
-                    {destinationsByCountry[country]
-                      .filter(dest => 
-                        dest.name.toLowerCase().includes(searchQuery.toLowerCase())
-                      )
-                      .map((dest) => (
-                        <motion.div
-                          key={dest.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`p-3 rounded-xl border-2 transition-all ${
-                            selectedDestination?.id === dest.id
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 bg-white hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            <div 
-                              className="flex-1 min-w-0 cursor-pointer"
-                              onClick={() => setSelectedDestination(dest)}
-                            >
-                              <MapPin size={18} className="text-blue-600 flex-shrink-0 mt-0.5 inline-block mr-2" />
-                              <h4 className="font-semibold text-gray-900 text-sm inline">{dest.name}</h4>
-                              <p className="text-xs text-gray-600 mt-0.5">{dest.type}</p>
+            {selectedCountry === 'all'
+              ? // Vue par pays
+                countries.map((country) => (
+                  <div key={country} className="space-y-2">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg">
+                      <Flag size={16} className="text-gray-600" />
+                      <h3 className="font-semibold text-gray-900">{country}</h3>
+                      <span className="ml-auto text-sm text-gray-500">{destinationsByCountry[country].length}</span>
+                    </div>
+                    <div className="space-y-2 pl-4">
+                      {destinationsByCountry[country]
+                        .filter((dest) => dest.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map((dest) => (
+                          <motion.div
+                            key={dest.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`p-3 rounded-xl border-2 transition-all ${
+                              selectedDestination?.id === dest.id
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 bg-white hover:border-gray-300'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <div
+                                className="flex-1 min-w-0 cursor-pointer"
+                                onClick={() => setSelectedDestination(dest)}
+                              >
+                                <MapPin size={18} className="text-blue-600 flex-shrink-0 mt-0.5 inline-block mr-2" />
+                                <h4 className="font-semibold text-gray-900 text-sm inline">{dest.name}</h4>
+                                <p className="text-xs text-gray-600 mt-0.5">{dest.type}</p>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditDestination(dest);
+                                }}
+                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Modifier"
+                              >
+                                <Edit size={16} />
+                              </button>
                             </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditDestination(dest);
-                              }}
-                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Modifier"
-                            >
-                              <Edit size={16} />
-                            </button>
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        ))}
+                    </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              // Vue filtrée
-              filteredDestinations.map((dest) => (
-                <motion.div
-                  key={dest.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                          className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                            selectedDestination?.id === dest.id
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 bg-white hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            <div 
-                              className="flex-1 min-w-0"
-                              onClick={() => setSelectedDestination(dest)}
-                            >
-                              <h4 className="font-semibold text-gray-900 text-sm">{dest.name}</h4>
-                              <p className="text-xs text-gray-600 mt-0.5">{dest.country} • {dest.type}</p>
-                            </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditDestination(dest);
-                              }}
-                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Modifier"
-                            >
-                              <Edit size={16} />
-                            </button>
-                          </div>
-                        </motion.div>
-              ))
-            )}
+                ))
+              : // Vue filtrée
+                filteredDestinations.map((dest) => (
+                  <motion.div
+                    key={dest.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      selectedDestination?.id === dest.id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0" onClick={() => setSelectedDestination(dest)}>
+                        <h4 className="font-semibold text-gray-900 text-sm">{dest.name}</h4>
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          {dest.country} • {dest.type}
+                        </p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditDestination(dest);
+                        }}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Modifier"
+                      >
+                        <Edit size={16} />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
           </div>
         </div>
 
@@ -706,9 +708,9 @@ const Destinations = () => {
               <div className="border-b border-gray-200">
                 <div className="flex space-x-1 px-4">
                   {[
-                    { id: 'overview', label: 'Vue d\'ensemble', icon: MapPin },
+                    { id: 'overview', label: "Vue d'ensemble", icon: MapPin },
                     { id: 'content', label: 'Contenu', icon: FileText },
-                    { id: 'routes', label: 'Lignes', icon: Ship }
+                    { id: 'routes', label: 'Lignes', icon: Ship },
                   ].map((tab) => {
                     const Icon = tab.icon;
                     return (
@@ -770,10 +772,7 @@ const Destinations = () => {
                       <h3 className="font-semibold text-gray-900 mb-3">Équipements du port</h3>
                       <div className="flex flex-wrap gap-2">
                         {selectedDestination.facilities.map((facility, idx) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
-                          >
+                          <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
                             {facility}
                           </span>
                         ))}
@@ -808,11 +807,41 @@ const Destinations = () => {
                     {/* Content by type */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { type: 'Articles', icon: BookOpen, count: selectedDestination.content.articles, bgColor: 'bg-blue-100', textColor: 'text-blue-600' },
-                        { type: 'Films & Séries', icon: Film, count: selectedDestination.content.movies, bgColor: 'bg-purple-100', textColor: 'text-purple-600' },
-                        { type: 'Restaurants', icon: UtensilsCrossed, count: selectedDestination.content.restaurants, bgColor: 'bg-orange-100', textColor: 'text-orange-600' },
-                        { type: 'Boutiques', icon: ShoppingBag, count: selectedDestination.content.shops, bgColor: 'bg-green-100', textColor: 'text-green-600' },
-                        { type: 'Radio', icon: Radio, count: selectedDestination.content.radio, bgColor: 'bg-red-100', textColor: 'text-red-600' }
+                        {
+                          type: 'Articles',
+                          icon: BookOpen,
+                          count: selectedDestination.content.articles,
+                          bgColor: 'bg-blue-100',
+                          textColor: 'text-blue-600',
+                        },
+                        {
+                          type: 'Films & Séries',
+                          icon: Film,
+                          count: selectedDestination.content.movies,
+                          bgColor: 'bg-purple-100',
+                          textColor: 'text-purple-600',
+                        },
+                        {
+                          type: 'Restaurants',
+                          icon: UtensilsCrossed,
+                          count: selectedDestination.content.restaurants,
+                          bgColor: 'bg-orange-100',
+                          textColor: 'text-orange-600',
+                        },
+                        {
+                          type: 'Boutiques',
+                          icon: ShoppingBag,
+                          count: selectedDestination.content.shops,
+                          bgColor: 'bg-green-100',
+                          textColor: 'text-green-600',
+                        },
+                        {
+                          type: 'Radio',
+                          icon: Radio,
+                          count: selectedDestination.content.radio,
+                          bgColor: 'bg-red-100',
+                          textColor: 'text-red-600',
+                        },
                       ].map((item) => {
                         const Icon = item.icon;
                         return (
@@ -824,7 +853,9 @@ const Destinations = () => {
                           >
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-lg ${item.bgColor} flex items-center justify-center`}>
+                                <div
+                                  className={`w-10 h-10 rounded-lg ${item.bgColor} flex items-center justify-center`}
+                                >
                                   <Icon size={20} className={item.textColor} />
                                 </div>
                                 <div>
@@ -909,9 +940,7 @@ const Destinations = () => {
               {/* Informations de base */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom de la destination *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nom de la destination *</label>
                   <input
                     type="text"
                     value={newDestination.name}
@@ -921,9 +950,7 @@ const Destinations = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Type *</label>
                   <select
                     value={newDestination.type}
                     onChange={(e) => setNewDestination({ ...newDestination, type: e.target.value })}
@@ -938,17 +965,15 @@ const Destinations = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pays *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Pays *</label>
                   <select
                     value={newDestination.country}
                     onChange={(e) => {
-                      const selected = availableCountries.find(c => c.name === e.target.value);
+                      const selected = availableCountries.find((c) => c.name === e.target.value);
                       setNewDestination({
                         ...newDestination,
                         country: e.target.value,
-                        countryCode: selected?.code || ''
+                        countryCode: selected?.code || '',
                       });
                     }}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -962,9 +987,7 @@ const Destinations = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Code pays
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Code pays</label>
                   <input
                     type="text"
                     value={newDestination.countryCode}
@@ -977,9 +1000,7 @@ const Destinations = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
                   value={newDestination.description}
                   onChange={(e) => setNewDestination({ ...newDestination, description: e.target.value })}
@@ -1011,32 +1032,48 @@ const Destinations = () => {
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1">Nom ({LANG_LIST.find(l => l.code === activeLang)?.label})</label>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        Nom ({LANG_LIST.find((l) => l.code === activeLang)?.label})
+                      </label>
                       <input
                         type="text"
                         value={newDestination.translations?.[activeLang]?.name ?? ''}
-                        onChange={(e) => setNewDestination({
-                          ...newDestination,
-                          translations: {
-                            ...newDestination.translations,
-                            [activeLang]: { ...newDestination.translations?.[activeLang], name: e.target.value, description: newDestination.translations?.[activeLang]?.description ?? '' }
-                          }
-                        })}
+                        onChange={(e) =>
+                          setNewDestination({
+                            ...newDestination,
+                            translations: {
+                              ...newDestination.translations,
+                              [activeLang]: {
+                                ...newDestination.translations?.[activeLang],
+                                name: e.target.value,
+                                description: newDestination.translations?.[activeLang]?.description ?? '',
+                              },
+                            },
+                          })
+                        }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Nom dans cette langue"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1">Description ({LANG_LIST.find(l => l.code === activeLang)?.label})</label>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        Description ({LANG_LIST.find((l) => l.code === activeLang)?.label})
+                      </label>
                       <textarea
                         value={newDestination.translations?.[activeLang]?.description ?? ''}
-                        onChange={(e) => setNewDestination({
-                          ...newDestination,
-                          translations: {
-                            ...newDestination.translations,
-                            [activeLang]: { ...newDestination.translations?.[activeLang], name: newDestination.translations?.[activeLang]?.name ?? '', description: e.target.value }
-                          }
-                        })}
+                        onChange={(e) =>
+                          setNewDestination({
+                            ...newDestination,
+                            translations: {
+                              ...newDestination.translations,
+                              [activeLang]: {
+                                ...newDestination.translations?.[activeLang],
+                                name: newDestination.translations?.[activeLang]?.name ?? '',
+                                description: e.target.value,
+                              },
+                            },
+                          })
+                        }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         rows={2}
                         placeholder="Description dans cette langue"
@@ -1047,9 +1084,7 @@ const Destinations = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  URL de l'image
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">URL de l'image</label>
                 <input
                   type="url"
                   value={newDestination.image}
@@ -1062,33 +1097,33 @@ const Destinations = () => {
               {/* Coordonnées */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Latitude
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
                   <input
                     type="number"
                     step="any"
                     value={newDestination.coordinates.lat}
-                    onChange={(e) => setNewDestination({
-                      ...newDestination,
-                      coordinates: { ...newDestination.coordinates, lat: e.target.value }
-                    })}
+                    onChange={(e) =>
+                      setNewDestination({
+                        ...newDestination,
+                        coordinates: { ...newDestination.coordinates, lat: e.target.value },
+                      })
+                    }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Ex: 43.4036"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Longitude
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
                   <input
                     type="number"
                     step="any"
                     value={newDestination.coordinates.lng}
-                    onChange={(e) => setNewDestination({
-                      ...newDestination,
-                      coordinates: { ...newDestination.coordinates, lng: e.target.value }
-                    })}
+                    onChange={(e) =>
+                      setNewDestination({
+                        ...newDestination,
+                        coordinates: { ...newDestination.coordinates, lng: e.target.value },
+                      })
+                    }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Ex: 3.6964"
                   />
@@ -1097,9 +1132,7 @@ const Destinations = () => {
 
               {/* Équipements */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Équipements
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Équipements</label>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
@@ -1123,10 +1156,7 @@ const Destinations = () => {
                       className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
                     >
                       {facility}
-                      <button
-                        onClick={() => removeFacility(index)}
-                        className="hover:text-red-600"
-                      >
+                      <button onClick={() => removeFacility(index)} className="hover:text-red-600">
                         <X size={14} />
                       </button>
                     </span>
@@ -1184,9 +1214,7 @@ const Destinations = () => {
               {/* Informations de base */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom de la destination *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nom de la destination *</label>
                   <input
                     type="text"
                     value={newDestination.name}
@@ -1196,9 +1224,7 @@ const Destinations = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Type *</label>
                   <select
                     value={newDestination.type}
                     onChange={(e) => setNewDestination({ ...newDestination, type: e.target.value })}
@@ -1213,17 +1239,15 @@ const Destinations = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pays *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Pays *</label>
                   <select
                     value={newDestination.country}
                     onChange={(e) => {
-                      const selected = availableCountries.find(c => c.name === e.target.value);
+                      const selected = availableCountries.find((c) => c.name === e.target.value);
                       setNewDestination({
                         ...newDestination,
                         country: e.target.value,
-                        countryCode: selected?.code || ''
+                        countryCode: selected?.code || '',
                       });
                     }}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1237,9 +1261,7 @@ const Destinations = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Code pays
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Code pays</label>
                   <input
                     type="text"
                     value={newDestination.countryCode}
@@ -1252,9 +1274,7 @@ const Destinations = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
                   value={newDestination.description}
                   onChange={(e) => setNewDestination({ ...newDestination, description: e.target.value })}
@@ -1286,32 +1306,48 @@ const Destinations = () => {
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1">Nom ({LANG_LIST.find(l => l.code === editActiveLang)?.label})</label>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        Nom ({LANG_LIST.find((l) => l.code === editActiveLang)?.label})
+                      </label>
                       <input
                         type="text"
                         value={newDestination.translations?.[editActiveLang]?.name ?? ''}
-                        onChange={(e) => setNewDestination({
-                          ...newDestination,
-                          translations: {
-                            ...newDestination.translations,
-                            [editActiveLang]: { ...newDestination.translations?.[editActiveLang], name: e.target.value, description: newDestination.translations?.[editActiveLang]?.description ?? '' }
-                          }
-                        })}
+                        onChange={(e) =>
+                          setNewDestination({
+                            ...newDestination,
+                            translations: {
+                              ...newDestination.translations,
+                              [editActiveLang]: {
+                                ...newDestination.translations?.[editActiveLang],
+                                name: e.target.value,
+                                description: newDestination.translations?.[editActiveLang]?.description ?? '',
+                              },
+                            },
+                          })
+                        }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Nom dans cette langue"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1">Description ({LANG_LIST.find(l => l.code === editActiveLang)?.label})</label>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        Description ({LANG_LIST.find((l) => l.code === editActiveLang)?.label})
+                      </label>
                       <textarea
                         value={newDestination.translations?.[editActiveLang]?.description ?? ''}
-                        onChange={(e) => setNewDestination({
-                          ...newDestination,
-                          translations: {
-                            ...newDestination.translations,
-                            [editActiveLang]: { ...newDestination.translations?.[editActiveLang], name: newDestination.translations?.[editActiveLang]?.name ?? '', description: e.target.value }
-                          }
-                        })}
+                        onChange={(e) =>
+                          setNewDestination({
+                            ...newDestination,
+                            translations: {
+                              ...newDestination.translations,
+                              [editActiveLang]: {
+                                ...newDestination.translations?.[editActiveLang],
+                                name: newDestination.translations?.[editActiveLang]?.name ?? '',
+                                description: e.target.value,
+                              },
+                            },
+                          })
+                        }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         rows={2}
                         placeholder="Description dans cette langue"
@@ -1322,9 +1358,7 @@ const Destinations = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  URL de l'image
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">URL de l'image</label>
                 <input
                   type="url"
                   value={newDestination.image}
@@ -1337,33 +1371,33 @@ const Destinations = () => {
               {/* Coordonnées */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Latitude
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
                   <input
                     type="number"
                     step="any"
                     value={newDestination.coordinates.lat}
-                    onChange={(e) => setNewDestination({
-                      ...newDestination,
-                      coordinates: { ...newDestination.coordinates, lat: e.target.value }
-                    })}
+                    onChange={(e) =>
+                      setNewDestination({
+                        ...newDestination,
+                        coordinates: { ...newDestination.coordinates, lat: e.target.value },
+                      })
+                    }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Ex: 35.7595"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Longitude
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
                   <input
                     type="number"
                     step="any"
                     value={newDestination.coordinates.lng}
-                    onChange={(e) => setNewDestination({
-                      ...newDestination,
-                      coordinates: { ...newDestination.coordinates, lng: e.target.value }
-                    })}
+                    onChange={(e) =>
+                      setNewDestination({
+                        ...newDestination,
+                        coordinates: { ...newDestination.coordinates, lng: e.target.value },
+                      })
+                    }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Ex: -5.8339"
                   />
@@ -1372,9 +1406,7 @@ const Destinations = () => {
 
               {/* Équipements */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Équipements
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Équipements</label>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
@@ -1398,10 +1430,7 @@ const Destinations = () => {
                       className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
                     >
                       {facility}
-                      <button
-                        onClick={() => removeEditFacility(index)}
-                        className="hover:text-red-600"
-                      >
+                      <button onClick={() => removeEditFacility(index)} className="hover:text-red-600">
                         <X size={14} />
                       </button>
                     </span>
@@ -1439,4 +1468,3 @@ const Destinations = () => {
 };
 
 export default Destinations;
-

@@ -56,7 +56,7 @@ function scheduleTimeoutFallback() {
     window.dispatchEvent(
       new CustomEvent('gnv-offline-sync-fallback', {
         detail: { reason: 'no_background_sync_api' },
-      }),
+      })
     );
   }, 400);
 }

@@ -1,48 +1,60 @@
 /**
  * Point d’entrée des routes API : monte toutes les routes sur l’app Express.
+ * Versionnement : préfixe canonique `/api/v1` ; `/api` reste un alias (MVP / rétrocompatibilité).
  * @param {import('express').Application} app
- * @param {{ dbManager: { isConnected: () => boolean }, connectionCounters?: { getTotalCount: () => number } }} deps
+ * @param {{ dbManager: { isConnected: () => boolean }, connectionCounters?: object, apiBases?: string[] }} deps
  */
 function mountRoutes(app, deps = {}) {
-  const { dbManager, connectionCounters } = deps;
+  const { dbManager, connectionCounters, apiBases } = deps;
+  const { API_BASE_PATHS } = require('../constants/apiVersion');
+  const bases = Array.isArray(apiBases) && apiBases.length ? apiBases : API_BASE_PATHS;
 
-  // Bibliothèque média (deux préfixes pour compatibilité)
+  for (const base of bases) {
+    mountRoutesAtBase(app, base, { dbManager, connectionCounters });
+  }
+}
+
+/**
+ * @param {import('express').Application} app
+ * @param {string} base ex. /api/v1 ou /api
+ */
+function mountRoutesAtBase(app, base, { dbManager, connectionCounters }) {
   const mediaLibraryRouter = require('./media-library');
-  app.use('/api/media-library', mediaLibraryRouter);
-  app.use('/api/upload/media', mediaLibraryRouter);
+  app.use(`${base}/media-library`, mediaLibraryRouter);
+  app.use(`${base}/upload/media`, mediaLibraryRouter);
 
-  // Routes métier
-  app.use('/api/auth', require('./auth'));
-  app.use('/api/users', require('./users'));
-  app.use('/api/restaurants', require('./restaurants'));
-  app.use('/api/movies', require('./movies'));
-  app.use('/api/radio', require('./radio'));
-  app.use('/api/magazine', require('./magazine'));
-  app.use('/api/messages', require('./messages'));
-  app.use('/api/sync', require('./sync'));
-  app.use('/api/shop', require('./shop'));
-  app.use('/api/feedback', require('./feedback'));
-  app.use('/api/admin', require('./admin'));
-  app.use('/api/analytics', require('./analytics'));
-  app.use('/api/gnv', require('./gnv'));
-  app.use('/api/upload', require('./upload'));
-  app.use('/api/stream', require('./stream'));
-  app.use('/api/webtv', require('./webtv'));
-  app.use('/api/enfant', require('./enfant'));
-  app.use('/api/shipmap', require('./shipmap'));
-  app.use('/api/banners', require('./banners'));
-  app.use('/api/ads', require('./ads'));
-  app.use('/api/trailers', require('./trailers'));
-  app.use('/api/notifications', require('./notifications'));
-  app.use('/api/export', require('./export'));
+  app.use(`${base}/metrics`, require('./metrics'));
+  app.use(`${base}/auth`, require('./auth'));
+  app.use(`${base}/users`, require('./users'));
+  app.use(`${base}/restaurants`, require('./restaurants'));
+  app.use(`${base}/movies`, require('./movies'));
+  app.use(`${base}/radio`, require('./radio'));
+  app.use(`${base}/magazine`, require('./magazine'));
+  app.use(`${base}/messages`, require('./messages'));
+  app.use(`${base}/sync`, require('./sync'));
+  app.use(`${base}/shop`, require('./shop'));
+  app.use(`${base}/feedback`, require('./feedback'));
+  app.use(`${base}/admin`, require('./admin'));
+  app.use(`${base}/analytics`, require('./analytics'));
+  app.use(`${base}/gnv`, require('./gnv'));
+  app.use(`${base}/upload`, require('./upload'));
+  app.use(`${base}/stream`, require('./stream'));
+  app.use(`${base}/webtv`, require('./webtv'));
+  app.use(`${base}/enfant`, require('./enfant'));
+  app.use(`${base}/shipmap`, require('./shipmap'));
+  app.use(`${base}/banners`, require('./banners'));
+  app.use(`${base}/ads`, require('./ads'));
+  app.use(`${base}/trailers`, require('./trailers'));
+  app.use(`${base}/notifications`, require('./notifications'));
+  app.use(`${base}/export`, require('./export'));
 
-  // Health check enrichi (connexions Socket, mémoire) — monitoring / alerte (audit CTO)
   const configModule = require('../config');
   /**
    * @swagger
-   * /api/health:
+   * /api/v1/health:
    *   get:
-   *     summary: Vérification de l'état du serveur
+   *     summary: Vérification de l'état du serveur (liveness)
+   *     description: Alias historique sans version — GET /api/health
    *     tags: [Health]
    *     responses:
    *       200:
@@ -52,7 +64,7 @@ function mountRoutes(app, deps = {}) {
    *             schema:
    *               $ref: '#/components/schemas/Health'
    */
-  app.get('/api/health', async (req, res) => {
+  app.get(`${base}/health`, async (req, res) => {
     const dbConnected = dbManager && typeof dbManager.isConnected === 'function' && dbManager.isConnected();
     let connections;
     if (connectionCounters && typeof connectionCounters.getTotalCountAsync === 'function') {
@@ -68,14 +80,22 @@ function mountRoutes(app, deps = {}) {
       status: 'OK',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      mongodb: dbManager && typeof dbManager.isConnected === 'function' ? (dbConnected ? 'connected' : 'disconnected') : 'unknown',
+      apiVersion: 'v1',
+      mongodb:
+        dbManager && typeof dbManager.isConnected === 'function'
+          ? dbConnected
+            ? 'connected'
+            : 'disconnected'
+          : 'unknown',
       offlineMode: !dbConnected,
       connections,
       memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
     };
     if (dbConnected && dbManager.getStats) {
       const stats = dbManager.getStats();
-      if (stats.name) {payload.mongodbDatabase = stats.name;}
+      if (stats.name) {
+        payload.mongodbDatabase = stats.name;
+      }
     }
     if (configModule.env !== 'production') {
       payload.environment = configModule.env;
@@ -86,15 +106,12 @@ function mountRoutes(app, deps = {}) {
     res.json(payload);
   });
 
-  /**
-   * Readiness Kubernetes / load balancer : 503 si MongoDB indisponible.
-   * Liveness : utiliser GET /api/health (200 tant que le process répond).
-   */
-  app.get('/api/health/ready', (req, res) => {
+  app.get(`${base}/health/ready`, (req, res) => {
     const dbConnected = dbManager && typeof dbManager.isConnected === 'function' && dbManager.isConnected();
     const body = {
       ready: dbConnected,
       mongodb: dbConnected ? 'connected' : 'disconnected',
+      apiVersion: 'v1',
       timestamp: new Date().toISOString(),
     };
     if (dbConnected) {
@@ -105,27 +122,17 @@ function mountRoutes(app, deps = {}) {
 
   /**
    * @swagger
-   * /api/time:
+   * /api/v1/time:
    *   get:
    *     summary: Heure serveur pour synchronisation
    *     tags: [Health]
    *     responses:
    *       200:
    *         description: Heure serveur
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 serverTime:
-   *                   type: string
-   *                   format: date-time
-   *                 unix:
-   *                   type: number
    */
-  app.get('/api/time', (req, res) => {
+  app.get(`${base}/time`, (req, res) => {
     const now = new Date();
-    res.json({ serverTime: now.toISOString(), unix: now.getTime() });
+    res.json({ serverTime: now.toISOString(), unix: now.getTime(), apiVersion: 'v1' });
   });
 }
 

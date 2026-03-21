@@ -63,6 +63,8 @@ const redisConnectionManager = require('./src/lib/redis-connection-manager');
 const memoryMonitor = require('./src/lib/memory-monitor');
 const https = require('https');
 const http = require('http');
+const { getApiPathSuffix } = require('./src/lib/apiPath');
+const { API_BASE_PATHS } = require('./src/constants/apiVersion');
 
 const app = express();
 
@@ -85,12 +87,13 @@ const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
       const allowed = config.cors.origins;
-      const isTunnel = config.cors.allowTunnelOrigins && origin && (
-        /\.trycloudflare\.com$/i.test(origin) ||
-        /\.cloudflare\.com$/i.test(origin) ||
-        /\.ngrok/i.test(origin) ||
-        /\.loca\.lt$/i.test(origin)
-      );
+      const isTunnel =
+        config.cors.allowTunnelOrigins &&
+        origin &&
+        (/\.trycloudflare\.com$/i.test(origin) ||
+          /\.cloudflare\.com$/i.test(origin) ||
+          /\.ngrok/i.test(origin) ||
+          /\.loca\.lt$/i.test(origin));
       if (!origin || allowed.includes(origin) || isTunnel) {
         callback(null, true);
       } else {
@@ -135,37 +138,40 @@ app.use((_req, res, next) => {
   res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
   next();
 });
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce || ''}'`],
-      imgSrc: ["'self'", 'data:', 'https:'],
-      // React utilise style={{ … }} (attributs style inline) — sans 'unsafe-inline', l’UI est bloquée par la CSP.
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      mediaSrc: ["'self'", 'blob:'],
-      connectSrc: ["'self'", 'ws:', 'wss:'],
-      fontSrc: ["'self'", 'https:', 'data:'],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce || ''}'`],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        // React utilise style={{ … }} (attributs style inline) — sans 'unsafe-inline', l’UI est bloquée par la CSP.
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        mediaSrc: ["'self'", 'blob:'],
+        connectSrc: ["'self'", 'ws:', 'wss:'],
+        fontSrc: ["'self'", 'https:', 'data:'],
+      },
     },
-  },
-  hsts: {
-    maxAge: 31536000, // 1 year
-    includeSubDomains: true,
-  },
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
-}));
+    hsts: {
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+    },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 app.use(cookieParser());
 app.use('/api', csrfCookie);
 app.use('/api', csrfProtection);
 const corsOptions = {
   origin: (origin, callback) => {
     const allowed = config.cors.origins;
-    const isTunnel = config.cors.allowTunnelOrigins && origin && (
-      /\.trycloudflare\.com$/i.test(origin) ||
-      /\.cloudflare\.com$/i.test(origin) ||
-      /\.ngrok/i.test(origin) ||
-      /\.loca\.lt$/i.test(origin)
-    );
+    const isTunnel =
+      config.cors.allowTunnelOrigins &&
+      origin &&
+      (/\.trycloudflare\.com$/i.test(origin) ||
+        /\.cloudflare\.com$/i.test(origin) ||
+        /\.ngrok/i.test(origin) ||
+        /\.loca\.lt$/i.test(origin));
     if (!origin || allowed.includes(origin) || isTunnel) {
       callback(null, true);
     } else {
@@ -176,9 +182,19 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 // En prod : format court + pas de log health/uploads (réduit I/O et bruit — audit CTO)
-app.use(morgan(config.env === 'production' ? 'short' : 'combined', {
-  skip: (req) => req.path === '/api/health' || req.path?.startsWith('/uploads/'),
-}));
+app.use(
+  morgan(config.env === 'production' ? 'short' : 'combined', {
+    skip: (req) => {
+      const sub = getApiPathSuffix(req.path || '');
+      return (
+        sub === '/health' ||
+        sub.startsWith('/health/') ||
+        sub === '/metrics/web-vitals' ||
+        req.path?.startsWith('/uploads/')
+      );
+    },
+  })
+);
 // Identifiant de requête pour le log d'erreurs et les réponses (requestId)
 app.use((req, res, next) => {
   req.id = req.get('x-request-id') || crypto.randomBytes(8).toString('hex');
@@ -200,13 +216,19 @@ app.use('/api', (req, res, next) => {
 // Les requêtes avec Authorization (dashboard admin) ne sont pas mises en cache pour que les ajouts/modifs/suppressions s'affichent immédiatement
 // GET /notifications (app passagers) : pas de cache pour que les notifications envoyées depuis le dashboard s'affichent tout de suite
 app.use('/api', (req, res, next) => {
-  if (req.method !== 'GET') {return next();}
-  if (req.path === '/notifications' || req.path === '/notifications/') {
+  if (req.method !== 'GET') {
+    return next();
+  }
+  const sub = getApiPathSuffix(req.path || '');
+  if (sub === '/notifications' || sub === '/notifications/') {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     return next();
   }
-  const isListPath = /^\/(movies|magazine|radio|banners|shop|restaurants|webtv|enfant|shipmap|notifications)(\/|$)/.test(req.path);
-  if (!isListPath) {return next();}
+  const isListPath =
+    /^\/(movies|magazine|radio|banners|shop|restaurants|webtv|enfant|shipmap|notifications)(\/|$)/.test(sub);
+  if (!isListPath) {
+    return next();
+  }
   if (req.get('Authorization')) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     return next();
@@ -220,11 +242,13 @@ app.use('/api', (req, res, next) => {
 const uploadLimiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
   max: parseInt(process.env.RATE_LIMIT_UPLOAD_MAX, 10) || 100,
-  message: { success: false, message: 'Trop d\'uploads. Réessayez plus tard.' },
+  message: { success: false, message: "Trop d'uploads. Réessayez plus tard." },
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use('/api/upload', uploadLimiter);
+for (const px of API_BASE_PATHS) {
+  app.use(`${px}/upload`, uploadLimiter);
+}
 
 // Rate limit dédié au streaming (vidéo/audio) : limite par IP pour supporter beaucoup de connexions sans abus
 const streamLimiter = rateLimit({
@@ -234,7 +258,9 @@ const streamLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use('/api/stream', streamLimiter);
+for (const px of API_BASE_PATHS) {
+  app.use(`${px}/stream`, streamLimiter);
+}
 
 // Rate limit bibliothèque média (admin)
 const mediaLibraryLimiter = rateLimit({
@@ -244,7 +270,9 @@ const mediaLibraryLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use('/api/media-library', mediaLibraryLimiter);
+for (const px of API_BASE_PATHS) {
+  app.use(`${px}/media-library`, mediaLibraryLimiter);
+}
 
 const feedbackLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -253,13 +281,39 @@ const feedbackLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use('/api/feedback', feedbackLimiter);
+for (const px of API_BASE_PATHS) {
+  app.use(`${px}/feedback`, feedbackLimiter);
+}
 
 // Fichiers statiques et streaming
 app.use('/uploads', videoStreamMiddleware);
 app.use('/uploads', audioStreamMiddleware);
-app.use('/uploads', express.static(config.paths.uploads));
-app.use('/public', express.static(config.paths.public));
+app.use(
+  '/uploads',
+  express.static(config.paths.uploads, {
+    etag: true,
+    lastModified: true,
+    setHeaders(res, filePath) {
+      if (/\.(webp|avif|jpe?g|png|gif|svg|ico|woff2)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+      } else if (/\.(mp4|webm|mp3|wav|m4a|m3u8|ts)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
+      }
+    },
+  })
+);
+app.use(
+  '/public',
+  express.static(config.paths.public, {
+    etag: true,
+    lastModified: true,
+    setHeaders(res, filePath) {
+      if (/\.(webp|avif|jpe?g|png|gif|svg|ico|woff2|js|css)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+      }
+    },
+  })
+);
 
 // Base de données (config centralisée)
 const dbManager = require('./src/lib/database');
@@ -267,7 +321,9 @@ const cacheManager = require('./src/lib/cache-manager');
 
 /** En production : vérifier que Redis est accessible (obligatoire pour rate limit, Socket.io, cache). */
 async function ensureRedisInProduction() {
-  if (process.env.NODE_ENV !== 'production') {return;}
+  if (process.env.NODE_ENV !== 'production') {
+    return;
+  }
   const uri = config.redis?.uri;
   if (!uri || typeof uri !== 'string' || !uri.startsWith('redis')) {
     console.error('CRITICAL: En production REDIS_URI (ou REDIS_URL) doit être défini.');
@@ -281,7 +337,10 @@ async function ensureRedisInProduction() {
     await client.quit();
     console.log('✅ Redis requis en production : vérification OK.');
   } catch (err) {
-    console.error('CRITICAL: Redis inaccessible en production. Vérifiez REDIS_URI et que Redis est démarré:', err.message);
+    console.error(
+      'CRITICAL: Redis inaccessible en production. Vérifiez REDIS_URI et que Redis est démarré:',
+      err.message
+    );
     process.exit(1);
   }
 }
@@ -290,7 +349,9 @@ async function ensureRedisInProduction() {
 async function setupAfterDb() {
   await ensureRedisInProduction();
   const redisStore = await createRedisStore(config.redis && config.redis.uri, 'rl:api:');
-  if (redisStore) {redisStore.init({ windowMs: config.rateLimit.windowMs });}
+  if (redisStore) {
+    redisStore.init({ windowMs: config.rateLimit.windowMs });
+  }
   if (config.redis && config.redis.uri) {
     const cacheConnected = await cacheManager.connect(config.redis.uri);
     if (cacheConnected) {
@@ -305,21 +366,45 @@ async function setupAfterDb() {
       }
     }
   }
+  /** Loopback / local : SPA + React Strict Mode + polls = beaucoup de GET d’un coup. */
+  const isLocalLoopbackIp = (req) => {
+    const raw = req.ip || req.socket?.remoteAddress || '';
+    const ip = String(raw).replace(/^::ffff:/i, '');
+    return ip === '127.0.0.1' || ip === '::1' || ip === 'localhost';
+  };
+
   const skipApiLimit = (req) => {
-    const p = (req.path || '').toLowerCase();
-    if (p === '/health' || p === '/health/ready' || p === '/time') {return true;}
-    if (p.startsWith('/stream') || p.startsWith('/upload') || p.startsWith('/media-library')) {return true;}
+    const p = getApiPathSuffix(req.path || '').toLowerCase();
+    if (p === '/health' || p === '/health/ready' || p === '/time') {
+      return true;
+    }
+    if (p.startsWith('/stream') || p.startsWith('/upload') || p.startsWith('/media-library')) {
+      return true;
+    }
+    // Dev : pas de rate limit sur loopback (évite 429 au premier chargement + compteurs Redis résiduels)
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      process.env.RATE_LIMIT_LOCALHOST !== '0' &&
+      isLocalLoopbackIp(req)
+    ) {
+      return true;
+    }
     try {
       const token = req.get('Authorization')?.replace('Bearer ', '') || req.cookies?.authToken;
       if (token && config.jwt?.secret) {
         const decoded = jwt.verify(token, config.jwt.secret);
-        if (decoded.role === 'admin') {return true;}
+        if (decoded.role === 'admin') {
+          return true;
+        }
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) {
+      /* ignore */
+    }
     return false;
   };
   // [SEC-6] RATE_LIMIT_LOAD_TEST ignoré en production (réservé aux tests de charge en dev)
-  const apiLimitMax = process.env.NODE_ENV !== 'production' && process.env.RATE_LIMIT_LOAD_TEST === '1' ? 1000000 : config.rateLimit.max;
+  const apiLimitMax =
+    process.env.NODE_ENV !== 'production' && process.env.RATE_LIMIT_LOAD_TEST === '1' ? 1000000 : config.rateLimit.max;
   const apiLimiter = rateLimit({
     windowMs: config.rateLimit.windowMs,
     max: apiLimitMax,
@@ -333,7 +418,9 @@ async function setupAfterDb() {
   if (redisStore) {
     console.log('✅ Rate limit API : store Redis actif');
   } else if (process.env.NODE_ENV === 'production') {
-    console.warn('⚠️ Rate limit API : store mémoire (REDIS_URI non configuré). En multi-process la limite n\'est pas partagée.');
+    console.warn(
+      "⚠️ Rate limit API : store mémoire (REDIS_URI non configuré). En multi-process la limite n'est pas partagée."
+    );
   }
   mountRoutes(app, { dbManager, connectionCounters });
 
@@ -341,10 +428,14 @@ async function setupAfterDb() {
   if (process.env.NODE_ENV !== 'production' || process.env.SWAGGER_ENABLED === 'true') {
     const swaggerUi = require('swagger-ui-express');
     const swaggerSpec = require('./src/lib/swagger');
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-      customCss: '.swagger-ui .topbar { display: none }',
-      customSiteTitle: 'GNV OnBoard API Documentation',
-    }));
+    app.use(
+      '/api-docs',
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerSpec, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'GNV OnBoard API Documentation',
+      })
+    );
     app.get('/api-docs.json', (req, res) => {
       res.setHeader('Content-Type', 'application/json');
       res.send(swaggerSpec);
@@ -373,12 +464,16 @@ async function setupAfterDb() {
     }
     html = html.replace(/__CSP_NONCE__/g, nonce);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
     res.send(html);
   };
   app.get('/', sendIndexWithNonce);
   // Express 5 : wildcard doit être nommé (ex. /*splat)
   app.get('/*splat', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {return next();}
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
     sendIndexWithNonce(req, res);
   });
   app.use('/*splat', (req, res) => {
@@ -391,25 +486,31 @@ async function setupAfterDb() {
 function startServer() {
   const PORT = config.port;
   const listenOptions = typeof cluster !== 'undefined' && cluster.isWorker ? { reusePort: true } : {};
-  server.listen(PORT, listenOptions, () => {
-    const workerId = typeof cluster !== 'undefined' && cluster.worker ? cluster.worker.id : '-';
-    console.log(`🚀 Server running on port ${PORT}${workerId !== '-' ? ` (worker ${workerId})` : ''}`);
-    console.log(`📱 Environment: ${config.env}`);
-  }).on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.error(`❌ Port ${PORT} déjà utilisé. Arrêtez l'autre processus (lsof -i :${PORT}) ou changez PORT dans config.env`);
-    } else {
-      console.error('❌ Erreur serveur:', err.message);
-    }
-    process.exit(1);
-  });
+  server
+    .listen(PORT, listenOptions, () => {
+      const workerId = typeof cluster !== 'undefined' && cluster.worker ? cluster.worker.id : '-';
+      console.log(`🚀 Server running on port ${PORT}${workerId !== '-' ? ` (worker ${workerId})` : ''}`);
+      console.log(`📱 Environment: ${config.env}`);
+    })
+    .on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(
+          `❌ Port ${PORT} déjà utilisé. Arrêtez l'autre processus (lsof -i :${PORT}) ou changez PORT dans config.env`
+        );
+      } else {
+        console.error('❌ Erreur serveur:', err.message);
+      }
+      process.exit(1);
+    });
 }
 
 dbManager.connect(config.mongodb.uri).then(async (connected) => {
   if (connected) {
     console.log('✅ MongoDB connecté — Radio, WebTV, Films, etc. reliés à la base.');
   } else {
-    console.log('⚠️  MongoDB non connecté. Démarrez MongoDB (docker run -d -p 27017:27017 mongo) puis redémarrez le backend.');
+    console.log(
+      '⚠️  MongoDB non connecté. Démarrez MongoDB (docker run -d -p 27017:27017 mongo) puis redémarrez le backend.'
+    );
     console.log('   MONGODB_URI utilisé:', config.mongodb.uri);
   }
   await setupAfterDb();
@@ -437,7 +538,7 @@ io.use(async (socket, next) => {
     try {
       const atLimit = await redisConnectionManager.isIpAtOrOverLimit(
         clientIp,
-        parseInt(process.env.MAX_CONNECTIONS_PER_IP, 10) || 50,
+        parseInt(process.env.MAX_CONNECTIONS_PER_IP, 10) || 50
       );
       if (atLimit) {
         logSocketAuthFailed(socket.id, 'ip_limit_global');
@@ -476,14 +577,14 @@ let lastMemoryWebhookCritical = 0;
 
 function postMemoryWebhook(payload) {
   const url = process.env.MEMORY_ALERT_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL;
-  if (!url || typeof url !== 'string') {return Promise.resolve();}
+  if (!url || typeof url !== 'string') {
+    return Promise.resolve();
+  }
   return new Promise((resolve) => {
     try {
       const lib = new URL(url).protocol === 'https:' ? https : http;
       const text = `[GNV Backend] ${payload.title || 'Memory'}\nheap ${payload.percent}% | used=${payload.heapUsed} | rss=${payload.rss} | ${payload.timestamp}`;
-      const body = JSON.stringify(
-        payload.raw && typeof payload.raw === 'object' ? payload.raw : { text },
-      );
+      const body = JSON.stringify(payload.raw && typeof payload.raw === 'object' ? payload.raw : { text });
       const req = lib.request(
         url,
         {
@@ -497,7 +598,7 @@ function postMemoryWebhook(payload) {
         (res) => {
           res.resume();
           res.on('end', resolve);
-        },
+        }
       );
       req.on('error', (err) => {
         logger.warn({ event: 'memory_webhook_error', message: err.message });
@@ -571,7 +672,9 @@ function gracefulShutdown(signal) {
   } catch (_) {}
   server.close(() => {
     console.log('✅ Serveur HTTP fermé');
-    Promise.resolve(dbManager.disconnect?.()).then(() => process.exit(0)).catch(() => process.exit(0));
+    Promise.resolve(dbManager.disconnect?.())
+      .then(() => process.exit(0))
+      .catch(() => process.exit(0));
   });
   setTimeout(() => {
     console.error('❌ Timeout graceful shutdown — arrêt forcé');

@@ -21,6 +21,7 @@ SSHPASS='votre_mot_de_passe' ./scripts/update-vps.sh
 ```
 
 Ce script :
+
 - synchronise le code depuis votre machine vers le VPS ;
 - installe les dépendances (npm ci) et rebuild (frontend + dashboard) ;
 - recharge les processus PM2 (backend, frontend, dashboard).
@@ -62,6 +63,7 @@ SSHPASS='votre_mot_de_passe' ./scripts/deploy-to-vps.sh
 ```
 
 Ce script :
+
 - exporte la base locale (mongodump) ;
 - synchronise tout le code ;
 - exécute l’installation sur le VPS (Node, MongoDB, Redis, Nginx, PM2 si besoin) ;
@@ -127,14 +129,14 @@ Vercel rebuild et redéploie automatiquement. Vérifiez dans Vercel que `VITE_AP
 
 ## Résumé
 
-| Hébergement        | Commande / action principale                          |
-|--------------------|--------------------------------------------------------|
-| **VPS** (mise à jour légère) | `./scripts/update-vps.sh`                             |
-| **VPS** (mise à jour + base) | `UPDATE_DB=1 ./scripts/update-vps.sh` ou `./scripts/update-vps.sh --with-db` |
-| **VPS** (déploiement complet) | `./scripts/deploy-to-vps.sh`                          |
-| **Hostinger**      | Adapter `deploy.sh` puis exécuter `./deploy.sh` sur le serveur |
-| **Railway / Render** | `git push origin main` (déploiement auto)             |
-| **Vercel**         | `git push origin main` (déploiement auto)             |
+| Hébergement                   | Commande / action principale                                                 |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| **VPS** (mise à jour légère)  | `./scripts/update-vps.sh`                                                    |
+| **VPS** (mise à jour + base)  | `UPDATE_DB=1 ./scripts/update-vps.sh` ou `./scripts/update-vps.sh --with-db` |
+| **VPS** (déploiement complet) | `./scripts/deploy-to-vps.sh`                                                 |
+| **Hostinger**                 | Adapter `deploy.sh` puis exécuter `./deploy.sh` sur le serveur               |
+| **Railway / Render**          | `git push origin main` (déploiement auto)                                    |
+| **Vercel**                    | `git push origin main` (déploiement auto)                                    |
 
 ---
 

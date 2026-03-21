@@ -38,7 +38,9 @@ async function seedRadio() {
     await mongoose.connect(MONGODB_URI);
     const existing = await RadioStation.countDocuments({});
     if (existing > 0) {
-      console.log('ℹ️  Des stations existent déjà (' + existing + '). Pour repartir de zéro : node scripts/clear-radio.js');
+      console.log(
+        'ℹ️  Des stations existent déjà (' + existing + '). Pour repartir de zéro : node scripts/clear-radio.js'
+      );
     }
     for (const s of stations) {
       const found = await RadioStation.findOne({ name: s.name });
@@ -51,7 +53,9 @@ async function seedRadio() {
     }
     const total = await RadioStation.countDocuments({});
     console.log('\n✅ Seed radio terminé. Total stations:', total);
-    console.log('   Dans le dashboard (http://localhost:5174/radio), cliquez "Créer playlist de démo" pour lier la playlist locale à GNV Radio Playlist.');
+    console.log(
+      '   Dans le dashboard (http://localhost:5174/radio), cliquez "Créer playlist de démo" pour lier la playlist locale à GNV Radio Playlist.'
+    );
   } catch (err) {
     console.error('❌ Erreur:', err.message);
     process.exit(1);

@@ -142,7 +142,8 @@ Important : OLD doit être une copie exacte du code actuel (indentation, sauts d
     messages: [
       {
         role: 'system',
-        content: 'Tu génères des modifications de code précises. Tu réponds uniquement par des blocs === FILE ===, === OLD ===, === NEW ===. Pas de texte avant ou après les blocs.',
+        content:
+          'Tu génères des modifications de code précises. Tu réponds uniquement par des blocs === FILE ===, === OLD ===, === NEW ===. Pas de texte avant ou après les blocs.',
       },
       { role: 'user', content: prompt },
     ],
@@ -161,7 +162,9 @@ Important : OLD doit être une copie exacte du code actuel (indentation, sauts d
   const log = [];
   let applied = 0;
   for (const { filePath, oldContent, newContent } of modifications) {
-    if (applyChange(filePath, oldContent, newContent, log)) {applied++;}
+    if (applyChange(filePath, oldContent, newContent, log)) {
+      applied++;
+    }
   }
 
   const logText = [
@@ -176,7 +179,9 @@ Important : OLD doit être une copie exacte du code actuel (indentation, sauts d
   console.log('\nLog écrit dans docs/AMELIORATIONS-OPENAI-LOG.txt');
 
   if (applied === 0 && modifications.length > 0) {
-    console.log('\nAucune modification appliquée (OLD non trouvé). Vérifiez docs/AMELIORATIONS-OPENAI-REPONSE-OPENAI.md et appliquez à la main si besoin.');
+    console.log(
+      '\nAucune modification appliquée (OLD non trouvé). Vérifiez docs/AMELIORATIONS-OPENAI-REPONSE-OPENAI.md et appliquez à la main si besoin.'
+    );
   }
 }
 

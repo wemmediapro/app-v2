@@ -14,7 +14,9 @@ const MONGODB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mong
 const IMAGES_DIR = config.paths?.images || path.join(__dirname, '..', 'public', 'uploads', 'images');
 
 function filenameFromImagePath(imagePath) {
-  if (!imagePath || typeof imagePath !== 'string') {return null;}
+  if (!imagePath || typeof imagePath !== 'string') {
+    return null;
+  }
   const p = String(imagePath).replace(/\\/g, '/').trim();
   const match = p.match(/\/uploads\/images\/([^/]+)$/i) || p.match(/\/([^/]+)$/);
   return match ? match[1] : null;
@@ -22,7 +24,9 @@ function filenameFromImagePath(imagePath) {
 
 function imageFileExists(imagePath) {
   const name = filenameFromImagePath(imagePath);
-  if (!name) {return false;}
+  if (!name) {
+    return false;
+  }
   const fullPath = path.join(IMAGES_DIR, name);
   return fs.existsSync(fullPath);
 }
@@ -50,10 +54,16 @@ async function main() {
     const restoImagePath = r.image || '';
     const restoHasPath = !!restoImagePath && String(restoImagePath).includes('/uploads/');
     const restoFileExists = restoHasPath && imageFileExists(restoImagePath);
-    if (restoFileExists) {totalRestoOk++;} else if (restoHasPath) {totalRestoMissing++;}
+    if (restoFileExists) {
+      totalRestoOk++;
+    } else if (restoHasPath) {
+      totalRestoMissing++;
+    }
 
     console.log(`\n🍽️  ${name}`);
-    console.log(`   Image restaurant: ${restoHasPath ? restoImagePath : '(aucun chemin)'} ${restoFileExists ? '✅' : restoHasPath ? '❌ fichier absent' : '⚠️'}`);
+    console.log(
+      `   Image restaurant: ${restoHasPath ? restoImagePath : '(aucun chemin)'} ${restoFileExists ? '✅' : restoHasPath ? '❌ fichier absent' : '⚠️'}`
+    );
 
     if (menu.length === 0) {
       console.log('   Menu: (vide)');
@@ -68,9 +78,15 @@ async function main() {
       const hasPath = !!imgPath && String(imgPath).includes('/uploads/');
       const fileExists = hasPath && imageFileExists(imgPath);
 
-      if (fileExists) {totalDishesOk++;} else if (hasPath) {totalDishesPathNoFile++;} else {totalDishesNoPath++;}
+      if (fileExists) {
+        totalDishesOk++;
+      } else if (hasPath) {
+        totalDishesPathNoFile++;
+      } else {
+        totalDishesNoPath++;
+      }
 
-      const status = fileExists ? '✅' : hasPath ? '❌ fichier absent' : '⚠️ pas d\'image';
+      const status = fileExists ? '✅' : hasPath ? '❌ fichier absent' : "⚠️ pas d'image";
       console.log(`      - ${dishName}: ${status}${hasPath ? ` (${filenameFromImagePath(imgPath)})` : ''}`);
     }
   }
@@ -79,7 +95,9 @@ async function main() {
   console.log('RÉSUMÉ');
   console.log('='.repeat(60));
   console.log(`Restaurants: ${totalRestoOk} avec image OK, ${totalRestoMissing} avec chemin mais fichier absent`);
-  console.log(`Plats: ${totalDishesOk} avec image OK, ${totalDishesPathNoFile} avec chemin mais fichier absent, ${totalDishesNoPath} sans image`);
+  console.log(
+    `Plats: ${totalDishesOk} avec image OK, ${totalDishesPathNoFile} avec chemin mais fichier absent, ${totalDishesNoPath} sans image`
+  );
   console.log('');
 
   await mongoose.disconnect();

@@ -39,11 +39,15 @@ function slug(str) {
  */
 async function getImageBuffer(poster) {
   const p = (poster || '').trim();
-  if (!p) {return null;}
+  if (!p) {
+    return null;
+  }
 
   if (p.startsWith('http://') || p.startsWith('https://')) {
     const res = await fetch(p, { headers: { 'User-Agent': 'GNV-OnBoard/1.0' } });
-    if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
     const buf = Buffer.from(await res.arrayBuffer());
     return buf;
   }
@@ -52,7 +56,9 @@ async function getImageBuffer(poster) {
   const localPath = path.join(IMAGES_DIR, path.basename(relativePath));
   if (!fs.existsSync(localPath)) {
     const altPath = path.join(path.dirname(IMAGES_DIR), relativePath);
-    if (fs.existsSync(altPath)) {return fs.readFileSync(altPath);}
+    if (fs.existsSync(altPath)) {
+      return fs.readFileSync(altPath);
+    }
     throw new Error(`Fichier introuvable: ${localPath}`);
   }
   return fs.readFileSync(localPath);
@@ -126,4 +132,7 @@ async function main() {
   process.exit(fail > 0 ? 1 : 0);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

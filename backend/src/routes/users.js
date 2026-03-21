@@ -37,7 +37,12 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
     }
 
     const [data, total] = await Promise.all([
-      User.find(query).select('firstName lastName email cabinNumber avatar').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      User.find(query)
+        .select('firstName lastName email cabinNumber avatar')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
       User.countDocuments(query),
     ]);
 
@@ -53,8 +58,7 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
 // @access  Private
 router.get('/:id', authMiddleware, validateMongoId('id'), handleValidationErrors, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
-      .select('-password');
+    const user = await User.findById(req.params.id).select('-password');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -68,4 +72,3 @@ router.get('/:id', authMiddleware, validateMongoId('id'), handleValidationErrors
 });
 
 module.exports = router;
-

@@ -14,7 +14,17 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const API_BASE_URL = (process.env.API_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
 const SEED_SECRET = process.env.SEED_SCRIPT_SECRET || process.env.SEED_SECRET || '';
 
-const CATEGORIES = ['souvenirs', 'fashion', 'accessories', 'food', 'beverages', 'electronics', 'books', 'toys', 'dutyfree'];
+const CATEGORIES = [
+  'souvenirs',
+  'fashion',
+  'accessories',
+  'food',
+  'beverages',
+  'electronics',
+  'books',
+  'toys',
+  'dutyfree',
+];
 
 function slug(str) {
   return String(str || '')
@@ -30,17 +40,18 @@ function buildProductImagePrompt(product) {
   const name = product.name || 'Product';
   const category = product.category || 'souvenirs';
   const desc = (product.description || '').slice(0, 150);
-  const style = {
-    souvenirs: 'souvenir gift item, ferry cruise themed',
-    fashion: 'fashion clothing item, clean product shot',
-    accessories: 'accessory product, lifestyle',
-    food: 'food product, packaged or gourmet',
-    beverages: 'beverage bottle or drink, professional',
-    electronics: 'electronic device, modern tech product',
-    books: 'book or magazine, cover visible',
-    toys: 'toy or game product, family friendly',
-    dutyfree: 'duty free product, perfume or luxury',
-  }[category] || 'product for cruise ferry shop';
+  const style =
+    {
+      souvenirs: 'souvenir gift item, ferry cruise themed',
+      fashion: 'fashion clothing item, clean product shot',
+      accessories: 'accessory product, lifestyle',
+      food: 'food product, packaged or gourmet',
+      beverages: 'beverage bottle or drink, professional',
+      electronics: 'electronic device, modern tech product',
+      books: 'book or magazine, cover visible',
+      toys: 'toy or game product, family friendly',
+      dutyfree: 'duty free product, perfume or luxury',
+    }[category] || 'product for cruise ferry shop';
   return `Professional product photography: ${name}. ${style}. ${desc ? desc + '.' : ''} White or neutral background, clean, high quality, no text overlay. Single product centered. Suitable for e-commerce.`;
 }
 
@@ -55,21 +66,29 @@ async function generateAndUploadImage(openai, prompt, filename) {
     style: 'natural',
   });
   const img = response.data?.[0];
-  if (!img?.b64_json) {throw new Error('Pas d’image retournée par OpenAI');}
+  if (!img?.b64_json) {
+    throw new Error('Pas d’image retournée par OpenAI');
+  }
 
   const uploadUrl = `${API_BASE_URL}/api/upload/image-from-base64`;
   const headers = { 'Content-Type': 'application/json' };
-  if (SEED_SECRET) {headers['X-Seed-Secret'] = SEED_SECRET;}
+  if (SEED_SECRET) {
+    headers['X-Seed-Secret'] = SEED_SECRET;
+  }
 
   const res = await fetch(uploadUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify({ base64: img.b64_json, filename }),
   });
-  if (!res.ok) {throw new Error(`Upload échoué (${res.status}): ${await res.text()}`);}
+  if (!res.ok) {
+    throw new Error(`Upload échoué (${res.status}): ${await res.text()}`);
+  }
   const data = await res.json();
   const pathRel = data?.image?.path || (data?.image?.url || '').replace(/^https?:\/\/[^/]+/, '');
-  if (!pathRel) {throw new Error('Réponse upload sans image.path');}
+  if (!pathRel) {
+    throw new Error('Réponse upload sans image.path');
+  }
   return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;
 }
 
@@ -105,7 +124,7 @@ async function main() {
       const imagePath = await generateAndUploadImage(openai, prompt, filename);
       await Product.updateOne(
         { _id: p._id },
-        { $set: { images: [{ url: imagePath, alt: p.name || '', isPrimary: true }] } },
+        { $set: { images: [{ url: imagePath, alt: p.name || '', isPrimary: true }] } }
       );
       console.log('      ✅ Image uploadée et produit mis à jour.');
     } catch (err) {
@@ -118,4 +137,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

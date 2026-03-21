@@ -1,6 +1,27 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Image, Plus, Edit, Trash2, Search, Filter, Eye, EyeOff, Calendar, Link as LinkIcon, Monitor, Globe, Ship, FileText, X, Upload, Smartphone, Tablet, BarChart2, MousePointer } from 'lucide-react';
+import {
+  Image,
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Filter,
+  Eye,
+  EyeOff,
+  Calendar,
+  Link as LinkIcon,
+  Monitor,
+  Globe,
+  Ship,
+  FileText,
+  X,
+  Upload,
+  Smartphone,
+  Tablet,
+  BarChart2,
+  MousePointer,
+} from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { useBoatConfig } from '../contexts/BoatConfigContext';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
@@ -37,7 +58,7 @@ const Banners = () => {
     countries: [],
     ships: [],
     pages: [],
-    translations: emptyTranslations()
+    translations: emptyTranslations(),
   });
 
   // Pays disponibles
@@ -46,9 +67,8 @@ const Banners = () => {
     { name: 'Tunisie', code: 'TN' },
     { name: 'Algérie', code: 'DZ' },
     { name: 'Italie', code: 'IT' },
-    { name: 'Espagne', code: 'ES' }
+    { name: 'Espagne', code: 'ES' },
   ];
-
 
   // Pages disponibles (noms traduits selon la langue)
   const availablePages = [
@@ -61,11 +81,12 @@ const Banners = () => {
     { id: 'webtv', name: t('banners.pageName_webtv') },
     { id: 'enfant', name: t('banners.pageName_enfant') },
     { id: 'shipmap', name: t('banners.pageName_shipmap') },
-    { id: 'chat', name: t('banners.pageName_chat') }
+    { id: 'chat', name: t('banners.pageName_chat') },
   ];
 
   const getBannerTitle = (banner, lang) => (banner.translations?.[lang]?.title || banner.title || '').trim();
-  const getBannerDescription = (banner, lang) => (banner.translations?.[lang]?.description || banner.description || '').trim();
+  const getBannerDescription = (banner, lang) =>
+    (banner.translations?.[lang]?.description || banner.description || '').trim();
 
   useEffect(() => {
     fetchBanners();
@@ -92,10 +113,10 @@ const Banners = () => {
 
   const handleToggleStatus = async (bannerId) => {
     try {
-      const banner = banners.find(b => b._id === bannerId);
+      const banner = banners.find((b) => b._id === bannerId);
       const newStatus = !banner.isActive;
       await apiService.put(`/banners/${bannerId}`, { isActive: newStatus });
-      setBanners(banners.map(b => b._id === bannerId ? { ...b, isActive: newStatus } : b));
+      setBanners(banners.map((b) => (b._id === bannerId ? { ...b, isActive: newStatus } : b)));
       toast.success(newStatus ? t('banners.bannerActivated') : t('banners.bannerDeactivated'));
     } catch (error) {
       toast.error(t('banners.errorUpdate'));
@@ -110,11 +131,11 @@ const Banners = () => {
     try {
       try {
         await apiService.delete(`/banners/${bannerId}`);
-        setBanners(banners.filter(b => b._id !== bannerId));
+        setBanners(banners.filter((b) => b._id !== bannerId));
         toast.success(t('banners.bannerDeleted'));
       } catch (error) {
         // Simulation
-        setBanners(banners.filter(b => b._id !== bannerId));
+        setBanners(banners.filter((b) => b._id !== bannerId));
         toast.success(t('banners.bannerDeleted'));
       }
     } catch (error) {
@@ -126,8 +147,8 @@ const Banners = () => {
     setNewBanner({
       ...newBanner,
       countries: newBanner.countries.includes(countryName)
-        ? newBanner.countries.filter(c => c !== countryName)
-        : [...newBanner.countries, countryName]
+        ? newBanner.countries.filter((c) => c !== countryName)
+        : [...newBanner.countries, countryName],
     });
   };
 
@@ -135,8 +156,8 @@ const Banners = () => {
     setNewBanner({
       ...newBanner,
       pages: newBanner.pages.includes(pageId)
-        ? newBanner.pages.filter(p => p !== pageId)
-        : [...newBanner.pages, pageId]
+        ? newBanner.pages.filter((p) => p !== pageId)
+        : [...newBanner.pages, pageId],
     });
   };
 
@@ -170,8 +191,14 @@ const Banners = () => {
   const handleImageUploadMobile = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (!file.type.startsWith('image/')) { toast.error(t('banners.selectImage')); return; }
-      if (file.size > 5 * 1024 * 1024) { toast.error(t('banners.fileTooLarge5MB')); return; }
+      if (!file.type.startsWith('image/')) {
+        toast.error(t('banners.selectImage'));
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(t('banners.fileTooLarge5MB'));
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviewMobile(reader.result);
@@ -188,8 +215,14 @@ const Banners = () => {
   const handleImageUploadTablet = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (!file.type.startsWith('image/')) { toast.error(t('banners.selectImage')); return; }
-      if (file.size > 5 * 1024 * 1024) { toast.error(t('banners.fileTooLarge5MB')); return; }
+      if (!file.type.startsWith('image/')) {
+        toast.error(t('banners.selectImage'));
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(t('banners.fileTooLarge5MB'));
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviewTablet(reader.result);
@@ -227,7 +260,7 @@ const Banners = () => {
         imageMobile: imagePreviewMobile || newBanner.imageMobile || null,
         imageTablet: imagePreviewTablet || newBanner.imageTablet || null,
         _id: selectedBanner?._id || `banner_${Date.now()}`,
-        createdAt: selectedBanner?.createdAt || new Date().toISOString()
+        createdAt: selectedBanner?.createdAt || new Date().toISOString(),
       };
 
       try {
@@ -244,7 +277,7 @@ const Banners = () => {
       } catch (error) {
         // Simulation
         if (selectedBanner) {
-          setBanners(banners.map(b => b._id === selectedBanner._id ? banner : b));
+          setBanners(banners.map((b) => (b._id === selectedBanner._id ? banner : b)));
           toast.success(t('banners.bannerUpdatedDemo'));
           if (Object.keys(translations).length > 1) toast.success(t('common.contentAddedByLanguage'));
         } else {
@@ -276,7 +309,7 @@ const Banners = () => {
         countries: [],
         ships: [],
         pages: [],
-        translations: emptyTranslations()
+        translations: emptyTranslations(),
       });
     } catch (error) {
       console.error('Erreur lors de la création/modification:', error);
@@ -285,11 +318,13 @@ const Banners = () => {
   };
 
   const filteredBanners = useMemo(() => {
-    return banners.filter(banner => {
-      const matchesSearch = !searchQuery ||
+    return banners.filter((banner) => {
+      const matchesSearch =
+        !searchQuery ||
         banner.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         banner.description?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'all' ||
+      const matchesStatus =
+        statusFilter === 'all' ||
         (statusFilter === 'active' && banner.isActive) ||
         (statusFilter === 'inactive' && !banner.isActive);
       const matchesPosition = positionFilter === 'all' || banner.position === positionFilter;
@@ -297,11 +332,11 @@ const Banners = () => {
     });
   }, [banners, searchQuery, statusFilter, positionFilter]);
 
-  const activeBanners = banners.filter(b => b.isActive);
+  const activeBanners = banners.filter((b) => b.isActive);
   const totalImpressions = useMemo(() => banners.reduce((acc, b) => acc + (Number(b.impressions) || 0), 0), [banners]);
   const totalClicks = useMemo(() => banners.reduce((acc, b) => acc + (Number(b.clicks) || 0), 0), [banners]);
   const positions = useMemo(() => {
-    const pos = new Set(banners.map(b => b.position));
+    const pos = new Set(banners.map((b) => b.position));
     return Array.from(pos).sort();
   }, [banners]);
 
@@ -348,7 +383,7 @@ const Banners = () => {
               countries: [],
               ships: [],
               pages: [],
-              translations: emptyTranslations()
+              translations: emptyTranslations(),
             });
             setShowModal(true);
           }}
@@ -362,28 +397,58 @@ const Banners = () => {
       {/* Stats compactes */}
       <div className="flex flex-wrap gap-3">
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100"><Image size={18} className="text-slate-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('banners.totalBanners')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{banners.length}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
+            <Image size={18} className="text-slate-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('banners.totalBanners')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{banners.length}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50"><Eye size={18} className="text-emerald-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('banners.activeCount')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{activeBanners.length}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
+            <Eye size={18} className="text-emerald-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('banners.activeCount')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{activeBanners.length}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100"><EyeOff size={18} className="text-slate-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('banners.inactiveCount')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{banners.length - activeBanners.length}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
+            <EyeOff size={18} className="text-slate-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('banners.inactiveCount')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{banners.length - activeBanners.length}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50"><Monitor size={18} className="text-violet-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('banners.positionsCount')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{positions.length}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
+            <Monitor size={18} className="text-violet-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('banners.positionsCount')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{positions.length}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50"><BarChart2 size={18} className="text-amber-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('banners.impressionsCount')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{totalImpressions.toLocaleString()}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50">
+            <BarChart2 size={18} className="text-amber-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('banners.impressionsCount')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{totalImpressions.toLocaleString()}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50"><MousePointer size={18} className="text-emerald-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('banners.clicksCount')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{totalClicks.toLocaleString()}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
+            <MousePointer size={18} className="text-emerald-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('banners.clicksCount')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{totalClicks.toLocaleString()}</p>
+          </div>
         </div>
       </div>
 
@@ -400,7 +465,11 @@ const Banners = () => {
           />
         </div>
         <div className="flex rounded-xl border border-slate-200 bg-slate-50/80 p-1 gap-0.5 shrink-0">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3.5 py-2 rounded-lg text-sm font-medium bg-white border border-slate-200/80 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3.5 py-2 rounded-lg text-sm font-medium bg-white border border-slate-200/80 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          >
             <option value="all">{t('banners.allStatuses')}</option>
             <option value="active">{t('banners.active')}</option>
             <option value="inactive">{t('banners.inactive')}</option>
@@ -411,8 +480,10 @@ const Banners = () => {
             className="px-3.5 py-2 rounded-lg text-sm font-medium bg-white border border-slate-200/80 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           >
             <option value="all">{t('banners.allPositions')}</option>
-            {positions.map(position => (
-              <option key={position} value={position}>{position}</option>
+            {positions.map((position) => (
+              <option key={position} value={position}>
+                {position}
+              </option>
             ))}
           </select>
         </div>
@@ -429,11 +500,7 @@ const Banners = () => {
           >
             <div className="relative aspect-video bg-gradient-to-br from-blue-100 to-purple-100">
               {banner.image ? (
-                <img 
-                  src={banner.image} 
-                  alt={getBannerTitle(banner, language)}
-                  className="w-full h-full object-cover"
-                />
+                <img src={banner.image} alt={getBannerTitle(banner, language)} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <Image size={48} className="text-gray-400" />
@@ -460,12 +527,16 @@ const Banners = () => {
                 {banner.startDate && (
                   <div className="flex items-center gap-1">
                     <Calendar size={14} />
-                    <span>{t('banners.dateFrom')} {new Date(banner.startDate).toLocaleDateString('fr-FR')}</span>
+                    <span>
+                      {t('banners.dateFrom')} {new Date(banner.startDate).toLocaleDateString('fr-FR')}
+                    </span>
                   </div>
                 )}
                 {banner.endDate && (
                   <div className="flex items-center gap-1">
-                    <span>{t('banners.dateTo')} {new Date(banner.endDate).toLocaleDateString('fr-FR')}</span>
+                    <span>
+                      {t('banners.dateTo')} {new Date(banner.endDate).toLocaleDateString('fr-FR')}
+                    </span>
                   </div>
                 )}
               </div>
@@ -477,9 +548,13 @@ const Banners = () => {
               )}
               {/* Statistiques affichage / clics */}
               <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                <span className="flex items-center gap-1"><BarChart2 size={12} /> {(banner.impressions ?? 0).toLocaleString()} {t('banners.impressionsLabel')}</span>
-                <span className="flex items-center gap-1"><MousePointer size={12} /> {(banner.clicks ?? 0).toLocaleString()} {t('banners.clicksLabel')}</span>
-                {(banner.impressions > 0) && (
+                <span className="flex items-center gap-1">
+                  <BarChart2 size={12} /> {(banner.impressions ?? 0).toLocaleString()} {t('banners.impressionsLabel')}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MousePointer size={12} /> {(banner.clicks ?? 0).toLocaleString()} {t('banners.clicksLabel')}
+                </span>
+                {banner.impressions > 0 && (
                   <span>CTR {((100 * (banner.clicks ?? 0)) / banner.impressions).toFixed(1)} %</span>
                 )}
               </div>
@@ -508,7 +583,7 @@ const Banners = () => {
                     <div className="flex items-center gap-1 flex-wrap">
                       <FileText size={12} className="text-gray-400" />
                       {banner.pages.map((pageId, idx) => {
-                        const page = availablePages.find(p => p.id === pageId);
+                        const page = availablePages.find((p) => p.id === pageId);
                         return page ? (
                           <span key={idx} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs">
                             {page.name}
@@ -523,9 +598,7 @@ const Banners = () => {
                 <button
                   onClick={() => handleToggleStatus(banner._id)}
                   className={`flex-1 flex items-center justify-center gap-2 p-2 rounded-lg transition-colors ${
-                    banner.isActive
-                      ? 'text-orange-600 hover:bg-orange-50'
-                      : 'text-green-600 hover:bg-green-50'
+                    banner.isActive ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'
                   }`}
                 >
                   {banner.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -554,7 +627,10 @@ const Banners = () => {
                       countries: banner.countries || [],
                       ships: banner.ships || [],
                       pages: banner.pages || [],
-                      translations: banner.translations && typeof banner.translations === 'object' ? { ...emptyTranslations(), ...banner.translations } : emptyTranslations()
+                      translations:
+                        banner.translations && typeof banner.translations === 'object'
+                          ? { ...emptyTranslations(), ...banner.translations }
+                          : emptyTranslations(),
                     });
                     setShowModal(true);
                   }}
@@ -619,7 +695,9 @@ const Banners = () => {
             <div className="flex-1 overflow-y-auto p-6">
               <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('banners.contentByLanguage')}</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('banners.contentByLanguage')}
+                  </label>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {LANG_LIST.map(({ code, label }) => (
                       <button
@@ -635,7 +713,9 @@ const Banners = () => {
                   {activeLang === 'fr' ? (
                     <>
                       <div className="mb-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('banners.titleRequired')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('banners.titleRequired')}
+                        </label>
                         <input
                           type="text"
                           value={newBanner.title}
@@ -645,7 +725,9 @@ const Banners = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('banners.descriptionLabel')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('banners.descriptionLabel')}
+                        </label>
                         <textarea
                           value={newBanner.description || ''}
                           onChange={(e) => setNewBanner({ ...newBanner, description: e.target.value })}
@@ -658,32 +740,40 @@ const Banners = () => {
                   ) : (
                     <>
                       <div className="mb-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('banners.titleLabel')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('banners.titleLabel')}
+                        </label>
                         <input
                           type="text"
                           value={newBanner.translations?.[activeLang]?.title || ''}
-                          onChange={(e) => setNewBanner({
-                            ...newBanner,
-                            translations: {
-                              ...newBanner.translations,
-                              [activeLang]: { ...newBanner.translations?.[activeLang], title: e.target.value }
-                            }
-                          })}
+                          onChange={(e) =>
+                            setNewBanner({
+                              ...newBanner,
+                              translations: {
+                                ...newBanner.translations,
+                                [activeLang]: { ...newBanner.translations?.[activeLang], title: e.target.value },
+                              },
+                            })
+                          }
                           className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                           placeholder={t('banners.titleLabel')}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('banners.descriptionLabel')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {t('banners.descriptionLabel')}
+                        </label>
                         <textarea
                           value={newBanner.translations?.[activeLang]?.description || ''}
-                          onChange={(e) => setNewBanner({
-                            ...newBanner,
-                            translations: {
-                              ...newBanner.translations,
-                              [activeLang]: { ...newBanner.translations?.[activeLang], description: e.target.value }
-                            }
-                          })}
+                          onChange={(e) =>
+                            setNewBanner({
+                              ...newBanner,
+                              translations: {
+                                ...newBanner.translations,
+                                [activeLang]: { ...newBanner.translations?.[activeLang], description: e.target.value },
+                              },
+                            })
+                          }
                           rows={3}
                           className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                           placeholder={t('banners.descriptionLabel')}
@@ -729,20 +819,14 @@ const Banners = () => {
                       <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
                         <div className="flex items-center gap-4">
                           <div className="relative w-32 h-20 rounded-lg overflow-hidden bg-white border border-gray-200">
-                            <img
-                              src={imagePreview}
-                              alt="Banner preview"
-                              className="w-full h-full object-cover"
-                            />
+                            <img src={imagePreview} alt="Banner preview" className="w-full h-full object-cover" />
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900">
                               {imageFile?.name || t('banners.imageSelected')}
                             </p>
                             {imageFile && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                {(imageFile.size / 1024).toFixed(2)} KB
-                              </p>
+                              <p className="text-xs text-gray-500 mt-1">{(imageFile.size / 1024).toFixed(2)} KB</p>
                             )}
                           </div>
                           <button
@@ -762,16 +846,9 @@ const Banners = () => {
                         <p className="mb-2 text-sm text-gray-500">
                           <span className="font-semibold">{t('banners.clickToUpload')}</span> {t('banners.orDragDrop')}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {t('banners.imageFormats')}
-                        </p>
+                        <p className="text-xs text-gray-500">{t('banners.imageFormats')}</p>
                       </div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                      />
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                     </label>
                   )}
                 </div>
@@ -786,7 +863,11 @@ const Banners = () => {
                       <div className="w-24 h-14 rounded overflow-hidden bg-white border border-gray-200">
                         <img src={imagePreviewMobile} alt="Mobile" className="w-full h-full object-cover" />
                       </div>
-                      <button type="button" onClick={removeImageMobile} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                      <button
+                        type="button"
+                        onClick={removeImageMobile}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                      >
                         <X size={18} />
                       </button>
                     </div>
@@ -809,7 +890,11 @@ const Banners = () => {
                       <div className="w-32 h-16 rounded overflow-hidden bg-white border border-gray-200">
                         <img src={imagePreviewTablet} alt="Tablette" className="w-full h-full object-cover" />
                       </div>
-                      <button type="button" onClick={removeImageTablet} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                      <button
+                        type="button"
+                        onClick={removeImageTablet}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                      >
                         <X size={18} />
                       </button>
                     </div>
@@ -874,12 +959,12 @@ const Banners = () => {
                   {newBanner.countries.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {newBanner.countries.map((country) => (
-                        <span key={country} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                        <span
+                          key={country}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs"
+                        >
                           {country}
-                          <button
-                            onClick={() => toggleCountry(country)}
-                            className="hover:text-blue-900"
-                          >
+                          <button onClick={() => toggleCountry(country)} className="hover:text-blue-900">
                             <X size={12} />
                           </button>
                         </span>
@@ -910,14 +995,14 @@ const Banners = () => {
                   {newBanner.pages.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {newBanner.pages.map((pageId) => {
-                        const page = availablePages.find(p => p.id === pageId);
+                        const page = availablePages.find((p) => p.id === pageId);
                         return page ? (
-                          <span key={pageId} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
+                          <span
+                            key={pageId}
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs"
+                          >
                             {page.name}
-                            <button
-                              onClick={() => togglePage(pageId)}
-                              className="hover:text-purple-900"
-                            >
+                            <button onClick={() => togglePage(pageId)} className="hover:text-purple-900">
                               <X size={12} />
                             </button>
                           </span>
@@ -967,7 +1052,7 @@ const Banners = () => {
                     countries: [],
                     ships: [],
                     pages: [],
-                    translations: emptyTranslations()
+                    translations: emptyTranslations(),
                   });
                 }}
                 className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-white hover:border-slate-300 transition-colors"
@@ -991,6 +1076,3 @@ const Banners = () => {
 };
 
 export default Banners;
-
-
-

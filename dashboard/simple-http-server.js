@@ -5,16 +5,16 @@ import httpProxy from 'http-proxy';
 const proxy = httpProxy.createProxyServer({
   target: 'http://localhost:5173',
   changeOrigin: true,
-  ws: true
+  ws: true,
 });
 
 const server = createServer((req, res) => {
   // Accepter TOUTES les requêtes sans aucune vérification
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Host: ${req.headers.host || 'unknown'}`);
-  
+
   proxy.web(req, res, {
     target: 'http://localhost:5173',
-    changeOrigin: true
+    changeOrigin: true,
   });
 });
 
@@ -38,4 +38,3 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`📱 URL locale: http://localhost:${PORT}`);
   console.log(`🔄 Proxy vers Vite: http://localhost:5173`);
 });
-

@@ -1,16 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Radio,
-  Play,
-  Pause,
-  Volume2,
-  Music2,
-  SkipBack,
-  SkipForward,
-  Heart,
-  ChevronRight,
-} from 'lucide-react';
+import { Radio, Play, Pause, Volume2, Music2, SkipBack, SkipForward, Heart, ChevronRight } from 'lucide-react';
 
 export default function RadioPage({
   t,
@@ -33,7 +23,15 @@ export default function RadioPage({
   const getGenreLabel = (genre) => {
     if (!genre || typeof genre !== 'string') return '';
     const g = genre.trim().toLowerCase();
-    if (g === 'variétés' || g === 'varietes' || g === 'variety' || g === 'varietà' || g === 'variedad' || g === 'varieté') return t('radio.genreVarieties');
+    if (
+      g === 'variétés' ||
+      g === 'varietes' ||
+      g === 'variety' ||
+      g === 'varietà' ||
+      g === 'variedad' ||
+      g === 'varieté'
+    )
+      return t('radio.genreVarieties');
     return genre;
   };
 
@@ -43,7 +41,8 @@ export default function RadioPage({
     if (!currentRadio || !isPlaying || isDirectStream || typeof getRadioStreamProgress !== 'function') return;
     const tick = () => {
       const p = getRadioStreamProgress();
-      if (p && p.durationSeconds > 0) setStreamProgress({ positionSeconds: p.positionSeconds, durationSeconds: p.durationSeconds });
+      if (p && p.durationSeconds > 0)
+        setStreamProgress({ positionSeconds: p.positionSeconds, durationSeconds: p.durationSeconds });
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -62,7 +61,10 @@ export default function RadioPage({
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6 sm:space-y-8 pb-32">
         {/* En-tête — même esprit que page Shop (bloc bleu) */}
         <header className="space-y-4">
-          <div className="rounded-2xl p-4 sm:p-6 shadow-lg border border-blue-200/50" style={{ backgroundColor: '#264FFF' }}>
+          <div
+            className="rounded-2xl p-4 sm:p-6 shadow-lg border border-blue-200/50"
+            style={{ backgroundColor: '#264FFF' }}
+          >
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-white/20 border border-white/30 flex-shrink-0 backdrop-blur-sm">
                 <Radio size={24} className="text-white sm:w-6 sm:h-6" strokeWidth={1.75} />
@@ -89,9 +91,7 @@ export default function RadioPage({
                 <>
                   <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-8">
                     <div className="flex justify-center sm:flex-shrink-0">
-                      <div
-                        className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden bg-slate-100 ring-1 ring-slate-200/60"
-                      >
+                      <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden bg-slate-100 ring-1 ring-slate-200/60">
                         {getRadioLogoUrl(currentRadio.logo) ? (
                           <img
                             src={getRadioLogoUrl(currentRadio.logo)}
@@ -173,7 +173,9 @@ export default function RadioPage({
                         <motion.div
                           className="h-full rounded-full min-w-[2px] bg-slate-500"
                           initial={false}
-                          animate={{ width: `${Math.min(100, (streamProgress.positionSeconds / streamProgress.durationSeconds) * 100)}%` }}
+                          animate={{
+                            width: `${Math.min(100, (streamProgress.positionSeconds / streamProgress.durationSeconds) * 100)}%`,
+                          }}
                           transition={{ duration: 0.3 }}
                         />
                       ) : (
@@ -226,9 +228,7 @@ export default function RadioPage({
         <section className="space-y-4">
           <div className="flex items-baseline justify-between gap-3 flex-wrap">
             <div>
-              <h2 className="text-base font-semibold text-slate-700 tracking-tight">
-                {t('radio.allStations')}
-              </h2>
+              <h2 className="text-base font-semibold text-slate-700 tracking-tight">{t('radio.allStations')}</h2>
               <p className="text-xs text-slate-500 mt-1">{t('radio.selectStationToListen')}</p>
             </div>
             <span className="shrink-0 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
@@ -283,7 +283,10 @@ export default function RadioPage({
                                 if (fallback) fallback.classList.remove('hidden');
                               }}
                             />
-                            <div data-fallback className="absolute inset-0 hidden items-center justify-center bg-slate-200 text-slate-400">
+                            <div
+                              data-fallback
+                              className="absolute inset-0 hidden items-center justify-center bg-slate-200 text-slate-400"
+                            >
                               <Music2 size={32} strokeWidth={1.5} />
                             </div>
                           </>
@@ -329,7 +332,10 @@ export default function RadioPage({
                             <Play size={18} className="fill-current ml-0.5" strokeWidth={1.75} />
                           )}
                         </div>
-                        <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all" />
+                        <ChevronRight
+                          size={18}
+                          className="text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all"
+                        />
                       </div>
                     </motion.button>
                   );

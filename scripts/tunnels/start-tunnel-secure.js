@@ -9,9 +9,9 @@ const PORT = 5173;
 function askPassword(question) {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
-  
+
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
@@ -26,15 +26,15 @@ console.log('🚀 Démarrage du frontend avec tunnel ngrok sécurisé...\n');
 async function getCredentials() {
   let username = process.env.NGROK_USERNAME;
   let password = process.env.NGROK_PASSWORD;
-  
+
   if (!username) {
-    username = await askPassword('👤 Nom d\'utilisateur pour le tunnel: ');
+    username = await askPassword("👤 Nom d'utilisateur pour le tunnel: ");
   }
-  
+
   if (!password) {
     password = await askPassword('🔐 Mot de passe pour le tunnel: ');
   }
-  
+
   return { username, password };
 }
 
@@ -43,26 +43,26 @@ console.log(`🌐 Démarrage du serveur Vite sur le port ${PORT}...`);
 const vite = spawn('npm', ['run', 'dev'], {
   stdio: 'inherit',
   shell: true,
-  cwd: process.cwd()
+  cwd: process.cwd(),
 });
 
 // Attendre que le serveur démarre
 setTimeout(async () => {
   try {
     console.log('\n🔗 Création du tunnel ngrok sécurisé...');
-    
+
     // Obtenir les identifiants
     const { username, password } = await getCredentials();
-    
+
     // Configuration du tunnel avec authentification HTTP de base
     const tunnelConfig = {
       addr: PORT,
       authtoken: process.env.NGROK_AUTH_TOKEN || undefined,
-      basic_auth: `${username}:${password}`
+      basic_auth: `${username}:${password}`,
     };
-    
+
     const url = await ngrok.connect(tunnelConfig);
-    
+
     console.log('\n✅ Tunnel sécurisé créé avec succès!');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`🌐 URL locale:    http://localhost:${PORT}`);
@@ -75,7 +75,7 @@ setTimeout(async () => {
     console.log('💡 Pour éviter de saisir le mot de passe à chaque fois:');
     console.log(`   export NGROK_USERNAME="${username}"`);
     console.log(`   export NGROK_PASSWORD="${password}"\n`);
-    
+
     // Gérer l'arrêt propre
     const cleanup = async () => {
       console.log('\n\n🛑 Arrêt en cours...');
@@ -88,10 +88,9 @@ setTimeout(async () => {
       vite.kill();
       process.exit(0);
     };
-    
+
     process.on('SIGINT', cleanup);
     process.on('SIGTERM', cleanup);
-    
   } catch (error) {
     console.error('\n❌ Erreur lors de la création du tunnel:', error.message);
     console.log('\n💡 Solutions possibles:');

@@ -157,10 +157,7 @@ describe('Auth — credentials & sécurité', () => {
 
   it('après changement de mot de passe, l’ancien mot de passe n’est plus accepté au login', async () => {
     const compare = User._mockComparePassword;
-    compare
-      .mockResolvedValueOnce(true)
-      .mockResolvedValueOnce(true)
-      .mockResolvedValue(false);
+    compare.mockResolvedValueOnce(true).mockResolvedValueOnce(true).mockResolvedValue(false);
 
     const fakeUser = {
       _id: '507f1f77bcf86cd799439011',

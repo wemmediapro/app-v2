@@ -1,11 +1,19 @@
 import axios from 'axios';
 
-// En dev : utiliser le proxy Vite (/api → backend 3000). Sinon : .env ou défaut 3000.
-const API_BASE_URL = import.meta.env.DEV
-  ? '/api'
-  : (import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:3000/api')); // navigateur : fallback window.location.origin, pas de localhost hardcodé
-/** Origine du backend (sans /api) pour streaming vidéo, audio et images. En 100% offline, servir l'app depuis ce même hôte. */
-export const BACKEND_ORIGIN = import.meta.env.DEV ? '' : (API_BASE_URL || '').replace(/\/api\/?$/, '');
+/** Base API versionnée (défaut /api/v1). Rétrocompat : VITE_API_URL peut pointer vers une URL complète incluant le préfixe. */
+function resolveApiBaseUrl() {
+  if (import.meta.env.VITE_API_URL) {
+    return String(import.meta.env.VITE_API_URL).replace(/\/$/, '');
+  }
+  const prefix = String(import.meta.env.VITE_API_PREFIX || '/api/v1').replace(/\/$/, '');
+  if (import.meta.env.DEV) return prefix;
+  if (typeof window !== 'undefined') return `${window.location.origin}${prefix}`;
+  return `http://localhost:3000${prefix}`;
+}
+
+export const API_BASE_URL = resolveApiBaseUrl();
+/** Origine du backend (sans suffixe /api ou /api/v1) pour streaming et médias. */
+export const BACKEND_ORIGIN = import.meta.env.DEV ? '' : (API_BASE_URL || '').replace(/\/api(\/v1)?\/?$/i, '');
 
 /**
  * Origine effective pour les URLs de streaming/médias.
@@ -102,7 +110,7 @@ export function getStreamingVideoUrl(videoUrl) {
       const match =
         pathname.match(/\/uploads\/videos\/([^/]+)$/) ||
         pathname.match(/\/videos\/([^/]+)$/) ||
-        pathname.match(/\/api\/stream\/video\/([^/]+)$/);
+        pathname.match(/\/api(?:\/v1)?\/stream\/video\/([^/]+)$/);
       if (match) {
         try {
           filename = decodeURIComponent(match[1]);
@@ -119,7 +127,7 @@ export function getStreamingVideoUrl(videoUrl) {
     const match =
       path.match(/\/uploads\/videos\/([^/]+)$/) ||
       path.match(/\/videos\/([^/]+)$/) ||
-      path.match(/\/api\/stream\/video\/([^/]+)$/);
+      path.match(/\/api(?:\/v1)?\/stream\/video\/([^/]+)$/);
     if (match) {
       try {
         filename = decodeURIComponent(match[1]);
@@ -145,7 +153,10 @@ export function getStreamingVideoUrl(videoUrl) {
     if (import.meta.env.VITE_STREAM_VIA_UPLOADS !== '0') {
       return `${origin}/uploads/videos/${encodeURIComponent(filename)}`;
     }
-    return `${origin}/api/stream/video/${encodeURIComponent(filename)}`;
+    if (API_BASE_URL.startsWith('http')) {
+      return `${API_BASE_URL}/stream/video/${encodeURIComponent(filename)}`;
+    }
+    return `${getEffectiveBackendOrigin()}${API_BASE_URL}/stream/video/${encodeURIComponent(filename)}`;
   }
 
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
@@ -167,7 +178,15 @@ export function getHlsUrlFromVideoUrl(videoUrl) {
   const filename = match[1];
   const base = filename.replace(/\.[^.]+$/, '');
   const safeName = base.replace(/[^a-zA-Z0-9_-]/g, '_');
-  const origin = trimmed.startsWith('http') ? (() => { try { return new URL(trimmed).origin; } catch { return getEffectiveBackendOrigin(); } })() : getEffectiveBackendOrigin();
+  const origin = trimmed.startsWith('http')
+    ? (() => {
+        try {
+          return new URL(trimmed).origin;
+        } catch {
+          return getEffectiveBackendOrigin();
+        }
+      })()
+    : getEffectiveBackendOrigin();
   return `${origin}/uploads/videos_hls/${safeName}/playlist.m3u8`;
 }
 const api = axios.create({
@@ -187,7 +206,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  },
+  }
 );
 
 // Response interceptor
@@ -199,30 +218,32 @@ api.interceptors.response.use(
       // Backend not available, return empty response for demo mode
       return Promise.reject(error);
     }
-    
+
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       // Optionally redirect to login
     }
-    
+
     // For 500+ errors: attach a clearer message and log for debugging
     if (error.response?.status >= 500) {
-      const url = error.config?.baseURL && error.config?.url
-        ? `${error.config.baseURL}${error.config.url}`
-        : error.config?.url || 'requête inconnue';
+      const url =
+        error.config?.baseURL && error.config?.url
+          ? `${error.config.baseURL}${error.config.url}`
+          : error.config?.url || 'requête inconnue';
       const serverMsg = error.response?.data?.message || error.response?.data?.error;
       const detail = serverMsg ? ` — ${serverMsg}` : '';
       error.userMessage = `Erreur serveur (${error.response.status}) sur ${url}${detail}`;
       // Ne pas polluer la console pour GET /api/notifications (backend souvent arrêté en dev)
-      const isNotificationsList = /\/api\/notifications(\?|$)/.test(url || '') && (error.config?.method || 'get').toLowerCase() === 'get';
+      const isNotificationsList =
+        /\/api\/notifications(\?|$)/.test(url || '') && (error.config?.method || 'get').toLowerCase() === 'get';
       if (import.meta.env.DEV && !isNotificationsList) {
         console.error('[API 5xx]', url, error.response?.data || error.message);
       }
       return Promise.reject(error);
     }
-    
+
     return Promise.reject(error);
-  },
+  }
 );
 
 export const apiService = {
@@ -231,19 +252,19 @@ export const apiService = {
   getRadioStation: (id) => api.get(`/radio/${id}`),
   /** Signale qu'un auditeur rejoint ou quitte l'écoute (action: 'join' | 'leave') */
   updateRadioListeners: (stationId, action) => api.patch(`/radio/${stationId}/listeners`, { action }),
-  
+
   // Movies & Series
   getMovies: (params = '') => api.get(`/movies?${params}`),
   getMovie: (id) => api.get(`/movies/${id}`),
-  
+
   // Magazine
   getArticles: (params = '') => api.get(`/magazine?${params}`),
   getArticle: (id, params = '') => api.get(`/magazine/${id}${params ? `?${params}` : ''}`),
-  
+
   // Restaurants
   getRestaurants: (params = '') => api.get(`/restaurants?${params}`),
   getRestaurant: (id) => api.get(`/restaurants/${id}`),
-  
+
   // Shop
   getProducts: (params = '') => api.get(`/shop?${params}`),
   getProduct: (id) => api.get(`/shop/${id}`),
@@ -270,7 +291,8 @@ export const apiService = {
     const id = bannerId != null ? String(bannerId) : '';
     if (!id) return Promise.resolve();
     return api.post(`/banners/${id}/impression`).catch((err) => {
-      if (import.meta.env.DEV) console.warn('[Banners] Erreur enregistrement affichage:', err?.response?.status, err?.message);
+      if (import.meta.env.DEV)
+        console.warn('[Banners] Erreur enregistrement affichage:', err?.response?.status, err?.message);
     });
   },
   /** Enregistrer un clic sur une bannière */
@@ -278,7 +300,11 @@ export const apiService = {
 
   /** Prochaine pub éligible (calendrier). type: 'preroll' | 'midroll'. Retourne { id, videoUrl, skipAfterSeconds } ou { videoUrl: null }. */
   getNextAd: (type, atPercent) => {
-    const q = `type=${type}` + (type === 'midroll' && atPercent != null && atPercent !== '' ? `&atPercent=${encodeURIComponent(atPercent)}` : '');
+    const q =
+      `type=${type}` +
+      (type === 'midroll' && atPercent != null && atPercent !== ''
+        ? `&atPercent=${encodeURIComponent(atPercent)}`
+        : '');
     return api.get(`/ads/next?${q}`);
   },
   /** Enregistrer un affichage (impression) d'une publicité vidéo */
@@ -286,7 +312,8 @@ export const apiService = {
     const id = adId != null ? String(adId) : '';
     if (!id) return Promise.resolve();
     return api.post(`/ads/${id}/impression`).catch((err) => {
-      if (import.meta.env.DEV) console.warn('[Pubs] Erreur enregistrement affichage:', err?.response?.status, err?.message);
+      if (import.meta.env.DEV)
+        console.warn('[Pubs] Erreur enregistrement affichage:', err?.response?.status, err?.message);
     });
   },
 
@@ -297,21 +324,21 @@ export const apiService = {
   getNotifications: (params = '') => api.get(`/notifications${params ? `?${params}` : ''}`),
   createNotification: (data) => api.post('/notifications', data),
   deleteNotification: (id) => api.delete(`/notifications/${id}`),
-  
+
   // Messages
   getConversations: () => api.get('/messages'),
   getMessages: (userId) => api.get(`/messages/${userId}`),
   sendMessage: (data) => api.post('/messages', data),
-  
+
   // Feedback
   submitFeedback: (data) => api.post('/feedback', data),
   getFeedback: (id) => api.get(`/feedback/${id}`),
-  
+
   // Auth — getUserData/putUserData conservés pour sync favoris (futur mode connecté)
   /** Données utilisateur (favoris + positions de lecture) — persistées côté serveur */
   getUserData: () => api.get('/auth/user-data'),
   putUserData: (data) => api.put('/auth/user-data', data),
-  
+
   // Health check
   healthCheck: () => api.get('/health'),
 
@@ -338,11 +365,11 @@ export const apiService = {
     } catch (_) {}
     return null;
   },
-  
+
   // GNV - Navires (API MongoDB)
   getGNVShips: () => api.get('/gnv/ships'),
   getGNVShip: (id) => api.get(`/gnv/ships/${id}`),
-  
+
   // Generic methods
   get: (url) => api.get(url),
   post: (url, data) => api.post(url, data),
@@ -351,7 +378,3 @@ export const apiService = {
 };
 
 export default api;
-
-
-
-

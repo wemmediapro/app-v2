@@ -1,6 +1,22 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Baby, Plus, Edit, Trash2, Search, Clock, Users, Filter, MapPin, Calendar, X, Save, Upload, Ship, Globe } from 'lucide-react';
+import {
+  Baby,
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Clock,
+  Users,
+  Filter,
+  MapPin,
+  Calendar,
+  X,
+  Save,
+  Upload,
+  Ship,
+  Globe,
+} from 'lucide-react';
 import FilterBar from '../components/FilterBar';
 import { apiService } from '../services/apiService';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
@@ -35,7 +51,7 @@ const Enfant = () => {
     features: [],
     isActive: true,
     countries: [],
-    translations: emptyTranslations()
+    translations: emptyTranslations(),
   });
   const [newFeature, setNewFeature] = useState('');
 
@@ -45,7 +61,7 @@ const Enfant = () => {
     { name: 'Tunisie', code: 'TN' },
     { name: 'Algérie', code: 'DZ' },
     { name: 'Italie', code: 'IT' },
-    { name: 'Espagne', code: 'ES' }
+    { name: 'Espagne', code: 'ES' },
   ];
 
   // Catégories disponibles
@@ -57,7 +73,7 @@ const Enfant = () => {
     'Divertissement',
     'Musique',
     'Danse',
-    'Lecture'
+    'Lecture',
   ];
 
   useEffect(() => {
@@ -79,18 +95,20 @@ const Enfant = () => {
   };
 
   const categories = useMemo(() => {
-    const cats = new Set(activities.map(activity => activity.category));
+    const cats = new Set(activities.map((activity) => activity.category));
     return Array.from(cats).sort();
   }, [activities]);
 
   const filteredActivities = useMemo(() => {
-    return activities.filter(activity => {
-      const matchesSearch = activity.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           activity.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    return activities.filter((activity) => {
+      const matchesSearch =
+        activity.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        activity.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || activity.category === categoryFilter;
-      const matchesStatus = statusFilter === 'all' || 
-                           (statusFilter === 'active' && activity.isActive) ||
-                           (statusFilter === 'inactive' && !activity.isActive);
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'active' && activity.isActive) ||
+        (statusFilter === 'inactive' && !activity.isActive);
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [activities, searchQuery, categoryFilter, statusFilter]);
@@ -124,7 +142,7 @@ const Enfant = () => {
     if (newFeature.trim() && !newActivity.features.includes(newFeature.trim())) {
       setNewActivity({
         ...newActivity,
-        features: [...newActivity.features, newFeature.trim()]
+        features: [...newActivity.features, newFeature.trim()],
       });
       setNewFeature('');
     }
@@ -133,7 +151,7 @@ const Enfant = () => {
   const removeFeature = (feature) => {
     setNewActivity({
       ...newActivity,
-      features: newActivity.features.filter(f => f !== feature)
+      features: newActivity.features.filter((f) => f !== feature),
     });
   };
 
@@ -141,8 +159,8 @@ const Enfant = () => {
     setNewActivity({
       ...newActivity,
       countries: newActivity.countries.includes(countryName)
-        ? newActivity.countries.filter(c => c !== countryName)
-        : [...newActivity.countries, countryName]
+        ? newActivity.countries.filter((c) => c !== countryName)
+        : [...newActivity.countries, countryName],
     });
   };
 
@@ -164,9 +182,10 @@ const Enfant = () => {
       features: Array.isArray(activity.features) ? [...activity.features] : [],
       isActive: activity.isActive !== false,
       countries: Array.isArray(activity.countries) ? [...activity.countries] : [],
-      translations: activity.translations && typeof activity.translations === 'object'
-        ? { ...emptyTranslations(), ...activity.translations }
-        : emptyTranslations()
+      translations:
+        activity.translations && typeof activity.translations === 'object'
+          ? { ...emptyTranslations(), ...activity.translations }
+          : emptyTranslations(),
     });
     setImagePreview(activity.image || activity.imageUrl || null);
     setImageFile(null);
@@ -196,7 +215,7 @@ const Enfant = () => {
       features: [],
       isActive: true,
       countries: [],
-      translations: emptyTranslations()
+      translations: emptyTranslations(),
     });
   };
 
@@ -229,10 +248,15 @@ const Enfant = () => {
         imageUrl: imagePreview || editingActivity.imageUrl || editingActivity.image,
         capacity: String(newActivity.capacity || 15),
         price: parseFloat(newActivity.price) || 0,
-        duration: typeof newActivity.duration === 'number' ? `${newActivity.duration} min` : (newActivity.duration ? `${newActivity.duration} min` : '60 min'),
+        duration:
+          typeof newActivity.duration === 'number'
+            ? `${newActivity.duration} min`
+            : newActivity.duration
+              ? `${newActivity.duration} min`
+              : '60 min',
         schedule: newActivity.schedule || '10h-11h',
         location: newActivity.location || 'Espace Enfant - Pont 6',
-        ageRange: newActivity.ageRange || '4-12 ans'
+        ageRange: newActivity.ageRange || '4-12 ans',
       };
       await apiService.updateEnfantActivity(editingActivity._id, activityData);
       closeModal();
@@ -283,13 +307,17 @@ const Enfant = () => {
         name: frName,
         description: frDesc,
         translations,
-        imageUrl: imagePreview || newActivity.imageUrl || 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&h=400&fit=crop',
+        imageUrl:
+          imagePreview ||
+          newActivity.imageUrl ||
+          'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&h=400&fit=crop',
         capacity: String(newActivity.capacity || 15),
         price: parseFloat(newActivity.price) || 0,
-        duration: typeof newActivity.duration === 'number' ? `${newActivity.duration} min` : (newActivity.duration || '60 min'),
+        duration:
+          typeof newActivity.duration === 'number' ? `${newActivity.duration} min` : newActivity.duration || '60 min',
         schedule: newActivity.schedule || '10h-11h',
         location: newActivity.location || 'Espace Enfant - Pont 6',
-        ageRange: newActivity.ageRange || '4-12 ans'
+        ageRange: newActivity.ageRange || '4-12 ans',
       };
 
       await apiService.createEnfantActivity(activityData);
@@ -297,7 +325,7 @@ const Enfant = () => {
       toast.success(t('enfant.activityAdded'));
       fetchActivities();
     } catch (error) {
-      console.error('Erreur lors de l\'ajout de l\'activité:', error);
+      console.error("Erreur lors de l'ajout de l'activité:", error);
       toast.error(t('enfant.addError'));
     }
   };
@@ -313,7 +341,7 @@ const Enfant = () => {
     );
   }
 
-  const activeActivities = activities.filter(a => a.isActive);
+  const activeActivities = activities.filter((a) => a.isActive);
 
   const totalParticipants = activities.reduce((sum, a) => sum + (a.currentParticipants || 0), 0);
   const totalActivities = activities.length;
@@ -327,55 +355,70 @@ const Enfant = () => {
           <p className="text-sm text-slate-500 mt-0.5">{t('enfant.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => {
-            setEditingActivity(null);
-            setImageFile(null);
-            setImagePreview(null);
-            setNewFeature('');
-            setActiveLang('fr');
-            setNewActivity({
-              name: '',
-              category: '',
-              description: '',
-              ageRange: '',
-              duration: '',
-              location: '',
-              capacity: '',
-              price: 0,
-              schedule: '',
-              instructor: '',
-              features: [],
-              isActive: true,
-              countries: [],
-              translations: emptyTranslations()
-            });
-            setShowAddModal(true);
-          }}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-indigo-700 transition-colors shrink-0"
-        >
-          <Plus size={18} />
-          {t('enfant.addActivity')}
-        </motion.button>
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              setEditingActivity(null);
+              setImageFile(null);
+              setImagePreview(null);
+              setNewFeature('');
+              setActiveLang('fr');
+              setNewActivity({
+                name: '',
+                category: '',
+                description: '',
+                ageRange: '',
+                duration: '',
+                location: '',
+                capacity: '',
+                price: 0,
+                schedule: '',
+                instructor: '',
+                features: [],
+                isActive: true,
+                countries: [],
+                translations: emptyTranslations(),
+              });
+              setShowAddModal(true);
+            }}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-indigo-700 transition-colors shrink-0"
+          >
+            <Plus size={18} />
+            {t('enfant.addActivity')}
+          </motion.button>
         </div>
       </div>
 
       {/* Stats compactes */}
       <div className="flex flex-wrap gap-3">
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-pink-50"><Baby size={18} className="text-pink-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('enfant.totalActivities')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{totalActivities}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-pink-50">
+            <Baby size={18} className="text-pink-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('enfant.totalActivities')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{totalActivities}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50"><Baby size={18} className="text-emerald-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('enfant.active')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{activeActivities.length}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
+            <Baby size={18} className="text-emerald-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('enfant.active')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{activeActivities.length}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50"><Users size={18} className="text-violet-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('enfant.participants')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{totalParticipants}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
+            <Users size={18} className="text-violet-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('enfant.participants')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{totalParticipants}</p>
+          </div>
         </div>
       </div>
 
@@ -392,11 +435,23 @@ const Enfant = () => {
           />
         </div>
         <div className="flex rounded-xl border border-slate-200 bg-slate-50/80 p-1 gap-0.5 shrink-0">
-          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="px-3.5 py-2 rounded-lg text-sm font-medium bg-white border border-slate-200/80 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3.5 py-2 rounded-lg text-sm font-medium bg-white border border-slate-200/80 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          >
             <option value="all">{t('enfant.allCategories')}</option>
-            {categories.map(category => (<option key={category} value={category}>{category}</option>))}
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
           </select>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3.5 py-2 rounded-lg text-sm font-medium bg-white border border-slate-200/80 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3.5 py-2 rounded-lg text-sm font-medium bg-white border border-slate-200/80 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          >
             <option value="all">{t('enfant.allStatuses')}</option>
             <option value="active">{t('enfant.statusActive')}</option>
             <option value="inactive">{t('enfant.statusInactive')}</option>
@@ -407,11 +462,10 @@ const Enfant = () => {
       {/* Activities Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredActivities.map((activity) => {
-          const occupancyRate = activity.capacity > 0 
-            ? Math.round((activity.currentParticipants / activity.capacity) * 100) 
-            : 0;
+          const occupancyRate =
+            activity.capacity > 0 ? Math.round((activity.currentParticipants / activity.capacity) * 100) : 0;
           const isFull = activity.currentParticipants >= activity.capacity;
-          
+
           return (
             <motion.div
               key={activity._id}
@@ -421,8 +475,8 @@ const Enfant = () => {
             >
               <div className="aspect-video bg-gradient-to-br from-pink-100 to-purple-100 relative overflow-hidden">
                 {activity.image ? (
-                  <img 
-                    src={activity.image} 
+                  <img
+                    src={activity.image}
                     alt={activity.name}
                     className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => {
@@ -435,12 +489,12 @@ const Enfant = () => {
                   <Baby size={48} className="text-pink-500" />
                 </div>
                 {!activity.isActive && (
-                    <div className="absolute top-2 right-2 bg-gray-500 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
+                  <div className="absolute top-2 right-2 bg-gray-500 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
                     {t('enfant.inactive')}
                   </div>
                 )}
                 {isFull && activity.isActive && (
-                    <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
+                  <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
                     {t('enfant.full')}
                   </div>
                 )}
@@ -457,7 +511,9 @@ const Enfant = () => {
                   </span>
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Users size={14} />
-                    <span>{activity.currentParticipants || 0}/{activity.capacity || 0}</span>
+                    <span>
+                      {activity.currentParticipants || 0}/{activity.capacity || 0}
+                    </span>
                   </div>
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">{activity.name}</h3>
@@ -465,7 +521,10 @@ const Enfant = () => {
                 {activity.countries && activity.countries.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-3">
                     {activity.countries.slice(0, 3).map((country, idx) => (
-                      <span key={idx} className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded flex items-center gap-1">
+                      <span
+                        key={idx}
+                        className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded flex items-center gap-1"
+                      >
                         <Globe size={10} />
                         {country}
                       </span>
@@ -507,11 +566,9 @@ const Enfant = () => {
                       <span>{occupancyRate}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         className={`h-2 rounded-full ${
-                          occupancyRate >= 90 ? 'bg-red-500' : 
-                          occupancyRate >= 70 ? 'bg-yellow-500' : 
-                          'bg-green-500'
+                          occupancyRate >= 90 ? 'bg-red-500' : occupancyRate >= 70 ? 'bg-yellow-500' : 'bg-green-500'
                         }`}
                         style={{ width: `${Math.min(occupancyRate, 100)}%` }}
                       />
@@ -542,7 +599,9 @@ const Enfant = () => {
         })}
         {filteredActivities.length === 0 && (
           <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-            <div className="rounded-2xl bg-slate-100 p-6 mb-4"><Baby size={40} className="text-slate-400" /></div>
+            <div className="rounded-2xl bg-slate-100 p-6 mb-4">
+              <Baby size={40} className="text-slate-400" />
+            </div>
             <p className="text-slate-600 font-medium">{t('enfant.noActivityFound')}</p>
           </div>
         )}
@@ -561,10 +620,7 @@ const Enfant = () => {
               <h2 className="text-2xl font-bold text-gray-900">
                 {editingActivity ? t('enfant.editActivity') : t('enfant.addActivity')}
               </h2>
-              <button
-                onClick={closeModal}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
+              <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <X size={20} className="text-gray-600" />
               </button>
             </div>
@@ -587,36 +643,53 @@ const Enfant = () => {
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('enfant.activityNameRequired')}</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('enfant.activityNameRequired')}
+                    </label>
                     <input
                       type="text"
-                      value={activeLang === 'fr' ? newActivity.name : (newActivity.translations?.[activeLang]?.name ?? '')}
-                      onChange={(e) => activeLang === 'fr'
-                        ? setNewActivity({ ...newActivity, name: e.target.value })
-                        : setNewActivity({
-                            ...newActivity,
-                            translations: {
-                              ...newActivity.translations,
-                              [activeLang]: { ...newActivity.translations?.[activeLang], name: e.target.value }
-                            }
-                          })}
+                      value={
+                        activeLang === 'fr' ? newActivity.name : (newActivity.translations?.[activeLang]?.name ?? '')
+                      }
+                      onChange={(e) =>
+                        activeLang === 'fr'
+                          ? setNewActivity({ ...newActivity, name: e.target.value })
+                          : setNewActivity({
+                              ...newActivity,
+                              translations: {
+                                ...newActivity.translations,
+                                [activeLang]: { ...newActivity.translations?.[activeLang], name: e.target.value },
+                              },
+                            })
+                      }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder={t('enfant.placeholderActivityName')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('enfant.descriptionRequired')}</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('enfant.descriptionRequired')}
+                    </label>
                     <textarea
-                      value={activeLang === 'fr' ? newActivity.description : (newActivity.translations?.[activeLang]?.description ?? '')}
-                      onChange={(e) => activeLang === 'fr'
-                        ? setNewActivity({ ...newActivity, description: e.target.value })
-                        : setNewActivity({
-                            ...newActivity,
-                            translations: {
-                              ...newActivity.translations,
-                              [activeLang]: { ...newActivity.translations?.[activeLang], description: e.target.value }
-                            }
-                          })}
+                      value={
+                        activeLang === 'fr'
+                          ? newActivity.description
+                          : (newActivity.translations?.[activeLang]?.description ?? '')
+                      }
+                      onChange={(e) =>
+                        activeLang === 'fr'
+                          ? setNewActivity({ ...newActivity, description: e.target.value })
+                          : setNewActivity({
+                              ...newActivity,
+                              translations: {
+                                ...newActivity.translations,
+                                [activeLang]: {
+                                  ...newActivity.translations?.[activeLang],
+                                  description: e.target.value,
+                                },
+                              },
+                            })
+                      }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       rows={3}
                       placeholder={t('enfant.placeholderDescription')}
@@ -633,17 +706,17 @@ const Enfant = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">{t('enfant.selectCategory')}</option>
-                  {availableCategories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {availableCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
                   ))}
                 </select>
               </div>
 
               {/* Pays */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  {t('enfant.assignCountries')}
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">{t('enfant.assignCountries')}</label>
                 <div className="border border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
                   {availableCountries.length === 0 ? (
                     <p className="text-sm text-gray-500 text-center py-4">{t('enfant.noCountryAvailable')}</p>
@@ -683,9 +756,7 @@ const Enfant = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('enfant.ageRange')}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('enfant.ageRange')}</label>
                   <input
                     type="text"
                     value={newActivity.ageRange}
@@ -695,9 +766,7 @@ const Enfant = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('enfant.durationMin')}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('enfant.durationMin')}</label>
                   <input
                     type="number"
                     value={newActivity.duration}
@@ -707,9 +776,7 @@ const Enfant = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('enfant.capacityMax')}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('enfant.capacityMax')}</label>
                   <input
                     type="number"
                     value={newActivity.capacity}
@@ -722,9 +789,7 @@ const Enfant = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('enfant.location')}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('enfant.location')}</label>
                   <input
                     type="text"
                     value={newActivity.location}
@@ -734,9 +799,7 @@ const Enfant = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('enfant.price')}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('enfant.price')}</label>
                   <input
                     type="number"
                     step="0.01"
@@ -750,9 +813,7 @@ const Enfant = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('enfant.schedule')}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('enfant.schedule')}</label>
                   <input
                     type="text"
                     value={newActivity.schedule}
@@ -762,9 +823,7 @@ const Enfant = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('enfant.instructor')}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('enfant.instructor')}</label>
                   <input
                     type="text"
                     value={newActivity.instructor}
@@ -777,19 +836,13 @@ const Enfant = () => {
 
               {/* Upload Image */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('enfant.activityImage')}
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('enfant.activityImage')}</label>
                 {imagePreview ? (
                   <div className="relative">
                     <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
                       <div className="flex items-center gap-4">
                         <div className="relative w-32 h-24 rounded-lg overflow-hidden bg-white border border-gray-200">
-                          <img
-                            src={imagePreview}
-                            alt="Activity preview"
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={imagePreview} alt="Activity preview" className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-900">
@@ -816,25 +869,16 @@ const Enfant = () => {
                       <p className="mb-2 text-sm text-gray-500">
                         <span className="font-semibold">{t('enfant.clickToUpload')}</span> {t('enfant.orDragDrop')}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        {t('enfant.imageFormats')}
-                      </p>
+                      <p className="text-xs text-gray-500">{t('enfant.imageFormats')}</p>
                     </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                   </label>
                 )}
               </div>
 
               {/* Caractéristiques */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('enfant.features')}
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('enfant.features')}</label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {newActivity.features.map((feature, index) => (
                     <span
@@ -842,11 +886,7 @@ const Enfant = () => {
                       className="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm"
                     >
                       {feature}
-                      <button
-                        type="button"
-                        onClick={() => removeFeature(feature)}
-                        className="hover:text-pink-900"
-                      >
+                      <button type="button" onClick={() => removeFeature(feature)} className="hover:text-pink-900">
                         <X size={14} />
                       </button>
                     </span>
@@ -917,4 +957,3 @@ const Enfant = () => {
 };
 
 export default Enfant;
-

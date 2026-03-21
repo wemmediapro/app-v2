@@ -6,13 +6,13 @@ Ce document décrit pourquoi le streaming peut encore sembler lent et comment le
 
 ## 1. Où peut venir la lenteur ?
 
-| Cause | Ce qui a été fait / à faire |
-|-------|-----------------------------|
-| **Pas de cache HTTP long** | Backend et Nginx envoient maintenant `max-age=86400` (24 h) + `stale-while-revalidate=3600`. |
-| **Médias servis par Node** | Activer la livraison directe par Nginx : `nginx_serve_uploads_static: true` (Ansible) ou `location /uploads/` avec `alias` (voir `docs/NGINX-STREAMING-SERVEUR.md`). |
-| **Cache navigateur court** | `Cache-Control` passé à 24 h + `stale-while-revalidate` pour que le navigateur réutilise le cache tout en revalidant en arrière-plan. |
-| **Service Worker sans 206** | PWA met en cache les réponses 200/206 pour `/uploads/` (CacheFirst, 7 jours, 80 entrées). Les requêtes Range sont prises en compte via `cacheableResponse: { statuses: [0, 200, 206] }`. |
-| **Premier octet lent (TTFB)** | Buffer Node à 128 Ko, Nginx avec `proxy_request_buffering off` et timeouts longs pour `/api/stream/` et `/uploads/`. |
+| Cause                         | Ce qui a été fait / à faire                                                                                                                                                              |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pas de cache HTTP long**    | Backend et Nginx envoient maintenant `max-age=86400` (24 h) + `stale-while-revalidate=3600`.                                                                                             |
+| **Médias servis par Node**    | Activer la livraison directe par Nginx : `nginx_serve_uploads_static: true` (Ansible) ou `location /uploads/` avec `alias` (voir `docs/NGINX-STREAMING-SERVEUR.md`).                     |
+| **Cache navigateur court**    | `Cache-Control` passé à 24 h + `stale-while-revalidate` pour que le navigateur réutilise le cache tout en revalidant en arrière-plan.                                                    |
+| **Service Worker sans 206**   | PWA met en cache les réponses 200/206 pour `/uploads/` (CacheFirst, 7 jours, 80 entrées). Les requêtes Range sont prises en compte via `cacheableResponse: { statuses: [0, 200, 206] }`. |
+| **Premier octet lent (TTFB)** | Buffer Node à 128 Ko, Nginx avec `proxy_request_buffering off` et timeouts longs pour `/api/stream/` et `/uploads/`.                                                                     |
 
 ---
 

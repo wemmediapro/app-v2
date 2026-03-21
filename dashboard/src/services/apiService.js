@@ -1,11 +1,14 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-// En dev : utiliser /api pour passer par le proxy Vite (évite CORS et 404 sur /notifications, etc.)
-// En prod : toujours URL relative /api
-const API_BASE_URL = import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== ''
-  ? import.meta.env.VITE_API_URL
-  : '/api';
+function resolveApiBaseUrl() {
+  if (import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== '') {
+    return String(import.meta.env.VITE_API_URL).replace(/\/$/, '');
+  }
+  return String(import.meta.env.VITE_API_PREFIX || '/api/v1').replace(/\/$/, '');
+}
+
+export const API_BASE_URL = resolveApiBaseUrl();
 
 // Create axios instance — withCredentials pour envoyer le cookie httpOnly (auth admin)
 const api = axios.create({
@@ -39,25 +42,25 @@ export const apiService = {
   // Dashboard
   getDashboardStats: () => api.get('/admin/dashboard'),
   getDatabases: () => api.get('/admin/databases'),
-  
+
   // Users
   getUsers: (params = '') => api.get(`/admin/users?${params}`),
   createUser: (data) => api.post('/admin/users', data),
   updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
   deleteUser: (id, hard = false) => api.delete(`/admin/users/${id}${hard ? '?hard=true' : ''}`),
-  
+
   // Restaurants
   getRestaurants: (params = '') => api.get(`/restaurants?${params}`),
   getRestaurant: (id) => api.get(`/restaurants/${id}`),
   createRestaurant: (data) => api.post('/restaurants', data),
   updateRestaurant: (id, data) => api.put(`/restaurants/${id}`, data),
   deleteRestaurant: (id) => api.delete(`/restaurants/${id}`),
-  
+
   // Feedback
   getFeedback: (params = '') => api.get(`/feedback/admin/all?${params}`),
   getFeedbackById: (id) => api.get(`/feedback/${id}`),
   updateFeedbackStatus: (id, data) => api.put(`/feedback/admin/${id}`, data),
-  
+
   // Messages
   getConversations: () => api.get('/admin/conversations'),
   getConversationsUnreadCount: () => api.get('/admin/conversations/unread-count'),
@@ -68,20 +71,20 @@ export const apiService = {
   getNotificationsAll: (params = '') => api.get(`/notifications/all?${params}`),
   createNotification: (data) => api.post('/notifications', data),
   deleteNotification: (id) => api.delete(`/notifications/${id}`),
-  
+
   // Analytics
   getAnalyticsOverview: () => api.get('/analytics/overview'),
   getAnalyticsConnections: () => api.get('/analytics/connections'),
   getAnalyticsContent: () => api.get('/analytics/content'),
   getAnalyticsPerformance: () => api.get('/analytics/performance'),
-  
+
   // Radio
   getRadioStations: (params = '') => api.get(`/radio?${params}`),
   getRadioStation: (id) => api.get(`/radio/${id}`),
   createRadioStation: (data) => api.post('/radio', data),
   updateRadioStation: (id, data) => api.put(`/radio/${id}`, data),
   deleteRadioStation: (id) => api.delete(`/radio/${id}`),
-  
+
   // Movies & Series
   getMovies: (params = '') => api.get(`/movies?${params}`),
   getMovie: (id) => api.get(`/movies/${id}`),
@@ -95,7 +98,7 @@ export const apiService = {
   createArticle: (data) => api.post('/magazine', data),
   updateArticle: (id, data) => api.put(`/magazine/${id}`, data),
   deleteArticle: (id) => api.delete(`/magazine/${id}`),
-  
+
   // Shop
   getProducts: (params = '') => api.get(`/shop?${params}`),
   getProduct: (id) => api.get(`/shop/${id}`),
@@ -106,7 +109,7 @@ export const apiService = {
   createPromotion: (data) => api.post('/shop/promotions', data),
   updatePromotion: (id, data) => api.put(`/shop/promotions/${id}`, data),
   deletePromotion: (id) => api.delete(`/shop/promotions/${id}`),
-  
+
   // WebTV (MongoDB + fallback démo)
   getWebTVChannels: (params = '') => api.get(`/webtv/channels?${params}`),
   getWebTVChannel: (id) => api.get(`/webtv/channels/${id}`),
@@ -117,7 +120,7 @@ export const apiService = {
   translateWebTVChannel: (id, data) => api.post(`/webtv/channels/${id}/translate`, data || {}),
   /** Traduire un titre + description sans chaîne (pour formulaire création). Retourne { translations }. */
   translateWebTVPreview: (data) => api.post('/webtv/translate', data),
-  
+
   // Enfant (MongoDB + fallback démo)
   getEnfantActivities: (params = '') => api.get(`/enfant/activities?${params}`),
   getEnfantActivity: (id) => api.get(`/enfant/activities/${id}`),
@@ -134,7 +137,7 @@ export const apiService = {
   createShipmapDeck: (data) => api.post('/shipmap/decks', data),
   updateShipmapDeck: (id, data) => api.put(`/shipmap/decks/${id}`, data),
   deleteShipmapDeck: (id) => api.delete(`/shipmap/decks/${id}`),
-  
+
   // Banners (MongoDB + fallback démo)
   getBanners: (params = '') => api.get(`/banners?${params}`),
   getBannersAll: () => api.get('/banners/all'),
@@ -156,14 +159,16 @@ export const apiService = {
   createTrailer: (data) => api.post('/trailers', data),
   updateTrailer: (id, data) => api.put(`/trailers/${id}`, data),
   deleteTrailer: (id) => api.delete(`/trailers/${id}`),
-  
+
   // Upload vidéo (compression automatique à 480p)
   uploadVideo: async (file, onProgress) => {
     const formData = new FormData();
     formData.append('video', file);
-    const config = onProgress ? {
-      onUploadProgress: (e) => onProgress(e.loaded && e.total ? (e.loaded / e.total) * 100 : 0)
-    } : {};
+    const config = onProgress
+      ? {
+          onUploadProgress: (e) => onProgress(e.loaded && e.total ? (e.loaded / e.total) * 100 : 0),
+        }
+      : {};
     const response = await api.post('/upload/video', formData, {
       ...config,
       timeout: 300000, // 5 min pour les grosses vidéos
@@ -197,7 +202,7 @@ export const apiService = {
             const percent = e.total ? Math.min(100, Math.round((e.loaded / e.total) * 100)) : 0;
             onProgress(percent);
           }
-        : undefined
+        : undefined,
     });
     return response.data;
   },
@@ -230,5 +235,3 @@ export const apiService = {
 };
 
 export default api;
-
-

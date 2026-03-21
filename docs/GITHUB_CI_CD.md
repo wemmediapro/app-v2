@@ -8,15 +8,15 @@ Ce document complète les workflows dans `.github/workflows/`. Les **paramètres
 
 ## Workflows
 
-| Fichier | Déclencheur | Rôle |
-|---------|-------------|------|
-| `tests.yml` | `push` / `pull_request` sur `main`, `develop` | Frontend (Vitest + Playwright + Codecov), backend (Jest + Codecov), **dashboard** (build + audit), k6 sur **PR uniquement**, `npm audit` |
-| `codeql.yml` | `push` / `pull_request` / cron hebdo | Analyse sémantique GitHub CodeQL (JS/TS) |
-| `load-test.yml` | `push` sur `main`, `workflow_dispatch` | Charge k6 (+ Artillery optionnel) |
-| `deploy-staging.yml` | `push` sur `develop` | Tests gate, build, déploiement staging (si activé) |
-| `deploy-prod.yml` | `workflow_dispatch` (saisie `DEPLOY`) | Tests, build, déploiement prod (si activé), readiness `GET /api/health/ready` |
-| `security.yml` | Cron quotidien + `workflow_dispatch` | Audit npm, OWASP Dependency-Check (action épinglée par SHA), Snyk optionnel |
-| `monitoring-ping.yml` | Toutes les **15 min** + manuel | Sonde HTTP vers staging ; prod seulement si variable activée (voir ci-dessous) |
+| Fichier               | Déclencheur                                                                                                          | Rôle                                                                                                                                                                           |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tests.yml`           | `push` / `pull_request` sur `main`, `develop`, **`workflow_dispatch`** (lancer manuellement depuis l’onglet Actions) | Frontend (Vitest + Playwright + Codecov), backend (Jest + Codecov), **TypeScript** (`npm run typecheck`), **dashboard** (build + audit), k6 sur **PR uniquement**, `npm audit` |
+| `codeql.yml`          | `push` / `pull_request` / cron hebdo                                                                                 | Analyse sémantique GitHub CodeQL (JS/TS)                                                                                                                                       |
+| `load-test.yml`       | `push` sur `main`, `workflow_dispatch`                                                                               | Charge k6 (+ Artillery optionnel)                                                                                                                                              |
+| `deploy-staging.yml`  | `push` sur `develop`                                                                                                 | Tests + **typecheck**, build, déploiement staging (si activé)                                                                                                                  |
+| `deploy-prod.yml`     | `workflow_dispatch` (saisie `DEPLOY`)                                                                                | Tests + **typecheck**, build, déploiement prod (si activé), readiness `GET /api/v1/health/ready`                                                                               |
+| `security.yml`        | Cron quotidien + `workflow_dispatch`                                                                                 | Audit npm, OWASP Dependency-Check (action épinglée par SHA), Snyk optionnel                                                                                                    |
+| `monitoring-ping.yml` | Toutes les **15 min** + manuel                                                                                       | Sonde HTTP vers staging ; prod seulement si variable activée (voir ci-dessous)                                                                                                 |
 
 ## Dependabot
 
@@ -24,10 +24,10 @@ Le fichier [`.github/dependabot.yml`](../.github/dependabot.yml) ouvre des PR he
 
 ## Monitoring synthétique (Actions)
 
-- **Staging** : si `STAGING_PUBLIC_URL` est défini, le workflow appelle `GET …/api/health/ready` toutes les 15 minutes (`curl` échoue sur **503** si MongoDB est down).
+- **Staging** : si `STAGING_PUBLIC_URL` est défini, le workflow appelle `GET …/api/v1/health/ready` toutes les 15 minutes (`curl` échoue sur **503** si MongoDB est down).
 - **Production** : définir en plus `MONITORING_PING_PRODUCTION=true` pour activer la sonde prod (évite du trafic involontaire).
 
-**Backend** : `GET /api/health` reste une **liveness** (réponse 200 si le process répond). `GET /api/health/ready` est la **readiness** (503 sans MongoDB).
+**Backend** : liveness **`GET /api/v1/health`** (alias **`GET /api/health`**). Readiness **`GET /api/v1/health/ready`** (alias **`/api/health/ready`**), **503** sans MongoDB.
 
 ## CodeQL
 
@@ -44,6 +44,7 @@ Les résultats apparaissent sous **Security → Code scanning**. Ajoutez le job 
    - Ajouter les jobs requis, par ex. :
      - `Frontend Tests`
      - `Backend Tests`
+     - `TypeScript`
      - `Dashboard build + audit`
      - `Security Scan (npm audit)`
      - `Analyze` (CodeQL), si activé
@@ -58,27 +59,42 @@ Les résultats apparaissent sous **Security → Code scanning**. Ajoutez le job 
 
 ### Secrets (Settings → Secrets and variables → Actions)
 
-| Secret | Usage |
-|--------|--------|
-| `CODECOV_TOKEN` | Upload des rapports de couverture (optionnel si Codecov désactivé) |
-| `SNYK_TOKEN` | Scan Snyk dans `security.yml` |
-| `HEROKU_API_KEY` / `RAILWAY_TOKEN` / etc. | Déploiement (à brancher dans les jobs `deploy-*`) |
+| Secret                                    | Usage                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------ |
+| `CODECOV_TOKEN`                           | Upload des rapports de couverture (optionnel si Codecov désactivé) |
+| `SNYK_TOKEN`                              | Scan Snyk dans `security.yml`                                      |
+| `HEROKU_API_KEY` / `RAILWAY_TOKEN` / etc. | Déploiement (à brancher dans les jobs `deploy-*`)                  |
 
 ### Variables (repository ou environment)
 
-| Variable | Usage |
-|----------|--------|
-| `STAGING_DEPLOY_ENABLED` | Mettre à `true` pour exécuter le job de déploiement staging |
-| `STAGING_PUBLIC_URL` | URL publique du staging (smoke test `GET /api/health`) |
-| `PRODUCTION_DEPLOY_ENABLED` | Mettre à `true` pour le job de déploiement prod |
-| `PRODUCTION_PUBLIC_URL` | URL prod pour le readiness check post-déploiement (`/api/health/ready`) |
-| `MONITORING_PING_PRODUCTION` | Mettre à `true` pour que `monitoring-ping.yml` sonde aussi la prod |
+| Variable                     | Usage                                                                |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `STAGING_DEPLOY_ENABLED`     | Mettre à `true` pour exécuter le job de déploiement staging          |
+| `STAGING_PUBLIC_URL`         | URL publique du staging (smoke readiness `GET /api/v1/health/ready`) |
+| `PRODUCTION_DEPLOY_ENABLED`  | Mettre à `true` pour le job de déploiement prod                      |
+| `PRODUCTION_PUBLIC_URL`      | URL prod pour le readiness post-déploiement (`/api/v1/health/ready`) |
+| `MONITORING_PING_PRODUCTION` | Mettre à `true` pour que `monitoring-ping.yml` sonde aussi la prod   |
 
 ## Codecov
 
 1. Créer un projet sur [codecov.io](https://codecov.io) lié au dépôt.
 2. Ajouter `CODECOV_TOKEN` dans les secrets GitHub.
 3. Les flags `frontend` et `backend` séparent les rapports dans Codecov.
+
+Le fichier racine [`codecov.yml`](../codecov.yml) configure les statuts Codecov en mode **informationnel** (ne bloque pas la CI si la couverture baisse).
+
+## Rapports de couverture (artefacts GitHub)
+
+À chaque exécution du workflow **Tests**, les jobs frontend et backend publient des artefacts téléchargeables (**Actions** → exécution → **Artifacts**) :
+
+- **`frontend-coverage`** : `coverage/lcov.info` et les pages HTML Vitest.
+- **`backend-coverage`** : `backend/coverage/lcov.info` et le rapport HTML Jest.
+
+Utile sans compte Codecov ou pour archiver les rapports.
+
+## Lint / format (consultatif en CI)
+
+Les étapes ESLint / Prettier du workflow **Tests** utilisent `continue-on-error: true` : elles signalent la dette sans faire échouer le pipeline (le dépôt compte encore de nombreuses alertes). Pour rendre le lint **bloquant**, corrigez les violations puis retirez `continue-on-error` sur ces étapes.
 
 ## Déploiement Heroku / Railway
 

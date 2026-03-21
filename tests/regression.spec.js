@@ -15,7 +15,12 @@ test.describe('Non-régression', () => {
     if (await article.isVisible().catch(() => false)) {
       await article.click();
       await page.waitForTimeout(300);
-      const back = page.getByRole('button', { name: /retour|back/i }).or(page.locator('button').filter({ has: page.locator('svg') }).first());
+      const back = page.getByRole('button', { name: /retour|back/i }).or(
+        page
+          .locator('button')
+          .filter({ has: page.locator('svg') })
+          .first()
+      );
       if (await back.isVisible().catch(() => false)) {
         await back.click();
         await expect(page).toHaveURL(/\/magazine/);
@@ -31,9 +36,10 @@ test.describe('Non-régression', () => {
   test('changement de langue ne casse pas la page', async ({ page }) => {
     await page.goto('/magazine');
     await acceptConditions(page);
-    const langTrigger = page.getByRole('button', { name: /changer|langue|language|fr|en/i }).or(
-      page.locator('[aria-haspopup="listbox"]')
-    ).first();
+    const langTrigger = page
+      .getByRole('button', { name: /changer|langue|language|fr|en/i })
+      .or(page.locator('[aria-haspopup="listbox"]'))
+      .first();
     if (await langTrigger.isVisible().catch(() => false)) {
       await langTrigger.click();
       await page.waitForTimeout(400);

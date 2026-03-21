@@ -15,14 +15,14 @@ Dans `config.env` du backend, augmenter par exemple :
 
 ## Commandes
 
-| Script | Description |
-|--------|-------------|
-| `npm run test:load:k6` | k6 — profil **full** (1500 VUs, ~8 min) |
-| `npm run test:load:k6:ci` | k6 — profil **ci** (100 VUs) |
-| `npm run test:load:artillery` | Artillery — `-e full` |
-| `npm run test:load:artillery:ci` | Artillery — `-e ci` |
-| `npm run test:load:report` | k6 JSON + Artillery JSON + **HTML** (profil `ci` par défaut) |
-| `npm run test:load` | Ancien script léger `k6-load.js` |
+| Script                           | Description                                                  |
+| -------------------------------- | ------------------------------------------------------------ |
+| `npm run test:load:k6`           | k6 — profil **full** (1500 VUs, ~8 min)                      |
+| `npm run test:load:k6:ci`        | k6 — profil **ci** (100 VUs)                                 |
+| `npm run test:load:artillery`    | Artillery — `-e full`                                        |
+| `npm run test:load:artillery:ci` | Artillery — `-e ci`                                          |
+| `npm run test:load:report`       | k6 JSON + Artillery JSON + **HTML** (profil `ci` par défaut) |
+| `npm run test:load`              | Ancien script léger `k6-load.js`                             |
 
 ### Variables utiles (k6)
 
@@ -51,6 +51,6 @@ Fichiers générés dans `tests/load/out/` :
 
 ## Seuils cibles (spécification produit)
 
-- p95 latence HTTP &lt; 500 ms  
-- Taux d’erreur &lt; 1 %  
+- p95 latence HTTP &lt; 500 ms
+- Taux d’erreur &lt; 1 %
 - Durée cible scénario 1500 VUs &lt; 10 min (k6 ≈ 8 min)

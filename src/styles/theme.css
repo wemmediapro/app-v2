@@ -1,14 +1,14 @@
 /* Charte graphique GNV OnBoard — voir CHARTE-GRAPHIQUE-FRONT.md */
 :root {
-  --gnv-blue: #0E4DA4;
-  --gnv-sky: #6BBDEB;
-  --gnv-orange: #E85D2E;
-  --gnv-green: #2D9D78;
-  --gnv-terracotta: #DA6F4A;
-  --gnv-teal: #3E8A7D;
-  --gnv-sand: #F0E6D8;
-  --gnv-mint: #8ACD85;
-  --gnv-royal: #2944B8;
+  --gnv-blue: #0e4da4;
+  --gnv-sky: #6bbdeb;
+  --gnv-orange: #e85d2e;
+  --gnv-green: #2d9d78;
+  --gnv-terracotta: #da6f4a;
+  --gnv-teal: #3e8a7d;
+  --gnv-sand: #f0e6d8;
+  --gnv-mint: #8acd85;
+  --gnv-royal: #2944b8;
   /* Safe area pour encoches et barre d'accueil (iPhone X+, Android) */
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
@@ -18,9 +18,9 @@
 
 /* Charte Airline Entertainment System — garder en sync avec src/theme/charte-figma.js */
 :root {
-  --aes-primary: #264FFF;
-  --aes-primary-dark: #264FFF;
-  --aes-accent: #FF6B35;
+  --aes-primary: #264fff;
+  --aes-primary-dark: #264fff;
+  --aes-accent: #ff6b35;
 }
 
 /* Responsive: mobile first, colonne centrée sur grand écran */
@@ -50,7 +50,12 @@ body {
   position: relative;
   overflow-x: hidden;
   overflow-y: auto;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    'Plus Jakarta Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -70,44 +75,55 @@ body {
   position: relative;
 }
 
-  /* Tablette et plus : largeur max format tablette (768px), pas plus */
-  @media (min-width: 641px) {
-    body {
-      margin: 0 auto;
-      min-height: 100vh;
-      max-width: 768px;
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.08);
-    }
-    #root {
-      margin: 0 auto;
-      max-width: 768px;
-    }
-    /* Header : largeur max tablette */
-    #root > * > header,
-    #root header:first-of-type {
-      max-width: 768px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    /* Footer : largeur max tablette, centré avec transform */
-    #root nav[class*="fixed"][class*="bottom"] {
-      max-width: 768px;
-      left: 50%;
-      right: auto;
-      transform: translateX(-50%);
-    }
+/* Tablette et plus : largeur max format tablette (768px), pas plus */
+@media (min-width: 641px) {
+  body {
+    margin: 0 auto;
+    min-height: 100vh;
+    max-width: 768px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.08);
   }
+  #root {
+    margin: 0 auto;
+    max-width: 768px;
+  }
+  /* Header : largeur max tablette */
+  #root > * > header,
+  #root header:first-of-type {
+    max-width: 768px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  /* Footer : largeur max tablette, centré avec transform */
+  #root nav[class*='fixed'][class*='bottom'] {
+    max-width: 768px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+}
 
 * {
   box-sizing: border-box;
 }
 
-section, div, article, header, footer, main, nav, ul, ol, li {
+section,
+div,
+article,
+header,
+footer,
+main,
+nav,
+ul,
+ol,
+li {
   max-width: 100%;
   overflow-x: hidden;
 }
 
-.flex, .flex-col, .flex-row {
+.flex,
+.flex-col,
+.flex-row {
   max-width: 100%;
   overflow-x: hidden;
 }
@@ -129,43 +145,67 @@ section, div, article, header, footer, main, nav, ul, ol, li {
   width: 100%;
 }
 
-.container, .mx-auto {
+.container,
+.mx-auto {
   max-width: 100%;
   overflow-x: hidden;
 }
 
-img, video, iframe {
+img,
+video,
+iframe {
   max-width: 100%;
   height: auto;
 }
 
-.grid, .flex, .flex-col, .flex-row {
+.grid,
+.flex,
+.flex-col,
+.flex-row {
   max-width: 100%;
   overflow-x: hidden !important;
 }
 
-p, h1, h2, h3, h4, h5, h6, span, a, label {
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span,
+a,
+label {
   word-wrap: break-word;
   overflow-wrap: break-word;
   max-width: 100%;
 }
 
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
   max-width: 100%;
   box-sizing: border-box;
 }
 
-[class*="motion"], motion.div {
+[class*='motion'],
+motion.div {
   max-width: 100%;
   overflow-x: hidden !important;
 }
 
-a, button, [role="button"] {
+a,
+button,
+[role='button'] {
   max-width: 100%;
   overflow-x: hidden;
 }
 
-img, video, iframe, svg {
+img,
+video,
+iframe,
+svg {
   max-width: 100%;
   height: auto;
   display: block;
@@ -183,16 +223,21 @@ form {
   overflow-x: hidden !important;
 }
 
-motion.div, [class*="motion"] {
+motion.div,
+[class*='motion'] {
   max-width: 100% !important;
   overflow-x: hidden !important;
 }
 
-.overflow-x-auto, .overflow-x-scroll {
+.overflow-x-auto,
+.overflow-x-scroll {
   overflow-x: hidden !important;
 }
 
-[class*="px-"], [class*="mx-"], [class*="pl-"], [class*="pr-"] {
+[class*='px-'],
+[class*='mx-'],
+[class*='pl-'],
+[class*='pr-'] {
   box-sizing: border-box;
 }
 
@@ -266,8 +311,8 @@ motion.div, [class*="motion"] {
   right: 0;
   bottom: 0;
   background-image:
-    linear-gradient(90deg, transparent 0%, transparent 49%, rgba(255,255,255,0.03) 50%, transparent 51%),
-    linear-gradient(0deg, transparent 0%, transparent 49%, rgba(255,255,255,0.03) 50%, transparent 51%);
+    linear-gradient(90deg, transparent 0%, transparent 49%, rgba(255, 255, 255, 0.03) 50%, transparent 51%),
+    linear-gradient(0deg, transparent 0%, transparent 49%, rgba(255, 255, 255, 0.03) 50%, transparent 51%);
   background-size: 4px 4px;
   pointer-events: none;
 }
@@ -334,7 +379,7 @@ motion.div, [class*="motion"] {
   overflow: hidden;
   border-radius: 0.375rem;
   background: linear-gradient(145deg, #e2e8f0 0%, #cbd5e1 100%);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 .poster-netflix img {
   transition: transform 0.25s ease-out;
@@ -358,7 +403,8 @@ motion.div, [class*="motion"] {
 }
 
 /* Défilement fluide sur iOS */
-main, .overflow-y-auto {
+main,
+.overflow-y-auto {
   -webkit-overflow-scrolling: touch;
 }
 

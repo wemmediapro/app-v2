@@ -103,7 +103,9 @@ export function useChat(options = {}) {
     let connectTimeout;
     const socketUrl = import.meta.env.DEV
       ? ''
-      : (import.meta.env.VITE_SOCKET_URL || (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'));
+      : import.meta.env.VITE_SOCKET_URL ||
+        (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') ||
+        (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
     try {
       newSocket = io(socketUrl || undefined, {
         auth: { token: token || '' },
@@ -136,19 +138,19 @@ export function useChat(options = {}) {
       });
       newSocket.on('disconnect', () => {});
       newSocket.on('new-message', (message) => {
-        setChatMessages(prev => [...prev, message]);
+        setChatMessages((prev) => [...prev, message]);
       });
       newSocket.on('typing', (data) => {
-        setTypingUsers(prev => ({ ...prev, [data.userId]: data.isTyping }));
+        setTypingUsers((prev) => ({ ...prev, [data.userId]: data.isTyping }));
       });
       newSocket.on('message-read', (data) => {
-        setChatMessages(prev => prev.map(msg =>
-          msg.id === data.messageId ? { ...msg, isRead: true } : msg,
-        ));
+        setChatMessages((prev) => prev.map((msg) => (msg.id === data.messageId ? { ...msg, isRead: true } : msg)));
       });
     } catch (err) {
       if (newSocket) {
-        try { newSocket.disconnect(); } catch (_) {}
+        try {
+          newSocket.disconnect();
+        } catch (_) {}
       }
     }
     return () => {
@@ -255,7 +257,7 @@ export function useChat(options = {}) {
     try {
       const response = await apiService.get(`/messages/users/search?q=${encodeURIComponent(query)}`);
       if (response.data) {
-        const transformed = response.data.map(user => ({
+        const transformed = response.data.map((user) => ({
           id: user._id || user.id,
           name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Utilisateur',
           avatar: user.avatar || `https://ui-avatars.com/api/?name=${user.firstName || 'User'}`,
@@ -270,39 +272,71 @@ export function useChat(options = {}) {
         setSearchResults(transformed);
       }
     } catch (error) {
-      console.error('Erreur lors de la recherche d\'utilisateurs:', error);
+      console.error("Erreur lors de la recherche d'utilisateurs:", error);
       if (isEmail) {
-        setSearchResults([{ id: 999, name: query.split('@')[0], avatar: `https://ui-avatars.com/api/?name=${query.split('@')[0]}`, email: query, phone: '0612345678', cabinNumber: 'A100', status: 'online', lastSeen: 'En ligne', isTyping: false, unreadCount: 0 }]);
+        setSearchResults([
+          {
+            id: 999,
+            name: query.split('@')[0],
+            avatar: `https://ui-avatars.com/api/?name=${query.split('@')[0]}`,
+            email: query,
+            phone: '0612345678',
+            cabinNumber: 'A100',
+            status: 'online',
+            lastSeen: 'En ligne',
+            isTyping: false,
+            unreadCount: 0,
+          },
+        ]);
       } else if (isPhone) {
-        setSearchResults([{ id: 999, name: `Utilisateur ${phoneNumber}`, avatar: `https://ui-avatars.com/api/?name=${phoneNumber}`, email: `user${phoneNumber}@gnv.local`, phone: phoneNumber, cabinNumber: 'A100', status: 'online', lastSeen: 'En ligne', isTyping: false, unreadCount: 0 }]);
+        setSearchResults([
+          {
+            id: 999,
+            name: `Utilisateur ${phoneNumber}`,
+            avatar: `https://ui-avatars.com/api/?name=${phoneNumber}`,
+            email: `user${phoneNumber}@gnv.local`,
+            phone: phoneNumber,
+            cabinNumber: 'A100',
+            status: 'online',
+            lastSeen: 'En ligne',
+            isTyping: false,
+            unreadCount: 0,
+          },
+        ]);
       }
     } finally {
       setIsSearchingUsers(false);
     }
   }, []);
 
-  const startNewChat = useCallback((user) => {
-    const existingChat = chatUsers.find(u => u.id === user.id);
-    if (existingChat) {
-      setSelectedChat(user.id);
-      setSelectedChatUser(existingChat);
-    } else {
-      const newUser = { ...user, unreadCount: 0 };
-      setChatUsers(prev => [newUser, ...prev]);
-      setSelectedChat(user.id);
-      setSelectedChatUser(newUser);
-      setChatMessages([]);
-    }
-    setShowAddUser(false);
-    setUserSearchQuery('');
-    setSearchResults([]);
-  }, [chatUsers]);
+  const startNewChat = useCallback(
+    (user) => {
+      const existingChat = chatUsers.find((u) => u.id === user.id);
+      if (existingChat) {
+        setSelectedChat(user.id);
+        setSelectedChatUser(existingChat);
+      } else {
+        const newUser = { ...user, unreadCount: 0 };
+        setChatUsers((prev) => [newUser, ...prev]);
+        setSelectedChat(user.id);
+        setSelectedChatUser(newUser);
+        setChatMessages([]);
+      }
+      setShowAddUser(false);
+      setUserSearchQuery('');
+      setSearchResults([]);
+    },
+    [chatUsers]
+  );
 
-  const getChatMessages = useCallback((chatId) => chatMessages.filter(msg => msg.chatId === chatId), [chatMessages]);
-  const getLastMessage = useCallback((chatId) => {
-    const messages = chatMessages.filter(msg => msg.chatId === chatId);
-    return messages[messages.length - 1];
-  }, [chatMessages]);
+  const getChatMessages = useCallback((chatId) => chatMessages.filter((msg) => msg.chatId === chatId), [chatMessages]);
+  const getLastMessage = useCallback(
+    (chatId) => {
+      const messages = chatMessages.filter((msg) => msg.chatId === chatId);
+      return messages[messages.length - 1];
+    },
+    [chatMessages]
+  );
 
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || !selectedChat) return;
@@ -331,9 +365,9 @@ export function useChat(options = {}) {
         });
         await refreshOfflineQueueCount?.();
       } catch (e) {
-        console.error('Impossible d\'enregistrer le message hors ligne:', e);
+        console.error("Impossible d'enregistrer le message hors ligne:", e);
       }
-      setChatMessages(prev => [...prev, newMsg]);
+      setChatMessages((prev) => [...prev, newMsg]);
       setNewMessage('');
       setIsTyping(false);
       return;
@@ -346,7 +380,7 @@ export function useChat(options = {}) {
     }
     await refreshOfflineQueueCount?.();
 
-    setChatMessages(prev => [...prev, newMsg]);
+    setChatMessages((prev) => [...prev, newMsg]);
     setNewMessage('');
     if (socket?.connected && dmRoom) {
       socket.emit('send-message', { room: dmRoom, content: newMsg.content, text: newMsg.content });
@@ -354,7 +388,7 @@ export function useChat(options = {}) {
     try {
       await apiService.sendMessage({ receiver: selectedChat, content: newMsg.content, type: 'text' });
     } catch (error) {
-      console.error('Erreur lors de l\'envoi du message:', error);
+      console.error("Erreur lors de l'envoi du message:", error);
       try {
         await enqueue({ room: dmRoom, content: newMsg.content });
         await refreshOfflineQueueCount?.();
@@ -369,51 +403,74 @@ export function useChat(options = {}) {
     }
   }, [newMessage, selectedChat, socket, refreshOfflineQueueCount]);
 
-  const handleTyping = useCallback((e) => {
-    setNewMessage(e.target.value);
-    if (!isTyping && e.target.value.trim()) {
-      setIsTyping(true);
-      const tr = peerChatRoom(selectedChat);
-      if (socket?.connected && tr) {
-        socket.emit('typing', { room: tr, userId: 0, isTyping: true });
+  const handleTyping = useCallback(
+    (e) => {
+      setNewMessage(e.target.value);
+      if (!isTyping && e.target.value.trim()) {
+        setIsTyping(true);
+        const tr = peerChatRoom(selectedChat);
+        if (socket?.connected && tr) {
+          socket.emit('typing', { room: tr, userId: 0, isTyping: true });
+        }
       }
-    }
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-      const tr = peerChatRoom(selectedChat);
-      if (socket?.connected && tr) {
-        socket.emit('typing', { room: tr, userId: 0, isTyping: false });
-      }
-    }, 1000);
-  }, [isTyping, selectedChat, socket]);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsTyping(false);
+        const tr = peerChatRoom(selectedChat);
+        if (socket?.connected && tr) {
+          socket.emit('typing', { room: tr, userId: 0, isTyping: false });
+        }
+      }, 1000);
+    },
+    [isTyping, selectedChat, socket]
+  );
 
-  const handleFileUpload = useCallback((e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const attachment = { type: file.type.startsWith('image/') ? 'image' : 'file', url: reader.result, name: file.name, size: file.size };
-      const newMsg = { id: Date.now(), chatId: selectedChat, senderId: 0, content: '', timestamp: new Date().toISOString(), isRead: false, type: attachment.type, attachments: [attachment], reactions: [] };
-      setChatMessages(prev => [...prev, newMsg]);
-      const dmRoom = peerChatRoom(selectedChat);
-      if (socket?.connected && dmRoom) {
-        socket.emit('send-message', { room: dmRoom, content: newMsg.content || '📎', text: newMsg.content || '📎' });
-      }
-    };
-    reader.readAsDataURL(file);
-  }, [selectedChat, socket]);
+  const handleFileUpload = useCallback(
+    (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const attachment = {
+          type: file.type.startsWith('image/') ? 'image' : 'file',
+          url: reader.result,
+          name: file.name,
+          size: file.size,
+        };
+        const newMsg = {
+          id: Date.now(),
+          chatId: selectedChat,
+          senderId: 0,
+          content: '',
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          type: attachment.type,
+          attachments: [attachment],
+          reactions: [],
+        };
+        setChatMessages((prev) => [...prev, newMsg]);
+        const dmRoom = peerChatRoom(selectedChat);
+        if (socket?.connected && dmRoom) {
+          socket.emit('send-message', { room: dmRoom, content: newMsg.content || '📎', text: newMsg.content || '📎' });
+        }
+      };
+      reader.readAsDataURL(file);
+    },
+    [selectedChat, socket]
+  );
 
   const addReaction = useCallback((messageId, emoji) => {
-    setChatMessages(prev => prev.map(msg => {
-      if (msg.id !== messageId) return msg;
-      const reactions = msg.reactions || [];
-      const existingReaction = reactions.find(r => r.emoji === emoji && r.userId === 0);
-      if (existingReaction) {
-        return { ...msg, reactions: reactions.filter(r => !(r.emoji === emoji && r.userId === 0)) };
-      }
-      return { ...msg, reactions: [...reactions, { emoji, userId: 0, timestamp: new Date().toISOString() }] };
-    }));
+    setChatMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.id !== messageId) return msg;
+        const reactions = msg.reactions || [];
+        const existingReaction = reactions.find((r) => r.emoji === emoji && r.userId === 0);
+        if (existingReaction) {
+          return { ...msg, reactions: reactions.filter((r) => !(r.emoji === emoji && r.userId === 0)) };
+        }
+        return { ...msg, reactions: [...reactions, { emoji, userId: 0, timestamp: new Date().toISOString() }] };
+      })
+    );
   }, []);
 
   const startVoiceRecording = useCallback(async () => {
@@ -422,17 +479,19 @@ export function useChat(options = {}) {
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
-      mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) audioChunksRef.current.push(event.data); };
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         setVoiceRecording({ blob: audioBlob, url: URL.createObjectURL(audioBlob) });
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       };
       mediaRecorder.start();
       setIsRecordingVoice(true);
     } catch (error) {
-      console.error('Erreur lors du démarrage de l\'enregistrement:', error);
-      alert('Impossible d\'accéder au microphone. Veuillez vérifier les permissions.');
+      console.error("Erreur lors du démarrage de l'enregistrement:", error);
+      alert("Impossible d'accéder au microphone. Veuillez vérifier les permissions.");
     }
   }, []);
 
@@ -445,9 +504,25 @@ export function useChat(options = {}) {
 
   const sendVoiceMessage = useCallback(() => {
     if (!voiceRecording || !selectedChat) return;
-    const attachment = { type: 'voice', url: voiceRecording.url, blob: voiceRecording.blob, name: 'Voice message', duration: 0 };
-    const newMsg = { id: Date.now(), chatId: selectedChat, senderId: 0, content: '🎤 Message vocal', timestamp: new Date().toISOString(), isRead: false, type: 'voice', attachments: [attachment], reactions: [] };
-    setChatMessages(prev => [...prev, newMsg]);
+    const attachment = {
+      type: 'voice',
+      url: voiceRecording.url,
+      blob: voiceRecording.blob,
+      name: 'Voice message',
+      duration: 0,
+    };
+    const newMsg = {
+      id: Date.now(),
+      chatId: selectedChat,
+      senderId: 0,
+      content: '🎤 Message vocal',
+      timestamp: new Date().toISOString(),
+      isRead: false,
+      type: 'voice',
+      attachments: [attachment],
+      reactions: [],
+    };
+    setChatMessages((prev) => [...prev, newMsg]);
     setVoiceRecording(null);
     setIsRecordingVoice(false);
     const dmRoom = peerChatRoom(selectedChat);
@@ -457,77 +532,90 @@ export function useChat(options = {}) {
   }, [voiceRecording, selectedChat, socket]);
 
   const togglePinMessage = useCallback((messageId) => {
-    setPinnedMessages(prev => prev.includes(messageId) ? prev.filter(id => id !== messageId) : [...prev, messageId]);
+    setPinnedMessages((prev) =>
+      prev.includes(messageId) ? prev.filter((id) => id !== messageId) : [...prev, messageId]
+    );
   }, []);
 
-  const deleteConversation = useCallback((chatId) => {
-    setChatUsers(prev => prev.filter(u => u.id !== chatId));
-    setChatMessages(prev => prev.filter(msg => msg.chatId !== chatId));
-    if (selectedChat === chatId) {
-      setSelectedChat(null);
-      setSelectedChatUser(null);
-    }
-    setOpenConversationMenu(null);
-  }, [selectedChat]);
+  const deleteConversation = useCallback(
+    (chatId) => {
+      setChatUsers((prev) => prev.filter((u) => u.id !== chatId));
+      setChatMessages((prev) => prev.filter((msg) => msg.chatId !== chatId));
+      if (selectedChat === chatId) {
+        setSelectedChat(null);
+        setSelectedChatUser(null);
+      }
+      setOpenConversationMenu(null);
+    },
+    [selectedChat]
+  );
 
-  const archiveConversation = useCallback((chatId) => {
-    setArchivedConversations(prev => [...prev, chatId]);
-    setChatUsers(prev => prev.filter(u => u.id !== chatId));
-    if (selectedChat === chatId) {
-      setSelectedChat(null);
-      setSelectedChatUser(null);
-    }
-    setOpenConversationMenu(null);
-  }, [selectedChat]);
+  const archiveConversation = useCallback(
+    (chatId) => {
+      setArchivedConversations((prev) => [...prev, chatId]);
+      setChatUsers((prev) => prev.filter((u) => u.id !== chatId));
+      if (selectedChat === chatId) {
+        setSelectedChat(null);
+        setSelectedChatUser(null);
+      }
+      setOpenConversationMenu(null);
+    },
+    [selectedChat]
+  );
 
   const unarchiveConversation = useCallback((chatId) => {
-    setArchivedConversations(prev => prev.filter(id => id !== chatId));
+    setArchivedConversations((prev) => prev.filter((id) => id !== chatId));
     setOpenConversationMenu(null);
   }, []);
 
   const muteConversation = useCallback((chatId) => {
-    setMutedConversations(prev => [...prev, chatId]);
+    setMutedConversations((prev) => [...prev, chatId]);
     setOpenConversationMenu(null);
   }, []);
 
   const unmuteConversation = useCallback((chatId) => {
-    setMutedConversations(prev => prev.filter(id => id !== chatId));
+    setMutedConversations((prev) => prev.filter((id) => id !== chatId));
     setOpenConversationMenu(null);
   }, []);
 
   const markAsRead = useCallback((chatId) => {
-    setChatUsers(prev => prev.map(u => u.id === chatId ? { ...u, unreadCount: 0 } : u));
-    setChatMessages(prev => prev.map(msg => msg.chatId === chatId ? { ...msg, isRead: true } : msg));
+    setChatUsers((prev) => prev.map((u) => (u.id === chatId ? { ...u, unreadCount: 0 } : u)));
+    setChatMessages((prev) => prev.map((msg) => (msg.chatId === chatId ? { ...msg, isRead: true } : msg)));
     setOpenConversationMenu(null);
   }, []);
 
   const markAsUnread = useCallback((chatId) => {
-    setChatUsers(prev => prev.map(u => u.id === chatId ? { ...u, unreadCount: 1 } : u));
+    setChatUsers((prev) => prev.map((u) => (u.id === chatId ? { ...u, unreadCount: 1 } : u)));
     setOpenConversationMenu(null);
   }, []);
 
-  const blockUser = useCallback((userId) => {
-    setBlockedUsers(prev => [...prev, userId]);
-    deleteConversation(userId);
-  }, [deleteConversation]);
+  const blockUser = useCallback(
+    (userId) => {
+      setBlockedUsers((prev) => [...prev, userId]);
+      deleteConversation(userId);
+    },
+    [deleteConversation]
+  );
 
   const unblockUser = useCallback((userId) => {
-    setBlockedUsers(prev => prev.filter(id => id !== userId));
+    setBlockedUsers((prev) => prev.filter((id) => id !== userId));
   }, []);
 
-  const filteredChatUsers = chatUsers.filter(user =>
-    user.name.toLowerCase().includes(chatSearchQuery.toLowerCase()) &&
-    !archivedConversations.includes(user.id) &&
-    !blockedUsers.includes(user.id),
+  const filteredChatUsers = chatUsers.filter(
+    (user) =>
+      user.name.toLowerCase().includes(chatSearchQuery.toLowerCase()) &&
+      !archivedConversations.includes(user.id) &&
+      !blockedUsers.includes(user.id)
   );
-  const filteredArchivedConversations = chatUsers.filter(user =>
-    archivedConversations.includes(user.id) &&
-    user.name.toLowerCase().includes(chatSearchQuery.toLowerCase()),
+  const filteredArchivedConversations = chatUsers.filter(
+    (user) => archivedConversations.includes(user.id) && user.name.toLowerCase().includes(chatSearchQuery.toLowerCase())
   );
-  const filteredMessages = selectedChat ? getChatMessages(selectedChat).filter(msg => {
-    if (!messageSearchQuery?.trim()) return true;
-    return msg.content?.toLowerCase().includes(messageSearchQuery.toLowerCase());
-  }) : [];
+  const filteredMessages = selectedChat
+    ? getChatMessages(selectedChat).filter((msg) => {
+        if (!messageSearchQuery?.trim()) return true;
+        return msg.content?.toLowerCase().includes(messageSearchQuery.toLowerCase());
+      })
+    : [];
 
   const formatTime = useCallback((timestamp) => {
     const date = new Date(timestamp);

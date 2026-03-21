@@ -15,7 +15,14 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const SHIP_ID = '7';
 const SHIP_NAME = 'GNV Excellent';
 
-const RESTAURANT_TYPES = ['Restaurant à la carte', 'Restaurant Self-Service', 'Café & Snacks', 'Pizzeria saisonnière', 'Steakhouse', 'Room Service'];
+const RESTAURANT_TYPES = [
+  'Restaurant à la carte',
+  'Restaurant Self-Service',
+  'Café & Snacks',
+  'Pizzeria saisonnière',
+  'Steakhouse',
+  'Room Service',
+];
 const CATEGORIES = ['french', 'fastfood', 'dessert', 'seafood'];
 const IMG = 'https://picsum.photos/seed/gnv-restaurant/800/400';
 
@@ -42,7 +49,8 @@ Génère 2 restaurants pour le bateau "GNV Excellent", avec des styles différen
 
 Les plats doivent être variés (entrées, plats principaux, desserts, boissons), adaptés à un ferry Méditerranée (influences italiennes, françaises, fruits de mer).`;
 
-  const userPrompt = 'Génère 2 restaurants pour le ferry GNV Excellent (traversée Gênes - Palerme), avec des menus complets (au moins 8 plats par restaurant). Réponse: uniquement l\'objet JSON avec la clé "restaurants".';
+  const userPrompt =
+    'Génère 2 restaurants pour le ferry GNV Excellent (traversée Gênes - Palerme), avec des menus complets (au moins 8 plats par restaurant). Réponse: uniquement l\'objet JSON avec la clé "restaurants".';
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -55,7 +63,9 @@ Les plats doivent être variés (entrées, plats principaux, desserts, boissons)
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) {throw new Error('Réponse OpenAI vide');}
+  if (!raw) {
+    throw new Error('Réponse OpenAI vide');
+  }
   const data = JSON.parse(raw);
   const list = data.restaurants || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list : [];
@@ -90,25 +100,54 @@ async function seedRestaurantExcellent() {
       const rating = typeof r.rating === 'number' ? Math.min(5, Math.max(0, r.rating)) : 4.5;
       const priceRange = ['€', '€€', '€€€', '€€€€'].includes(r.priceRange) ? r.priceRange : '€€';
       const openingHours = (r.openingHours || '08h00 - 22h00').trim();
-      const specialties = Array.isArray(r.specialties) ? r.specialties.slice(0, 8).map(s => String(s).trim()) : [];
+      const specialties = Array.isArray(r.specialties) ? r.specialties.slice(0, 8).map((s) => String(s).trim()) : [];
 
-      const menu = (r.menu || []).map((item, idx) => ({
-        id: typeof item.id === 'number' ? item.id : idx + 1,
-        name: (item.name || `Plat ${idx + 1}`).trim(),
-        description: (item.description || '').trim() || 'Délicieuse préparation maison.',
-        price: typeof item.price === 'number' ? Math.max(0, item.price) : 12.9,
-        category: (item.category || 'Plats').trim(),
-        isPopular: Boolean(item.isPopular),
-        allergens: Array.isArray(item.allergens) ? item.allergens.map(String) : [],
-        image: IMG,
-      })).filter(m => m.name);
+      const menu = (r.menu || [])
+        .map((item, idx) => ({
+          id: typeof item.id === 'number' ? item.id : idx + 1,
+          name: (item.name || `Plat ${idx + 1}`).trim(),
+          description: (item.description || '').trim() || 'Délicieuse préparation maison.',
+          price: typeof item.price === 'number' ? Math.max(0, item.price) : 12.9,
+          category: (item.category || 'Plats').trim(),
+          isPopular: Boolean(item.isPopular),
+          allergens: Array.isArray(item.allergens) ? item.allergens.map(String) : [],
+          image: IMG,
+        }))
+        .filter((m) => m.name);
 
       if (menu.length === 0) {
         console.warn(`⚠️  Restaurant "${name}" sans menu valide, ajout de plats par défaut.`);
         menu.push(
-          { id: 1, name: 'Plat du jour', description: 'Selon arrivage', price: 14.9, category: 'Plats', isPopular: true, allergens: [], image: IMG },
-          { id: 2, name: 'Salade méditerranéenne', description: 'Quinoa, feta, olives', price: 10.5, category: 'Entrées', isPopular: false, allergens: ['lactose'], image: IMG },
-          { id: 3, name: 'Dessert du chef', description: 'Sélection du jour', price: 6.5, category: 'Desserts', isPopular: true, allergens: [], image: IMG },
+          {
+            id: 1,
+            name: 'Plat du jour',
+            description: 'Selon arrivage',
+            price: 14.9,
+            category: 'Plats',
+            isPopular: true,
+            allergens: [],
+            image: IMG,
+          },
+          {
+            id: 2,
+            name: 'Salade méditerranéenne',
+            description: 'Quinoa, feta, olives',
+            price: 10.5,
+            category: 'Entrées',
+            isPopular: false,
+            allergens: ['lactose'],
+            image: IMG,
+          },
+          {
+            id: 3,
+            name: 'Dessert du chef',
+            description: 'Sélection du jour',
+            price: 6.5,
+            category: 'Desserts',
+            isPopular: true,
+            allergens: [],
+            image: IMG,
+          }
         );
       }
 
@@ -137,7 +176,9 @@ async function seedRestaurantExcellent() {
     console.log('\n✅ Seed restaurant GNV Excellent terminé. Restaurants sur ce bateau:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) {console.error(err.response.data);}
+    if (err.response?.data) {
+      console.error(err.response.data);
+    }
     process.exit(1);
   } finally {
     await mongoose.disconnect();

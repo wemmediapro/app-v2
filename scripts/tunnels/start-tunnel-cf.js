@@ -30,13 +30,9 @@ function run() {
 
   const startCloudflared = () => {
     const cloudflaredCmd = platform() === 'win32' ? 'cloudflared.exe' : 'cloudflared';
-    const child = spawn(cloudflaredCmd, [
-      'tunnel',
-      '--url',
-      `http://127.0.0.1:${PORT}`
-    ], {
+    const child = spawn(cloudflaredCmd, ['tunnel', '--url', `http://127.0.0.1:${PORT}`], {
       stdio: ['inherit', 'pipe', 'pipe'],
-      shell: true
+      shell: true,
     });
 
     let resolved = false;
@@ -60,7 +56,9 @@ function run() {
     child.on('error', (err) => {
       if (err.code === 'ENOENT') {
         console.error('\n❌ cloudflared introuvable.');
-        console.error('   Installez-le : https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/');
+        console.error(
+          '   Installez-le : https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/'
+        );
         console.error('   macOS: brew install cloudflared\n');
       } else {
         console.error('\n❌ Erreur cloudflared:', err.message);
@@ -72,7 +70,11 @@ function run() {
     child.on('close', (code) => {
       if (code !== 0 && code !== null) {
         if (!resolved) {
-          console.error('\n❌ Le tunnel Cloudflare s\'est fermé. Vérifiez que le port', PORT, 'est bien utilisé par votre app.');
+          console.error(
+            "\n❌ Le tunnel Cloudflare s'est fermé. Vérifiez que le port",
+            PORT,
+            'est bien utilisé par votre app.'
+          );
         }
         if (appProcess) appProcess.kill();
         process.exit(code);
@@ -96,7 +98,7 @@ function run() {
     appProcess = spawn('npm', ['run', 'dev'], {
       stdio: 'inherit',
       shell: true,
-      cwd: process.cwd()
+      cwd: process.cwd(),
     });
 
     appProcess.on('error', (err) => {
@@ -109,7 +111,7 @@ function run() {
     }, 4000);
   } else {
     console.log(`🔗 Tunnel seul vers http://127.0.0.1:${PORT}`);
-    console.log('   (lancez l\'app vous-même sur ce port)\n');
+    console.log("   (lancez l'app vous-même sur ce port)\n");
     startCloudflared();
   }
 }

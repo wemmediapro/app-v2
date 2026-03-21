@@ -25,19 +25,23 @@ const TRANSLATIONS = {
   },
   en: {
     name: 'GNV WebTV On Board',
-    description: 'Line news, onboard offers and services, behind the scenes and travel tips to prepare for your crossing.',
+    description:
+      'Line news, onboard offers and services, behind the scenes and travel tips to prepare for your crossing.',
   },
   es: {
     name: 'GNV WebTV A bordo',
-    description: 'Información de líneas, ofertas, servicios a bordo, detrás de cámaras y consejos de viaje para preparar su travesía.',
+    description:
+      'Información de líneas, ofertas, servicios a bordo, detrás de cámaras y consejos de viaje para preparar su travesía.',
   },
   it: {
     name: 'GNV WebTV A bordo',
-    description: 'Info linee, offerte, servizi a bordo, retroscena e consigli di viaggio per preparare la vostra traversata.',
+    description:
+      'Info linee, offerte, servizi a bordo, retroscena e consigli di viaggio per preparare la vostra traversata.',
   },
   de: {
     name: 'GNV WebTV An Bord',
-    description: 'Infos zu Linien, Angeboten und Service an Bord, Hinter den Kulissen und Reisetipps für Ihre Überfahrt.',
+    description:
+      'Infos zu Linien, Angeboten und Service an Bord, Hinter den Kulissen und Reisetipps für Ihre Überfahrt.',
   },
   ar: {
     name: 'GNV WebTV على متن السفينة',
@@ -63,7 +67,7 @@ async function updateChannel() {
       console.log('⚠️  Aucune chaîne "GNV WebTV À bord" trouvée.');
       const all = await WebTVChannel.find({}).select('name _id').lean();
       if (all.length) {
-        console.log('   Chaînes existantes:', all.map(c => c.name).join(', '));
+        console.log('   Chaînes existantes:', all.map((c) => c.name).join(', '));
         console.log('   Pour appliquer les traductions à une autre chaîne, modifiez le filtre dans ce script.');
       }
       await mongoose.disconnect();

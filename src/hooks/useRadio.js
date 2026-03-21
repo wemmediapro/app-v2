@@ -33,9 +33,12 @@ export function useRadio(language, page, isAnyVideoPlaying) {
 
   // --- Helpers (time/program) ---
   const getCurrentTimeSecondsFromMidnight = useCallback((date = null) => {
-    const d = date != null ? date : (radioServerTimeOffsetRef.current != null
-      ? new Date(Date.now() + radioServerTimeOffsetRef.current)
-      : new Date());
+    const d =
+      date != null
+        ? date
+        : radioServerTimeOffsetRef.current != null
+          ? new Date(Date.now() + radioServerTimeOffsetRef.current)
+          : new Date();
     return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
   }, []);
 
@@ -46,7 +49,10 @@ export function useRadio(language, page, isAnyVideoPlaying) {
     let timePart = s;
     const tIndex = s.indexOf('T');
     if (tIndex >= 0) {
-      timePart = s.slice(tIndex + 1).replace(/\.\d+Z?$/i, '').split('Z')[0];
+      timePart = s
+        .slice(tIndex + 1)
+        .replace(/\.\d+Z?$/i, '')
+        .split('Z')[0];
     }
     const parts = timePart.split(':').map(Number);
     if (parts.length < 2) return null;
@@ -65,9 +71,8 @@ export function useRadio(language, page, isAnyVideoPlaying) {
   }, []);
 
   const getServerDayName = useCallback(() => {
-    const d = radioServerTimeOffsetRef.current != null
-      ? new Date(Date.now() + radioServerTimeOffsetRef.current)
-      : new Date();
+    const d =
+      radioServerTimeOffsetRef.current != null ? new Date(Date.now() + radioServerTimeOffsetRef.current) : new Date();
     return ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][d.getDay()];
   }, []);
 
@@ -88,85 +93,95 @@ export function useRadio(language, page, isAnyVideoPlaying) {
     });
   }, []);
 
-  const getCurrentRadioProgramAndPosition = useCallback((programsWithTimes) => {
-    const now = getCurrentTimeSecondsFromMidnight();
-    const dayName = getServerDayName();
-    const withOriginalIndex = programsWithTimes.map((prog, i) => ({ prog, originalIndex: i }));
-    let forToday = withOriginalIndex.filter(({ prog }) => programAppliesToDay(prog, dayName));
-    if (forToday.length === 0) forToday = withOriginalIndex;
-    const hasAnyStartTime = forToday.some(({ prog }) => parseTimeToSecondsFromMidnight(prog.startTime) != null);
-    if (hasAnyStartTime) {
-      const sortedByStart = [...forToday].sort((a, b) => {
-        const sa = parseTimeToSecondsFromMidnight(a.prog.startTime);
-        const sb = parseTimeToSecondsFromMidnight(b.prog.startTime);
-        return (sa ?? 0) - (sb ?? 0);
-      });
-      const firstStart = parseTimeToSecondsFromMidnight(sortedByStart[0]?.prog?.startTime);
-      const lastProg = sortedByStart[sortedByStart.length - 1];
-      const lastStartParsed = parseTimeToSecondsFromMidnight(lastProg?.prog?.startTime);
-      const lastEndParsed = parseTimeToSecondsFromMidnight(lastProg?.prog?.endTime);
-      const lastEndSec = segmentEndSeconds(lastStartParsed, lastEndParsed, lastProg?.prog?.duration) ?? (firstStart != null && lastProg?.prog?.duration != null ? lastStartParsed + lastProg.prog.duration : null);
+  const getCurrentRadioProgramAndPosition = useCallback(
+    (programsWithTimes) => {
+      const now = getCurrentTimeSecondsFromMidnight();
+      const dayName = getServerDayName();
+      const withOriginalIndex = programsWithTimes.map((prog, i) => ({ prog, originalIndex: i }));
+      let forToday = withOriginalIndex.filter(({ prog }) => programAppliesToDay(prog, dayName));
+      if (forToday.length === 0) forToday = withOriginalIndex;
+      const hasAnyStartTime = forToday.some(({ prog }) => parseTimeToSecondsFromMidnight(prog.startTime) != null);
+      if (hasAnyStartTime) {
+        const sortedByStart = [...forToday].sort((a, b) => {
+          const sa = parseTimeToSecondsFromMidnight(a.prog.startTime);
+          const sb = parseTimeToSecondsFromMidnight(b.prog.startTime);
+          return (sa ?? 0) - (sb ?? 0);
+        });
+        const firstStart = parseTimeToSecondsFromMidnight(sortedByStart[0]?.prog?.startTime);
+        const lastProg = sortedByStart[sortedByStart.length - 1];
+        const lastStartParsed = parseTimeToSecondsFromMidnight(lastProg?.prog?.startTime);
+        const lastEndParsed = parseTimeToSecondsFromMidnight(lastProg?.prog?.endTime);
+        const lastEndSec =
+          segmentEndSeconds(lastStartParsed, lastEndParsed, lastProg?.prog?.duration) ??
+          (firstStart != null && lastProg?.prog?.duration != null ? lastStartParsed + lastProg.prog.duration : null);
 
-      for (let j = 0; j < forToday.length; j++) {
-        const { prog, originalIndex: i } = forToday[j];
-        const start = parseTimeToSecondsFromMidnight(prog.startTime);
-        const end = parseTimeToSecondsFromMidnight(prog.endTime);
-        if (start == null) continue;
-        const endSec = segmentEndSeconds(start, end, prog.duration || 0);
-        if (endSec == null) continue;
-        if (now >= start && now < endSec) {
-          const positionInSeconds = Math.min(Math.max(0, now - start), prog.duration || 0);
-          return { index: i, positionInSeconds, matched: true };
-        }
-      }
-      if (firstStart != null && now < firstStart) {
-        const idx = lastProg?.originalIndex ?? 0;
-        const dur = Math.max(0, Number(lastProg?.prog?.duration) || 0) || (lastEndSec != null && lastStartParsed != null ? lastEndSec - lastStartParsed : 60);
-        return { index: idx, positionInSeconds: Math.max(1, dur - 1), matched: true };
-      }
-      if (lastEndSec != null && now >= lastEndSec && firstStart != null) {
-        const totalDuration = lastEndSec - firstStart;
-        if (totalDuration > 0) {
-          const nowInGrid = (now - firstStart) % totalDuration;
-          let acc = 0;
-          for (let j = 0; j < sortedByStart.length; j++) {
-            const { prog, originalIndex: i } = sortedByStart[j];
-            const start = parseTimeToSecondsFromMidnight(prog.startTime);
-            const end = parseTimeToSecondsFromMidnight(prog.endTime);
-            const endSec = segmentEndSeconds(start, end, prog.duration || 0);
-            if (start == null || endSec == null) continue;
-            const segLen = endSec - start;
-            if (segLen <= 0) continue;
-            if (nowInGrid >= acc && nowInGrid < acc + segLen) {
-              const positionInSeconds = Math.min(nowInGrid - acc, prog.duration || segLen);
-              return { index: i, positionInSeconds, matched: true };
-            }
-            acc += segLen;
+        for (let j = 0; j < forToday.length; j++) {
+          const { prog, originalIndex: i } = forToday[j];
+          const start = parseTimeToSecondsFromMidnight(prog.startTime);
+          const end = parseTimeToSecondsFromMidnight(prog.endTime);
+          if (start == null) continue;
+          const endSec = segmentEndSeconds(start, end, prog.duration || 0);
+          if (endSec == null) continue;
+          if (now >= start && now < endSec) {
+            const positionInSeconds = Math.min(Math.max(0, now - start), prog.duration || 0);
+            return { index: i, positionInSeconds, matched: true };
           }
         }
+        if (firstStart != null && now < firstStart) {
+          const idx = lastProg?.originalIndex ?? 0;
+          const dur =
+            Math.max(0, Number(lastProg?.prog?.duration) || 0) ||
+            (lastEndSec != null && lastStartParsed != null ? lastEndSec - lastStartParsed : 60);
+          return { index: idx, positionInSeconds: Math.max(1, dur - 1), matched: true };
+        }
+        if (lastEndSec != null && now >= lastEndSec && firstStart != null) {
+          const totalDuration = lastEndSec - firstStart;
+          if (totalDuration > 0) {
+            const nowInGrid = (now - firstStart) % totalDuration;
+            let acc = 0;
+            for (let j = 0; j < sortedByStart.length; j++) {
+              const { prog, originalIndex: i } = sortedByStart[j];
+              const start = parseTimeToSecondsFromMidnight(prog.startTime);
+              const end = parseTimeToSecondsFromMidnight(prog.endTime);
+              const endSec = segmentEndSeconds(start, end, prog.duration || 0);
+              if (start == null || endSec == null) continue;
+              const segLen = endSec - start;
+              if (segLen <= 0) continue;
+              if (nowInGrid >= acc && nowInGrid < acc + segLen) {
+                const positionInSeconds = Math.min(nowInGrid - acc, prog.duration || segLen);
+                return { index: i, positionInSeconds, matched: true };
+              }
+              acc += segLen;
+            }
+          }
+        }
+        let best = { index: 0, positionInSeconds: 0 };
+        for (let j = 0; j < forToday.length; j++) {
+          const { prog, originalIndex: i } = forToday[j];
+          const start = parseTimeToSecondsFromMidnight(prog.startTime);
+          if (start != null && start <= now) best = { index: i, positionInSeconds: 0 };
+        }
+        return { ...best, matched: true };
       }
-      let best = { index: 0, positionInSeconds: 0 };
-      for (let j = 0; j < forToday.length; j++) {
-        const { prog, originalIndex: i } = forToday[j];
-        const start = parseTimeToSecondsFromMidnight(prog.startTime);
-        if (start != null && start <= now) best = { index: i, positionInSeconds: 0 };
-      }
-      return { ...best, matched: true };
-    }
-    const daySeconds = 24 * 3600;
-    const n = forToday.length;
-    if (n === 0) return { index: 0, positionInSeconds: 0, matched: false };
-    const segmentLength = daySeconds / n;
-    const programIndexInDay = Math.min(Math.floor(now / segmentLength), n - 1);
-    const { prog, originalIndex: i } = forToday[programIndexInDay];
-    const dur = Math.max(0, Number(prog.duration) || 60);
-    const positionInSegment = now - programIndexInDay * segmentLength;
-    const positionInSeconds = Math.min(
-      Math.floor((positionInSegment / segmentLength) * dur),
-      Math.max(0, dur - 1),
-    );
-    return { index: i, positionInSeconds, matched: true };
-  }, [getCurrentTimeSecondsFromMidnight, getServerDayName, programAppliesToDay, parseTimeToSecondsFromMidnight, segmentEndSeconds]);
+      const daySeconds = 24 * 3600;
+      const n = forToday.length;
+      if (n === 0) return { index: 0, positionInSeconds: 0, matched: false };
+      const segmentLength = daySeconds / n;
+      const programIndexInDay = Math.min(Math.floor(now / segmentLength), n - 1);
+      const { prog, originalIndex: i } = forToday[programIndexInDay];
+      const dur = Math.max(0, Number(prog.duration) || 60);
+      const positionInSegment = now - programIndexInDay * segmentLength;
+      const positionInSeconds = Math.min(Math.floor((positionInSegment / segmentLength) * dur), Math.max(0, dur - 1));
+      return { index: i, positionInSeconds, matched: true };
+    },
+    [
+      getCurrentTimeSecondsFromMidnight,
+      getServerDayName,
+      programAppliesToDay,
+      parseTimeToSecondsFromMidnight,
+      segmentEndSeconds,
+    ]
+  );
 
   const getRadioStreamProgress = useCallback(() => {
     if (!currentRadio?.programs?.length || radioPlaylistTracks.length === 0) return null;
@@ -181,7 +196,13 @@ export function useRadio(language, page, isAnyVideoPlaying) {
     if (durationSeconds <= 0 && start != null && endSec != null && endSec > start) durationSeconds = endSec - start;
     if (durationSeconds <= 0) durationSeconds = 60;
     return { positionSeconds: Math.min(positionInSeconds, durationSeconds), durationSeconds };
-  }, [currentRadio, radioPlaylistTracks, getCurrentRadioProgramAndPosition, parseTimeToSecondsFromMidnight, segmentEndSeconds]);
+  }, [
+    currentRadio,
+    radioPlaylistTracks,
+    getCurrentRadioProgramAndPosition,
+    parseTimeToSecondsFromMidnight,
+    segmentEndSeconds,
+  ]);
 
   const startRadioPlayInClickContext = useCallback((streamUrl, seekToSeconds = null) => {
     if (!streamUrl || !audioRef.current) return;
@@ -239,12 +260,107 @@ export function useRadio(language, page, isAnyVideoPlaying) {
     }
   }, []);
 
-  const toggleRadio = useCallback((station) => {
-    if (currentRadio && currentRadio.id === station.id) {
-      if (isPlaying) {
-        setIsPlaying(false);
+  const toggleRadio = useCallback(
+    (station) => {
+      if (currentRadio && currentRadio.id === station.id) {
+        if (isPlaying) {
+          setIsPlaying(false);
+          return;
+        }
+        if (station.programs && station.programs.length > 0) {
+          (async () => {
+            const setOffsetFromServer = async () => {
+              try {
+                const d = await apiService.getServerTime();
+                if (d) radioServerTimeOffsetRef.current = d.getTime() - Date.now();
+              } catch (_) {}
+            };
+            await setOffsetFromServer();
+            if (radioServerTimeOffsetRef.current === null) await setOffsetFromServer();
+            const sorted = [...station.programs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            const resolveTracks = sorted.map((prog) => {
+              if (prog.streamUrl)
+                return {
+                  streamUrl: getRadioStreamUrl(prog.streamUrl),
+                  title: prog.title,
+                  artist: prog.artist || '',
+                  duration: prog.duration,
+                };
+              if (prog.libraryId) {
+                try {
+                  const lib = JSON.parse(localStorage.getItem('mp3Library') || '[]');
+                  const file = lib.find((f) => f.id === prog.libraryId);
+                  if (file && file.streamUrl)
+                    return {
+                      streamUrl: getRadioStreamUrl(file.streamUrl),
+                      title: prog.title || file.title,
+                      artist: prog.artist || file.artist || '',
+                      duration: prog.duration || file.duration,
+                    };
+                } catch (_) {}
+              }
+              return null;
+            });
+            const firstPlayableIndex = resolveTracks.findIndex((t) => t != null);
+            if (firstPlayableIndex >= 0) {
+              const { index: programIndex, positionInSeconds, matched } = getCurrentRadioProgramAndPosition(sorted);
+              let track;
+              let playIndex;
+              if (matched) {
+                track = resolveTracks[programIndex];
+                playIndex = programIndex;
+              }
+              if (!matched || !track) {
+                if (matched && !track) {
+                  for (let k = 1; k < resolveTracks.length; k++) {
+                    const nextIdx = (programIndex + k) % resolveTracks.length;
+                    if (resolveTracks[nextIdx]) {
+                      playIndex = nextIdx;
+                      track = resolveTracks[nextIdx];
+                      break;
+                    }
+                  }
+                }
+                if (!track) {
+                  playIndex = Math.min(radioPlaylistIndex, resolveTracks.length - 1);
+                  if (playIndex < firstPlayableIndex) playIndex = firstPlayableIndex;
+                  track = resolveTracks[playIndex];
+                }
+              }
+              if (!track) {
+                playIndex = firstPlayableIndex;
+                track = resolveTracks[playIndex];
+              }
+              const urlToPlay = track && track.streamUrl ? track.streamUrl : getRadioStreamUrl(station.streamUrl || '');
+              const seekPos =
+                matched && track && playIndex === programIndex && positionInSeconds > 0 ? positionInSeconds : null;
+              radioSeekToRef.current = seekPos;
+              setRadioPlaylistTracks(resolveTracks);
+              setRadioPlaylistIndex(playIndex);
+              setCurrentRadio((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      streamUrl: urlToPlay || (track && track.streamUrl) || prev.streamUrl,
+                      currentlyPlaying: (track && track.title) || prev.currentlyPlaying,
+                      artist: (track && track.artist) || prev.artist || '',
+                    }
+                  : null
+              );
+              if (urlToPlay) {
+                if (seekPos != null) radioSeekHandledInClickRef.current = true;
+                startRadioPlayInClickContext(urlToPlay, seekPos);
+              }
+              if (seekPos != null) radioSeekToRef.current = null;
+              setIsPlaying(true);
+            }
+          })();
+          return;
+        }
+        setIsPlaying(true);
         return;
       }
+      setIsFavorite(false);
       if (station.programs && station.programs.length > 0) {
         (async () => {
           const setOffsetFromServer = async () => {
@@ -257,220 +373,174 @@ export function useRadio(language, page, isAnyVideoPlaying) {
           if (radioServerTimeOffsetRef.current === null) await setOffsetFromServer();
           const sorted = [...station.programs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
           const resolveTracks = sorted.map((prog) => {
-            if (prog.streamUrl) return { streamUrl: getRadioStreamUrl(prog.streamUrl), title: prog.title, artist: prog.artist || '', duration: prog.duration };
+            if (prog.streamUrl)
+              return {
+                streamUrl: getRadioStreamUrl(prog.streamUrl),
+                title: prog.title,
+                artist: prog.artist || '',
+                duration: prog.duration,
+              };
             if (prog.libraryId) {
               try {
                 const lib = JSON.parse(localStorage.getItem('mp3Library') || '[]');
                 const file = lib.find((f) => f.id === prog.libraryId);
-                if (file && file.streamUrl) return { streamUrl: getRadioStreamUrl(file.streamUrl), title: prog.title || file.title, artist: prog.artist || file.artist || '', duration: prog.duration || file.duration };
+                if (file && file.streamUrl)
+                  return {
+                    streamUrl: getRadioStreamUrl(file.streamUrl),
+                    title: prog.title || file.title,
+                    artist: prog.artist || file.artist || '',
+                    duration: prog.duration || file.duration,
+                  };
               } catch (_) {}
             }
             return null;
           });
           const firstPlayableIndex = resolveTracks.findIndex((t) => t != null);
-          if (firstPlayableIndex >= 0) {
-            const { index: programIndex, positionInSeconds, matched } = getCurrentRadioProgramAndPosition(sorted);
-            let track;
-            let playIndex;
-            if (matched) {
-              track = resolveTracks[programIndex];
-              playIndex = programIndex;
-            }
-            if (!matched || !track) {
-              if (matched && !track) {
-                for (let k = 1; k < resolveTracks.length; k++) {
-                  const nextIdx = (programIndex + k) % resolveTracks.length;
-                  if (resolveTracks[nextIdx]) {
-                    playIndex = nextIdx;
-                    track = resolveTracks[nextIdx];
-                    break;
-                  }
+          if (firstPlayableIndex < 0) {
+            setCurrentRadio({ ...station, currentlyPlaying: '—', artist: 'Aucune piste lisible' });
+            setRadioPlaylistTracks([]);
+            setRadioPlaylistIndex(0);
+            setIsPlaying(false);
+            return;
+          }
+          const { index: programIndex, positionInSeconds, matched } = getCurrentRadioProgramAndPosition(sorted);
+          let track = resolveTracks[programIndex];
+          let playIndex = programIndex;
+          if (!matched || !track) {
+            if (matched && !track) {
+              for (let k = 1; k < resolveTracks.length; k++) {
+                const nextIdx = (programIndex + k) % resolveTracks.length;
+                if (resolveTracks[nextIdx]) {
+                  playIndex = nextIdx;
+                  track = resolveTracks[nextIdx];
+                  break;
                 }
-              }
-              if (!track) {
-                playIndex = Math.min(radioPlaylistIndex, resolveTracks.length - 1);
-                if (playIndex < firstPlayableIndex) playIndex = firstPlayableIndex;
-                track = resolveTracks[playIndex];
               }
             }
             if (!track) {
               playIndex = firstPlayableIndex;
               track = resolveTracks[playIndex];
             }
-            const urlToPlay = (track && track.streamUrl) ? track.streamUrl : getRadioStreamUrl(station.streamUrl || '');
-            const seekPos = (matched && track && playIndex === programIndex && positionInSeconds > 0) ? positionInSeconds : null;
-            radioSeekToRef.current = seekPos;
-            setRadioPlaylistTracks(resolveTracks);
-            setRadioPlaylistIndex(playIndex);
-            setCurrentRadio(prev => prev ? {
-              ...prev,
-              streamUrl: urlToPlay || (track && track.streamUrl) || prev.streamUrl,
-              currentlyPlaying: (track && track.title) || prev.currentlyPlaying,
-              artist: (track && track.artist) || prev.artist || '',
-            } : null);
-            if (urlToPlay) {
-              if (seekPos != null) radioSeekHandledInClickRef.current = true;
-              startRadioPlayInClickContext(urlToPlay, seekPos);
-            }
-            if (seekPos != null) radioSeekToRef.current = null;
-            setIsPlaying(true);
-          }
-        })();
-        return;
-      }
-      setIsPlaying(true);
-      return;
-    }
-    setIsFavorite(false);
-    if (station.programs && station.programs.length > 0) {
-      (async () => {
-        const setOffsetFromServer = async () => {
-          try {
-            const d = await apiService.getServerTime();
-            if (d) radioServerTimeOffsetRef.current = d.getTime() - Date.now();
-          } catch (_) {}
-        };
-        await setOffsetFromServer();
-        if (radioServerTimeOffsetRef.current === null) await setOffsetFromServer();
-        const sorted = [...station.programs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-        const resolveTracks = sorted.map((prog) => {
-          if (prog.streamUrl) return { streamUrl: getRadioStreamUrl(prog.streamUrl), title: prog.title, artist: prog.artist || '', duration: prog.duration };
-          if (prog.libraryId) {
-            try {
-              const lib = JSON.parse(localStorage.getItem('mp3Library') || '[]');
-              const file = lib.find((f) => f.id === prog.libraryId);
-              if (file && file.streamUrl) return { streamUrl: getRadioStreamUrl(file.streamUrl), title: prog.title || file.title, artist: prog.artist || file.artist || '', duration: prog.duration || file.duration };
-            } catch (_) {}
-          }
-          return null;
-        });
-        const firstPlayableIndex = resolveTracks.findIndex((t) => t != null);
-        if (firstPlayableIndex < 0) {
-          setCurrentRadio({ ...station, currentlyPlaying: '—', artist: 'Aucune piste lisible' });
-          setRadioPlaylistTracks([]);
-          setRadioPlaylistIndex(0);
-          setIsPlaying(false);
-          return;
-        }
-        const { index: programIndex, positionInSeconds, matched } = getCurrentRadioProgramAndPosition(sorted);
-        let track = resolveTracks[programIndex];
-        let playIndex = programIndex;
-        if (!matched || !track) {
-          if (matched && !track) {
-            for (let k = 1; k < resolveTracks.length; k++) {
-              const nextIdx = (programIndex + k) % resolveTracks.length;
-              if (resolveTracks[nextIdx]) {
-                playIndex = nextIdx;
-                track = resolveTracks[nextIdx];
-                break;
-              }
-            }
           }
           if (!track) {
             playIndex = firstPlayableIndex;
             track = resolveTracks[playIndex];
           }
-        }
-        if (!track) {
-          playIndex = firstPlayableIndex;
-          track = resolveTracks[playIndex];
-        }
-        const seekPos = (matched && track && playIndex === programIndex && positionInSeconds > 0) ? positionInSeconds : null;
-        const urlToPlay = (track && track.streamUrl) ? track.streamUrl : getRadioStreamUrl(station.streamUrl || '');
-        radioSeekToRef.current = seekPos;
-        setRadioPlaylistTracks(resolveTracks);
-        setRadioPlaylistIndex(playIndex);
-        setCurrentRadio({
-          ...station,
-          streamUrl: urlToPlay || (track && track.streamUrl) || station.streamUrl || '',
-          currentlyPlaying: (track && track.title) || station.currentlyPlaying || '—',
-          artist: (track && track.artist) || station.artist || '',
-        });
-        setIsPlaying(true);
-        if (urlToPlay) {
-          if (seekPos != null) radioSeekHandledInClickRef.current = true;
-          startRadioPlayInClickContext(urlToPlay, seekPos);
-        }
-        if (seekPos != null) radioSeekToRef.current = null;
-      })();
-      return;
-    }
-    if (station.playlistId) {
-      try {
-        const raw = localStorage.getItem('playlists');
-        const playlists = raw ? JSON.parse(raw) : [];
-        const playlist = playlists.find(p => p.id === station.playlistId);
-        const files = playlist?.files || [];
-        if (files.length === 0) {
-          setCurrentRadio({ ...station, currentlyPlaying: '—', artist: 'Playlist vide' });
+          const seekPos =
+            matched && track && playIndex === programIndex && positionInSeconds > 0 ? positionInSeconds : null;
+          const urlToPlay = track && track.streamUrl ? track.streamUrl : getRadioStreamUrl(station.streamUrl || '');
+          radioSeekToRef.current = seekPos;
+          setRadioPlaylistTracks(resolveTracks);
+          setRadioPlaylistIndex(playIndex);
+          setCurrentRadio({
+            ...station,
+            streamUrl: urlToPlay || (track && track.streamUrl) || station.streamUrl || '',
+            currentlyPlaying: (track && track.title) || station.currentlyPlaying || '—',
+            artist: (track && track.artist) || station.artist || '',
+          });
+          setIsPlaying(true);
+          if (urlToPlay) {
+            if (seekPos != null) radioSeekHandledInClickRef.current = true;
+            startRadioPlayInClickContext(urlToPlay, seekPos);
+          }
+          if (seekPos != null) radioSeekToRef.current = null;
+        })();
+        return;
+      }
+      if (station.playlistId) {
+        try {
+          const raw = localStorage.getItem('playlists');
+          const playlists = raw ? JSON.parse(raw) : [];
+          const playlist = playlists.find((p) => p.id === station.playlistId);
+          const files = playlist?.files || [];
+          if (files.length === 0) {
+            setCurrentRadio({ ...station, currentlyPlaying: '—', artist: 'Playlist vide' });
+            setRadioPlaylistTracks([]);
+            setRadioPlaylistIndex(0);
+            setIsPlaying(false);
+            return;
+          }
+          const first = files[0];
+          setRadioPlaylistTracks(files);
+          setRadioPlaylistIndex(0);
+          setCurrentRadio({
+            ...station,
+            streamUrl: first.streamUrl,
+            currentlyPlaying: first.title || first.name,
+            artist: first.artist || '',
+          });
+          setIsPlaying(true);
+          const urlToPlay = getRadioStreamUrl(first.streamUrl);
+          if (urlToPlay) startRadioPlayInClickContext(urlToPlay);
+        } catch (e) {
+          setCurrentRadio(station);
           setRadioPlaylistTracks([]);
           setRadioPlaylistIndex(0);
           setIsPlaying(false);
-          return;
         }
-        const first = files[0];
-        setRadioPlaylistTracks(files);
-        setRadioPlaylistIndex(0);
-        setCurrentRadio({
-          ...station,
-          streamUrl: first.streamUrl,
-          currentlyPlaying: first.title || first.name,
-          artist: first.artist || '',
-        });
-        setIsPlaying(true);
-        const urlToPlay = getRadioStreamUrl(first.streamUrl);
-        if (urlToPlay) startRadioPlayInClickContext(urlToPlay);
-      } catch (e) {
-        setCurrentRadio(station);
-        setRadioPlaylistTracks([]);
-        setRadioPlaylistIndex(0);
-        setIsPlaying(false);
+        return;
       }
-      return;
-    }
-    setRadioPlaylistTracks([]);
-    setRadioPlaylistIndex(0);
-    let effectiveStation = station;
-    let streamUrlToPlay = getRadioStreamUrl(station.streamUrl || '');
-    if (!streamUrlToPlay && station.programs?.length > 0) {
-      const sorted = [...station.programs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      for (const prog of sorted) {
-        if (prog.streamUrl) {
-          streamUrlToPlay = getRadioStreamUrl(prog.streamUrl);
-          effectiveStation = { ...station, streamUrl: prog.streamUrl, currentlyPlaying: prog.title || 'En direct', artist: prog.artist || '' };
-          break;
-        }
-        if (prog.libraryId) {
-          try {
-            const lib = JSON.parse(localStorage.getItem('mp3Library') || '[]');
-            const file = lib.find((f) => f.id === prog.libraryId);
-            if (file?.streamUrl) {
-              streamUrlToPlay = getRadioStreamUrl(file.streamUrl);
-              effectiveStation = { ...station, streamUrl: file.streamUrl, currentlyPlaying: prog.title || file.title || 'En direct', artist: prog.artist || file.artist || '' };
-              break;
-            }
-          } catch (_) {}
+      setRadioPlaylistTracks([]);
+      setRadioPlaylistIndex(0);
+      let effectiveStation = station;
+      let streamUrlToPlay = getRadioStreamUrl(station.streamUrl || '');
+      if (!streamUrlToPlay && station.programs?.length > 0) {
+        const sorted = [...station.programs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        for (const prog of sorted) {
+          if (prog.streamUrl) {
+            streamUrlToPlay = getRadioStreamUrl(prog.streamUrl);
+            effectiveStation = {
+              ...station,
+              streamUrl: prog.streamUrl,
+              currentlyPlaying: prog.title || 'En direct',
+              artist: prog.artist || '',
+            };
+            break;
+          }
+          if (prog.libraryId) {
+            try {
+              const lib = JSON.parse(localStorage.getItem('mp3Library') || '[]');
+              const file = lib.find((f) => f.id === prog.libraryId);
+              if (file?.streamUrl) {
+                streamUrlToPlay = getRadioStreamUrl(file.streamUrl);
+                effectiveStation = {
+                  ...station,
+                  streamUrl: file.streamUrl,
+                  currentlyPlaying: prog.title || file.title || 'En direct',
+                  artist: prog.artist || file.artist || '',
+                };
+                break;
+              }
+            } catch (_) {}
+          }
         }
       }
-    }
-    if (!effectiveStation.programs?.length && !station.playlistId) {
-      effectiveStation = { ...effectiveStation, id: station.id || station._id, name: station.name, currentlyPlaying: 'En direct', artist: '' };
-    }
-    setCurrentRadio(effectiveStation);
-    setIsPlaying(true);
-    if (streamUrlToPlay) startRadioPlayInClickContext(streamUrlToPlay);
-  }, [currentRadio, isPlaying, radioPlaylistIndex, getCurrentRadioProgramAndPosition, startRadioPlayInClickContext]);
+      if (!effectiveStation.programs?.length && !station.playlistId) {
+        effectiveStation = {
+          ...effectiveStation,
+          id: station.id || station._id,
+          name: station.name,
+          currentlyPlaying: 'En direct',
+          artist: '',
+        };
+      }
+      setCurrentRadio(effectiveStation);
+      setIsPlaying(true);
+      if (streamUrlToPlay) startRadioPlayInClickContext(streamUrlToPlay);
+    },
+    [currentRadio, isPlaying, radioPlaylistIndex, getCurrentRadioProgramAndPosition, startRadioPlayInClickContext]
+  );
 
   const toggleRepeat = useCallback(() => {
-    setRepeatMode(prev => prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off');
+    setRepeatMode((prev) => (prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off'));
   }, []);
 
   const toggleShuffle = useCallback(() => {
-    setIsShuffle(prev => !prev);
+    setIsShuffle((prev) => !prev);
   }, []);
 
   const toggleFavorite = useCallback(() => {
-    setIsFavorite(prev => !prev);
+    setIsFavorite((prev) => !prev);
   }, []);
 
   const handleVolumeChange = useCallback((e) => {
@@ -486,9 +556,9 @@ export function useRadio(language, page, isAnyVideoPlaying) {
         const response = await apiService.getRadioStations(`lang=${language}`);
         if (cancelled) return;
         const raw = response?.data;
-        const data = Array.isArray(raw) ? raw : (raw?.stations || []);
+        const data = Array.isArray(raw) ? raw : raw?.stations || [];
         if (data && data.length > 0) {
-          const transformed = data.map(station => ({
+          const transformed = data.map((station) => ({
             id: station._id || station.id,
             name: station.name,
             artist: station.genre || 'Live',
@@ -515,9 +585,12 @@ export function useRadio(language, page, isAnyVideoPlaying) {
           if (!isNaN(serverDate.getTime())) radioServerTimeOffsetRef.current = serverDate.getTime() - Date.now();
         }
         if (radioServerTimeOffsetRef.current === null) {
-          apiService.getServerTime().then((serverDate) => {
-            if (serverDate) radioServerTimeOffsetRef.current = serverDate.getTime() - Date.now();
-          }).catch(() => {});
+          apiService
+            .getServerTime()
+            .then((serverDate) => {
+              if (serverDate) radioServerTimeOffsetRef.current = serverDate.getTime() - Date.now();
+            })
+            .catch(() => {});
         }
       } catch (error) {
         console.warn('Erreur chargement stations radio:', error);
@@ -527,7 +600,9 @@ export function useRadio(language, page, isAnyVideoPlaying) {
       }
     };
     loadRadioStations();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [language]);
 
   // --- Page === radio auto-start effect ---
@@ -559,7 +634,9 @@ export function useRadio(language, page, isAnyVideoPlaying) {
         }
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [page, radioStations, currentRadio, toggleRadio]);
 
   // --- Init Audio element effect ---
@@ -624,7 +701,12 @@ export function useRadio(language, page, isAnyVideoPlaying) {
       };
       audioElement.addEventListener('canplay', onCanPlay);
       audioElement.addEventListener('loadedmetadata', onCanPlay);
-      if (audioElement.readyState >= 2) setTimeout(() => { doSeek(); audioElement.removeEventListener('canplay', onCanPlay); audioElement.removeEventListener('loadedmetadata', onCanPlay); }, 0);
+      if (audioElement.readyState >= 2)
+        setTimeout(() => {
+          doSeek();
+          audioElement.removeEventListener('canplay', onCanPlay);
+          audioElement.removeEventListener('loadedmetadata', onCanPlay);
+        }, 0);
 
       const maxRetries = 2;
       const retryDelayMs = 1500;
@@ -647,7 +729,7 @@ export function useRadio(language, page, isAnyVideoPlaying) {
       audioElement.addEventListener('error', handleError, { once: true });
 
       if (!radioSeekHandledInClickRef.current && (!isSameResource || audioElement.paused)) {
-        audioElement.play().catch(error => {
+        audioElement.play().catch((error) => {
           if (error?.name === 'AbortError') return;
           console.error('Erreur de lecture audio:', error);
           setIsPlaying(false);
@@ -696,7 +778,9 @@ export function useRadio(language, page, isAnyVideoPlaying) {
         return (url.split('?')[0] || '').replace(/\/+/g, '/').replace(/\/$/, '') || '/';
       }
     };
-    const uniqueUrls = [...new Set(radioPlaylistTracks.filter((t) => t?.streamUrl).map((t) => normalizeUrl(t.streamUrl)))];
+    const uniqueUrls = [
+      ...new Set(radioPlaylistTracks.filter((t) => t?.streamUrl).map((t) => normalizeUrl(t.streamUrl))),
+    ];
     const isSingleStreamPlaylist = uniqueUrls.length <= 1;
 
     const onEnded = () => {
@@ -705,7 +789,7 @@ export function useRadio(language, page, isAnyVideoPlaying) {
       const pos = audioElement.currentTime;
       const hasValidDuration = typeof dur === 'number' && !isNaN(dur) && isFinite(dur) && dur > 0;
       const isShortSegment = hasValidDuration && dur < 60;
-      const reallyEnded = hasValidDuration && !isShortSegment && (pos >= dur - 2);
+      const reallyEnded = hasValidDuration && !isShortSegment && pos >= dur - 2;
       if (!reallyEnded) return;
 
       const currentNorm = normalizeUrl(currentRadio?.streamUrl);
@@ -716,12 +800,16 @@ export function useRadio(language, page, isAnyVideoPlaying) {
         if (nextTrack) {
           if (normalizeUrl(nextTrack.streamUrl) === currentNorm) return;
           setRadioPlaylistIndex(nextIndex);
-          setCurrentRadio(prev => prev ? {
-            ...prev,
-            streamUrl: nextTrack.streamUrl,
-            currentlyPlaying: nextTrack.title || nextTrack.name,
-            artist: nextTrack.artist || '',
-          } : null);
+          setCurrentRadio((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  streamUrl: nextTrack.streamUrl,
+                  currentlyPlaying: nextTrack.title || nextTrack.name,
+                  artist: nextTrack.artist || '',
+                }
+              : null
+          );
         }
       } else if (repeatMode === 'all') {
         const firstIndex = radioPlaylistTracks.findIndex((t) => t != null);
@@ -729,12 +817,16 @@ export function useRadio(language, page, isAnyVideoPlaying) {
           const first = radioPlaylistTracks[firstIndex];
           if (first && normalizeUrl(first.streamUrl) === currentNorm) return;
           setRadioPlaylistIndex(firstIndex);
-          setCurrentRadio(prev => prev ? {
-            ...prev,
-            streamUrl: first.streamUrl,
-            currentlyPlaying: first.title || first.name,
-            artist: first.artist || '',
-          } : null);
+          setCurrentRadio((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  streamUrl: first.streamUrl,
+                  currentlyPlaying: first.title || first.name,
+                  artist: first.artist || '',
+                }
+              : null
+          );
         } else {
           setIsPlaying(false);
         }
@@ -759,7 +851,10 @@ export function useRadio(language, page, isAnyVideoPlaying) {
     if (currentRadio && isPlaying) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentRadio.name || 'GNV Radio',
-        artist: currentRadio.currentlyPlaying && currentRadio.currentlyPlaying !== 'En direct' ? currentRadio.currentlyPlaying : 'En direct',
+        artist:
+          currentRadio.currentlyPlaying && currentRadio.currentlyPlaying !== 'En direct'
+            ? currentRadio.currentlyPlaying
+            : 'En direct',
         album: 'GNV OnBoard',
       });
       navigator.mediaSession.playbackState = 'playing';

@@ -1,6 +1,37 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Plus, Edit, Trash2, Calendar, Eye, Heart, Filter, X, Save, MapPin, Upload, Image as ImageIcon, Video, Link, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, Eye as EyeIcon, Clock, Tag, Globe, FileText, Heading2, Heading3, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import {
+  BookOpen,
+  Plus,
+  Edit,
+  Trash2,
+  Calendar,
+  Eye,
+  Heart,
+  Filter,
+  X,
+  Save,
+  MapPin,
+  Upload,
+  Image as ImageIcon,
+  Video,
+  Link,
+  Bold,
+  Italic,
+  List,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Eye as EyeIcon,
+  Clock,
+  Tag,
+  Globe,
+  FileText,
+  Heading2,
+  Heading3,
+  ChevronDown,
+  SlidersHorizontal,
+} from 'lucide-react';
 import FilterBar from '../components/FilterBar';
 import { apiService } from '../services/apiService';
 import toast from 'react-hot-toast';
@@ -53,7 +84,7 @@ const Magazine = () => {
     featured: false,
     allowComments: true,
     readingTime: 0,
-    translations: emptyTranslations()
+    translations: emptyTranslations(),
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [editActiveLang, setEditActiveLang] = useState('fr');
@@ -83,7 +114,7 @@ const Magazine = () => {
     { name: 'Tunisie', code: 'TN' },
     { name: 'Algérie', code: 'DZ' },
     { name: 'Italie', code: 'IT' },
-    { name: 'Espagne', code: 'ES' }
+    { name: 'Espagne', code: 'ES' },
   ];
 
   // Catégories disponibles
@@ -94,7 +125,7 @@ const Magazine = () => {
     'Gastronomie',
     'Divertissement',
     'Sport',
-    'Lifestyle'
+    'Lifestyle',
   ];
 
   useEffect(() => {
@@ -105,7 +136,7 @@ const Magazine = () => {
     try {
       setLoading(true);
       const response = await apiService.getArticles('all=1&withTranslations=1&limit=100&page=1');
-      const articlesArray = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      const articlesArray = Array.isArray(response.data) ? response.data : response.data?.data || [];
       setArticles(articlesArray);
     } catch (error) {
       console.error('Error fetching articles:', error);
@@ -146,7 +177,7 @@ const Magazine = () => {
       return;
     }
     setLoadingEditArticle(true);
-    const loadingToast = toast.loading('Chargement de l\'article…');
+    const loadingToast = toast.loading("Chargement de l'article…");
     try {
       const res = await apiService.getArticle(id, 'withTranslations=1');
       toast.dismiss(loadingToast);
@@ -159,9 +190,10 @@ const Magazine = () => {
         ...full,
         countries: full.countries && Array.isArray(full.countries) ? [...full.countries] : [],
         tags: full.tags && Array.isArray(full.tags) ? [...full.tags] : [],
-        translations: full.translations && typeof full.translations === 'object'
-          ? { ...emptyTranslations(), ...full.translations }
-          : emptyTranslations()
+        translations:
+          full.translations && typeof full.translations === 'object'
+            ? { ...emptyTranslations(), ...full.translations }
+            : emptyTranslations(),
       };
       setEditingArticle(articleData);
       setEditActiveLang('fr');
@@ -171,14 +203,16 @@ const Magazine = () => {
       const pubAt = full.publishedAt ? new Date(full.publishedAt) : null;
       setEditPublishDate(pubAt ? pubAt.toISOString().split('T')[0] : '');
       setEditPublishTime(pubAt && pubAt.toTimeString ? pubAt.toTimeString().slice(0, 5) : '');
-      setEditGalleryImages(full.gallery && full.gallery.length
-        ? full.gallery.map((g, i) => ({ id: `edit-g-${i}`, preview: g.url || g, caption: g.caption || '' }))
-        : []);
+      setEditGalleryImages(
+        full.gallery && full.gallery.length
+          ? full.gallery.map((g, i) => ({ id: `edit-g-${i}`, preview: g.url || g, caption: g.caption || '' }))
+          : []
+      );
       setInsertTargetMode('new');
     } catch (err) {
       toast.dismiss(loadingToast);
       console.error('Error loading article for edit:', err);
-      toast.error(err.response?.data?.message || 'Erreur lors du chargement de l\'article');
+      toast.error(err.response?.data?.message || "Erreur lors du chargement de l'article");
     } finally {
       setLoadingEditArticle(false);
     }
@@ -207,7 +241,7 @@ const Magazine = () => {
   const removeEditImage = () => {
     setEditImageFile(null);
     setEditImagePreview(null);
-    setEditingArticle(prev => ({ ...prev, imageUrl: '' }));
+    setEditingArticle((prev) => ({ ...prev, imageUrl: '' }));
   };
 
   const toggleEditCountry = (countryName) => {
@@ -215,8 +249,8 @@ const Magazine = () => {
     setEditingArticle({
       ...editingArticle,
       countries: editingArticle.countries?.includes(countryName)
-        ? (editingArticle.countries || []).filter(c => c !== countryName)
-        : [...(editingArticle.countries || []), countryName]
+        ? (editingArticle.countries || []).filter((c) => c !== countryName)
+        : [...(editingArticle.countries || []), countryName],
     });
   };
 
@@ -231,7 +265,7 @@ const Magazine = () => {
     if (!editingArticle) return;
     setEditingArticle({
       ...editingArticle,
-      tags: (editingArticle.tags || []).filter(t => t !== tagToRemove)
+      tags: (editingArticle.tags || []).filter((t) => t !== tagToRemove),
     });
   };
 
@@ -242,14 +276,14 @@ const Magazine = () => {
       if (!file.type.startsWith('image/')) return;
       const reader = new FileReader();
       reader.onloadend = () => {
-        setEditGalleryImages(prev => [...prev, { id: `edit-g-${Date.now()}-${i}`, preview: reader.result, file }]);
+        setEditGalleryImages((prev) => [...prev, { id: `edit-g-${Date.now()}-${i}`, preview: reader.result, file }]);
       };
       reader.readAsDataURL(file);
     });
   };
 
   const removeEditGalleryImage = (id) => {
-    setEditGalleryImages(prev => prev.filter(img => img.id !== id));
+    setEditGalleryImages((prev) => prev.filter((img) => img.id !== id));
   };
 
   const handleSaveEdit = async () => {
@@ -270,7 +304,13 @@ const Magazine = () => {
         imageUrl = up?.image?.path || up?.data?.image?.path || up?.data?.image?.url || up?.image?.url || imageUrl;
         setUploadingImage(false);
       }
-      const translations = { fr: { title: editingArticle.title, excerpt: editingArticle.excerpt || '', content: editingArticle.content || '' } };
+      const translations = {
+        fr: {
+          title: editingArticle.title,
+          excerpt: editingArticle.excerpt || '',
+          content: editingArticle.content || '',
+        },
+      };
       LANG_LIST.forEach(({ code }) => {
         if (code === 'fr') return;
         const t = editingArticle.translations?.[code];
@@ -278,9 +318,12 @@ const Magazine = () => {
           translations[code] = { title: t.title || '', excerpt: t.excerpt || '', content: t.content || '' };
         }
       });
-      const publishedAt = editingArticle.status === 'scheduled' && editPublishDate && editPublishTime
-        ? new Date(`${editPublishDate}T${editPublishTime}`).toISOString()
-        : (editingArticle.status === 'published' ? (editingArticle.publishedAt || new Date().toISOString()) : (editingArticle.publishedAt || null));
+      const publishedAt =
+        editingArticle.status === 'scheduled' && editPublishDate && editPublishTime
+          ? new Date(`${editPublishDate}T${editPublishTime}`).toISOString()
+          : editingArticle.status === 'published'
+            ? editingArticle.publishedAt || new Date().toISOString()
+            : editingArticle.publishedAt || null;
       const payload = {
         title: editingArticle.title,
         excerpt: editingArticle.excerpt || '',
@@ -297,15 +340,23 @@ const Magazine = () => {
         countries: editingArticle.countries || [],
         publishedAt,
         metaDescription: editingArticle.metaDescription || '',
-        metaKeywords: Array.isArray(editingArticle.metaKeywords) ? editingArticle.metaKeywords : (editingArticle.metaKeywords ? [String(editingArticle.metaKeywords)] : []),
-        gallery: editGalleryImages.map(img => ({ url: img.preview, caption: img.caption || '' })),
-        translations
+        metaKeywords: Array.isArray(editingArticle.metaKeywords)
+          ? editingArticle.metaKeywords
+          : editingArticle.metaKeywords
+            ? [String(editingArticle.metaKeywords)]
+            : [],
+        gallery: editGalleryImages.map((img) => ({ url: img.preview, caption: img.caption || '' })),
+        translations,
       };
       const res = await apiService.updateArticle(id, payload);
       const updatedFromApi = res?.data?.data;
       if (updatedFromApi) {
         const sid = updatedFromApi._id || updatedFromApi.id || id;
-        setArticles(prev => prev.map(a => (a._id === id || a.id === id) ? { ...updatedFromApi, _id: sid, id: sid, updatedAt: Date.now() } : a));
+        setArticles((prev) =>
+          prev.map((a) =>
+            a._id === id || a.id === id ? { ...updatedFromApi, _id: sid, id: sid, updatedAt: Date.now() } : a
+          )
+        );
       }
       toast.success(t('magazine.articleUpdated'));
       if (Object.keys(translations).length > 1) toast.success(t('common.contentAddedByLanguage'));
@@ -322,20 +373,24 @@ const Magazine = () => {
   };
 
   const categories = useMemo(() => {
-    const cats = new Set(articles.map(article => article.category));
+    const cats = new Set(articles.map((article) => article.category));
     return Array.from(cats).sort();
   }, [articles]);
 
   const filteredArticles = useMemo(() => {
-    return articles.filter(article => {
-      const matchesSearch = !searchQuery || 
-        (article.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           article.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-         article.excerpt?.toLowerCase().includes(searchQuery.toLowerCase()));
+    return articles.filter((article) => {
+      const matchesSearch =
+        !searchQuery ||
+        article.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        article.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        article.excerpt?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || article.category === categoryFilter;
-      const matchesCountry = countryFilter === 'all' || 
-        (article.countries && article.countries.some(country => country.toLowerCase().includes(countryFilter.toLowerCase())));
-      const matchesDestination = destinationFilter === 'all' || 
+      const matchesCountry =
+        countryFilter === 'all' ||
+        (article.countries &&
+          article.countries.some((country) => country.toLowerCase().includes(countryFilter.toLowerCase())));
+      const matchesDestination =
+        destinationFilter === 'all' ||
         (article.destination && article.destination.toLowerCase().includes(destinationFilter.toLowerCase()));
       const matchesShip = true;
       return matchesSearch && matchesCategory && matchesCountry && matchesDestination && matchesShip;
@@ -391,8 +446,8 @@ const Magazine = () => {
     setNewArticle({
       ...newArticle,
       countries: newArticle.countries.includes(countryName)
-        ? newArticle.countries.filter(c => c !== countryName)
-        : [...newArticle.countries, countryName]
+        ? newArticle.countries.filter((c) => c !== countryName)
+        : [...newArticle.countries, countryName],
     });
   };
 
@@ -400,7 +455,7 @@ const Magazine = () => {
     if (tag.trim() && !newArticle.tags.includes(tag.trim())) {
       setNewArticle({
         ...newArticle,
-        tags: [...newArticle.tags, tag.trim()]
+        tags: [...newArticle.tags, tag.trim()],
       });
     }
   };
@@ -408,21 +463,24 @@ const Magazine = () => {
   const removeTag = (tagToRemove) => {
     setNewArticle({
       ...newArticle,
-      tags: newArticle.tags.filter(tag => tag !== tagToRemove)
+      tags: newArticle.tags.filter((tag) => tag !== tagToRemove),
     });
   };
 
   const handleGalleryUpload = (e) => {
     const files = Array.from(e.target.files);
-    files.forEach(file => {
+    files.forEach((file) => {
       if (file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024) {
         const reader = new FileReader();
         reader.onloadend = () => {
-          setGalleryImages(prev => [...prev, {
-            id: Date.now() + Math.random(),
-            file: file,
-            preview: reader.result
-          }]);
+          setGalleryImages((prev) => [
+            ...prev,
+            {
+              id: Date.now() + Math.random(),
+              file: file,
+              preview: reader.result,
+            },
+          ]);
         };
         reader.readAsDataURL(file);
       }
@@ -430,7 +488,7 @@ const Magazine = () => {
   };
 
   const removeGalleryImage = (id) => {
-    setGalleryImages(galleryImages.filter(img => img.id !== id));
+    setGalleryImages(galleryImages.filter((img) => img.id !== id));
   };
 
   const calculateReadingTime = (content) => {
@@ -441,22 +499,20 @@ const Magazine = () => {
 
   // Récupère le contenu et le setter pour la langue active (formulaire nouvel article)
   const getCurrentContent = () =>
-    activeLang === 'fr'
-      ? newArticle.content
-      : (newArticle.translations?.[activeLang]?.content ?? '');
+    activeLang === 'fr' ? newArticle.content : (newArticle.translations?.[activeLang]?.content ?? '');
   const setCurrentContent = (value) => {
     const frContent = activeLang === 'fr' ? value : (newArticle.translations?.fr?.content ?? newArticle.content);
     const rt = calculateReadingTime(frContent);
     if (activeLang === 'fr') {
-      setNewArticle(prev => ({ ...prev, content: value, readingTime: rt }));
+      setNewArticle((prev) => ({ ...prev, content: value, readingTime: rt }));
     } else {
-      setNewArticle(prev => ({
+      setNewArticle((prev) => ({
         ...prev,
         translations: {
           ...prev.translations,
-          [activeLang]: { ...prev.translations?.[activeLang], content: value }
+          [activeLang]: { ...prev.translations?.[activeLang], content: value },
         },
-        readingTime: rt
+        readingTime: rt,
       }));
     }
   };
@@ -501,22 +557,40 @@ const Magazine = () => {
         break;
       case 'list':
         html = selectedText
-          ? '<ul>' + selectedText.split('\n').filter(Boolean).map(l => `<li>${l}</li>`).join('') + '</ul>'
+          ? '<ul>' +
+            selectedText
+              .split('\n')
+              .filter(Boolean)
+              .map((l) => `<li>${l}</li>`)
+              .join('') +
+            '</ul>'
           : '<ul>\n<li>Élément 1</li>\n<li>Élément 2</li>\n</ul>';
         break;
       case 'listOrdered':
         html = selectedText
-          ? '<ol>' + selectedText.split('\n').filter(Boolean).map(l => `<li>${l}</li>`).join('') + '</ol>'
+          ? '<ol>' +
+            selectedText
+              .split('\n')
+              .filter(Boolean)
+              .map((l) => `<li>${l}</li>`)
+              .join('') +
+            '</ol>'
           : '<ol>\n<li>Premier</li>\n<li>Deuxième</li>\n</ol>';
         break;
       case 'alignLeft':
-        html = selectedText ? `<p style="text-align:left">${selectedText}</p>` : '<p style="text-align:left">Paragraphe</p>';
+        html = selectedText
+          ? `<p style="text-align:left">${selectedText}</p>`
+          : '<p style="text-align:left">Paragraphe</p>';
         break;
       case 'alignCenter':
-        html = selectedText ? `<p style="text-align:center">${selectedText}</p>` : '<p style="text-align:center">Paragraphe centré</p>';
+        html = selectedText
+          ? `<p style="text-align:center">${selectedText}</p>`
+          : '<p style="text-align:center">Paragraphe centré</p>';
         break;
       case 'alignRight':
-        html = selectedText ? `<p style="text-align:right">${selectedText}</p>` : '<p style="text-align:right">Paragraphe à droite</p>';
+        html = selectedText
+          ? `<p style="text-align:right">${selectedText}</p>`
+          : '<p style="text-align:right">Paragraphe à droite</p>';
         break;
       case 'paragraph':
         html = selectedText ? `<p>${selectedText}</p>` : '<p>Nouveau paragraphe.</p>';
@@ -536,17 +610,19 @@ const Magazine = () => {
   };
   const setEditCurrentContent = (value) => {
     if (!editingArticle) return;
-    const rt = calculateReadingTime(editActiveLang === 'fr' ? value : (editingArticle.translations?.fr?.content ?? editingArticle.content ?? ''));
+    const rt = calculateReadingTime(
+      editActiveLang === 'fr' ? value : (editingArticle.translations?.fr?.content ?? editingArticle.content ?? '')
+    );
     if (editActiveLang === 'fr') {
-      setEditingArticle(prev => ({ ...prev, content: value, readingTime: rt }));
+      setEditingArticle((prev) => ({ ...prev, content: value, readingTime: rt }));
     } else {
-      setEditingArticle(prev => ({
+      setEditingArticle((prev) => ({
         ...prev,
         translations: {
           ...prev.translations,
-          [editActiveLang]: { ...prev.translations?.[editActiveLang], content: value }
+          [editActiveLang]: { ...prev.translations?.[editActiveLang], content: value },
         },
-        readingTime: rt
+        readingTime: rt,
       }));
     }
   };
@@ -589,22 +665,40 @@ const Magazine = () => {
         break;
       case 'list':
         html = selectedText
-          ? '<ul>' + selectedText.split('\n').filter(Boolean).map(l => `<li>${l}</li>`).join('') + '</ul>'
+          ? '<ul>' +
+            selectedText
+              .split('\n')
+              .filter(Boolean)
+              .map((l) => `<li>${l}</li>`)
+              .join('') +
+            '</ul>'
           : '<ul>\n<li>Élément 1</li>\n<li>Élément 2</li>\n</ul>';
         break;
       case 'listOrdered':
         html = selectedText
-          ? '<ol>' + selectedText.split('\n').filter(Boolean).map(l => `<li>${l}</li>`).join('') + '</ol>'
+          ? '<ol>' +
+            selectedText
+              .split('\n')
+              .filter(Boolean)
+              .map((l) => `<li>${l}</li>`)
+              .join('') +
+            '</ol>'
           : '<ol>\n<li>Premier</li>\n<li>Deuxième</li>\n</ol>';
         break;
       case 'alignLeft':
-        html = selectedText ? `<p style="text-align:left">${selectedText}</p>` : '<p style="text-align:left">Paragraphe</p>';
+        html = selectedText
+          ? `<p style="text-align:left">${selectedText}</p>`
+          : '<p style="text-align:left">Paragraphe</p>';
         break;
       case 'alignCenter':
-        html = selectedText ? `<p style="text-align:center">${selectedText}</p>` : '<p style="text-align:center">Paragraphe centré</p>';
+        html = selectedText
+          ? `<p style="text-align:center">${selectedText}</p>`
+          : '<p style="text-align:center">Paragraphe centré</p>';
         break;
       case 'alignRight':
-        html = selectedText ? `<p style="text-align:right">${selectedText}</p>` : '<p style="text-align:right">Paragraphe à droite</p>';
+        html = selectedText
+          ? `<p style="text-align:right">${selectedText}</p>`
+          : '<p style="text-align:right">Paragraphe à droite</p>';
         break;
       case 'paragraph':
         html = selectedText ? `<p>${selectedText}</p>` : '<p>Nouveau paragraphe.</p>';
@@ -624,7 +718,7 @@ const Magazine = () => {
         url = res?.data?.image?.url || res?.image?.url;
         if (!url) throw new Error('URL manquante');
       } catch (err) {
-        toast.error(err.response?.data?.message || 'Échec de l\'upload');
+        toast.error(err.response?.data?.message || "Échec de l'upload");
         setUploadingInlineImage(false);
         return;
       }
@@ -635,7 +729,7 @@ const Magazine = () => {
       return;
     }
     const isEdit = insertTargetMode === 'edit';
-    const title = isEdit ? (editingArticle?.title || '') : newArticle.title;
+    const title = isEdit ? editingArticle?.title || '' : newArticle.title;
     const alt = title ? `Image - ${title}` : 'Image article';
     const html = `<figure class="article-inline-image"><img src="${url}" alt="${alt}" class="max-w-full h-auto rounded-lg" /><figcaption>Légende (optionnelle)</figcaption></figure>`;
     if (isEdit) {
@@ -696,7 +790,8 @@ const Magazine = () => {
     let cancelled = false;
     setLoadingMediaLibrary(true);
     setMediaLibraryVideos([]);
-    apiService.getMediaLibrary()
+    apiService
+      .getMediaLibrary()
       .then((res) => {
         if (cancelled) return;
         const data = res?.data?.media ?? res?.media ?? [];
@@ -709,14 +804,16 @@ const Magazine = () => {
       .finally(() => {
         if (!cancelled) setLoadingMediaLibrary(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [showInsertVideoModal]);
 
   useEffect(() => {
     const content = newArticle.translations?.fr?.content || newArticle.content;
     if (!content) return;
     const readingTime = calculateReadingTime(content);
-    setNewArticle(prev => (prev.readingTime === readingTime ? prev : { ...prev, readingTime }));
+    setNewArticle((prev) => (prev.readingTime === readingTime ? prev : { ...prev, readingTime }));
   }, [newArticle.translations?.fr?.content, newArticle.content]);
 
   const handleAddArticle = async () => {
@@ -739,7 +836,7 @@ const Magazine = () => {
         imageUrl = res?.image?.path || res?.data?.image?.path || res?.image?.url || res?.data?.image?.url;
         if (!imageUrl) throw new Error('URL image manquante');
       } catch (err) {
-        toast.error(err.response?.data?.message || 'Échec de l\'upload de l\'image');
+        toast.error(err.response?.data?.message || "Échec de l'upload de l'image");
         setUploadingImage(false);
         return;
       }
@@ -752,7 +849,7 @@ const Magazine = () => {
     try {
       // Multilingue 100 % en base : pas de traduction en ligne. On enregistre toutes les langues renseignées (fr + en, es, it, de, ar).
       const translations = {
-        fr: { title: frTitle, excerpt: frExcerpt, content: frContent }
+        fr: { title: frTitle, excerpt: frExcerpt, content: frContent },
       };
       LANG_LIST.forEach(({ code }) => {
         if (code === 'fr') return;
@@ -769,8 +866,12 @@ const Magazine = () => {
         author: newArticle.author?.trim() || 'Rédaction GNV',
         imageUrl,
         status: newArticle.status,
-        publishedAt: newArticle.status === 'published' ? new Date().toISOString() :
-          (newArticle.status === 'scheduled' && publishDate && publishTime ? new Date(`${publishDate}T${publishTime}`).toISOString() : null),
+        publishedAt:
+          newArticle.status === 'published'
+            ? new Date().toISOString()
+            : newArticle.status === 'scheduled' && publishDate && publishTime
+              ? new Date(`${publishDate}T${publishTime}`).toISOString()
+              : null,
         featured: !!newArticle.featured,
         allowComments: newArticle.allowComments !== false,
         readingTime: newArticle.readingTime || 0,
@@ -778,14 +879,19 @@ const Magazine = () => {
         tags: newArticle.tags,
         metaDescription: newArticle.metaDescription || '',
         metaKeywords: newArticle.metaKeywords || '',
-        gallery: galleryImages.map(img => ({ url: img.preview, caption: '' }))
+        gallery: galleryImages.map((img) => ({ url: img.preview, caption: '' })),
       };
       payload.translations = translations;
       const createRes = await apiService.createArticle(payload);
       const createdArticle = createRes?.data?.data ?? createRes?.data;
       if (createdArticle) {
-        const withId = { ...createdArticle, _id: createdArticle._id || createdArticle.id, id: createdArticle.id || createdArticle._id, updatedAt: Date.now() };
-        setArticles(prev => [withId, ...prev]);
+        const withId = {
+          ...createdArticle,
+          _id: createdArticle._id || createdArticle.id,
+          id: createdArticle.id || createdArticle._id,
+          updatedAt: Date.now(),
+        };
+        setArticles((prev) => [withId, ...prev]);
       }
       toast.success(t('magazine.articleCreated'));
       if (Object.keys(translations).length > 1) toast.success(t('common.contentAddedByLanguage'));
@@ -812,12 +918,12 @@ const Magazine = () => {
         featured: false,
         allowComments: true,
         readingTime: 0,
-        translations: emptyTranslations()
+        translations: emptyTranslations(),
       });
       fetchArticles();
     } catch (error) {
       console.error('Erreur création article:', error);
-      toast.error(error.response?.data?.message || 'Erreur lors de l\'ajout de l\'article');
+      toast.error(error.response?.data?.message || "Erreur lors de l'ajout de l'article");
     }
   };
 
@@ -829,7 +935,7 @@ const Magazine = () => {
     );
   }
 
-  const publishedArticles = articles.filter(a => a.isPublished);
+  const publishedArticles = articles.filter((a) => a.isPublished);
   const totalViews = articles.reduce((sum, a) => sum + (a.views || 0), 0);
   const totalLikes = articles.reduce((sum, a) => sum + (a.likes || 0), 0);
 
@@ -840,7 +946,9 @@ const Magazine = () => {
         <div>
           <h1 className="text-xl font-semibold text-slate-800 tracking-tight">{t('magazine.title')}</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            {loading ? t('common.loading') : t('magazine.articlesCount', { count: articles.length }) || `${articles.length} article(s)`}
+            {loading
+              ? t('common.loading')
+              : t('magazine.articlesCount', { count: articles.length }) || `${articles.length} article(s)`}
           </p>
         </div>
         <motion.button
@@ -874,7 +982,7 @@ const Magazine = () => {
               featured: false,
               allowComments: true,
               readingTime: 0,
-              translations: emptyTranslations()
+              translations: emptyTranslations(),
             });
             setShowAddModal(true);
           }}
@@ -889,20 +997,40 @@ const Magazine = () => {
       {/* Stats compactes */}
       <div className="flex flex-wrap gap-3">
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100"><BookOpen size={18} className="text-slate-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('magazine.totalArticles')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{articles.length}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
+            <BookOpen size={18} className="text-slate-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('magazine.totalArticles')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{articles.length}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50"><BookOpen size={18} className="text-emerald-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('magazine.published')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{publishedArticles.length}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
+            <BookOpen size={18} className="text-emerald-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('magazine.published')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{publishedArticles.length}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50"><Eye size={18} className="text-violet-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('magazine.totalViews')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{totalViews.toLocaleString()}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50">
+            <Eye size={18} className="text-violet-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('magazine.totalViews')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{totalViews.toLocaleString()}</p>
+          </div>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-pink-50"><Heart size={18} className="text-pink-600" /></div>
-          <div><p className="text-xs font-medium text-slate-500">{t('magazine.totalLikes')}</p><p className="text-lg font-semibold text-slate-800 tabular-nums">{totalLikes.toLocaleString()}</p></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-pink-50">
+            <Heart size={18} className="text-pink-600" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500">{t('magazine.totalLikes')}</p>
+            <p className="text-lg font-semibold text-slate-800 tabular-nums">{totalLikes.toLocaleString()}</p>
+          </div>
         </div>
       </div>
 
@@ -926,8 +1054,10 @@ const Magazine = () => {
               className="px-3.5 py-2 rounded-lg text-sm font-medium bg-white border border-slate-200/80 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             >
               <option value="all">{t('magazine.allCategories')}</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{getCategoryLabel(category)}</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {getCategoryLabel(category)}
+                </option>
               ))}
             </select>
           </div>
@@ -940,7 +1070,7 @@ const Magazine = () => {
             {t('common.advancedFilters') || 'Filtres avancés'}
             {(countryFilter !== 'all' || destinationFilter !== 'all') && (
               <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-indigo-100 px-1.5 text-xs font-semibold text-indigo-700">
-                {[countryFilter, destinationFilter].filter(v => v !== 'all').length}
+                {[countryFilter, destinationFilter].filter((v) => v !== 'all').length}
               </span>
             )}
             <ChevronDown size={16} className={`transition-transform ${filtersExpanded ? 'rotate-180' : ''}`} />
@@ -968,7 +1098,7 @@ const Magazine = () => {
             className="bg-white rounded-xl border border-slate-200/80 overflow-hidden hover:border-slate-300 hover:shadow-md transition-all"
           >
             <div className="aspect-video bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center relative overflow-hidden">
-              {(article.imageUrl || article.image) ? (
+              {article.imageUrl || article.image ? (
                 <>
                   <img
                     src={getImageSrc(article.imageUrl || article.image, article.updatedAt)}
@@ -980,7 +1110,10 @@ const Magazine = () => {
                       if (placeholder) placeholder.style.display = 'flex';
                     }}
                   />
-                  <div className="absolute inset-0 hidden flex items-center justify-center bg-gray-200" style={{ display: 'none' }}>
+                  <div
+                    className="absolute inset-0 hidden flex items-center justify-center bg-gray-200"
+                    style={{ display: 'none' }}
+                  >
                     <BookOpen size={48} className="text-gray-400" />
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -1016,7 +1149,9 @@ const Magazine = () => {
                 </div>
               </div>
               <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{getDisplayTitle(article, language)}</h3>
-              <p className="text-sm text-gray-600 line-clamp-2 mb-3">{getDisplayExcerpt(article, language) || t('magazine.noExcerpt')}</p>
+              <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                {getDisplayExcerpt(article, language) || t('magazine.noExcerpt')}
+              </p>
               {article.tags && article.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-3">
                   {article.tags.slice(0, 3).map((tag, idx) => (
@@ -1030,18 +1165,18 @@ const Magazine = () => {
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Calendar size={14} />
                   {new Date(article.createdAt).toLocaleDateString(
-                  ({ fr: 'fr-FR', en: 'en-US', ar: 'ar-EG', es: 'es-ES', it: 'it-IT' })[language] || 'fr-FR',
-                  { day: 'numeric', month: 'short', year: 'numeric' }
-                )}
+                    { fr: 'fr-FR', en: 'en-US', ar: 'ar-EG', es: 'es-ES', it: 'it-IT' }[language] || 'fr-FR',
+                    { day: 'numeric', month: 'short', year: 'numeric' }
+                  )}
                 </div>
-                <div className="text-xs text-gray-500 font-medium">
-                  {article.author || t('magazine.unknownAuthor')}
-                </div>
+                <div className="text-xs text-gray-500 font-medium">{article.author || t('magazine.unknownAuthor')}</div>
               </div>
               {article.readTime && (
                 <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
                   <Clock size={12} />
-                  <span>{article.readTime} {t('magazine.minRead')}</span>
+                  <span>
+                    {article.readTime} {t('magazine.minRead')}
+                  </span>
                 </div>
               )}
               <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
@@ -1102,457 +1237,621 @@ const Magazine = () => {
             <div className="p-6 space-y-6">
               {!showPreview ? (
                 <>
-              {/* Onglets langues (contenu multilingue) */}
-              <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
-                {LANG_LIST.map(({ code, label }) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => setActiveLang(code)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeLang === code ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {/* Titre / Extrait / Contenu selon langue active */}
-              {activeLang === 'fr' ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.titleFrench')}</label>
-                    <input
-                      type="text"
-                      value={newArticle.title}
-                      onChange={(e) => setNewArticle({ ...newArticle, title: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder={t('magazine.articleTitlePlaceholder')}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.excerptFrench')}</label>
-                    <textarea
-                      value={newArticle.excerpt}
-                      onChange={(e) => setNewArticle({ ...newArticle, excerpt: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows={2}
-                      placeholder={t('magazine.summaryPlaceholder')}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.contentFrench')}</label>
-                    <div className="border border-gray-300 rounded-lg overflow-hidden">
-                      <div className="flex flex-wrap items-center gap-1 p-2 bg-gray-50 border-b border-gray-300">
-                        <span className="text-xs font-medium text-gray-500 mr-2">{t('magazine.layoutToolbar')}</span>
-                        <button type="button" onClick={() => formatContent('h2')} className="p-2 rounded hover:bg-gray-200" title="Titre 2"><Heading2 size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('h3')} className="p-2 rounded hover:bg-gray-200" title="Titre 3"><Heading3 size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('paragraph')} className="p-2 rounded hover:bg-gray-200" title="Paragraphe"><FileText size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('bold')} className="p-2 rounded hover:bg-gray-200" title="Gras"><Bold size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('italic')} className="p-2 rounded hover:bg-gray-200" title="Italique"><Italic size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('list')} className="p-2 rounded hover:bg-gray-200" title="Liste à puces"><List size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('listOrdered')} className="p-2 rounded hover:bg-gray-200 text-sm font-bold" title="Liste numérotée">1.</button>
-                        <button type="button" onClick={() => formatContent('alignLeft')} className="p-2 rounded hover:bg-gray-200" title="Aligner à gauche"><AlignLeft size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('alignCenter')} className="p-2 rounded hover:bg-gray-200" title="Centrer"><AlignCenter size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('alignRight')} className="p-2 rounded hover:bg-gray-200" title="Aligner à droite"><AlignRight size={18} className="text-gray-700" /></button>
-                        <span className="border-l border-gray-300 h-5 mx-1" />
-                        <button type="button" onClick={() => setShowInsertImageModal(true)} className="flex items-center gap-1 px-2 py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm" title="Insérer une image"><ImageIcon size={18} /> Image</button>
-                        <button type="button" onClick={() => setShowInsertVideoModal(true)} className="flex items-center gap-1 px-2 py-1.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-sm" title="Insérer une vidéo"><Video size={18} /> Vidéo</button>
-                      </div>
-                      <textarea
-                        ref={contentTextareaRef}
-                        value={newArticle.content}
-                        onChange={(e) => setNewArticle({ ...newArticle, content: e.target.value })}
-                        className="w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        rows={8}
-                        placeholder={t('magazine.contentPlaceholder')}
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Titre ({LANG_LIST.find(l => l.code === activeLang)?.label})</label>
-                    <input
-                      type="text"
-                      value={newArticle.translations?.[activeLang]?.title || ''}
-                      onChange={(e) => setNewArticle({
-                        ...newArticle,
-                        translations: {
-                          ...newArticle.translations,
-                          [activeLang]: { ...newArticle.translations?.[activeLang], title: e.target.value }
-                        }
-                      })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Title"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.excerptLabel')}</label>
-                    <textarea
-                      value={newArticle.translations?.[activeLang]?.excerpt || ''}
-                      onChange={(e) => setNewArticle({
-                        ...newArticle,
-                        translations: {
-                          ...newArticle.translations,
-                          [activeLang]: { ...newArticle.translations?.[activeLang], excerpt: e.target.value }
-                        }
-                      })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows={2}
-                      placeholder="Excerpt"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.contentLabel')}</label>
-                    <div className="border border-gray-300 rounded-lg overflow-hidden">
-                      <div className="flex flex-wrap items-center gap-1 p-2 bg-gray-50 border-b border-gray-300">
-                        <span className="text-xs font-medium text-gray-500 mr-2">{t('magazine.layoutToolbar')}</span>
-                        <button type="button" onClick={() => formatContent('h2')} className="p-2 rounded hover:bg-gray-200" title="Titre 2"><Heading2 size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('h3')} className="p-2 rounded hover:bg-gray-200" title="Titre 3"><Heading3 size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('paragraph')} className="p-2 rounded hover:bg-gray-200" title="Paragraphe"><FileText size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('bold')} className="p-2 rounded hover:bg-gray-200" title="Gras"><Bold size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('italic')} className="p-2 rounded hover:bg-gray-200" title="Italique"><Italic size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('list')} className="p-2 rounded hover:bg-gray-200" title="Liste à puces"><List size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('listOrdered')} className="p-2 rounded hover:bg-gray-200 text-sm font-bold" title="Liste numérotée">1.</button>
-                        <button type="button" onClick={() => formatContent('alignLeft')} className="p-2 rounded hover:bg-gray-200" title="Aligner à gauche"><AlignLeft size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('alignCenter')} className="p-2 rounded hover:bg-gray-200" title="Centrer"><AlignCenter size={18} className="text-gray-700" /></button>
-                        <button type="button" onClick={() => formatContent('alignRight')} className="p-2 rounded hover:bg-gray-200" title="Aligner à droite"><AlignRight size={18} className="text-gray-700" /></button>
-                        <span className="border-l border-gray-300 h-5 mx-1" />
-                        <button type="button" onClick={() => setShowInsertImageModal(true)} className="flex items-center gap-1 px-2 py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm"><ImageIcon size={18} /> Image</button>
-                        <button type="button" onClick={() => setShowInsertVideoModal(true)} className="flex items-center gap-1 px-2 py-1.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-sm"><Video size={18} /> Vidéo</button>
-                      </div>
-                      <textarea
-                        ref={contentTextareaRef}
-                        value={newArticle.translations?.[activeLang]?.content || ''}
-                        onChange={(e) => setNewArticle({
-                          ...newArticle,
-                          translations: {
-                            ...newArticle.translations,
-                            [activeLang]: { ...newArticle.translations?.[activeLang], content: e.target.value }
-                          }
-                        })}
-                        className="w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        rows={8}
-                        placeholder={t('magazine.contentPlaceholderOther')}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Catégorie et Auteur */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('magazine.categoryLabel')}
-                  </label>
-                  <select
-                    value={newArticle.category}
-                    onChange={(e) => setNewArticle({ ...newArticle, category: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">{t('magazine.selectCategory')}</option>
-                    {availableCategories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                  {/* Onglets langues (contenu multilingue) */}
+                  <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
+                    {LANG_LIST.map(({ code, label }) => (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => setActiveLang(code)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeLang === code ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                      >
+                        {label}
+                      </button>
                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('magazine.authorLabel')}
-                  </label>
-                  <input
-                    type="text"
-                    value={newArticle.author}
-                    onChange={(e) => setNewArticle({ ...newArticle, author: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder={t('magazine.authorPlaceholder')}
-                  />
-                </div>
-              </div>
-
-              {/* Upload image (obligatoire — enregistrée sur le serveur) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('magazine.coverImageLabel')}
-                </label>
-                {imagePreview ? (
-                  <div className="relative">
-                    <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-32 h-24 rounded-lg overflow-hidden bg-white border border-gray-200">
-                          <img
-                            src={imagePreview}
-                            alt="Image preview"
-                            className="w-full h-full object-cover"
+                  </div>
+                  {/* Titre / Extrait / Contenu selon langue active */}
+                  {activeLang === 'fr' ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('magazine.titleFrench')}
+                        </label>
+                        <input
+                          type="text"
+                          value={newArticle.title}
+                          onChange={(e) => setNewArticle({ ...newArticle, title: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={t('magazine.articleTitlePlaceholder')}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('magazine.excerptFrench')}
+                        </label>
+                        <textarea
+                          value={newArticle.excerpt}
+                          onChange={(e) => setNewArticle({ ...newArticle, excerpt: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          rows={2}
+                          placeholder={t('magazine.summaryPlaceholder')}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('magazine.contentFrench')}
+                        </label>
+                        <div className="border border-gray-300 rounded-lg overflow-hidden">
+                          <div className="flex flex-wrap items-center gap-1 p-2 bg-gray-50 border-b border-gray-300">
+                            <span className="text-xs font-medium text-gray-500 mr-2">
+                              {t('magazine.layoutToolbar')}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('h2')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Titre 2"
+                            >
+                              <Heading2 size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('h3')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Titre 3"
+                            >
+                              <Heading3 size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('paragraph')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Paragraphe"
+                            >
+                              <FileText size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('bold')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Gras"
+                            >
+                              <Bold size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('italic')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Italique"
+                            >
+                              <Italic size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('list')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Liste à puces"
+                            >
+                              <List size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('listOrdered')}
+                              className="p-2 rounded hover:bg-gray-200 text-sm font-bold"
+                              title="Liste numérotée"
+                            >
+                              1.
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('alignLeft')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Aligner à gauche"
+                            >
+                              <AlignLeft size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('alignCenter')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Centrer"
+                            >
+                              <AlignCenter size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('alignRight')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Aligner à droite"
+                            >
+                              <AlignRight size={18} className="text-gray-700" />
+                            </button>
+                            <span className="border-l border-gray-300 h-5 mx-1" />
+                            <button
+                              type="button"
+                              onClick={() => setShowInsertImageModal(true)}
+                              className="flex items-center gap-1 px-2 py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm"
+                              title="Insérer une image"
+                            >
+                              <ImageIcon size={18} /> Image
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowInsertVideoModal(true)}
+                              className="flex items-center gap-1 px-2 py-1.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-sm"
+                              title="Insérer une vidéo"
+                            >
+                              <Video size={18} /> Vidéo
+                            </button>
+                          </div>
+                          <textarea
+                            ref={contentTextareaRef}
+                            value={newArticle.content}
+                            onChange={(e) => setNewArticle({ ...newArticle, content: e.target.value })}
+                            className="w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            rows={8}
+                            placeholder={t('magazine.contentPlaceholder')}
                           />
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">
-                            {imageFile?.name || t('magazine.imageSelected')}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {imageFile ? `${(imageFile.size / 1024).toFixed(2)} KB` : 'Image existante'}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={removeImage}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <X size={18} />
-                        </button>
                       </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Titre ({LANG_LIST.find((l) => l.code === activeLang)?.label})
+                        </label>
+                        <input
+                          type="text"
+                          value={newArticle.translations?.[activeLang]?.title || ''}
+                          onChange={(e) =>
+                            setNewArticle({
+                              ...newArticle,
+                              translations: {
+                                ...newArticle.translations,
+                                [activeLang]: { ...newArticle.translations?.[activeLang], title: e.target.value },
+                              },
+                            })
+                          }
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Title"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('magazine.excerptLabel')}
+                        </label>
+                        <textarea
+                          value={newArticle.translations?.[activeLang]?.excerpt || ''}
+                          onChange={(e) =>
+                            setNewArticle({
+                              ...newArticle,
+                              translations: {
+                                ...newArticle.translations,
+                                [activeLang]: { ...newArticle.translations?.[activeLang], excerpt: e.target.value },
+                              },
+                            })
+                          }
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          rows={2}
+                          placeholder="Excerpt"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('magazine.contentLabel')}
+                        </label>
+                        <div className="border border-gray-300 rounded-lg overflow-hidden">
+                          <div className="flex flex-wrap items-center gap-1 p-2 bg-gray-50 border-b border-gray-300">
+                            <span className="text-xs font-medium text-gray-500 mr-2">
+                              {t('magazine.layoutToolbar')}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('h2')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Titre 2"
+                            >
+                              <Heading2 size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('h3')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Titre 3"
+                            >
+                              <Heading3 size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('paragraph')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Paragraphe"
+                            >
+                              <FileText size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('bold')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Gras"
+                            >
+                              <Bold size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('italic')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Italique"
+                            >
+                              <Italic size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('list')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Liste à puces"
+                            >
+                              <List size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('listOrdered')}
+                              className="p-2 rounded hover:bg-gray-200 text-sm font-bold"
+                              title="Liste numérotée"
+                            >
+                              1.
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('alignLeft')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Aligner à gauche"
+                            >
+                              <AlignLeft size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('alignCenter')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Centrer"
+                            >
+                              <AlignCenter size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContent('alignRight')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Aligner à droite"
+                            >
+                              <AlignRight size={18} className="text-gray-700" />
+                            </button>
+                            <span className="border-l border-gray-300 h-5 mx-1" />
+                            <button
+                              type="button"
+                              onClick={() => setShowInsertImageModal(true)}
+                              className="flex items-center gap-1 px-2 py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm"
+                            >
+                              <ImageIcon size={18} /> Image
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowInsertVideoModal(true)}
+                              className="flex items-center gap-1 px-2 py-1.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-sm"
+                            >
+                              <Video size={18} /> Vidéo
+                            </button>
+                          </div>
+                          <textarea
+                            ref={contentTextareaRef}
+                            value={newArticle.translations?.[activeLang]?.content || ''}
+                            onChange={(e) =>
+                              setNewArticle({
+                                ...newArticle,
+                                translations: {
+                                  ...newArticle.translations,
+                                  [activeLang]: { ...newArticle.translations?.[activeLang], content: e.target.value },
+                                },
+                              })
+                            }
+                            className="w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            rows={8}
+                            placeholder={t('magazine.contentPlaceholderOther')}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Catégorie et Auteur */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t('magazine.categoryLabel')}
+                      </label>
+                      <select
+                        value={newArticle.category}
+                        onChange={(e) => setNewArticle({ ...newArticle, category: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">{t('magazine.selectCategory')}</option>
+                        {availableCategories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t('magazine.authorLabel')}
+                      </label>
+                      <input
+                        type="text"
+                        value={newArticle.author}
+                        onChange={(e) => setNewArticle({ ...newArticle, author: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder={t('magazine.authorPlaceholder')}
+                      />
                     </div>
                   </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload size={32} className="text-gray-400 mb-2" />
-                      <p className="mb-2 text-sm text-gray-500">
-                        <span className="font-semibold">{t('magazine.clickToUpload')}</span> {t('magazine.orDragDrop')}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {t('magazine.imageFormatMax')}
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
 
-              {/* Pays */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  {t('magazine.countriesLabel')}
-                </label>
-                <div className="border border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
-                  {availableCountries.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-4">{t('magazine.noCountriesAvailable')}</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {availableCountries.map((country) => (
-                        <label
-                          key={country.code}
-                          className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={newArticle.countries.includes(country.name)}
-                            onChange={() => toggleCountry(country.name)}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <div className="flex-1 flex items-center gap-2">
-                            <span className="font-medium text-gray-900">{country.name}</span>
-                            <span className="text-xs text-gray-500 px-2 py-0.5 bg-gray-100 rounded">
-                              {country.code}
-                            </span>
+                  {/* Upload image (obligatoire — enregistrée sur le serveur) */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('magazine.coverImageLabel')}
+                    </label>
+                    {imagePreview ? (
+                      <div className="relative">
+                        <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-center gap-4">
+                            <div className="relative w-32 h-24 rounded-lg overflow-hidden bg-white border border-gray-200">
+                              <img src={imagePreview} alt="Image preview" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">
+                                {imageFile?.name || t('magazine.imageSelected')}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {imageFile ? `${(imageFile.size / 1024).toFixed(2)} KB` : 'Image existante'}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={removeImage}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <X size={18} />
+                            </button>
                           </div>
-                          {newArticle.countries.includes(country.name) && (
-                            <MapPin size={16} className="text-blue-600" />
-                          )}
-                        </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Upload size={32} className="text-gray-400 mb-2" />
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">{t('magazine.clickToUpload')}</span>{' '}
+                            {t('magazine.orDragDrop')}
+                          </p>
+                          <p className="text-xs text-gray-500">{t('magazine.imageFormatMax')}</p>
+                        </div>
+                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Pays */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      {t('magazine.countriesLabel')}
+                    </label>
+                    <div className="border border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
+                      {availableCountries.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-4">{t('magazine.noCountriesAvailable')}</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {availableCountries.map((country) => (
+                            <label
+                              key={country.code}
+                              className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={newArticle.countries.includes(country.name)}
+                                onChange={() => toggleCountry(country.name)}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <div className="flex-1 flex items-center gap-2">
+                                <span className="font-medium text-gray-900">{country.name}</span>
+                                <span className="text-xs text-gray-500 px-2 py-0.5 bg-gray-100 rounded">
+                                  {country.code}
+                                </span>
+                              </div>
+                              {newArticle.countries.includes(country.name) && (
+                                <MapPin size={16} className="text-blue-600" />
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {newArticle.countries.length > 0 && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        {t('magazine.countriesSelectedCount', { count: newArticle.countries.length })}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Tags */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.tagsLabel')}</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {newArticle.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                        >
+                          {tag}
+                          <button type="button" onClick={() => removeTag(tag)} className="hover:text-blue-900">
+                            <X size={14} />
+                          </button>
+                        </span>
                       ))}
                     </div>
-                  )}
-                </div>
-                {newArticle.countries.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    {t('magazine.countriesSelectedCount', { count: newArticle.countries.length })}
-                  </p>
-                )}
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('magazine.tagsLabel')}
-                </label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {newArticle.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(tag)}
-                        className="hover:text-blue-900"
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddTag(e.target.value);
-                      e.target.value = '';
-                    }
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={t('magazine.tagsPlaceholder')}
-                />
-              </div>
-
-              {/* Galerie d'images */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('magazine.galleryLabel')}
-                </label>
-                {galleryImages.length > 0 && (
-                  <div className="grid grid-cols-4 gap-2 mb-2">
-                    {galleryImages.map((img) => (
-                      <div key={img.id} className="relative group">
-                        <img
-                          src={img.preview}
-                          alt="Gallery"
-                          className="w-full h-24 object-cover rounded-lg border border-gray-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeGalleryImage(img.id)}
-                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                  <div className="flex flex-col items-center justify-center">
-                    <ImageIcon size={20} className="text-gray-400 mb-1" />
-                    <p className="text-xs text-gray-500">{t('magazine.addImagesLabel')}</p>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleGalleryUpload}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-
-              {/* Métadonnées SEO */}
-              <div className="border-t border-gray-200 pt-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <Globe size={16} />
-                  {t('magazine.seoMetadata')}
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('magazine.metaDescriptionLabel')}
-                    </label>
-                    <textarea
-                      value={newArticle.metaDescription}
-                      onChange={(e) => setNewArticle({ ...newArticle, metaDescription: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows={2}
-                      placeholder={t('magazine.metaDescriptionPlaceholder')}
-                      maxLength={160}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {newArticle.metaDescription.length}/160 caractères
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('magazine.metaKeywordsLabel')}
-                    </label>
                     <input
                       type="text"
-                      value={newArticle.metaKeywords}
-                      onChange={(e) => setNewArticle({ ...newArticle, metaKeywords: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder={t('magazine.metaKeywordsPlaceholder')}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Statut de publication */}
-              <div className="border-t border-gray-200 pt-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('magazine.publicationLabel')}</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('magazine.statusLabel')}
-                    </label>
-                    <select
-                      value={newArticle.status}
-                      onChange={(e) => {
-                        setNewArticle({ ...newArticle, status: e.target.value, isPublished: e.target.value === 'published' });
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddTag(e.target.value);
+                          e.target.value = '';
+                        }
                       }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="draft">Brouillon</option>
-                      <option value="published">Publié</option>
-                      <option value="scheduled">Planifié</option>
-                    </select>
+                      placeholder={t('magazine.tagsPlaceholder')}
+                    />
                   </div>
 
-                  {newArticle.status === 'scheduled' && (
-                    <div className="grid grid-cols-2 gap-4">
+                  {/* Galerie d'images */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.galleryLabel')}</label>
+                    {galleryImages.length > 0 && (
+                      <div className="grid grid-cols-4 gap-2 mb-2">
+                        {galleryImages.map((img) => (
+                          <div key={img.id} className="relative group">
+                            <img
+                              src={img.preview}
+                              alt="Gallery"
+                              className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeGalleryImage(img.id)}
+                              className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <div className="flex flex-col items-center justify-center">
+                        <ImageIcon size={20} className="text-gray-400 mb-1" />
+                        <p className="text-xs text-gray-500">{t('magazine.addImagesLabel')}</p>
+                      </div>
+                      <input type="file" accept="image/*" multiple onChange={handleGalleryUpload} className="hidden" />
+                    </label>
+                  </div>
+
+                  {/* Métadonnées SEO */}
+                  <div className="border-t border-gray-200 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <Globe size={16} />
+                      {t('magazine.seoMetadata')}
+                    </h3>
+                    <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Date de publication
+                          {t('magazine.metaDescriptionLabel')}
                         </label>
-                        <input
-                          type="date"
-                          value={publishDate}
-                          onChange={(e) => setPublishDate(e.target.value)}
-                          min={new Date().toISOString().split('T')[0]}
+                        <textarea
+                          value={newArticle.metaDescription}
+                          onChange={(e) => setNewArticle({ ...newArticle, metaDescription: e.target.value })}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          rows={2}
+                          placeholder={t('magazine.metaDescriptionPlaceholder')}
+                          maxLength={160}
                         />
+                        <p className="text-xs text-gray-500 mt-1">{newArticle.metaDescription.length}/160 caractères</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Heure de publication
+                          {t('magazine.metaKeywordsLabel')}
                         </label>
                         <input
-                          type="time"
-                          value={publishTime}
-                          onChange={(e) => setPublishTime(e.target.value)}
+                          type="text"
+                          value={newArticle.metaKeywords}
+                          onChange={(e) => setNewArticle({ ...newArticle, metaKeywords: e.target.value })}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={t('magazine.metaKeywordsPlaceholder')}
                         />
                       </div>
                     </div>
-                  )}
-
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={newArticle.featured}
-                        onChange={(e) => setNewArticle({ ...newArticle, featured: e.target.checked })}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">Article mis en avant</span>
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={newArticle.allowComments}
-                        onChange={(e) => setNewArticle({ ...newArticle, allowComments: e.target.checked })}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">Autoriser les commentaires</span>
-                    </label>
                   </div>
-                </div>
-              </div>
+
+                  {/* Statut de publication */}
+                  <div className="border-t border-gray-200 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('magazine.publicationLabel')}</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('magazine.statusLabel')}
+                        </label>
+                        <select
+                          value={newArticle.status}
+                          onChange={(e) => {
+                            setNewArticle({
+                              ...newArticle,
+                              status: e.target.value,
+                              isPublished: e.target.value === 'published',
+                            });
+                          }}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="draft">Brouillon</option>
+                          <option value="published">Publié</option>
+                          <option value="scheduled">Planifié</option>
+                        </select>
+                      </div>
+
+                      {newArticle.status === 'scheduled' && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Date de publication</label>
+                            <input
+                              type="date"
+                              value={publishDate}
+                              onChange={(e) => setPublishDate(e.target.value)}
+                              min={new Date().toISOString().split('T')[0]}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Heure de publication</label>
+                            <input
+                              type="time"
+                              value={publishTime}
+                              onChange={(e) => setPublishTime(e.target.value)}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={newArticle.featured}
+                            onChange={(e) => setNewArticle({ ...newArticle, featured: e.target.checked })}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-sm font-medium text-gray-700">Article mis en avant</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={newArticle.allowComments}
+                            onChange={(e) => setNewArticle({ ...newArticle, allowComments: e.target.checked })}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-sm font-medium text-gray-700">Autoriser les commentaires</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
                 </>
               ) : (
                 /* Aperçu */
@@ -1576,14 +1875,12 @@ const Magazine = () => {
                           ⭐ Mis en avant
                         </span>
                       )}
-                      <span className="text-sm text-gray-500">
-                        {newArticle.readingTime} min de lecture
-                      </span>
+                      <span className="text-sm text-gray-500">{newArticle.readingTime} min de lecture</span>
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-4">{newArticle.title || 'Titre de l\'article'}</h1>
-                    {newArticle.excerpt && (
-                      <p className="text-lg text-gray-600 mb-6 italic">{newArticle.excerpt}</p>
-                    )}
+                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                      {newArticle.title || "Titre de l'article"}
+                    </h1>
+                    {newArticle.excerpt && <p className="text-lg text-gray-600 mb-6 italic">{newArticle.excerpt}</p>}
                     {newArticle.author && (
                       <div className="flex items-center gap-2 mb-6 text-sm text-gray-500">
                         <span>Par {newArticle.author}</span>
@@ -1604,10 +1901,7 @@ const Magazine = () => {
                     {newArticle.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-gray-200">
                         {newArticle.tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
-                          >
+                          <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
                             #{tag}
                           </span>
                         ))}
@@ -1700,7 +1994,9 @@ const Magazine = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Extrait / Résumé (français)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Extrait / Résumé (français)
+                        </label>
                         <textarea
                           value={editingArticle.excerpt || ''}
                           onChange={(e) => setEditingArticle({ ...editingArticle, excerpt: e.target.value })}
@@ -1713,20 +2009,110 @@ const Magazine = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">Contenu (français) *</label>
                         <div className="border border-gray-300 rounded-lg overflow-hidden">
                           <div className="flex flex-wrap items-center gap-1 p-2 bg-gray-50 border-b border-gray-300">
-                            <span className="text-xs font-medium text-gray-500 mr-2">{t('magazine.layoutToolbar')}</span>
-                            <button type="button" onClick={() => formatContentEdit('h2')} className="p-2 rounded hover:bg-gray-200" title="Titre 2"><Heading2 size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('h3')} className="p-2 rounded hover:bg-gray-200" title="Titre 3"><Heading3 size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('paragraph')} className="p-2 rounded hover:bg-gray-200" title="Paragraphe"><FileText size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('bold')} className="p-2 rounded hover:bg-gray-200" title="Gras"><Bold size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('italic')} className="p-2 rounded hover:bg-gray-200" title="Italique"><Italic size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('list')} className="p-2 rounded hover:bg-gray-200" title="Liste à puces"><List size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('listOrdered')} className="p-2 rounded hover:bg-gray-200 text-sm font-bold" title="Liste numérotée">1.</button>
-                            <button type="button" onClick={() => formatContentEdit('alignLeft')} className="p-2 rounded hover:bg-gray-200" title="Aligner à gauche"><AlignLeft size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('alignCenter')} className="p-2 rounded hover:bg-gray-200" title="Centrer"><AlignCenter size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('alignRight')} className="p-2 rounded hover:bg-gray-200" title="Aligner à droite"><AlignRight size={18} className="text-gray-700" /></button>
+                            <span className="text-xs font-medium text-gray-500 mr-2">
+                              {t('magazine.layoutToolbar')}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('h2')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Titre 2"
+                            >
+                              <Heading2 size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('h3')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Titre 3"
+                            >
+                              <Heading3 size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('paragraph')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Paragraphe"
+                            >
+                              <FileText size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('bold')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Gras"
+                            >
+                              <Bold size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('italic')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Italique"
+                            >
+                              <Italic size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('list')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Liste à puces"
+                            >
+                              <List size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('listOrdered')}
+                              className="p-2 rounded hover:bg-gray-200 text-sm font-bold"
+                              title="Liste numérotée"
+                            >
+                              1.
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('alignLeft')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Aligner à gauche"
+                            >
+                              <AlignLeft size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('alignCenter')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Centrer"
+                            >
+                              <AlignCenter size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('alignRight')}
+                              className="p-2 rounded hover:bg-gray-200"
+                              title="Aligner à droite"
+                            >
+                              <AlignRight size={18} className="text-gray-700" />
+                            </button>
                             <span className="border-l border-gray-300 h-5 mx-1" />
-                            <button type="button" onClick={() => { setInsertTargetMode('edit'); setShowInsertImageModal(true); }} className="flex items-center gap-1 px-2 py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm"><ImageIcon size={18} /> Image</button>
-                            <button type="button" onClick={() => { setInsertTargetMode('edit'); setShowInsertVideoModal(true); }} className="flex items-center gap-1 px-2 py-1.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-sm"><Video size={18} /> Vidéo</button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInsertTargetMode('edit');
+                                setShowInsertImageModal(true);
+                              }}
+                              className="flex items-center gap-1 px-2 py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm"
+                            >
+                              <ImageIcon size={18} /> Image
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInsertTargetMode('edit');
+                                setShowInsertVideoModal(true);
+                              }}
+                              className="flex items-center gap-1 px-2 py-1.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-sm"
+                            >
+                              <Video size={18} /> Vidéo
+                            </button>
                           </div>
                           <textarea
                             ref={editContentTextareaRef}
@@ -1742,66 +2128,167 @@ const Magazine = () => {
                   ) : (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.titleField')} ({LANG_LIST.find(l => l.code === editActiveLang)?.label})</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('magazine.titleField')} ({LANG_LIST.find((l) => l.code === editActiveLang)?.label})
+                        </label>
                         <input
                           type="text"
                           value={editingArticle.translations?.[editActiveLang]?.title || ''}
-                          onChange={(e) => setEditingArticle({
-                            ...editingArticle,
-                            translations: {
-                              ...editingArticle.translations,
-                              [editActiveLang]: { ...editingArticle.translations?.[editActiveLang], title: e.target.value }
-                            }
-                          })}
+                          onChange={(e) =>
+                            setEditingArticle({
+                              ...editingArticle,
+                              translations: {
+                                ...editingArticle.translations,
+                                [editActiveLang]: {
+                                  ...editingArticle.translations?.[editActiveLang],
+                                  title: e.target.value,
+                                },
+                              },
+                            })
+                          }
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Title"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.excerptLabel')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('magazine.excerptLabel')}
+                        </label>
                         <textarea
                           value={editingArticle.translations?.[editActiveLang]?.excerpt || ''}
-                          onChange={(e) => setEditingArticle({
-                            ...editingArticle,
-                            translations: {
-                              ...editingArticle.translations,
-                              [editActiveLang]: { ...editingArticle.translations?.[editActiveLang], excerpt: e.target.value }
-                            }
-                          })}
+                          onChange={(e) =>
+                            setEditingArticle({
+                              ...editingArticle,
+                              translations: {
+                                ...editingArticle.translations,
+                                [editActiveLang]: {
+                                  ...editingArticle.translations?.[editActiveLang],
+                                  excerpt: e.target.value,
+                                },
+                              },
+                            })
+                          }
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           rows={2}
                           placeholder="Excerpt"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.contentLabel')}</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('magazine.contentLabel')}
+                        </label>
                         <div className="border border-gray-300 rounded-lg overflow-hidden">
                           <div className="flex flex-wrap items-center gap-1 p-2 bg-gray-50 border-b border-gray-300">
-                            <span className="text-xs font-medium text-gray-500 mr-2">{t('magazine.layoutToolbar')}</span>
-                            <button type="button" onClick={() => formatContentEdit('h2')} className="p-2 rounded hover:bg-gray-200"><Heading2 size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('h3')} className="p-2 rounded hover:bg-gray-200"><Heading3 size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('paragraph')} className="p-2 rounded hover:bg-gray-200"><FileText size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('bold')} className="p-2 rounded hover:bg-gray-200"><Bold size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('italic')} className="p-2 rounded hover:bg-gray-200"><Italic size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('list')} className="p-2 rounded hover:bg-gray-200"><List size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('listOrdered')} className="p-2 rounded hover:bg-gray-200 text-sm font-bold">1.</button>
-                            <button type="button" onClick={() => formatContentEdit('alignLeft')} className="p-2 rounded hover:bg-gray-200"><AlignLeft size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('alignCenter')} className="p-2 rounded hover:bg-gray-200"><AlignCenter size={18} className="text-gray-700" /></button>
-                            <button type="button" onClick={() => formatContentEdit('alignRight')} className="p-2 rounded hover:bg-gray-200"><AlignRight size={18} className="text-gray-700" /></button>
+                            <span className="text-xs font-medium text-gray-500 mr-2">
+                              {t('magazine.layoutToolbar')}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('h2')}
+                              className="p-2 rounded hover:bg-gray-200"
+                            >
+                              <Heading2 size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('h3')}
+                              className="p-2 rounded hover:bg-gray-200"
+                            >
+                              <Heading3 size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('paragraph')}
+                              className="p-2 rounded hover:bg-gray-200"
+                            >
+                              <FileText size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('bold')}
+                              className="p-2 rounded hover:bg-gray-200"
+                            >
+                              <Bold size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('italic')}
+                              className="p-2 rounded hover:bg-gray-200"
+                            >
+                              <Italic size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('list')}
+                              className="p-2 rounded hover:bg-gray-200"
+                            >
+                              <List size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('listOrdered')}
+                              className="p-2 rounded hover:bg-gray-200 text-sm font-bold"
+                            >
+                              1.
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('alignLeft')}
+                              className="p-2 rounded hover:bg-gray-200"
+                            >
+                              <AlignLeft size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('alignCenter')}
+                              className="p-2 rounded hover:bg-gray-200"
+                            >
+                              <AlignCenter size={18} className="text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => formatContentEdit('alignRight')}
+                              className="p-2 rounded hover:bg-gray-200"
+                            >
+                              <AlignRight size={18} className="text-gray-700" />
+                            </button>
                             <span className="border-l border-gray-300 h-5 mx-1" />
-                            <button type="button" onClick={() => { setInsertTargetMode('edit'); setShowInsertImageModal(true); }} className="flex items-center gap-1 px-2 py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm"><ImageIcon size={18} /> Image</button>
-                            <button type="button" onClick={() => { setInsertTargetMode('edit'); setShowInsertVideoModal(true); }} className="flex items-center gap-1 px-2 py-1.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-sm"><Video size={18} /> Vidéo</button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInsertTargetMode('edit');
+                                setShowInsertImageModal(true);
+                              }}
+                              className="flex items-center gap-1 px-2 py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 text-sm"
+                            >
+                              <ImageIcon size={18} /> Image
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInsertTargetMode('edit');
+                                setShowInsertVideoModal(true);
+                              }}
+                              className="flex items-center gap-1 px-2 py-1.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 text-sm"
+                            >
+                              <Video size={18} /> Vidéo
+                            </button>
                           </div>
                           <textarea
                             ref={editContentTextareaRef}
                             value={editingArticle.translations?.[editActiveLang]?.content || ''}
-                            onChange={(e) => setEditingArticle({
-                              ...editingArticle,
-                              translations: {
-                                ...editingArticle.translations,
-                                [editActiveLang]: { ...editingArticle.translations?.[editActiveLang], content: e.target.value }
-                              }
-                            })}
+                            onChange={(e) =>
+                              setEditingArticle({
+                                ...editingArticle,
+                                translations: {
+                                  ...editingArticle.translations,
+                                  [editActiveLang]: {
+                                    ...editingArticle.translations?.[editActiveLang],
+                                    content: e.target.value,
+                                  },
+                                },
+                              })
+                            }
                             className="w-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             rows={8}
                             placeholder={t('magazine.contentPlaceholderOther')}
@@ -1813,20 +2300,26 @@ const Magazine = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.categoryLabel')}</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t('magazine.categoryLabel')}
+                      </label>
                       <select
                         value={editingArticle.category || ''}
                         onChange={(e) => setEditingArticle({ ...editingArticle, category: e.target.value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">{t('magazine.selectCategory')}</option>
-                        {availableCategories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
+                        {availableCategories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.authorLabel')}</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t('magazine.authorLabel')}
+                      </label>
                       <input
                         type="text"
                         value={editingArticle.author || ''}
@@ -1838,8 +2331,10 @@ const Magazine = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('magazine.coverImageLabel').replace(' *', '')}</label>
-                    {(editImagePreview || editingArticle.imageUrl) ? (
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('magazine.coverImageLabel').replace(' *', '')}
+                    </label>
+                    {editImagePreview || editingArticle.imageUrl ? (
                       <div className="relative">
                         <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
                           <div className="flex items-center gap-4">
@@ -1848,14 +2343,18 @@ const Magazine = () => {
                                 src={
                                   typeof editImagePreview === 'string' && editImagePreview.startsWith('data:')
                                     ? editImagePreview
-                                    : getImageSrc(editImagePreview || editingArticle.imageUrl) || editImagePreview || editingArticle.imageUrl
+                                    : getImageSrc(editImagePreview || editingArticle.imageUrl) ||
+                                      editImagePreview ||
+                                      editingArticle.imageUrl
                                 }
                                 alt="Couverture"
                                 className="w-full h-full object-cover"
                               />
                             </div>
                             <div className="flex-1 flex flex-wrap items-center gap-2">
-                              <p className="text-sm font-medium text-gray-900 w-full">{editImageFile?.name || t('magazine.currentImage')}</p>
+                              <p className="text-sm font-medium text-gray-900 w-full">
+                                {editImageFile?.name || t('magazine.currentImage')}
+                              </p>
                               <button
                                 type="button"
                                 onClick={() => editCoverInputRef.current?.click()}
@@ -1864,19 +2363,33 @@ const Magazine = () => {
                                 <Upload size={16} />
                                 {t('magazine.changeImage')}
                               </button>
-                              <button type="button" onClick={removeEditImage} className="inline-flex items-center gap-2 p-2 text-red-600 hover:bg-red-50 rounded-lg" title={t('magazine.removeImageLabel')}>
+                              <button
+                                type="button"
+                                onClick={removeEditImage}
+                                className="inline-flex items-center gap-2 p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                title={t('magazine.removeImageLabel')}
+                              >
                                 <X size={18} />
                                 <span className="text-sm">{t('magazine.removeImageLabel')}</span>
                               </button>
                             </div>
                           </div>
                         </div>
-                        <input ref={editCoverInputRef} type="file" accept="image/*" onChange={handleEditImageUpload} className="hidden" />
+                        <input
+                          ref={editCoverInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleEditImageUpload}
+                          className="hidden"
+                        />
                       </div>
                     ) : (
                       <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                         <Upload size={32} className="text-gray-400 mb-2" />
-                        <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">{t('magazine.clickToUpload')}</span> {t('magazine.orDragDrop')}</p>
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">{t('magazine.clickToUpload')}</span>{' '}
+                          {t('magazine.orDragDrop')}
+                        </p>
                         <p className="text-xs text-gray-500">{t('magazine.imageFormatMax')}</p>
                         <input type="file" accept="image/*" onChange={handleEditImageUpload} className="hidden" />
                       </label>
@@ -1888,7 +2401,10 @@ const Magazine = () => {
                     <div className="border border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
                       <div className="space-y-2">
                         {availableCountries.map((country) => (
-                          <label key={country.code} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                          <label
+                            key={country.code}
+                            className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
+                          >
                             <input
                               type="checkbox"
                               checked={(editingArticle.countries || []).includes(country.name)}
@@ -1896,14 +2412,20 @@ const Magazine = () => {
                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
                             <span className="font-medium text-gray-900">{country.name}</span>
-                            <span className="text-xs text-gray-500 px-2 py-0.5 bg-gray-100 rounded">{country.code}</span>
-                            {(editingArticle.countries || []).includes(country.name) && <MapPin size={16} className="text-blue-600" />}
+                            <span className="text-xs text-gray-500 px-2 py-0.5 bg-gray-100 rounded">
+                              {country.code}
+                            </span>
+                            {(editingArticle.countries || []).includes(country.name) && (
+                              <MapPin size={16} className="text-blue-600" />
+                            )}
                           </label>
                         ))}
                       </div>
                     </div>
                     {(editingArticle.countries || []).length > 0 && (
-                      <p className="text-xs text-gray-500 mt-2">{(editingArticle.countries || []).length} pays sélectionné(s)</p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {(editingArticle.countries || []).length} pays sélectionné(s)
+                      </p>
                     )}
                   </div>
 
@@ -1911,15 +2433,26 @@ const Magazine = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Tags / Mots-clés</label>
                     <div className="flex flex-wrap gap-2 mb-2">
                       {(editingArticle.tags || []).map((tag, index) => (
-                        <span key={index} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                        >
                           {tag}
-                          <button type="button" onClick={() => removeEditTag(tag)} className="hover:text-blue-900"><X size={14} /></button>
+                          <button type="button" onClick={() => removeEditTag(tag)} className="hover:text-blue-900">
+                            <X size={14} />
+                          </button>
                         </span>
                       ))}
                     </div>
                     <input
                       type="text"
-                      onKeyPress={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleEditAddTag(e.target.value); e.target.value = ''; } }}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleEditAddTag(e.target.value);
+                          e.target.value = '';
+                        }
+                      }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Appuyez sur Entrée pour ajouter un tag"
                     />
@@ -1931,20 +2464,41 @@ const Magazine = () => {
                       <div className="grid grid-cols-4 gap-2 mb-2">
                         {editGalleryImages.map((img) => (
                           <div key={img.id} className="relative group">
-                            <img src={img.preview} alt="Galerie" className="w-full h-24 object-cover rounded-lg border border-gray-200" />
-                            <button type="button" onClick={() => removeEditGalleryImage(img.id)} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X size={12} /></button>
+                            <img
+                              src={img.preview}
+                              alt="Galerie"
+                              className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeEditGalleryImage(img.id)}
+                              className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X size={12} />
+                            </button>
                           </div>
                         ))}
                       </div>
                     )}
                     <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                      <div className="flex flex-col items-center justify-center"><ImageIcon size={20} className="text-gray-400 mb-1" /><p className="text-xs text-gray-500">Ajouter des images</p></div>
-                      <input type="file" accept="image/*" multiple onChange={handleEditGalleryUpload} className="hidden" />
+                      <div className="flex flex-col items-center justify-center">
+                        <ImageIcon size={20} className="text-gray-400 mb-1" />
+                        <p className="text-xs text-gray-500">Ajouter des images</p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleEditGalleryUpload}
+                        className="hidden"
+                      />
                     </label>
                   </div>
 
                   <div className="border-t border-gray-200 pt-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"><Globe size={16} /> Métadonnées SEO</h3>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <Globe size={16} /> Métadonnées SEO
+                    </h3>
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
@@ -1956,7 +2510,9 @@ const Magazine = () => {
                           placeholder="Description pour les moteurs de recherche (150-160 caractères)"
                           maxLength={160}
                         />
-                        <p className="text-xs text-gray-500 mt-1">{(editingArticle.metaDescription || '').length}/160 caractères</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {(editingArticle.metaDescription || '').length}/160 caractères
+                        </p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Meta Keywords</label>
@@ -1990,21 +2546,42 @@ const Magazine = () => {
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Date de publication</label>
-                            <input type="date" value={editPublishDate} onChange={(e) => setEditPublishDate(e.target.value)} min={new Date().toISOString().split('T')[0]} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <input
+                              type="date"
+                              value={editPublishDate}
+                              onChange={(e) => setEditPublishDate(e.target.value)}
+                              min={new Date().toISOString().split('T')[0]}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Heure de publication</label>
-                            <input type="time" value={editPublishTime} onChange={(e) => setEditPublishTime(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <input
+                              type="time"
+                              value={editPublishTime}
+                              onChange={(e) => setEditPublishTime(e.target.value)}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
                           </div>
                         </div>
                       )}
                       <div className="flex items-center gap-4">
                         <label className="flex items-center gap-2">
-                          <input type="checkbox" checked={!!editingArticle.featured} onChange={(e) => setEditingArticle({ ...editingArticle, featured: e.target.checked })} className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                          <input
+                            type="checkbox"
+                            checked={!!editingArticle.featured}
+                            onChange={(e) => setEditingArticle({ ...editingArticle, featured: e.target.checked })}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
                           <span className="text-sm font-medium text-gray-700">Article mis en avant</span>
                         </label>
                         <label className="flex items-center gap-2">
-                          <input type="checkbox" checked={editingArticle.allowComments !== false} onChange={(e) => setEditingArticle({ ...editingArticle, allowComments: e.target.checked })} className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                          <input
+                            type="checkbox"
+                            checked={editingArticle.allowComments !== false}
+                            onChange={(e) => setEditingArticle({ ...editingArticle, allowComments: e.target.checked })}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
                           <span className="text-sm font-medium text-gray-700">Autoriser les commentaires</span>
                         </label>
                       </div>
@@ -2016,23 +2593,52 @@ const Magazine = () => {
                   <article>
                     {(editImagePreview || editingArticle.imageUrl) && (
                       <div className="mb-4">
-                        <img src={editImagePreview || editingArticle.imageUrl} alt={editingArticle.title} className="w-full h-64 object-cover rounded-lg" />
+                        <img
+                          src={editImagePreview || editingArticle.imageUrl}
+                          alt={editingArticle.title}
+                          className="w-full h-64 object-cover rounded-lg"
+                        />
                       </div>
                     )}
                     <div className="flex items-center gap-2 mb-4">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">{editingArticle.category || 'Non catégorisé'}</span>
-                      {editingArticle.featured && <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">⭐ Mis en avant</span>}
-                      <span className="text-sm text-gray-500">{editingArticle.readingTime || editingArticle.readTime || 0} min de lecture</span>
+                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                        {editingArticle.category || 'Non catégorisé'}
+                      </span>
+                      {editingArticle.featured && (
+                        <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
+                          ⭐ Mis en avant
+                        </span>
+                      )}
+                      <span className="text-sm text-gray-500">
+                        {editingArticle.readingTime || editingArticle.readTime || 0} min de lecture
+                      </span>
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-4">{editingArticle.title || 'Titre'}</h1>
-                    {editingArticle.excerpt && <p className="text-lg text-gray-600 mb-6 italic">{editingArticle.excerpt}</p>}
-                    {editingArticle.author && <div className="flex items-center gap-2 mb-6 text-sm text-gray-500">Par {editingArticle.author}</div>}
+                    {editingArticle.excerpt && (
+                      <p className="text-lg text-gray-600 mb-6 italic">{editingArticle.excerpt}</p>
+                    )}
+                    {editingArticle.author && (
+                      <div className="flex items-center gap-2 mb-6 text-sm text-gray-500">
+                        Par {editingArticle.author}
+                      </div>
+                    )}
                     <div className="prose max-w-none text-gray-700 leading-relaxed">
-                      {editingArticle.content ? <div className="article-preview-content" dangerouslySetInnerHTML={{ __html: editingArticle.content }} /> : <p className="text-gray-500">Le contenu apparaîtra ici...</p>}
+                      {editingArticle.content ? (
+                        <div
+                          className="article-preview-content"
+                          dangerouslySetInnerHTML={{ __html: editingArticle.content }}
+                        />
+                      ) : (
+                        <p className="text-gray-500">Le contenu apparaîtra ici...</p>
+                      )}
                     </div>
                     {(editingArticle.tags || []).length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-gray-200">
-                        {(editingArticle.tags || []).map((tag, index) => <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#{tag}</span>)}
+                        {(editingArticle.tags || []).map((tag, index) => (
+                          <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                            #{tag}
+                          </span>
+                        ))}
                       </div>
                     )}
                   </article>
@@ -2040,8 +2646,18 @@ const Magazine = () => {
               )}
             </div>
             <div className="flex items-center justify-end gap-4 p-6 border-t border-gray-200">
-              <button type="button" onClick={() => setEditingArticle(null)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Annuler</button>
-              <button type="button" onClick={handleSaveEdit} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              <button
+                type="button"
+                onClick={() => setEditingArticle(null)}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
                 <Save size={18} />
                 Enregistrer
               </button>
@@ -2052,63 +2668,150 @@ const Magazine = () => {
 
       {/* Modales Insérer image / vidéo (partagées entre {t('magazine.addArticle')} et Modifier article) */}
       {showInsertImageModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" onClick={() => !uploadingInlineImage && setShowInsertImageModal(false)}>
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} onClick={e => e.stopPropagation()} className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><ImageIcon size={22} className="text-blue-600" /> Insérer une image dans l'article</h3>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4"
+          onClick={() => !uploadingInlineImage && setShowInsertImageModal(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <ImageIcon size={22} className="text-blue-600" /> Insérer une image dans l'article
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">URL de l'image (optionnel)</label>
-                <input type="url" value={insertImageUrl} onChange={(e) => setInsertImageUrl(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
+                <input
+                  type="url"
+                  value={insertImageUrl}
+                  onChange={(e) => setInsertImageUrl(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="https://..."
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Ou uploader un fichier</label>
                 <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                   <Upload size={24} className="text-gray-400 mb-1" />
                   <span className="text-sm text-gray-500">Cliquez ou glissez une image</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setInsertImageFile(f); }} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) setInsertImageFile(f);
+                    }}
+                  />
                 </label>
                 {insertImageFile && <p className="text-xs text-gray-600 mt-1 truncate">{insertImageFile.name}</p>}
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <button type="button" onClick={() => setShowInsertImageModal(false)} className="px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Annuler</button>
-              <button type="button" onClick={handleInsertImageConfirm} disabled={uploadingInlineImage || (!insertImageUrl.trim() && !insertImageFile)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{uploadingInlineImage ? 'Upload...' : 'Insérer'}</button>
+              <button
+                type="button"
+                onClick={() => setShowInsertImageModal(false)}
+                className="px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleInsertImageConfirm}
+                disabled={uploadingInlineImage || (!insertImageUrl.trim() && !insertImageFile)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {uploadingInlineImage ? 'Upload...' : 'Insérer'}
+              </button>
             </div>
           </motion.div>
         </div>
       )}
       {showInsertVideoModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" onClick={() => setShowInsertVideoModal(false)}>
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} onClick={e => e.stopPropagation()} className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Video size={22} className="text-purple-600" /> Insérer une vidéo dans l'article</h3>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4"
+          onClick={() => setShowInsertVideoModal(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Video size={22} className="text-purple-600" /> Insérer une vidéo dans l'article
+            </h3>
 
             {/* Bibliothèque média */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Choisir depuis la bibliothèque média</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Choisir depuis la bibliothèque média
+              </label>
               {loadingMediaLibrary ? (
                 <p className="text-sm text-gray-500 py-2">Chargement des vidéos...</p>
               ) : mediaLibraryVideos.length > 0 ? (
                 <ul className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-2 bg-gray-50">
                   {mediaLibraryVideos.map((v) => (
-                    <li key={v.path || v.url} className="flex items-center justify-between gap-2 py-2 px-2 rounded hover:bg-gray-100">
-                      <span className="text-sm text-gray-800 truncate flex-1" title={v.name}>{v.name}</span>
-                      {v.duration != null && <span className="text-xs text-gray-500 shrink-0">{Math.floor(v.duration / 60)}:{(v.duration % 60).toString().padStart(2, '0')}</span>}
-                      <button type="button" onClick={() => setInsertVideoUrl(v.path || v.url || '')} className="shrink-0 px-3 py-1 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700">Choisir</button>
+                    <li
+                      key={v.path || v.url}
+                      className="flex items-center justify-between gap-2 py-2 px-2 rounded hover:bg-gray-100"
+                    >
+                      <span className="text-sm text-gray-800 truncate flex-1" title={v.name}>
+                        {v.name}
+                      </span>
+                      {v.duration != null && (
+                        <span className="text-xs text-gray-500 shrink-0">
+                          {Math.floor(v.duration / 60)}:{(v.duration % 60).toString().padStart(2, '0')}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setInsertVideoUrl(v.path || v.url || '')}
+                        className="shrink-0 px-3 py-1 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700"
+                      >
+                        Choisir
+                      </button>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-gray-500 py-2">Aucune vidéo dans la bibliothèque. Uploadez des vidéos dans la section appropriée.</p>
+                <p className="text-sm text-gray-500 py-2">
+                  Aucune vidéo dans la bibliothèque. Uploadez des vidéos dans la section appropriée.
+                </p>
               )}
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ou coller une URL (YouTube, Vimeo ou lien direct)</label>
-              <input type="url" value={insertVideoUrl} onChange={(e) => setInsertVideoUrl(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="https://www.youtube.com/... ou URL d'une vidéo" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Ou coller une URL (YouTube, Vimeo ou lien direct)
+              </label>
+              <input
+                type="url"
+                value={insertVideoUrl}
+                onChange={(e) => setInsertVideoUrl(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="https://www.youtube.com/... ou URL d'une vidéo"
+              />
             </div>
             <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setShowInsertVideoModal(false)} className="px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Annuler</button>
-              <button type="button" onClick={handleInsertVideoConfirm} disabled={!insertVideoUrl.trim()} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">Insérer</button>
+              <button
+                type="button"
+                onClick={() => setShowInsertVideoModal(false)}
+                className="px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleInsertVideoConfirm}
+                disabled={!insertVideoUrl.trim()}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+              >
+                Insérer
+              </button>
             </div>
           </motion.div>
         </div>
@@ -2118,6 +2821,3 @@ const Magazine = () => {
 };
 
 export default Magazine;
-
-
-

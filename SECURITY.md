@@ -4,13 +4,13 @@ Guide opérationnel et checklist pour l’équipe. Détails d’implémentation 
 
 ## Credentials administrateur
 
-| Règle | Détail |
-|--------|--------|
-| Variables | `ADMIN_EMAIL` et `ADMIN_PASSWORD` **obligatoires** dans `config.env` / `.env`. Aucune valeur codée en dur dans le code applicatif. |
-| Production | `validateSecurityConfig()` refuse le démarrage si l’une manque, si `JWT_SECRET` &lt; 32 caractères, ou si `ADMIN_EMAIL` = `admin@gnv.com`. |
-| Login | `POST /api/auth/login` renvoie **500** si la config admin est incomplète ; **403** si tentative avec `admin@gnv.com` en production. |
-| Init DB | `npm run init-db` : en prod, mot de passe admin **obligatoire** ; en dev, sans `ADMIN_PASSWORD`, génération d’un mot de passe temporaire **32 caractères hex**, affiché **une fois**, avec `mustChangePassword=true` jusqu’au `PUT /api/auth/change-password`. |
-| Réinit mot de passe | `scripts/reset-admin-password.js` exige `ADMIN_EMAIL` + `ADMIN_PASSWORD_RESET` (pas de mot de passe par défaut). |
+| Règle               | Détail                                                                                                                                                                                                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Variables           | `ADMIN_EMAIL` et `ADMIN_PASSWORD` **obligatoires** dans `config.env` / `.env`. Aucune valeur codée en dur dans le code applicatif.                                                                                                                             |
+| Production          | `validateSecurityConfig()` refuse le démarrage si l’une manque, si `JWT_SECRET` &lt; 32 caractères, ou si `ADMIN_EMAIL` = `admin@gnv.com`.                                                                                                                     |
+| Login               | `POST /api/auth/login` renvoie **500** si la config admin est incomplète ; **403** si tentative avec `admin@gnv.com` en production.                                                                                                                            |
+| Init DB             | `npm run init-db` : en prod, mot de passe admin **obligatoire** ; en dev, sans `ADMIN_PASSWORD`, génération d’un mot de passe temporaire **32 caractères hex**, affiché **une fois**, avec `mustChangePassword=true` jusqu’au `PUT /api/auth/change-password`. |
+| Réinit mot de passe | `scripts/reset-admin-password.js` exige `ADMIN_EMAIL` + `ADMIN_PASSWORD_RESET` (pas de mot de passe par défaut).                                                                                                                                               |
 
 **Ne jamais** commiter de vrais secrets ni réutiliser des identifiants de démo publics.
 
