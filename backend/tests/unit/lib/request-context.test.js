@@ -14,6 +14,8 @@ describe('request-context', () => {
       expect(req.id).toBe('client-corr-001');
       expect(req.correlationId).toBe('client-corr-001');
       expect(req.log).toBeDefined();
+      expect(req.log.bindings().requestId).toBe('client-corr-001');
+      expect(req.log.bindings().correlationId).toBe('client-corr-001');
       res.json({ ok: true });
     });
     const res = await request(app).get('/x').set('X-Correlation-Id', 'client-corr-001');

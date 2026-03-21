@@ -5,6 +5,8 @@ const Restaurant = require('../models/Restaurant');
 const { safeRegexSearch } = require('../utils/regex-escape');
 const restaurantsFallback = require('../lib/restaurants-fallback');
 const { logRouteError } = require('../lib/route-logger');
+const queryCache = require('../lib/queryCache');
+const { hashQueryPart } = require('../lib/queryCache');
 
 const router = express.Router();
 
@@ -151,8 +153,19 @@ router.get('/', async (req, res) => {
       }
     }
 
-    const restaurants = await Restaurant.find(query).read('secondaryPreferred').sort({ name: 1 }).lean();
-    res.json(restaurants.map((doc) => localizeRestaurant(doc, lang)));
+    const cacheKey = [
+      'restaurants:list',
+      lang || 'default',
+      category && String(category) !== 'all' ? String(category) : 'all',
+      hashQueryPart(search ? String(search) : ''),
+    ].join(':');
+
+    const restaurants = await queryCache.getCached(cacheKey, async () => {
+      const docs = await Restaurant.find(query).read('secondaryPreferred').sort({ name: 1 }).lean();
+      return docs.map((doc) => localizeRestaurant(doc, lang));
+    });
+
+    res.json(restaurants);
   } catch (error) {
     logRouteError(req, 'restaurants_list_failed', error);
     res.status(500).json({ message: 'Server error' });
@@ -198,11 +211,22 @@ router.get('/:id', async (req, res) => {
       }
       return res.json(restaurant);
     }
-    const restaurant = await Restaurant.findById(req.params.id).read('secondaryPreferred').lean();
-    if (!restaurant) {
+    const lang = (req.query.lang && String(req.query.lang).toLowerCase()) || '';
+    const id = String(req.params.id);
+    const cacheKey = `restaurants:byId:${id}:${lang || 'default'}`;
+
+    const payload = await queryCache.getCached(cacheKey, async () => {
+      const doc = await Restaurant.findById(id).read('secondaryPreferred').lean();
+      if (!doc) {
+        return null;
+      }
+      return localizeRestaurant(doc, lang);
+    });
+
+    if (!payload) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
-    res.json(localizeRestaurant(restaurant, (req.query.lang && String(req.query.lang).toLowerCase()) || ''));
+    res.json(payload);
   } catch (error) {
     logRouteError(req, 'restaurants_get_failed', error);
     res.status(500).json({ message: 'Server error' });
@@ -218,6 +242,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     }
     const restaurant = new Restaurant(body);
     await restaurant.save();
+    void queryCache.invalidate('restaurants');
     res.status(201).json({
       message: 'Restaurant created successfully',
       restaurant,
@@ -252,6 +277,8 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
 
+    void queryCache.invalidate('restaurants');
+
     res.json({
       message: 'Restaurant updated successfully',
       restaurant,
@@ -281,6 +308,8 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
+
+    void queryCache.invalidate('restaurants');
 
     res.json({ message: 'Restaurant deactivated successfully' });
   } catch (error) {

@@ -10,7 +10,7 @@ function createApiRateLimitSkip({ getApiPathSuffix, jwtAdminSkipCache, config })
 
   return function skipApiRateLimit(req) {
     const p = getApiPathSuffix(req.path || '').toLowerCase();
-    if (p === '/health' || p === '/health/ready' || p === '/time') {
+    if (p === '/health' || p.startsWith('/health/') || p === '/time') {
       return true;
     }
     if (p.startsWith('/stream') || p.startsWith('/upload') || p.startsWith('/media-library')) {

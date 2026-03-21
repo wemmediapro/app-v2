@@ -43,6 +43,45 @@ class RedisStore {
    * @param {string} key
    * @param {{ windowMs?: number }} [options] — fenêtre par clé (rate limit par endpoint)
    */
+  /**
+   * Fenêtre glissante : compte les hits dont le timestamp est dans les `windowMs` dernières ms (ZSET).
+   * @param {string} key
+   * @param {{ windowMs?: number }} [options]
+   * @returns {Promise<{ totalHits: number, resetTime: Date }>}
+   */
+  async slidingIncrement(key, options = {}) {
+    const windowMs = Number.isFinite(options.windowMs) && options.windowMs > 0 ? options.windowMs : this.windowMs;
+    const resetTime = new Date(Date.now() + windowMs);
+    if (!this.client) {
+      return { totalHits: 1, resetTime };
+    }
+    const now = Date.now();
+    const member = `${now}:${Math.random().toString(36).slice(2, 12)}`;
+    const redisKey = this.prefixKey(`sw:${key}`);
+    const lua = `
+      local zkey = KEYS[1]
+      local now = tonumber(ARGV[1])
+      local window = tonumber(ARGV[2])
+      local member = ARGV[3]
+      local start = now - window
+      redis.call('ZREMRANGEBYSCORE', zkey, '-inf', start)
+      redis.call('ZADD', zkey, now, member)
+      redis.call('PEXPIRE', zkey, window)
+      return redis.call('ZCARD', zkey)
+    `;
+    try {
+      const totalHits = await this.client.eval(lua, {
+        keys: [redisKey],
+        arguments: [String(now), String(windowMs), member],
+      });
+      const n = typeof totalHits === 'number' ? totalHits : parseInt(totalHits, 10) || 1;
+      return { totalHits: n, resetTime };
+    } catch (err) {
+      logger.warn({ event: 'rate_limit_redis_sliding_increment_failed', err: err.message, stack: err.stack });
+      return { totalHits: 1, resetTime };
+    }
+  }
+
   async increment(key, options = {}) {
     const windowMs = Number.isFinite(options.windowMs) && options.windowMs > 0 ? options.windowMs : this.windowMs;
     const resetTime = new Date(Date.now() + windowMs);

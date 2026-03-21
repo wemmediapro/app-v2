@@ -1,5 +1,5 @@
 /**
- * Contexte HTTP : ID de corrélation (traçage bout-en-bout) + `req.log` enfant Pino.
+ * Contexte HTTP : ID de corrélation (traçage bout-en-bout) + `req.log` enfant Pino (`reqId`, `requestId`, `correlationId`).
  * Accepte les en-têtes entrants `X-Request-Id` ou `X-Correlation-Id` ; sinon génère un ID.
  * Journal d’accès HTTP structuré (remplace une ligne Apache texte) pour ELK / Loki / etc.
  */
@@ -7,6 +7,16 @@
 const crypto = require('crypto');
 const logger = require('./logger');
 const { getApiPathSuffix } = require('./apiPath');
+
+/** Champs trace OpenTelemetry (si OTEL_ENABLED et span actif). */
+function readOtelTraceLogFields() {
+  try {
+    const { getTraceLogFields } = require('./tracing');
+    return typeof getTraceLogFields === 'function' ? getTraceLogFields() : {};
+  } catch {
+    return {};
+  }
+}
 
 const MAX_CORRELATION_LEN = 128;
 
@@ -40,7 +50,9 @@ function requestContextMiddleware() {
     const pathOnly = (req.originalUrl || req.url || '').split('?')[0] || '';
     req.log = logger.child({
       reqId: req.id,
+      requestId: req.id,
       correlationId: req.id,
+      ...readOtelTraceLogFields(),
       http: {
         method: req.method,
         path: pathOnly,

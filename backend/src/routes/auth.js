@@ -19,6 +19,7 @@ const authService = require('../services/authService');
 const auditService = require('../services/auditService');
 const { auditContext } = require('../middleware/auditLog');
 const { logRouteError } = require('../lib/route-logger');
+const queryCache = require('../lib/queryCache');
 const { RE_TOTP_SIX_DIGITS, RE_WHITESPACE_ALL } = require('../constants/regex');
 
 // [SEC-1/PERF-1] Hash bcrypt admin pré-calculé une fois au premier login (évite bcrypt.hash à chaque requête)
@@ -168,6 +169,8 @@ router.post(
       });
 
       await user.save();
+
+      void queryCache.invalidate('users');
 
       await auditService.logAction({
         userId: req.user._id,

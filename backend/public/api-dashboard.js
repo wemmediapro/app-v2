@@ -1,7 +1,8 @@
 (function () {
   const endpoints = [
-    { method: 'GET', path: '/api/v1/health', desc: 'Liveness (alias /api/health)' },
-    { method: 'GET', path: '/api/v1/health/ready', desc: 'Readiness (alias /api/health/ready)' },
+    { method: 'GET', path: '/api/v1/health', desc: 'Santé détaillée (Mongo, Redis, disque, versions)' },
+    { method: 'GET', path: '/api/v1/health/live', desc: 'Liveness K8s (processus vivant)' },
+    { method: 'GET', path: '/api/v1/health/ready', desc: 'Readiness K8s (Mongo + Redis prod)' },
     { method: 'GET', path: '/api/admin/dashboard', desc: 'Statistiques du dashboard' },
     { method: 'GET', path: '/api/admin/users', desc: 'Liste des utilisateurs' },
     { method: 'GET', path: '/api/restaurants', desc: 'Liste des restaurants' },

@@ -14,6 +14,7 @@ const validateMessagesPagination = createValidatePagination({ defaultLimit: 50 }
 const Message = require('../models/Message');
 const User = require('../models/User');
 const { logRouteError } = require('../lib/route-logger');
+const queryCache = require('../lib/queryCache');
 
 const router = express.Router();
 
@@ -45,59 +46,64 @@ const router = express.Router();
 router.get('/', authMiddleware, validatePagination, handleValidationErrors, async (req, res) => {
   try {
     const { skip, limit } = req.pagination;
-    const conversations = await Message.aggregate([
-      {
-        $match: {
-          $or: [{ sender: req.user.id }, { receiver: req.user.id }],
-        },
-      },
-      { $sort: { createdAt: -1 } },
-      {
-        $group: {
-          _id: {
-            $cond: [{ $eq: ['$sender', req.user.id] }, '$receiver', '$sender'],
+    const userId = String(req.user.id);
+    const cacheKey = `messages:conversations:${userId}:${skip}:${limit}`;
+
+    const conversations = await queryCache.getCached(cacheKey, () =>
+      Message.aggregate([
+        {
+          $match: {
+            $or: [{ sender: req.user.id }, { receiver: req.user.id }],
           },
-          lastMessage: { $first: '$$ROOT' },
-          unreadCount: {
-            $sum: {
-              $cond: [
-                {
-                  $and: [{ $eq: ['$receiver', req.user.id] }, { $eq: ['$isRead', false] }],
-                },
-                1,
-                0,
-              ],
+        },
+        { $sort: { createdAt: -1 } },
+        {
+          $group: {
+            _id: {
+              $cond: [{ $eq: ['$sender', req.user.id] }, '$receiver', '$sender'],
+            },
+            lastMessage: { $first: '$$ROOT' },
+            unreadCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [{ $eq: ['$receiver', req.user.id] }, { $eq: ['$isRead', false] }],
+                  },
+                  1,
+                  0,
+                ],
+              },
             },
           },
         },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'user',
-        },
-      },
-      { $unwind: '$user' },
-      {
-        $project: {
-          user: {
-            _id: 1,
-            firstName: 1,
-            lastName: 1,
-            email: 1,
-            avatar: 1,
-            cabinNumber: 1,
+        {
+          $lookup: {
+            from: 'users',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'user',
           },
-          lastMessage: 1,
-          unreadCount: 1,
         },
-      },
-      { $sort: { 'lastMessage.createdAt': -1 } },
-      { $skip: skip },
-      { $limit: limit },
-    ]);
+        { $unwind: '$user' },
+        {
+          $project: {
+            user: {
+              _id: 1,
+              firstName: 1,
+              lastName: 1,
+              email: 1,
+              avatar: 1,
+              cabinNumber: 1,
+            },
+            lastMessage: 1,
+            unreadCount: 1,
+          },
+        },
+        { $sort: { 'lastMessage.createdAt': -1 } },
+        { $skip: skip },
+        { $limit: limit },
+      ])
+    );
 
     res.json(conversations);
   } catch (error) {
@@ -187,7 +193,7 @@ router.get(
         .populate('receiver', 'firstName lastName avatar');
 
       // Mark messages as read
-      await Message.updateMany(
+      const updated = await Message.updateMany(
         {
           sender: req.params.userId,
           receiver: req.user.id,
@@ -198,6 +204,10 @@ router.get(
           readAt: new Date(),
         }
       );
+
+      if (updated.modifiedCount > 0) {
+        void queryCache.invalidate(`messages:conversations:${String(req.user.id)}`);
+      }
 
       res.json(messages.reverse());
     } catch (error) {
@@ -283,6 +293,8 @@ router.post(
         { path: 'sender', select: 'firstName lastName avatar' },
         { path: 'receiver', select: 'firstName lastName avatar' },
       ]);
+
+      void queryCache.invalidate('messages:conversations');
 
       res.status(201).json({
         message: 'Message sent successfully',

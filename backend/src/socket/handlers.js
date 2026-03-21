@@ -9,6 +9,7 @@ const logger = require('../lib/logger');
 const connectionManager = require('../lib/connection-manager');
 const { hasAllowedPrefix, isRoomAuthorizedForUser } = require('./roomUtils');
 const { createMessageBroadcaster } = require('./broadcast-batcher');
+const { runInActiveSpan, getCustomMetrics } = require('../lib/tracing');
 const MAX_MESSAGE_LENGTH = 5000;
 const MAX_CLIENT_SYNC_ID_LENGTH = 128;
 
@@ -191,56 +192,66 @@ function attachSocketHandlers(io, connectionCounters) {
     });
 
     socket.on('send-message', (data, cb) => {
-      if (!checkSocketRateLimit(socket)) {
-        return;
-      }
-      if (!checkSendMessageRateLimit(socket)) {
-        return;
-      } // C6 : 60 msg/min/socket
-      if (!data || !hasAllowedPrefix(data.room) || !isRoomAuthorizedForUser(socket, data.room)) {
-        logger.warn({ event: 'socket_send_message_denied', socketId: socket.id, room: data?.room });
-        if (typeof cb === 'function') {
-          cb(new Error('Invalid or forbidden room'));
+      runInActiveSpan('socket.send_message', (span) => {
+        if (span) {
+          span.setAttribute('socket.id', socket.id);
+          if (data?.room) {
+            span.setAttribute('messaging.destination.name', String(data.room).slice(0, 256));
+          }
         }
-        return;
-      }
-      if (!socket.rooms.has(data.room)) {
-        if (typeof cb === 'function') {
-          cb(new Error('Not in room'));
+        getCustomMetrics()?.recordSocketEvent('send_message');
+
+        if (!checkSocketRateLimit(socket)) {
+          return;
         }
-        return;
-      }
-      const rawMsg = data.content ?? data.text;
-      if (rawMsg != null && typeof rawMsg !== 'string') {
-        logger.warn({ event: 'socket_send_message_denied', reason: 'invalid_content_type', socketId: socket.id });
-        if (typeof cb === 'function') {
-          cb(new Error('Invalid message content'));
+        if (!checkSendMessageRateLimit(socket)) {
+          return;
+        } // C6 : 60 msg/min/socket
+        if (!data || !hasAllowedPrefix(data.room) || !isRoomAuthorizedForUser(socket, data.room)) {
+          logger.warn({ event: 'socket_send_message_denied', socketId: socket.id, room: data?.room });
+          if (typeof cb === 'function') {
+            cb(new Error('Invalid or forbidden room'));
+          }
+          return;
         }
-        return;
-      }
-      const content = sanitizeContent(rawMsg ?? '');
-      const attachment = sanitizeSocketAttachment(data.attachment);
-      const clientSyncId = sanitizeClientSyncId(data.clientSyncId);
-      if (content.length === 0 && attachment == null) {
-        if (typeof cb === 'function') {
-          cb(new Error('Empty message'));
+        if (!socket.rooms.has(data.room)) {
+          if (typeof cb === 'function') {
+            cb(new Error('Not in room'));
+          }
+          return;
         }
-        return;
-      }
-      const payload = {
-        room: data.room,
-        content,
-        text: content,
-        senderId: socket.userId,
-        sender: socket.userId,
-        timestamp: new Date(),
-        ...(attachment != null && { attachment }),
-        ...(clientSyncId != null && { clientSyncId }),
-      };
-      messageBroadcaster.emitChatMessage(socket, data.room, payload);
-      if (typeof cb === 'function') {
-        cb(null, payload);
-      }
+        const rawMsg = data.content ?? data.text;
+        if (rawMsg != null && typeof rawMsg !== 'string') {
+          logger.warn({ event: 'socket_send_message_denied', reason: 'invalid_content_type', socketId: socket.id });
+          if (typeof cb === 'function') {
+            cb(new Error('Invalid message content'));
+          }
+          return;
+        }
+        const content = sanitizeContent(rawMsg ?? '');
+        const attachment = sanitizeSocketAttachment(data.attachment);
+        const clientSyncId = sanitizeClientSyncId(data.clientSyncId);
+        if (content.length === 0 && attachment == null) {
+          if (typeof cb === 'function') {
+            cb(new Error('Empty message'));
+          }
+          return;
+        }
+        const payload = {
+          room: data.room,
+          content,
+          text: content,
+          senderId: socket.userId,
+          sender: socket.userId,
+          timestamp: new Date(),
+          ...(attachment != null && { attachment }),
+          ...(clientSyncId != null && { clientSyncId }),
+        };
+        messageBroadcaster.emitChatMessage(socket, data.room, payload);
+        if (typeof cb === 'function') {
+          cb(null, payload);
+        }
+      });
     });
 
     socket.on('disconnect', () => {

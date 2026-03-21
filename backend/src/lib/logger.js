@@ -1,9 +1,11 @@
 /**
- * Logs structurés JSON (Pino) — une ligne JSON par entrée, adaptée à ELK / OpenSearch / Loki / CloudWatch.
+ * Logs structurés JSON (Pino) — une ligne JSON par entrée, adaptée à ELK / OpenSearch / Loki / CloudWatch / Datadog.
  *
- * Niveaux : fatal, error, warn, info, debug, trace — `LOG_LEVEL` (défaut `info` en production, `debug` sinon).
- * Contexte requête : utiliser `req.log` (champs `reqId`, `correlationId`, `http`) défini dans `request-context.js`.
- * Éviter `console.log` dans le code d’API ; préférer `req.log.info({ event: '...', ... })` ou `logger`.
+ * - Par défaut : **stdout JSON** (tous les environnements). Agrégation : capturer stdout (Fluent Bit, Filebeat, agent Datadog, etc.).
+ * - Lecture locale : `LOG_PRETTY=1` (nécessite `pino-pretty`, fourni en dev) — désactivé automatiquement sous Jest.
+ * - Niveaux : fatal, error, warn, info, debug, trace — `LOG_LEVEL` (défaut `info` en production, `debug` sinon).
+ * - Contexte requête : `req.log` avec `reqId`, `requestId`, `correlationId`, `http`, OTEL (`request-context.js`).
+ * - Serializers : `req` / `res` / `err` (conventions Pino), corps `req` redacté (OWASP).
  */
 const crypto = require('crypto');
 const pino = require('pino');
@@ -57,18 +59,54 @@ function redact(obj) {
   return out;
 }
 
-/** Logger racine. Pour une requête HTTP : utiliser `req.log` (enfant avec `reqId` / `correlationId`). */
-const logger = pino({
+/**
+ * Destination lisible humain (local uniquement). Sans `pino-pretty` (ex. `npm ci --omit=dev`) → JSON stdout.
+ * @returns {import('pino').TransportSingleOptions | null}
+ */
+function resolvePrettyDestination() {
+  if (process.env.LOG_PRETTY !== '1' || process.env.JEST_WORKER_ID) {
+    return null;
+  }
+  try {
+    require.resolve('pino-pretty');
+  } catch {
+    return null;
+  }
+  return pino.transport({
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+      ignore: 'pid,hostname',
+    },
+  });
+}
+
+const rootOptions = {
   level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
   base: {
     service: serviceName,
     environment: process.env.NODE_ENV || 'development',
   },
   serializers: {
-    req: (req) => (req && req.body ? { ...req, body: redact(req.body) } : req),
-    err: (err) => (err ? { message: err.message, stack: err.stack } : err),
+    req: (req) => {
+      if (!req || typeof req !== 'object') {
+        return req;
+      }
+      const serialized = pino.stdSerializers.req(req);
+      if (req.body != null && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
+        serialized.body = redact(req.body);
+      }
+      return serialized;
+    },
+    res: pino.stdSerializers.res,
+    err: pino.stdSerializers.err,
   },
-});
+};
+
+const prettyDest = resolvePrettyDestination();
+/** Logger racine. Pour une requête HTTP : utiliser `req.log` (enfant avec `reqId` / `requestId` / `correlationId`). */
+const logger = prettyDest ? pino(rootOptions, prettyDest) : pino(rootOptions);
 
 /** Log tentative de connexion échouée (sécurité — pas d’email en clair) */
 function logFailedLogin(email, reason, req = null) {

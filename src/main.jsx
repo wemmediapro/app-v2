@@ -1,15 +1,16 @@
 /**
  * Bootstrap React (Vite) : providers globaux, PWA / service worker, Framer Motion lazy.
  *
- * Arborescence : `ErrorBoundary` (root) → `LanguageProvider` → `ThemeProvider` → `BrowserRouter` → `LazyMotion` → `App` (`PassengerApp`).
+ * Arborescence : `ErrorBoundary` (root) → `LanguageProvider` → `ThemeProvider` → `BrowserRouter` → `LazyMotion` → `Suspense` → `App` (import dynamique `PassengerApp`).
  * Sentry passager : `initPassengerSentry()` si `VITE_SENTRY_DSN` est défini.
  * Les Web Vitals sont initialisés une fois au chargement (`initWebVitalsReporting`).
  */
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { LazyMotion } from 'framer-motion';
-import App from './App.jsx';
+
+const App = lazy(() => import('./App.jsx'));
 import './styles/fonts.css';
 import './styles/index.css';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -70,7 +71,18 @@ if (!rootEl) {
             <ThemeProvider>
               <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <LazyMotion features={loadMotionFeatures}>
-                  <App />
+                  <Suspense
+                    fallback={
+                      <div
+                        role="status"
+                        className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white font-medium"
+                      >
+                        Chargement…
+                      </div>
+                    }
+                  >
+                    <App />
+                  </Suspense>
                 </LazyMotion>
               </BrowserRouter>
             </ThemeProvider>

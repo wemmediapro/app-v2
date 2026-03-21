@@ -3,6 +3,7 @@ const {
   normalizeSuffixForEndpointRateLimit,
   pickEndpointRateRule,
   clearMemoryCountersForTests,
+  clearSlidingMemoryForTests,
 } = require('../../../src/middleware/endpointRateLimit');
 
 describe('endpointRateLimit — matching', () => {
@@ -24,6 +25,7 @@ describe('endpointRateLimit — matching', () => {
 describe('createEndpointRateLimitMiddleware', () => {
   afterEach(() => {
     clearMemoryCountersForTests();
+    clearSlidingMemoryForTests();
   });
 
   it('429 après dépassement du max (store mémoire)', async () => {
@@ -57,6 +59,36 @@ describe('createEndpointRateLimitMiddleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
     next.mockClear();
 
+    await mw(req, res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(429);
+  });
+
+  it('fenêtre glissante mémoire : 429 après max hits', async () => {
+    const mw = createEndpointRateLimitMiddleware({
+      rules: [{ prefix: '/t', max: 2, windowMs: 60_000, windowType: 'sliding' }],
+      redisStore: null,
+      skip: () => false,
+      defaultWindowMs: 60_000,
+    });
+    const req = { method: 'GET', path: '/api/v1/t', ip: '10.0.0.9' };
+    const mkRes = () => ({
+      headers: {},
+      setHeader(k, v) {
+        this.headers[k] = v;
+      },
+      statusCode: 200,
+      status(n) {
+        this.statusCode = n;
+        return this;
+      },
+      json() {},
+      on() {},
+    });
+    await mw(req, mkRes(), jest.fn());
+    await mw(req, mkRes(), jest.fn());
+    const res = mkRes();
+    const next = jest.fn();
     await mw(req, res, next);
     expect(next).not.toHaveBeenCalled();
     expect(res.statusCode).toBe(429);

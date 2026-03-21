@@ -4,19 +4,12 @@
  */
 const path = require('path');
 const logger = require('../lib/logger');
+const { DEFAULT_ENDPOINT_RULES } = require('../middleware/rateLimits');
 
 const ROOT = path.join(__dirname, '..', '..');
 
 /** Plafonds par préfixe (suffixe après /api[/v1]) — complètent le rate limit global. */
-const DEFAULT_RATE_LIMIT_ENDPOINT_RULES = [
-  { prefix: '/export', max: 40 },
-  { prefix: '/auth', max: 200 },
-  { prefix: '/messages', max: 450 },
-  { prefix: '/admin', max: 500 },
-  { prefix: '/sync', max: 250 },
-  { prefix: '/analytics', max: 120 },
-  { prefix: '/notifications', max: 600 },
-];
+const DEFAULT_RATE_LIMIT_ENDPOINT_RULES = DEFAULT_ENDPOINT_RULES;
 
 function parseRateLimitEndpointRules(fallbackWindowMs) {
   const raw = process.env.RATE_LIMIT_ENDPOINT_RULES_JSON;
@@ -35,12 +28,23 @@ function parseRateLimitEndpointRules(fallbackWindowMs) {
           const windowMs = r.windowMs != null && r.windowMs !== '' ? parseInt(r.windowMs, 10) : undefined;
           const methods = Array.isArray(r.methods) ? r.methods.map((m) => String(m).toUpperCase()) : null;
           const bucket = r.bucket != null ? String(r.bucket) : undefined;
+          const ks = r.keySource;
+          const keySource = ks === 'user' || ks === 'auto' || ks === 'ip' ? ks : undefined;
+          const wt = r.windowType;
+          const windowType = wt === 'sliding' || wt === 'fixed' ? wt : undefined;
+          const adaptive = r.adaptive === true || r.adaptive === 'true' || r.adaptive === 1;
+          const adaptiveMinRaw = parseInt(r.adaptiveMin, 10);
+          const adaptiveMin = Number.isFinite(adaptiveMinRaw) && adaptiveMinRaw > 0 ? adaptiveMinRaw : undefined;
           return {
             prefix,
             max,
             windowMs: Number.isFinite(windowMs) && windowMs > 0 ? windowMs : undefined,
             methods,
             bucket,
+            keySource,
+            windowType,
+            adaptive: adaptive || undefined,
+            adaptiveMin,
           };
         })
         .filter((r) => r.prefix.length > 1);
@@ -48,10 +52,19 @@ function parseRateLimitEndpointRules(fallbackWindowMs) {
         logger.warn({ event: 'rate_limit_endpoint_rules_json_empty' });
         return DEFAULT_RATE_LIMIT_ENDPOINT_RULES.map((r) => ({ ...r, windowMs: r.windowMs ?? fallbackWindowMs }));
       }
-      return parsed.map((r) => ({
-        ...r,
-        windowMs: r.windowMs ?? fallbackWindowMs,
-      }));
+      return parsed.map((r) => {
+        const base = {
+          ...r,
+          windowMs: r.windowMs ?? fallbackWindowMs,
+        };
+        if (base.adaptive === undefined) {
+          delete base.adaptive;
+        }
+        if (base.adaptiveMin === undefined) {
+          delete base.adaptiveMin;
+        }
+        return base;
+      });
     } catch (e) {
       logger.warn({ event: 'rate_limit_endpoint_rules_json_invalid', err: e.message });
     }

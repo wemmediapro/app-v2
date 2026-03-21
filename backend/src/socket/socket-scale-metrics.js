@@ -10,7 +10,8 @@
  * └────────────────────────────────┴──────────────────┴────────────────────────────────────────────┘
  *
  * Variables clés : SOCKET_MAX_CONNECTIONS, SOCKET_CONNECTION_ACCEPT_RATE_PER_SEC, SOCKET_BROADCAST_BATCH_MS,
- * SOCKET_PER_MESSAGE_DEFLATE=0 (défaut), Redis obligatoire pour l’adapter multi-instances.
+ * SOCKET_BROADCAST_BATCH_SIZE, SOCKET_MESSAGE_COMPACT, SOCKET_PER_MESSAGE_DEFLATE=0 (défaut),
+ * Redis obligatoire pour l’adapter multi-instances.
  */
 
 module.exports = {

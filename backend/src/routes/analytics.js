@@ -12,6 +12,7 @@ const Restaurant = require('../models/Restaurant');
 const WebTVChannel = require('../models/WebTVChannel');
 const Feedback = require('../models/Feedback');
 const connectionCounters = require('../lib/connectionCounters');
+const queryCache = require('../lib/queryCache');
 const { logRouteError } = require('../lib/route-logger');
 const {
   aggregateContentInventorySummary,
@@ -82,72 +83,78 @@ router.get('/content', authMiddleware, adminMiddleware, async (req, res) => {
         userBehavior: {},
       });
     }
-    let totalMovies = 0;
-    let totalArticles = 0;
-    let totalRadio = 0;
-    let totalActivities = 0;
-    let totalProducts = 0;
-    let totalRestaurants = 0;
-    let totalViewers = 0;
-    try {
-      const inv = await aggregateContentInventorySummary({
-        Movie,
-        Article,
-        RadioStation,
-        EnfantActivity,
-        Product,
-        Restaurant,
-        WebTVChannel,
-      });
-      totalMovies = inv.totalMovies;
-      totalArticles = inv.totalArticles;
-      totalRadio = inv.totalRadio;
-      totalActivities = inv.totalActivities;
-      totalProducts = inv.totalProducts;
-      totalRestaurants = inv.totalRestaurants;
-      totalViewers = inv.totalViewers;
-    } catch {
-      const [tm, ta, tr, te, tp, trr, viewersResult] = await Promise.all([
-        Movie.countDocuments().catch(() => 0),
-        Article.countDocuments().catch(() => 0),
-        RadioStation.countDocuments().catch(() => 0),
-        EnfantActivity.countDocuments().catch(() => 0),
-        Product.countDocuments().catch(() => 0),
-        Restaurant.countDocuments({ isActive: true }).catch(() => 0),
-        WebTVChannel.aggregate([{ $group: { _id: null, total: { $sum: '$viewers' } } }]).catch(() => []),
-      ]);
-      totalMovies = tm;
-      totalArticles = ta;
-      totalRadio = tr;
-      totalActivities = te;
-      totalProducts = tp;
-      totalRestaurants = trr;
-      totalViewers = (viewersResult && viewersResult[0] && viewersResult[0].total) || 0;
-    }
-    const totalContent = totalMovies + totalArticles + totalRadio + totalActivities + totalProducts + totalRestaurants;
-    const contentTypes = [
-      { type: 'Films & séries', count: totalMovies, views: 0, rating: null },
-      { type: 'Articles magazine', count: totalArticles, views: 0, rating: null },
-      { type: 'Stations radio', count: totalRadio, views: 0, rating: null },
-      { type: 'Activités enfant', count: totalActivities, views: 0, rating: null },
-      { type: 'Produits shop', count: totalProducts, views: 0, rating: null },
-      { type: 'Restaurants', count: totalRestaurants, views: 0, rating: null },
-    ].filter((c) => c.count > 0);
 
-    res.json({
-      totalContent,
-      contentTypes,
-      popularContent: [],
-      contentEngagement: { averageWatchTime: null, completionRate: null, favoriteGenres: [], peakViewingHours: [] },
-      userBehavior: {
-        averageSessionTime: null,
-        bounceRate: null,
-        returnVisitors: null,
-        newVisitors: null,
-        mostActiveUsers: [],
-      },
-      totalViewers,
+    const payload = await queryCache.getCached('statistics:content:v1', async () => {
+      let totalMovies = 0;
+      let totalArticles = 0;
+      let totalRadio = 0;
+      let totalActivities = 0;
+      let totalProducts = 0;
+      let totalRestaurants = 0;
+      let totalViewers = 0;
+      try {
+        const inv = await aggregateContentInventorySummary({
+          Movie,
+          Article,
+          RadioStation,
+          EnfantActivity,
+          Product,
+          Restaurant,
+          WebTVChannel,
+        });
+        totalMovies = inv.totalMovies;
+        totalArticles = inv.totalArticles;
+        totalRadio = inv.totalRadio;
+        totalActivities = inv.totalActivities;
+        totalProducts = inv.totalProducts;
+        totalRestaurants = inv.totalRestaurants;
+        totalViewers = inv.totalViewers;
+      } catch {
+        const [tm, ta, tr, te, tp, trr, viewersResult] = await Promise.all([
+          Movie.countDocuments().catch(() => 0),
+          Article.countDocuments().catch(() => 0),
+          RadioStation.countDocuments().catch(() => 0),
+          EnfantActivity.countDocuments().catch(() => 0),
+          Product.countDocuments().catch(() => 0),
+          Restaurant.countDocuments({ isActive: true }).catch(() => 0),
+          WebTVChannel.aggregate([{ $group: { _id: null, total: { $sum: '$viewers' } } }]).catch(() => []),
+        ]);
+        totalMovies = tm;
+        totalArticles = ta;
+        totalRadio = tr;
+        totalActivities = te;
+        totalProducts = tp;
+        totalRestaurants = trr;
+        totalViewers = (viewersResult && viewersResult[0] && viewersResult[0].total) || 0;
+      }
+      const totalContent =
+        totalMovies + totalArticles + totalRadio + totalActivities + totalProducts + totalRestaurants;
+      const contentTypes = [
+        { type: 'Films & séries', count: totalMovies, views: 0, rating: null },
+        { type: 'Articles magazine', count: totalArticles, views: 0, rating: null },
+        { type: 'Stations radio', count: totalRadio, views: 0, rating: null },
+        { type: 'Activités enfant', count: totalActivities, views: 0, rating: null },
+        { type: 'Produits shop', count: totalProducts, views: 0, rating: null },
+        { type: 'Restaurants', count: totalRestaurants, views: 0, rating: null },
+      ].filter((c) => c.count > 0);
+
+      return {
+        totalContent,
+        contentTypes,
+        popularContent: [],
+        contentEngagement: { averageWatchTime: null, completionRate: null, favoriteGenres: [], peakViewingHours: [] },
+        userBehavior: {
+          averageSessionTime: null,
+          bounceRate: null,
+          returnVisitors: null,
+          newVisitors: null,
+          mostActiveUsers: [],
+        },
+        totalViewers,
+      };
     });
+
+    res.json(payload);
   } catch (err) {
     logRouteError(req, 'analytics_content_failed', err);
     res.status(500).json({ message: 'Erreur lors du chargement du contenu' });
@@ -185,98 +192,103 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
       });
     }
 
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    const overviewPayload = await queryCache.getCached('statistics:overview:v1', async () => {
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-    const userStats = await aggregateAnalyticsUserOverview(User, thirtyDaysAgo, sixtyDaysAgo);
-    const totalUsers = userStats.totalUsers;
-    const activeUsers = userStats.activeUsers;
-    const usersLast30Days = userStats.usersLast30;
-    const usersPrevious30Days = userStats.usersPrevious30;
+      const userStats = await aggregateAnalyticsUserOverview(User, thirtyDaysAgo, sixtyDaysAgo);
+      const totalUsers = userStats.totalUsers;
+      const activeUsers = userStats.activeUsers;
+      const usersLast30Days = userStats.usersLast30;
+      const usersPrevious30Days = userStats.usersPrevious30;
 
-    const [movieStats, articleStats, recentFeedbacks, totalRadio, totalActivities, totalProducts, totalRestaurants] =
-      await Promise.all([
-        aggregateAnalyticsTemporalContent(Movie, thirtyDaysAgo, sixtyDaysAgo),
-        typeof Article.countDocuments === 'function'
-          ? aggregateAnalyticsTemporalContent(Article, thirtyDaysAgo, sixtyDaysAgo)
-          : Promise.resolve({ total: 0, last30: 0, prev30: 0, recent: [] }),
-        aggregateAnalyticsRecentFeedback(Feedback, 5),
-        RadioStation.countDocuments().catch(() => 0),
-        EnfantActivity.countDocuments().catch(() => 0),
-        Product.countDocuments().catch(() => 0),
-        Restaurant.countDocuments({ isActive: true }).catch(() => 0),
-      ]);
+      const [movieStats, articleStats, recentFeedbacks, totalRadio, totalActivities, totalProducts, totalRestaurants] =
+        await Promise.all([
+          aggregateAnalyticsTemporalContent(Movie, thirtyDaysAgo, sixtyDaysAgo),
+          typeof Article.countDocuments === 'function'
+            ? aggregateAnalyticsTemporalContent(Article, thirtyDaysAgo, sixtyDaysAgo)
+            : Promise.resolve({ total: 0, last30: 0, prev30: 0, recent: [] }),
+          aggregateAnalyticsRecentFeedback(Feedback, 5),
+          RadioStation.countDocuments().catch(() => 0),
+          EnfantActivity.countDocuments().catch(() => 0),
+          Product.countDocuments().catch(() => 0),
+          Restaurant.countDocuments({ isActive: true }).catch(() => 0),
+        ]);
 
-    const totalMovies = movieStats.total;
-    const totalArticles = articleStats.total;
-    const moviesLast30Days = movieStats.last30;
-    const moviesPrevious30Days = movieStats.prev30;
-    const articlesLast30Days = articleStats.last30;
-    const articlesPrevious30Days = articleStats.prev30;
-    const recentMovies = movieStats.recent;
-    const recentArticles = articleStats.recent;
+      const totalMovies = movieStats.total;
+      const totalArticles = articleStats.total;
+      const moviesLast30Days = movieStats.last30;
+      const moviesPrevious30Days = movieStats.prev30;
+      const articlesLast30Days = articleStats.last30;
+      const articlesPrevious30Days = articleStats.prev30;
+      const recentMovies = movieStats.recent;
+      const recentArticles = articleStats.recent;
 
-    const totalContent = totalMovies + totalArticles + totalRadio + totalActivities + totalProducts + totalRestaurants;
-    const contentLast30 = moviesLast30Days + articlesLast30Days;
-    const contentPrevious30 = moviesPrevious30Days + articlesPrevious30Days;
+      const totalContent =
+        totalMovies + totalArticles + totalRadio + totalActivities + totalProducts + totalRestaurants;
+      const contentLast30 = moviesLast30Days + articlesLast30Days;
+      const contentPrevious30 = moviesPrevious30Days + articlesPrevious30Days;
 
-    const userGrowth = growthPercent(usersLast30Days, usersPrevious30Days);
-    const contentGrowth = growthPercent(contentLast30, contentPrevious30);
-    const systemUptime = getSystemUptimePercent();
+      const userGrowth = growthPercent(usersLast30Days, usersPrevious30Days);
+      const contentGrowth = growthPercent(contentLast30, contentPrevious30);
+      const systemUptime = getSystemUptimePercent();
 
-    const alerts = [];
-    recentFeedbacks.forEach((f) => {
-      const status = f.status || 'nouveau';
-      const type = status === 'resolved' ? 'success' : status === 'pending' ? 'warning' : 'info';
-      alerts.push({
-        type,
-        message: `${(f.message || '').slice(0, 60)}${f.message && f.message.length > 60 ? '…' : ''}`,
-        timestamp: f.createdAt,
+      const alerts = [];
+      recentFeedbacks.forEach((f) => {
+        const status = f.status || 'nouveau';
+        const type = status === 'resolved' ? 'success' : status === 'pending' ? 'warning' : 'info';
+        alerts.push({
+          type,
+          message: `${(f.message || '').slice(0, 60)}${f.message && f.message.length > 60 ? '…' : ''}`,
+          timestamp: f.createdAt,
+        });
       });
+      if (recentMovies.length > 0) {
+        const titles = recentMovies
+          .map((m) => (m.translations && m.translations.fr && m.translations.fr.title) || m.title || 'Film')
+          .slice(0, 2);
+        alerts.push({
+          type: 'info',
+          message: `Nouveau(x) film(s) ajouté(s): ${titles.join(', ')}`,
+          timestamp: recentMovies[0].createdAt,
+        });
+      }
+      if (recentArticles.length > 0) {
+        const titles = recentArticles
+          .map((a) => (a.translations && a.translations.fr && a.translations.fr.title) || 'Article')
+          .slice(0, 2);
+        alerts.push({
+          type: 'info',
+          message: `Nouveau(x) article(s) magazine: ${titles.join(', ')}`,
+          timestamp: recentArticles[0].createdAt,
+        });
+      }
+      alerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      const alertsFormatted = alerts.slice(0, 10).map((a) => ({
+        type: a.type,
+        message: a.message,
+        timestamp: a.timestamp instanceof Date ? a.timestamp.toISOString() : a.timestamp,
+      }));
+
+      return {
+        summary: {
+          totalUsers,
+          activeUsers,
+          totalContent,
+          systemUptime,
+        },
+        trends: {
+          userGrowth,
+          contentGrowth,
+          engagementGrowth: 0,
+          performanceImprovement: systemUptime >= 99 ? 0 : Math.round((systemUptime / 100) * 10 * 10) / 10,
+        },
+        alerts: alertsFormatted,
+      };
     });
-    if (recentMovies.length > 0) {
-      const titles = recentMovies
-        .map((m) => (m.translations && m.translations.fr && m.translations.fr.title) || m.title || 'Film')
-        .slice(0, 2);
-      alerts.push({
-        type: 'info',
-        message: `Nouveau(x) film(s) ajouté(s): ${titles.join(', ')}`,
-        timestamp: recentMovies[0].createdAt,
-      });
-    }
-    if (recentArticles.length > 0) {
-      const titles = recentArticles
-        .map((a) => (a.translations && a.translations.fr && a.translations.fr.title) || 'Article')
-        .slice(0, 2);
-      alerts.push({
-        type: 'info',
-        message: `Nouveau(x) article(s) magazine: ${titles.join(', ')}`,
-        timestamp: recentArticles[0].createdAt,
-      });
-    }
-    alerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    const alertsFormatted = alerts.slice(0, 10).map((a) => ({
-      type: a.type,
-      message: a.message,
-      timestamp: a.timestamp instanceof Date ? a.timestamp.toISOString() : a.timestamp,
-    }));
 
-    res.json({
-      summary: {
-        totalUsers,
-        activeUsers,
-        totalContent,
-        systemUptime,
-      },
-      trends: {
-        userGrowth,
-        contentGrowth,
-        engagementGrowth: 0,
-        performanceImprovement: systemUptime >= 99 ? 0 : Math.round((systemUptime / 100) * 10 * 10) / 10,
-      },
-      alerts: alertsFormatted,
-    });
+    res.json(overviewPayload);
   } catch (err) {
     logRouteError(req, 'analytics_overview_failed', err);
     res.status(500).json({ message: "Erreur lors du chargement de la vue d'ensemble" });

@@ -175,18 +175,25 @@ export default defineConfig(({ mode }) => {
       reportCompressedSize: true,
       rollupOptions: {
         output: {
+          /**
+           * Chunks vendors nommés (pas de fourre-tout `vendor` : évite les cycles vendor ↔ react).
+           * `web-vitals` reste dans le graphe par défaut (souvent lié à Sentry) pour éviter sentry ↔ web-vitals.
+           */
           manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('react-dom') || id.includes('react/')) return 'react-vendor';
-              if (id.includes('react-router-dom')) return 'react-router';
-              if (id.includes('framer-motion')) return 'framer-motion';
-              if (id.includes('lucide-react')) return 'lucide-react';
-              if (id.includes('socket.io-client')) return 'socket.io';
-              if (id.includes('axios')) return 'axios';
-              if (id.includes('hls.js')) return 'hls';
-              if (id.includes('dompurify')) return 'dompurify';
-              if (id.includes('idb')) return 'idb';
+            if (!id.includes('node_modules')) return;
+            if (id.includes('react-dom') || id.includes('/react/') || id.includes('\\react\\')) {
+              return 'react-vendor';
             }
+            if (id.includes('react-router')) return 'react-router';
+            if (id.includes('framer-motion')) return 'framer-motion';
+            if (id.includes('lucide-react')) return 'lucide-react';
+            if (id.includes('socket.io-client')) return 'socket.io';
+            if (id.includes('axios')) return 'axios';
+            if (id.includes('hls.js')) return 'hls';
+            if (id.includes('dompurify') || id.includes('isomorphic-dompurify')) return 'dompurify';
+            if (id.includes('idb')) return 'idb';
+            if (id.includes('@sentry')) return 'sentry-vendor';
+            if (id.includes('workbox-')) return 'workbox';
           },
         },
       },

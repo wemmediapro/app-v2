@@ -1,9 +1,9 @@
-import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals';
 import { API_BASE_URL } from '../services/apiService';
 
 /**
  * Envoie les Core Web Vitals au backend (logs structurés, agrégables).
  * Désactiver : VITE_ENABLE_WEB_VITALS=false
+ * Le paquet `web-vitals` est importé dynamiquement (chunk séparé, hors chemin critique prod).
  */
 export function initWebVitalsReporting() {
   if (!import.meta.env.PROD) {
@@ -14,35 +14,39 @@ export function initWebVitalsReporting() {
   }
   const url = `${API_BASE_URL}/metrics/web-vitals`;
 
-  function send(metric) {
-    const body = JSON.stringify({
-      name: metric.name,
-      value: metric.value,
-      delta: metric.delta,
-      id: metric.id,
-      rating: metric.rating,
-      navigationType: metric.navigationType,
-    });
-    try {
-      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-        navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
-        return;
+  import('web-vitals')
+    .then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
+      function send(metric) {
+        const body = JSON.stringify({
+          name: metric.name,
+          value: metric.value,
+          delta: metric.delta,
+          id: metric.id,
+          rating: metric.rating,
+          navigationType: metric.navigationType,
+        });
+        try {
+          if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+            navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
+            return;
+          }
+          fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body,
+            credentials: 'include',
+            keepalive: true,
+          }).catch(() => {});
+        } catch (_) {
+          /* ignore */
+        }
       }
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-        credentials: 'include',
-        keepalive: true,
-      }).catch(() => {});
-    } catch (_) {
-      /* ignore */
-    }
-  }
 
-  onCLS(send);
-  onINP(send);
-  onFCP(send);
-  onLCP(send);
-  onTTFB(send);
+      onCLS(send);
+      onINP(send);
+      onFCP(send);
+      onLCP(send);
+      onTTFB(send);
+    })
+    .catch(() => {});
 }

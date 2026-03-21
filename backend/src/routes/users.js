@@ -9,6 +9,8 @@ const {
   handleValidationErrors,
 } = require('../middleware/validateInput');
 const { logRouteError } = require('../lib/route-logger');
+const queryCache = require('../lib/queryCache');
+const { hashQueryPart } = require('../lib/queryCache');
 
 const router = express.Router();
 
@@ -37,17 +39,22 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
       }
     }
 
-    const [data, total] = await Promise.all([
-      User.find(query)
-        .select('firstName lastName email cabinNumber avatar')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      User.countDocuments(query),
-    ]);
+    const cacheKey = `users:list:${page}:${limit}:${hashQueryPart(search ? String(search) : '')}`;
 
-    res.json({ data, total, page, limit });
+    const body = await queryCache.getCached(cacheKey, async () => {
+      const [data, total] = await Promise.all([
+        User.find(query)
+          .select('firstName lastName email cabinNumber avatar')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        User.countDocuments(query),
+      ]);
+      return { data, total, page, limit };
+    });
+
+    res.json(body);
   } catch (error) {
     logRouteError(req, 'users_list_failed', error);
     res.status(500).json({ message: 'Server error' });

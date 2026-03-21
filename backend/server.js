@@ -61,6 +61,9 @@ if (process.env.NODE_ENV === 'production' && process.env.RATE_LIMIT_LOAD_TEST) {
   delete process.env.RATE_LIMIT_LOAD_TEST;
 }
 
+const { initTracing, shutdownTracing, otelHttpCustomMetricsMiddleware } = require('./src/lib/tracing');
+initTracing();
+
 const express = require('express');
 const compression = require('compression');
 const cors = require('cors');
@@ -80,6 +83,7 @@ const { videoStreamMiddleware, audioStreamMiddleware } = require('./src/routes/s
 const { createRedisStore } = require('./src/lib/rateLimitRedisStore');
 const { createApiRateLimitSkip } = require('./src/lib/api-rate-limit-skip');
 const { createEndpointRateLimitMiddleware } = require('./src/middleware/endpointRateLimit');
+const { AdaptiveRateLimiter } = require('./src/middleware/rateLimits');
 const { mountRoutes } = require('./src/routes');
 const { globalErrorHandler } = require('./src/utils/errors');
 const { attachSocketHandlers } = require('./src/socket/handlers');
@@ -182,6 +186,7 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(requestContextMiddleware());
+app.use(otelHttpCustomMetricsMiddleware());
 app.use(httpAccessStructuredMiddleware());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -362,11 +367,19 @@ async function setupAfterDb() {
   if (endpointRedisStore) {
     endpointRedisStore.init({ windowMs: config.rateLimit.windowMs });
   }
+  const adaptiveEndpointLimiter =
+    endpointRedisStore?.client && process.env.ADAPTIVE_ENDPOINT_RATE_LIMIT === '1'
+      ? new AdaptiveRateLimiter(endpointRedisStore.client)
+      : null;
+  if (adaptiveEndpointLimiter) {
+    logger.info({ event: 'adaptive_endpoint_rate_limit_active' });
+  }
   const endpointRateLimiter = createEndpointRateLimitMiddleware({
     rules: config.rateLimit.endpointRules,
     redisStore: endpointRedisStore,
     skip: skipApiLimit,
     defaultWindowMs: config.rateLimit.windowMs,
+    adaptiveLimiter: adaptiveEndpointLimiter,
   });
   // [SEC-6] RATE_LIMIT_LOAD_TEST ignoré en production (réservé aux tests de charge en dev)
   const apiLimitMax =
@@ -686,7 +699,7 @@ function gracefulShutdown(signal) {
     }
     const bullClose = () =>
       Promise.resolve(require('./src/jobs').closeQueues?.()).catch(() => {});
-    Promise.all([bullClose(), Promise.resolve(dbManager.disconnect?.())])
+    Promise.all([bullClose(), shutdownTracing(), Promise.resolve(dbManager.disconnect?.())])
       .then(() => process.exit(0))
       .catch(() => process.exit(0));
   });
