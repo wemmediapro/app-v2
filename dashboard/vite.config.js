@@ -16,8 +16,7 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = (env.DEV_PROXY_TARGET || DEFAULT_DEV_PROXY).replace(/\/$/, '');
   const analyzeBundle = process.env.ANALYZE === '1';
   const cdnBase = (env.VITE_DASHBOARD_ASSET_BASE || env.VITE_ASSET_BASE || '').trim();
-  const dashboardBase =
-    cdnBase === '' ? '/dashboard/' : cdnBase.endsWith('/') ? cdnBase : `${cdnBase}/`;
+  const dashboardBase = cdnBase === '' ? '/dashboard/' : cdnBase.endsWith('/') ? cdnBase : `${cdnBase}/`;
 
   return {
     base: dashboardBase,

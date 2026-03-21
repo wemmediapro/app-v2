@@ -9,11 +9,7 @@
 const { performance } = require('perf_hooks');
 const zlib = require('zlib');
 const jwt = require('jsonwebtoken');
-const {
-  isTunnelOrigin,
-  RE_PUBLIC_GET_LIST_SUB,
-  jwtAdminSkipCache,
-} = require('../src/lib/http-middleware-tuning');
+const { isTunnelOrigin, RE_PUBLIC_GET_LIST_SUB, jwtAdminSkipCache } = require('../src/lib/http-middleware-tuning');
 
 const ITERS = 50_000;
 const SAMPLE_ORIGIN = 'https://abc.trycloudflare.com';

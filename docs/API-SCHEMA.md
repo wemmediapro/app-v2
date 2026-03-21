@@ -4,12 +4,12 @@ Ce projet combine **Mongoose (MongoDB)** pour la persistance et **OpenAPI 3** po
 
 ## Où sont les « vrais » schémas ?
 
-| Source | Emplacement | Rôle |
-|--------|-------------|------|
-| Modèles Mongoose | `backend/src/models/*.js`, `backend/models/*.js` | Schéma de données en base, hooks (hash mot de passe), index |
-| Validation requêtes | `backend/src/middleware/validation.js`, `validateInput.js` | Règles express-validator sur body/query/params |
-| Schémas OpenAPI | `backend/src/lib/swagger.js` → `components.schemas` | Types documentés pour clients / Swagger UI |
-| Annotations de routes | Blocs `@swagger` dans `backend/src/routes/*.js` | Paths, paramètres, réponses, sécurité |
+| Source                | Emplacement                                                | Rôle                                                        |
+| --------------------- | ---------------------------------------------------------- | ----------------------------------------------------------- |
+| Modèles Mongoose      | `backend/src/models/*.js`, `backend/models/*.js`           | Schéma de données en base, hooks (hash mot de passe), index |
+| Validation requêtes   | `backend/src/middleware/validation.js`, `validateInput.js` | Règles express-validator sur body/query/params              |
+| Schémas OpenAPI       | `backend/src/lib/swagger.js` → `components.schemas`        | Types documentés pour clients / Swagger UI                  |
+| Annotations de routes | Blocs `@swagger` dans `backend/src/routes/*.js`            | Paths, paramètres, réponses, sécurité                       |
 
 **Important** : l’API REST utilise **Mongoose**, pas Prisma, pour les routes métier — voir `docs/BACKEND-PRISMA.md`.
 
@@ -38,6 +38,6 @@ Fichier : `backend/docs/openapi.json`.
 
 ## Lectures complémentaires
 
-- [OPENAPI.md](./OPENAPI.md) — UI Swagger, extension de la doc  
-- [backend/docs/VALIDATION.md](../backend/docs/VALIDATION.md) — validation des entrées  
-- [SECURITY-BEST-PRACTICES.md](./SECURITY-BEST-PRACTICES.md) — exposition API et durcissement  
+- [OPENAPI.md](./OPENAPI.md) — UI Swagger, extension de la doc
+- [backend/docs/VALIDATION.md](../backend/docs/VALIDATION.md) — validation des entrées
+- [SECURITY-BEST-PRACTICES.md](./SECURITY-BEST-PRACTICES.md) — exposition API et durcissement

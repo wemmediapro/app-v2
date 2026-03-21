@@ -1,7 +1,4 @@
-const {
-  buildRateLimitIdentity,
-  AdaptiveRateLimiter,
-} = require('../../../src/middleware/rateLimits');
+const { buildRateLimitIdentity, AdaptiveRateLimiter } = require('../../../src/middleware/rateLimits');
 
 describe('rateLimits — buildRateLimitIdentity', () => {
   const req = { ip: '10.0.0.2', socket: {} };

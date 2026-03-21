@@ -72,11 +72,7 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "passenger",
-              "crew",
-              "admin"
-            ]
+            "enum": ["passenger", "crew", "admin"]
           },
           "cabinNumber": {
             "type": "string"
@@ -278,9 +274,7 @@
     "/api/v1/auth/register": {
       "post": {
         "summary": "Enregistrer un nouvel utilisateur (admin uniquement)",
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "security": [
           {
             "bearerAuth": []
@@ -295,12 +289,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "firstName",
-                  "lastName",
-                  "email",
-                  "password"
-                ],
+                "required": ["firstName", "lastName", "email", "password"],
                 "properties": {
                   "firstName": {
                     "type": "string"
@@ -368,19 +357,14 @@
     "/api/v1/auth/login": {
       "post": {
         "summary": "Connexion utilisateur",
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "email",
-                  "password"
-                ],
+                "required": ["email", "password"],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -434,9 +418,7 @@
       "get": {
         "summary": "Vérification de l'état du serveur (liveness)",
         "description": "Alias historique sans version — GET /api/health",
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "responses": {
           "200": {
             "description": "Serveur opérationnel",
@@ -455,9 +437,7 @@
       "get": {
         "summary": "Readiness (MongoDB requis pour 200)",
         "description": "Retourne 503 si la base n'est pas connectée — pour orchestrateurs (K8s, etc.).",
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "responses": {
           "200": {
             "description": "Prêt à recevoir du trafic",
@@ -496,9 +476,7 @@
     "/api/v1/time": {
       "get": {
         "summary": "Heure serveur pour synchronisation",
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "responses": {
           "200": {
             "description": "Heure serveur"
@@ -509,9 +487,7 @@
     "/api/v1/messages": {
       "get": {
         "summary": "Conversations de l'utilisateur connecté",
-        "tags": [
-          "Messages"
-        ],
+        "tags": ["Messages"],
         "security": [
           {
             "bearerAuth": []
@@ -552,9 +528,7 @@
       "get": {
         "summary": "Liste paginée des films/séries actifs",
         "description": "Pagination par défaut page=1, limit=20 (max 100). Cache Redis pour requêtes sans en-tête Authorization.",
-        "tags": [
-          "Movies"
-        ],
+        "tags": ["Movies"],
         "parameters": [
           {
             "in": "query",
@@ -603,9 +577,7 @@
     "/api/v1/movies/{id}": {
       "get": {
         "summary": "Détail d'un film ou d'une série",
-        "tags": [
-          "Movies"
-        ],
+        "tags": ["Movies"],
         "parameters": [
           {
             "in": "path",
@@ -643,9 +615,7 @@
     "/api/v1/radio": {
       "get": {
         "summary": "Liste des stations radio",
-        "tags": [
-          "Radio"
-        ],
+        "tags": ["Radio"],
         "parameters": [
           {
             "in": "query",
@@ -659,9 +629,7 @@
             "name": "all",
             "schema": {
               "type": "string",
-              "enum": [
-                "1"
-              ]
+              "enum": ["1"]
             },
             "description": "Si `all=1`, inclut les stations inactives (usage dashboard)"
           }
@@ -686,9 +654,7 @@
     "/api/v1/restaurants/categories/list": {
       "get": {
         "summary": "Catégories de restaurants (filtres UI)",
-        "tags": [
-          "Restaurants"
-        ],
+        "tags": ["Restaurants"],
         "responses": {
           "200": {
             "description": "Liste des catégories",
@@ -720,9 +686,7 @@
     "/api/v1/restaurants": {
       "get": {
         "summary": "Liste des restaurants actifs",
-        "tags": [
-          "Restaurants"
-        ],
+        "tags": ["Restaurants"],
         "parameters": [
           {
             "in": "query",
@@ -771,9 +735,7 @@
     "/api/v1/restaurants/{id}": {
       "get": {
         "summary": "Détail d'un restaurant",
-        "tags": [
-          "Restaurants"
-        ],
+        "tags": ["Restaurants"],
         "parameters": [
           {
             "in": "path",

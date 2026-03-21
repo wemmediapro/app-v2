@@ -46,11 +46,7 @@ describe('queryCache', () => {
     };
     const qc = new QueryCache(store);
     await qc.getCached('statistics:overview:v1', () => Promise.resolve({ ok: true }));
-    expect(store.set).toHaveBeenCalledWith(
-      `${PREFIX}statistics:overview:v1`,
-      { ok: true },
-      DEFAULT_TTL.statistics
-    );
+    expect(store.set).toHaveBeenCalledWith(`${PREFIX}statistics:overview:v1`, { ok: true }, DEFAULT_TTL.statistics);
   });
 
   test('getCached stores on miss and uses DEFAULT_TTL category', async () => {

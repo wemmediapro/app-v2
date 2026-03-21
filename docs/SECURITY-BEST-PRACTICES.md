@@ -39,11 +39,11 @@ Intégrer ces commandes dans la CI (déjà présent selon workflows du repo).
 
 ## Références rapides
 
-| Sujet | Document |
-|-------|----------|
-| Validation détaillée | `backend/docs/VALIDATION.md` |
-| Pistes de durcissement historiques | `docs/SECURITE-PRODUCTION-CORRECTIFS.md` |
-| Schémas / contrats API | [API-SCHEMA.md](./API-SCHEMA.md), [OPENAPI.md](./OPENAPI.md) |
-| Rotation des secrets (JWT, Mongo, Redis, …) | [SECRET-ROTATION.md](./SECRET-ROTATION.md) |
-| Journaux d’audit admin | [AUDIT-LOGGING-POLICY.md](./AUDIT-LOGGING-POLICY.md) |
-| Index documentation | [DOCUMENTATION-HUB.md](./DOCUMENTATION-HUB.md) |
+| Sujet                                       | Document                                                     |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| Validation détaillée                        | `backend/docs/VALIDATION.md`                                 |
+| Pistes de durcissement historiques          | `docs/SECURITE-PRODUCTION-CORRECTIFS.md`                     |
+| Schémas / contrats API                      | [API-SCHEMA.md](./API-SCHEMA.md), [OPENAPI.md](./OPENAPI.md) |
+| Rotation des secrets (JWT, Mongo, Redis, …) | [SECRET-ROTATION.md](./SECRET-ROTATION.md)                   |
+| Journaux d’audit admin                      | [AUDIT-LOGGING-POLICY.md](./AUDIT-LOGGING-POLICY.md)         |
+| Index documentation                         | [DOCUMENTATION-HUB.md](./DOCUMENTATION-HUB.md)               |

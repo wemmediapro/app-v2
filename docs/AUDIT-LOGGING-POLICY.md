@@ -9,17 +9,17 @@ Les actions sensibles des **administrateurs** peuvent être tracées dans la col
 
 ## Contenu d’une entrée
 
-| Champ | Rôle |
-|-------|------|
-| `userId` | Admin concerné (`ObjectId` User), ou `null` si login échoué |
-| `action` | Ex. `login`, `logout`, `create-user`, `update-user`, `delete-user`, `admin-action`, … |
-| `resource` | `user`, `restaurant`, `content`, `settings`, `auth` |
-| `resourceId` | Cible métier si applicable |
-| `changes.before` / `changes.after` | Diff optionnelle (Mixed) |
-| `ipAddress`, `userAgent` | Contexte réseau |
-| `timestamp` | Date de l’événement |
-| `status` | `success` ou `failure` |
-| `metadata` | Contexte additionnel (route, méthode HTTP, etc.) |
+| Champ                              | Rôle                                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------------------- |
+| `userId`                           | Admin concerné (`ObjectId` User), ou `null` si login échoué                           |
+| `action`                           | Ex. `login`, `logout`, `create-user`, `update-user`, `delete-user`, `admin-action`, … |
+| `resource`                         | `user`, `restaurant`, `content`, `settings`, `auth`                                   |
+| `resourceId`                       | Cible métier si applicable                                                            |
+| `changes.before` / `changes.after` | Diff optionnelle (Mixed)                                                              |
+| `ipAddress`, `userAgent`           | Contexte réseau                                                                       |
+| `timestamp`                        | Date de l’événement                                                                   |
+| `status`                           | `success` ou `failure`                                                                |
+| `metadata`                         | Contexte additionnel (route, méthode HTTP, etc.)                                      |
 
 ## Index (performances)
 
@@ -34,11 +34,11 @@ Définis dans `AuditLog.js` :
 
 Routes sous le préfixe admin (auth JWT + rôle admin) — voir `backend/src/routes/admin.js` :
 
-| Méthode | Path (relatif admin) | Description |
-|---------|----------------------|-------------|
-| GET | `/audit-logs` | Liste paginée avec filtres (`userId`, `action`, `days`, etc.) |
-| GET | `/audit-logs/export` | Export (format selon query) |
-| GET | `/audit-logs/user/:userId` | Logs pour un utilisateur donné |
+| Méthode | Path (relatif admin)       | Description                                                   |
+| ------- | -------------------------- | ------------------------------------------------------------- |
+| GET     | `/audit-logs`              | Liste paginée avec filtres (`userId`, `action`, `days`, etc.) |
+| GET     | `/audit-logs/export`       | Export (format selon query)                                   |
+| GET     | `/audit-logs/user/:userId` | Logs pour un utilisateur donné                                |
 
 Le chemin complet HTTP suit le montage des routes admin (ex. `/api/v1/admin/...` selon votre configuration).
 

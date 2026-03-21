@@ -1,4 +1,7 @@
-const { createSlowRequestLoggerMiddleware, getPerformanceMonitorStats } = require('../../../src/middleware/performanceMonitor');
+const {
+  createSlowRequestLoggerMiddleware,
+  getPerformanceMonitorStats,
+} = require('../../../src/middleware/performanceMonitor');
 
 describe('performanceMonitor', () => {
   it('getPerformanceMonitorStats expose des compteurs numériques', () => {

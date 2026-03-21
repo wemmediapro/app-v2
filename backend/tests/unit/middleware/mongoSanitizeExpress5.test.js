@@ -41,9 +41,7 @@ describe('mongoSanitizeExpress5', () => {
     const onSanitize = jest.fn();
     const mw = mongoSanitizeExpress5({ replaceWith: '_', onSanitize });
     mw(req, {}, () => {
-      expect(onSanitize).toHaveBeenCalledWith(
-        expect.objectContaining({ req, key: 'query' })
-      );
+      expect(onSanitize).toHaveBeenCalledWith(expect.objectContaining({ req, key: 'query' }));
       done();
     });
   });

@@ -174,9 +174,7 @@ describe('API Auth (étendu)', () => {
 
     it('401 si email inconnu et pas identifiants admin (audit user_not_found)', async () => {
       User.findOne.mockReturnValue(mockFindOneChain(null));
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({ email: 'ghost@test.com', password: 'Whatever12!' });
+      const res = await request(app).post('/api/auth/login').send({ email: 'ghost@test.com', password: 'Whatever12!' });
       expect(res.status).toBe(401);
     });
 
@@ -309,9 +307,7 @@ describe('API Auth (étendu)', () => {
         User.findById.mockImplementation(() => ({
           select: jest.fn().mockResolvedValue(loginSuccessDoc),
         }));
-        const res = await request(app)
-          .post('/api/auth/login')
-          .send({ email: 'u@test.com', password: 'goodpass12' });
+        const res = await request(app).post('/api/auth/login').send({ email: 'u@test.com', password: 'goodpass12' });
         expect(res.status).toBe(200);
         expect(res.headers['set-cookie']).toBeDefined();
       } finally {
@@ -419,9 +415,7 @@ describe('API Auth (étendu)', () => {
       User.findOne.mockReturnValue({
         select: jest.fn().mockRejectedValue(new Error('db findOne')),
       });
-      const res = await request(app)
-        .post('/api/auth/login')
-        .send({ email: 'u@test.com', password: 'whatever12' });
+      const res = await request(app).post('/api/auth/login').send({ email: 'u@test.com', password: 'whatever12' });
       expect(res.status).toBe(500);
       expect(res.body.message).toMatch(/login/i);
       expect(logger.error).toHaveBeenCalledWith(
@@ -525,9 +519,7 @@ describe('API Auth (étendu)', () => {
       });
       const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`);
       expect(res.status).toBe(500);
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.objectContaining({ event: 'auth_me_get_failed', err: 'db me' })
-      );
+      expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ event: 'auth_me_get_failed', err: 'db me' }));
     });
   });
 
@@ -985,15 +977,12 @@ describe('API Auth (étendu)', () => {
         }
         return authUserDbQuery();
       });
-      const res = await request(app)
-        .post('/api/auth/register')
-        .set('Cookie', `authToken=${adminToken}`)
-        .send({
-          firstName: 'N',
-          lastName: 'U',
-          email: 'taken@test.com',
-          password: 'Validpass1!',
-        });
+      const res = await request(app).post('/api/auth/register').set('Cookie', `authToken=${adminToken}`).send({
+        firstName: 'N',
+        lastName: 'U',
+        email: 'taken@test.com',
+        password: 'Validpass1!',
+      });
       expect(res.status).toBe(400);
       expect(res.body.message).toMatch(/already exists|email/i);
     });
@@ -1010,15 +999,12 @@ describe('API Auth (étendu)', () => {
         }
         return authUserDbQuery();
       });
-      const res = await request(app)
-        .post('/api/auth/register')
-        .set('Cookie', `authToken=${adminToken}`)
-        .send({
-          firstName: 'N',
-          lastName: 'U',
-          email: 'newuser-audit-fail@test.com',
-          password: 'Validpass1!',
-        });
+      const res = await request(app).post('/api/auth/register').set('Cookie', `authToken=${adminToken}`).send({
+        firstName: 'N',
+        lastName: 'U',
+        email: 'newuser-audit-fail@test.com',
+        password: 'Validpass1!',
+      });
       expect(res.status).toBe(500);
       expect(res.body.message).toMatch(/Server error during registration/i);
       expect(logger.error).toHaveBeenCalledWith(

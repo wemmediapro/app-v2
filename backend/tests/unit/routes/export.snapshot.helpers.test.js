@@ -1,14 +1,9 @@
-const {
-  exportSnapshotRateLimitKey,
-  approxExportItemCount,
-} = require('../../../src/routes/export');
+const { exportSnapshotRateLimitKey, approxExportItemCount } = require('../../../src/routes/export');
 
 describe('export snapshot — helpers', () => {
   it('exportSnapshotRateLimitKey : utilisateur connecté', () => {
     const req = { user: { id: '507f1f77bcf86cd799439011' }, ip: '1.2.3.4' };
-    expect(exportSnapshotRateLimitKey(req)).toBe(
-      'export-snapshot:user:507f1f77bcf86cd799439011'
-    );
+    expect(exportSnapshotRateLimitKey(req)).toBe('export-snapshot:user:507f1f77bcf86cd799439011');
   });
 
   it('exportSnapshotRateLimitKey : IP seule sans clé', () => {

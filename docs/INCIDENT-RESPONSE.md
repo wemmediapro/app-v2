@@ -4,11 +4,11 @@ Document **opérationnel** complémentaire au [OPS-RUNBOOK.md](./OPS-RUNBOOK.md)
 
 ## 1. Niveaux de gravité (exemple)
 
-| Niveau | Exemple | Action immédiate |
-|--------|---------|------------------|
+| Niveau | Exemple                                               | Action immédiate                                |
+| ------ | ----------------------------------------------------- | ----------------------------------------------- |
 | **P1** | API indisponible pour tous, perte de données en cours | Astreinte dev + ops, communication utilisateurs |
-| **P2** | Dégradation forte (latence, erreurs partielles) | Investigation prioritaire, mitigation |
-| **P3** | Bug limité, contournement possible | Ticket + correctif planifié |
+| **P2** | Dégradation forte (latence, erreurs partielles)       | Investigation prioritaire, mitigation           |
+| **P3** | Bug limité, contournement possible                    | Ticket + correctif planifié                     |
 
 ## 2. Escalade (à personnaliser)
 

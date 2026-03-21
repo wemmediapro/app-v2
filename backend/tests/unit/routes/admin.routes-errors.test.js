@@ -202,10 +202,7 @@ describe('Admin — erreurs HTTP et logRouteError', () => {
       }),
     };
     try {
-      await request(buildApp())
-        .get('/api/admin/databases')
-        .set('Authorization', `Bearer ${adminToken()}`)
-        .expect(500);
+      await request(buildApp()).get('/api/admin/databases').set('Authorization', `Bearer ${adminToken()}`).expect(500);
       expect(errSpy.mock.calls[0][0]).toEqual(
         expect.objectContaining({ event: 'admin_list_databases_failed', err: 'list fail' })
       );
@@ -234,10 +231,7 @@ describe('Admin — erreurs HTTP et logRouteError', () => {
     const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
     auditService.getAdminLogs.mockRejectedValueOnce(new Error('audit list'));
     try {
-      await request(buildApp())
-        .get('/api/admin/audit-logs')
-        .set('Authorization', `Bearer ${adminToken()}`)
-        .expect(500);
+      await request(buildApp()).get('/api/admin/audit-logs').set('Authorization', `Bearer ${adminToken()}`).expect(500);
       expect(errSpy.mock.calls[0][0]).toEqual(
         expect.objectContaining({ event: 'admin_audit_logs_list_failed', err: 'audit list' })
       );
@@ -282,10 +276,7 @@ describe('Admin — erreurs HTTP et logRouteError', () => {
     const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
     User.aggregate.mockRejectedValueOnce(new Error('dash count'));
     try {
-      await request(buildApp())
-        .get('/api/admin/dashboard')
-        .set('Authorization', `Bearer ${adminToken()}`)
-        .expect(500);
+      await request(buildApp()).get('/api/admin/dashboard').set('Authorization', `Bearer ${adminToken()}`).expect(500);
       expect(errSpy.mock.calls[0][0]).toEqual(
         expect.objectContaining({ event: 'admin_dashboard_failed', err: 'dash count' })
       );

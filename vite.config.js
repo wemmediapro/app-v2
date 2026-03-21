@@ -13,12 +13,10 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = (env.DEV_PROXY_TARGET || DEFAULT_DEV_PROXY).replace(/\/$/, '');
   const analyzeBundle = process.env.ANALYZE === '1';
   const assetBase = (env.VITE_ASSET_BASE || '/').trim();
-  const viteBase =
-    assetBase === '' || assetBase === '/' ? '/' : assetBase.endsWith('/') ? assetBase : `${assetBase}/`;
+  const viteBase = assetBase === '' || assetBase === '/' ? '/' : assetBase.endsWith('/') ? assetBase : `${assetBase}/`;
 
   /** App shell hors ligne (SPA) — aligné sur `base` Vite. */
-  const pwaNavigateFallback =
-    viteBase === '/' ? '/index.html' : `${viteBase.replace(/\/$/, '')}/index.html`;
+  const pwaNavigateFallback = viteBase === '/' ? '/index.html' : `${viteBase.replace(/\/$/, '')}/index.html`;
   /** Préfixe des chunks Vite dans l’URL (pour runtimeCaching SWR). */
   const pwaAssetsPathPrefix = viteBase === '/' ? '/assets/' : `${viteBase.replace(/\/$/, '')}/assets/`;
 

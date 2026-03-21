@@ -4,25 +4,25 @@ La persistance métier utilise **Mongoose** ; les fichiers canoniques sont dans 
 
 ## Collections principales (modèles)
 
-| Collection / modèle | Fichier | Rôle court |
-|---------------------|---------|------------|
-| `users` | `User.js` | Comptes passagers / équipage / admin |
-| `messages` | `Message.js` | Chat passager (sender/receiver → User) |
-| `feedback` | `Feedback.js` | Tickets / retours |
-| `auditlogs` | `AuditLog.js` | Traçabilité actions admin |
-| `restaurants` | `Restaurant.js` | Restaurants, menus |
-| `articles` | `Article.js` | Magazine |
-| `movies` | `Movie.js` | Films & séries |
-| `products` | `Product.js` | Shop |
-| `promotions` | `Promotion.js` | Promotions shop |
-| `notifications` | `Notification.js` | Notifications |
-| `radioStations` | `RadioStation.js` | Stations radio |
-| `webtvchannels` | `WebTVChannel.js` | Chaînes WebTV |
-| `banners` | `Banner.js` | Bannières |
-| `ships`, `shipmaps` | `Ship.js`, `Shipmap.js` | Navires, plans de pont |
-| `enfantactivities` | `EnfantActivity.js` | Espace enfant |
-| `ads`, `trailers`, `destinations` | divers | Contenu / pub |
-| `hostingservers`, `localserverconfigs` | `HostingServer.js`, `LocalServerConfig.js` | Config serveur / embarqué |
+| Collection / modèle                    | Fichier                                    | Rôle court                             |
+| -------------------------------------- | ------------------------------------------ | -------------------------------------- |
+| `users`                                | `User.js`                                  | Comptes passagers / équipage / admin   |
+| `messages`                             | `Message.js`                               | Chat passager (sender/receiver → User) |
+| `feedback`                             | `Feedback.js`                              | Tickets / retours                      |
+| `auditlogs`                            | `AuditLog.js`                              | Traçabilité actions admin              |
+| `restaurants`                          | `Restaurant.js`                            | Restaurants, menus                     |
+| `articles`                             | `Article.js`                               | Magazine                               |
+| `movies`                               | `Movie.js`                                 | Films & séries                         |
+| `products`                             | `Product.js`                               | Shop                                   |
+| `promotions`                           | `Promotion.js`                             | Promotions shop                        |
+| `notifications`                        | `Notification.js`                          | Notifications                          |
+| `radioStations`                        | `RadioStation.js`                          | Stations radio                         |
+| `webtvchannels`                        | `WebTVChannel.js`                          | Chaînes WebTV                          |
+| `banners`                              | `Banner.js`                                | Bannières                              |
+| `ships`, `shipmaps`                    | `Ship.js`, `Shipmap.js`                    | Navires, plans de pont                 |
+| `enfantactivities`                     | `EnfantActivity.js`                        | Espace enfant                          |
+| `ads`, `trailers`, `destinations`      | divers                                     | Contenu / pub                          |
+| `hostingservers`, `localserverconfigs` | `HostingServer.js`, `LocalServerConfig.js` | Config serveur / embarqué              |
 
 > Liste exacte : `ls backend/src/models/*.js`.
 

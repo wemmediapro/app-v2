@@ -83,14 +83,8 @@ describe('handleValidationErrors (intégration express-validator)', () => {
 
 describe('validateBody / validateQuery / validateParams', () => {
   it('terminent par handleValidationErrors', () => {
-    const {
-      validateBody,
-      validateQuery,
-      validateParams,
-      handleValidationErrors,
-      validateEmail,
-      validateObjectId,
-    } = validation;
+    const { validateBody, validateQuery, validateParams, handleValidationErrors, validateEmail, validateObjectId } =
+      validation;
     expect(validateBody(validateEmail()).slice(-1)[0]).toBe(handleValidationErrors);
     expect(validateQuery(query('q').optional()).slice(-1)[0]).toBe(handleValidationErrors);
     expect(validateParams(validateObjectId('segmentId')).slice(-1)[0]).toBe(handleValidationErrors);
@@ -176,7 +170,10 @@ describe('adminUserUpdateValidation — allowedModules', () => {
     app.use(express.json());
     app.put('/u', ...adminUserUpdateValidation, (req, res) => res.json({ ok: true }));
     await request(app).put('/u').send({ allowedModules: null }).expect(200);
-    await request(app).put('/u').send({ allowedModules: { a: 1 } }).expect(200);
+    await request(app)
+      .put('/u')
+      .send({ allowedModules: { a: 1 } })
+      .expect(200);
     await request(app).put('/u').send({ allowedModules: [] }).expect(400);
   });
 });

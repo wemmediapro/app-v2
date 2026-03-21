@@ -468,11 +468,7 @@ describe('authMiddleware (flux)', () => {
     const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
     const next = jest.fn();
     await authMiddleware(req, res, next);
-    expect(cacheManager.set).toHaveBeenCalledWith(
-      'auth:user:507f1f77bcf86cd799439011',
-      { invalid: true },
-      60
-    );
+    expect(cacheManager.set).toHaveBeenCalledWith('auth:user:507f1f77bcf86cd799439011', { invalid: true }, 60);
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
@@ -661,9 +657,7 @@ describe('authMiddleware — JWT secret absent (config mutable)', () => {
     const next = jest.fn();
     await authMiddleware(req, res, next);
     expect(res.status).toHaveBeenCalledWith(503);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'JWT_NOT_CONFIGURED' })
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'JWT_NOT_CONFIGURED' }));
   });
 
   it('503 optionalAuth si jwt.secret vide', async () => {

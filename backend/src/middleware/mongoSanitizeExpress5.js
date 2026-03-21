@@ -33,6 +33,9 @@ function mongoSanitizeExpress5(options = {}) {
   };
 }
 
+/**
+ *
+ */
 function sanitizeInPlace(target, options, allowDots) {
   const hadBefore = has(target, allowDots);
   sanitize(target, options);

@@ -8,12 +8,12 @@ Jest ne collecte la couverture que sur les fichiers listés dans `backend/jest.c
 
 ## Commandes utiles
 
-| Contexte | Commande |
-|----------|----------|
-| Backend (Jest + couverture périmètre) | `cd backend && npm test` |
-| Front (Vitest) | `npm run test:coverage` (racine du repo) |
-| E2E | `npm run test:e2e` (racine) |
-| Vérifier l’API locale | `npm run verify` (racine) |
+| Contexte                              | Commande                                 |
+| ------------------------------------- | ---------------------------------------- |
+| Backend (Jest + couverture périmètre) | `cd backend && npm test`                 |
+| Front (Vitest)                        | `npm run test:coverage` (racine du repo) |
+| E2E                                   | `npm run test:e2e` (racine)              |
+| Vérifier l’API locale                 | `npm run verify` (racine)                |
 
 ## CI
 

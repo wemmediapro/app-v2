@@ -11,7 +11,11 @@ jest.mock('../../../src/lib/logger', () => ({
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const request = require('supertest');
-const { createResponseCacheMiddleware, invalidateResponseCacheByEvent, invalidateResponseCacheByTag } = require('../../../src/middleware/responseCache');
+const {
+  createResponseCacheMiddleware,
+  invalidateResponseCacheByEvent,
+  invalidateResponseCacheByTag,
+} = require('../../../src/middleware/responseCache');
 
 function mockCacheManager() {
   const store = new Map();
@@ -66,10 +70,8 @@ describe('createResponseCacheMiddleware', () => {
       req.language = 'fr';
       next();
     });
-    app.get(
-      '/api/movies',
-      createResponseCacheMiddleware({ cacheManager, enabled: true }),
-      (_req, res) => res.json({ live: true })
+    app.get('/api/movies', createResponseCacheMiddleware({ cacheManager, enabled: true }), (_req, res) =>
+      res.json({ live: true })
     );
     const res = await request(app).get('/api/movies').expect(200);
     expect(res.body).toEqual({ cached: true });
@@ -83,10 +85,8 @@ describe('createResponseCacheMiddleware', () => {
       req.language = 'en';
       next();
     });
-    app.get(
-      '/api/magazine',
-      createResponseCacheMiddleware({ cacheManager, enabled: true }),
-      (_req, res) => res.json({ items: [] })
+    app.get('/api/magazine', createResponseCacheMiddleware({ cacheManager, enabled: true }), (_req, res) =>
+      res.json({ items: [] })
     );
     const res = await request(app).get('/api/magazine').expect(200);
     expect(res.headers['x-cache']).toBe('MISS');
@@ -106,10 +106,8 @@ describe('createResponseCacheMiddleware', () => {
       req.language = 'fr';
       next();
     });
-    app.post(
-      '/api/movies',
-      createResponseCacheMiddleware({ cacheManager, enabled: true }),
-      (_req, res) => res.json({ x: 1 })
+    app.post('/api/movies', createResponseCacheMiddleware({ cacheManager, enabled: true }), (_req, res) =>
+      res.json({ x: 1 })
     );
     await request(app).post('/api/movies').expect(200);
     expect(cacheManager.get).not.toHaveBeenCalled();
@@ -122,10 +120,8 @@ describe('createResponseCacheMiddleware', () => {
       req.language = 'fr';
       next();
     });
-    app.get(
-      '/api/movies',
-      createResponseCacheMiddleware({ cacheManager, enabled: true }),
-      (_req, res) => res.json({ a: 1 })
+    app.get('/api/movies', createResponseCacheMiddleware({ cacheManager, enabled: true }), (_req, res) =>
+      res.json({ a: 1 })
     );
     await request(app).get('/api/movies').set('Authorization', 'Bearer x').expect(200);
     expect(cacheManager.get).not.toHaveBeenCalled();
@@ -139,10 +135,8 @@ describe('createResponseCacheMiddleware', () => {
       req.language = 'fr';
       next();
     });
-    app.get(
-      '/api/movies',
-      createResponseCacheMiddleware({ cacheManager, enabled: true }),
-      (_req, res) => res.json({ a: 1 })
+    app.get('/api/movies', createResponseCacheMiddleware({ cacheManager, enabled: true }), (_req, res) =>
+      res.json({ a: 1 })
     );
     await request(app).get('/api/movies').set('Cookie', ['authToken=jwt']).expect(200);
     expect(cacheManager.get).not.toHaveBeenCalled();
@@ -156,10 +150,8 @@ describe('createResponseCacheMiddleware', () => {
       req.user = { id: '1' };
       next();
     });
-    app.get(
-      '/api/movies',
-      createResponseCacheMiddleware({ cacheManager, enabled: true }),
-      (_req, res) => res.json({ a: 1 })
+    app.get('/api/movies', createResponseCacheMiddleware({ cacheManager, enabled: true }), (_req, res) =>
+      res.json({ a: 1 })
     );
     await request(app).get('/api/movies').expect(200);
     expect(cacheManager.get).not.toHaveBeenCalled();
@@ -172,10 +164,8 @@ describe('createResponseCacheMiddleware', () => {
       req.language = 'fr';
       next();
     });
-    app.get(
-      '/api/notifications',
-      createResponseCacheMiddleware({ cacheManager, enabled: true }),
-      (_req, res) => res.json([])
+    app.get('/api/notifications', createResponseCacheMiddleware({ cacheManager, enabled: true }), (_req, res) =>
+      res.json([])
     );
     await request(app).get('/api/notifications').expect(200);
     expect(cacheManager.get).not.toHaveBeenCalled();
@@ -189,10 +179,8 @@ describe('createResponseCacheMiddleware', () => {
       req.language = 'fr';
       next();
     });
-    app.get(
-      '/api/movies',
-      createResponseCacheMiddleware({ cacheManager, enabled: true }),
-      (_req, res) => res.json({ live: true })
+    app.get('/api/movies', createResponseCacheMiddleware({ cacheManager, enabled: true }), (_req, res) =>
+      res.json({ live: true })
     );
     await request(app).get('/api/movies').expect(200);
     expect(cacheManager.get).not.toHaveBeenCalled();
@@ -205,10 +193,8 @@ describe('createResponseCacheMiddleware', () => {
       req.language = 'fr';
       next();
     });
-    app.get(
-      '/api/movies',
-      createResponseCacheMiddleware({ cacheManager, enabled: true }),
-      (_req, res) => res.status(503).json({ err: true })
+    app.get('/api/movies', createResponseCacheMiddleware({ cacheManager, enabled: true }), (_req, res) =>
+      res.status(503).json({ err: true })
     );
     await request(app).get('/api/movies').expect(503);
     expect(cacheManager.set).not.toHaveBeenCalled();

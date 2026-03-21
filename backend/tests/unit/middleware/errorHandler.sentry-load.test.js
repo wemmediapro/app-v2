@@ -29,8 +29,6 @@ describe('errorHandler — module sentry absent', () => {
     errorHandler(err, req, res, jest.fn());
     expect(logSpy).toHaveBeenCalledWith(req, 'express_legacy_error_handler', err);
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Internal Server Error' })
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Internal Server Error' }));
   });
 });

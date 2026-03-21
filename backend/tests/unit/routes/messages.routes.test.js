@@ -162,7 +162,10 @@ describe('GET /api/messages/users/search', () => {
 
   it('[] sans paramètre q (q absent)', async () => {
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
-    const res = await request(app).get('/api/messages/users/search').set('Authorization', `Bearer ${token}`).expect(200);
+    const res = await request(app)
+      .get('/api/messages/users/search')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
     expect(res.body).toEqual([]);
   });
 
@@ -325,9 +328,7 @@ describe('GET /api/messages/:userId', () => {
     try {
       await request(app).get(`/api/messages/${peerId}`).set('Authorization', `Bearer ${token}`).expect(500);
       expect(errSpy).toHaveBeenCalled();
-      expect(errSpy.mock.calls[0][0]).toEqual(
-        expect.objectContaining({ event: 'messages_thread_failed', err: 'db' })
-      );
+      expect(errSpy.mock.calls[0][0]).toEqual(expect.objectContaining({ event: 'messages_thread_failed', err: 'db' }));
     } finally {
       errSpy.mockRestore();
       Message.find.mockRestore();

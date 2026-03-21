@@ -544,11 +544,7 @@ describe('Auth 2FA — flux', () => {
       },
     }));
 
-    await request(app)
-      .post('/api/auth/2fa/disable')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({})
-      .expect(400);
+    await request(app).post('/api/auth/2fa/disable').set('Authorization', `Bearer ${adminToken}`).send({}).expect(400);
   });
 
   it('POST /2fa/disable 400 si 2FA déjà désactivé', async () => {

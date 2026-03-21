@@ -87,9 +87,7 @@ describe('errorHandler middleware', () => {
     };
     errorHandler(err, { method: 'GET', url: '/x' }, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(503);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Internal Server Error' })
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Internal Server Error' }));
   });
 
   it('statut 500 par défaut si ni err ni res ne définissent de code', () => {
@@ -101,8 +99,6 @@ describe('errorHandler middleware', () => {
     };
     errorHandler(err, { method: 'GET', url: '/x' }, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Internal Server Error' })
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Internal Server Error' }));
   });
 });

@@ -429,8 +429,7 @@ async function setupAfterDb() {
   } else if (config.rateLimit.endpointRules.length > 0) {
     logger.warn({
       event: 'endpoint_rate_limit_memory_store',
-      message:
-        "Rate limit par endpoint : compteurs mémoire (pas de REDIS_URI). En cluster, quotas par processus.",
+      message: 'Rate limit par endpoint : compteurs mémoire (pas de REDIS_URI). En cluster, quotas par processus.',
       rules: config.rateLimit.endpointRules.length,
     });
   }
@@ -714,8 +713,7 @@ function gracefulShutdown(signal) {
     } catch (_) {
       /* ignore */
     }
-    const bullClose = () =>
-      Promise.resolve(require('./src/jobs').closeQueues?.()).catch(() => {});
+    const bullClose = () => Promise.resolve(require('./src/jobs').closeQueues?.()).catch(() => {});
     Promise.all([bullClose(), shutdownTracing(), Promise.resolve(dbManager.disconnect?.())])
       .then(() => process.exit(0))
       .catch(() => process.exit(0));

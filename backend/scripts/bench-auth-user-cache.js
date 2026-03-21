@@ -42,9 +42,7 @@ function benchAsync(name, iterations, fn) {
 async function main() {
   console.log(`\n=== Auth user cache — benchmark CPU (${ITERS.toLocaleString()} iters) ===\n`);
 
-  await benchAsync('Avant (simulé): await Promise + clone objet user (type lean)', ITERS, () =>
-    simulateMongoLean()
-  );
+  await benchAsync('Avant (simulé): await Promise + clone objet user (type lean)', ITERS, () => simulateMongoLean());
 
   await benchAsync('Après (simulé): JSON.parse hit cache (type Redis GET)', ITERS, () =>
     Promise.resolve(JSON.parse(serialized))

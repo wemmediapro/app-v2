@@ -59,9 +59,7 @@ describe('mongoose-connection', () => {
 
     client.emit('connectionCheckOutStarted');
     client.emit('connectionCheckOutFailed');
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ event: 'mongodb_connection_checkout_failed' })
-    );
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ event: 'mongodb_connection_checkout_failed' }));
 
     stopMongoPoolMonitoring();
     jest.useRealTimers();
@@ -83,9 +81,7 @@ describe('mongoose-connection', () => {
       client.emit('connectionCheckedOut');
     }
     jest.advanceTimersByTime(2000);
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ event: 'mongodb_pool_utilization_high' })
-    );
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ event: 'mongodb_pool_utilization_high' }));
     mod.stopMongoPoolMonitoring();
     jest.useRealTimers();
     delete process.env.MONGODB_POOL_ALERT_COOLDOWN_MS;

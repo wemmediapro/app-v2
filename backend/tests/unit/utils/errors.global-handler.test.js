@@ -65,8 +65,6 @@ describe('globalErrorHandler', () => {
     const res = { headersSent: false, status: jest.fn().mockReturnThis(), json: jest.fn() };
     handler(new AppError('bad', 400, 'BAD'), req, res, jest.fn());
 
-    expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ event: 'app_error', code: 'BAD', message: 'bad' })
-    );
+    expect(warn).toHaveBeenCalledWith(expect.objectContaining({ event: 'app_error', code: 'BAD', message: 'bad' }));
   });
 });

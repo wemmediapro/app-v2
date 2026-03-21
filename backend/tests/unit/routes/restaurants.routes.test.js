@@ -239,7 +239,10 @@ describe('GET /api/restaurants', () => {
       _id: RESTAURANT_ID,
       name: 'Fr',
       menu: [{ name: 'Plat', description: 'Dp' }],
-      promotions: [{ title: 'T0', description: 'D0' }, { title: 'T1', description: 'D1' }],
+      promotions: [
+        { title: 'T0', description: 'D0' },
+        { title: 'T1', description: 'D1' },
+      ],
       translations: {
         en: {
           name: 'EnName',
@@ -836,7 +839,10 @@ describe('DELETE /api/restaurants/:id (admin)', () => {
       const token = generateToken({ id: ADMIN_ID, email: 'admin@test.com', role: 'admin' });
       jest.spyOn(Restaurant, 'findByIdAndUpdate').mockRejectedValue(new Error('db error'));
 
-      await request(app).delete(`/api/restaurants/${RESTAURANT_ID}`).set('Authorization', `Bearer ${token}`).expect(500);
+      await request(app)
+        .delete(`/api/restaurants/${RESTAURANT_ID}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(500);
 
       expect(errSpy).toHaveBeenCalled();
       expect(errSpy.mock.calls[0][0]).toEqual(

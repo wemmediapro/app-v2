@@ -98,10 +98,7 @@ describe('GET /api/admin/conversations', () => {
     app.use(express.json());
     app.use('/api/admin', adminRouter);
     const token = generateToken({ id: ADMIN_ID, email: 'admin@test.com', role: 'admin' });
-    const res = await request(app)
-      .get('/api/admin/conversations')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(200);
+    const res = await request(app).get('/api/admin/conversations').set('Authorization', `Bearer ${token}`).expect(200);
     expect(res.body).toEqual([]);
     expect(Message.aggregate).not.toHaveBeenCalled();
   });

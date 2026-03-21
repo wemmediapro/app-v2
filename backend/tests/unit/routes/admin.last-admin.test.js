@@ -87,9 +87,7 @@ describe('Admin — dernier administrateur', () => {
 
     User.countDocuments.mockResolvedValue(5);
 
-    const res = await request(app)
-      .delete(`/api/admin/users/${ACTOR_ID}`)
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).delete(`/api/admin/users/${ACTOR_ID}`).set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('SELF_DELETE');
@@ -108,9 +106,7 @@ describe('Admin — dernier administrateur', () => {
       role: 'admin',
     });
 
-    const res = await request(app)
-      .delete(`/api/admin/users/${TARGET_ID}`)
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).delete(`/api/admin/users/${TARGET_ID}`).set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('LAST_ADMIN');

@@ -2,11 +2,11 @@
 
 ## Accès
 
-| Ressource | URL (dev) | Condition |
-|-----------|-----------|-----------|
-| **Swagger UI** | `http://localhost:3000/api-docs` | Toujours en développement (`NODE_ENV !== production`) |
-| | | En production : définir `SWAGGER_ENABLED=true` |
-| **Spec JSON** | `http://localhost:3000/api-docs.json` | Idem |
+| Ressource      | URL (dev)                             | Condition                                             |
+| -------------- | ------------------------------------- | ----------------------------------------------------- |
+| **Swagger UI** | `http://localhost:3000/api-docs`      | Toujours en développement (`NODE_ENV !== production`) |
+|                |                                       | En production : définir `SWAGGER_ENABLED=true`        |
+| **Spec JSON**  | `http://localhost:3000/api-docs.json` | Idem                                                  |
 
 Variable optionnelle : `API_BASE_URL` — utilisée dans le champ `servers` de la spec (clients générateurs, Postman).
 
@@ -29,11 +29,11 @@ Le fichier produit est **`backend/docs/openapi.json`** (pratique pour CI, import
 
 ## Fichiers clés
 
-| Fichier | Rôle |
-|---------|------|
-| `backend/src/lib/swagger.js` | Métadonnées OpenAPI, schémas partagés, chemins des sources jsdoc |
-| `backend/server.js` | Montage de `swagger-ui-express` et route `GET /api-docs.json` |
-| `backend/scripts/export-openapi.js` | Export JSON |
+| Fichier                             | Rôle                                                             |
+| ----------------------------------- | ---------------------------------------------------------------- |
+| `backend/src/lib/swagger.js`        | Métadonnées OpenAPI, schémas partagés, chemins des sources jsdoc |
+| `backend/server.js`                 | Montage de `swagger-ui-express` et route `GET /api-docs.json`    |
+| `backend/scripts/export-openapi.js` | Export JSON                                                      |
 
 Pour une vue d’ensemble **schémas métier vs OpenAPI**, voir [API-SCHEMA.md](./API-SCHEMA.md).
 

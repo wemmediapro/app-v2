@@ -46,16 +46,12 @@ describe('invalidateAuthUserCache', () => {
   it('appelle del sur la clé auth:user:<id>', async () => {
     await invalidateAuthUserCache('507f1f77bcf86cd799439011');
     expect(cacheManager.del).toHaveBeenCalledWith('auth:user:507f1f77bcf86cd799439011');
-    expect(logger.debug).toHaveBeenCalledWith(
-      expect.objectContaining({ event: 'auth_user_cache_invalidated' })
-    );
+    expect(logger.debug).toHaveBeenCalledWith(expect.objectContaining({ event: 'auth_user_cache_invalidated' }));
   });
 
   it('del rejeté → warn sans throw', async () => {
     cacheManager.del.mockRejectedValue(new Error('boom'));
     await expect(invalidateAuthUserCache('507f1f77bcf86cd799439011')).resolves.toBeUndefined();
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ event: 'auth_user_cache_invalidate_failed' })
-    );
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ event: 'auth_user_cache_invalidate_failed' }));
   });
 });

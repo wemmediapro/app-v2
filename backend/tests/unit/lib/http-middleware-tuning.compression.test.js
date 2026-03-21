@@ -5,9 +5,7 @@ const {
 } = require('../../../src/lib/http-middleware-tuning');
 
 function makeRes(headers = {}) {
-  const lower = Object.fromEntries(
-    Object.entries(headers).map(([k, v]) => [String(k).toLowerCase(), v]),
-  );
+  const lower = Object.fromEntries(Object.entries(headers).map(([k, v]) => [String(k).toLowerCase(), v]));
   return {
     getHeader(name) {
       return lower[String(name).toLowerCase()];
