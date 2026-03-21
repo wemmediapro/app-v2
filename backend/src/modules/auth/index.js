@@ -11,6 +11,7 @@
  * ⚠️  NE PAS ajouter de routes ici : elles sont montées par src/routes/index.js.
  */
 const { authMiddleware: authenticateToken, adminMiddleware, requireRole } = require('../../middleware/auth');
+const logger = require('../../lib/logger');
 
 // Middleware d'autorisation admin (rétrocompat)
 const requireAdmin = (req, res, next) => {
@@ -27,7 +28,7 @@ const requireCrew = (req, res, next) => {
  * Cette fonction ne monte plus de routes pour éviter les doublons.
  */
 const initialize = (app, io) => {
-  console.log('✅ Module Auth initialisé (délègue à src/middleware/auth + src/routes/auth)');
+  logger.info({ event: 'module_auth_initialized' });
 };
 
 module.exports = {

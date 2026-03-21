@@ -15,6 +15,10 @@ Toutes les routes API sont sous `backend/src/routes/` et utilisent ce middleware
 
 **À utiliser** pour toute route sous `src/routes/`. Socket.io utilise uniquement `verifyToken` (sans DB lookup).
 
+### Production — 2FA obligatoire pour les comptes `admin`
+
+`adminMiddleware` refuse toute route protégée par ce middleware si `NODE_ENV=production`, que l’utilisateur est `role: admin`, que `twoFactorEnabled` est faux, et que le chemin n’est pas un onboarding 2FA : `POST .../auth/2fa/setup`, `POST .../auth/2fa/verify`, `GET .../auth/me`, `POST .../auth/logout`, **`POST .../auth/register`** (création d’utilisateurs avant 2FA). Réponse : **403** avec `code: ADMIN_2FA_SETUP_REQUIRED`. Variable d’urgence (déconseillée) : `ADMIN_2FA_OPTIONAL=1`.
+
 ---
 
 ## Récap

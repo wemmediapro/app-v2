@@ -15,6 +15,7 @@ const moviesFallback = require('../lib/movies-fallback');
 const cacheManager = require('../lib/cache-manager');
 const { fetchPosterUrlFromGoogle } = require('../lib/google-poster-search');
 const { buildPosterPrompt, DALLE3_POSTER_OPTIONS } = require('../lib/openai-poster-config');
+const { logRouteError } = require('../lib/route-logger');
 
 function normalizeEpisodes(episodes) {
   if (!Array.isArray(episodes)) {
@@ -124,7 +125,7 @@ router.get('/poster-search', async (req, res) => {
     const url = await fetchPosterUrlFromGoogle(q || '');
     return res.json({ url: url || null });
   } catch (err) {
-    console.error('poster-search error:', err);
+    logRouteError(req, 'movies_poster_search_failed', err);
     return res.status(500).json({ url: null, error: err.message });
   }
 });
@@ -159,7 +160,7 @@ router.post('/:id/fetch-poster', authMiddleware, adminMiddleware, async (req, re
     const updated = moviesFallback.getById(id);
     return res.json(formatFallbackMovie(updated));
   } catch (err) {
-    console.error('fetch-poster error:', err);
+    logRouteError(req, 'movies_fetch_poster_failed', err);
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
@@ -226,7 +227,7 @@ router.post('/:id/generate-poster', authMiddleware, adminMiddleware, async (req,
     const updated = moviesFallback.getById(id);
     return res.json(formatFallbackMovie(updated));
   } catch (err) {
-    console.error('generate-poster error:', err);
+    logRouteError(req, 'movies_generate_poster_failed', err);
     return res.status(500).json({ message: err.message || 'Erreur lors de la génération de l’affiche.' });
   }
 });
@@ -308,7 +309,7 @@ router.get('/', paginate, async (req, res) => {
     }
     res.json(body);
   } catch (error) {
-    console.error('Get movies error:', error);
+    logRouteError(req, 'movies_list_failed', error);
     // 503 + données vides pour permettre retry côté front (audit CTO — fallback sous charge)
     res.status(503).json({
       data: [],
@@ -361,7 +362,7 @@ router.get('/:id', async (req, res) => {
     }
     res.json(formatFallbackMovie(movie, lang));
   } catch (error) {
-    console.error('Get movie error:', error);
+    logRouteError(req, 'movies_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -413,7 +414,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     const movie = moviesFallback.create(body);
     res.status(201).json(formatFallbackMovie(movie));
   } catch (error) {
-    console.error('Create movie error:', error);
+    logRouteError(req, 'movies_create_failed', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -472,7 +473,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     res.json(formatFallbackMovie(movie));
   } catch (error) {
-    console.error('Update movie error:', error);
+    logRouteError(req, 'movies_update_failed', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -493,7 +494,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     res.json({ message: 'Contenu désactivé' });
   } catch (error) {
-    console.error('Delete movie error:', error);
+    logRouteError(req, 'movies_delete_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

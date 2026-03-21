@@ -6,6 +6,7 @@
  */
 
 const https = require('https');
+const logger = require('./logger');
 
 const CSE_BASE = 'https://www.googleapis.com/customsearch/v1';
 
@@ -18,7 +19,7 @@ async function fetchPosterUrlFromGoogle(title) {
   const apiKey = process.env.GOOGLE_CSE_API_KEY;
   const cx = process.env.GOOGLE_CSE_CX;
   if (!apiKey || !cx) {
-    console.warn('google-poster-search: GOOGLE_CSE_API_KEY ou GOOGLE_CSE_CX manquant');
+    logger.warn({ event: 'google_poster_search_credentials_missing' });
     return null;
   }
 
@@ -49,17 +50,20 @@ async function fetchPosterUrlFromGoogle(title) {
             return;
           }
           if (json.error) {
-            console.warn('google-poster-search:', json.error.message || json.error);
+            logger.warn({
+              event: 'google_poster_search_api_error',
+              err: json.error.message || String(json.error),
+            });
           }
           resolve(null);
         } catch (e) {
-          console.warn('google-poster-search parse error:', e.message);
+          logger.warn({ event: 'google_poster_search_parse_failed', err: e.message });
           resolve(null);
         }
       });
     });
     req.on('error', (err) => {
-      console.warn('google-poster-search request error:', err.message);
+      logger.warn({ event: 'google_poster_search_request_failed', err: err.message });
       resolve(null);
     });
     req.setTimeout(10000, () => {

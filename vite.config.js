@@ -31,6 +31,10 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ['react', 'react-dom', 'react-dom/client', 'react-router-dom'],
+      // hls.js : import dynamique → Vite le pré-bundle en deps/hls__js.js ; après restart / cache périmé le
+      // navigateur peut garder une vieille URL → 504 « Outdated Optimize Dep ». Exclure du pré-bundle : le
+      // paquet est servi en ESM direct (dist/hls.mjs), sans artefact deps versionné.
+      exclude: ['hls.js'],
     },
     resolve: {
       alias: {

@@ -13,6 +13,7 @@ const path = require('path');
 const fs = require('fs');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
+const logger = require('../lib/logger');
 
 const execFileAsync = promisify(execFile);
 
@@ -50,7 +51,7 @@ async function encodeToHls(inputPath) {
 
   const available = await checkFfmpeg();
   if (!available) {
-    console.warn('⚠️ HLS: ffmpeg non disponible');
+    logger.warn({ event: 'hls_ffmpeg_unavailable', message: 'ffmpeg non disponible' });
     return null;
   }
 
@@ -104,7 +105,11 @@ async function encodeToHls(inputPath) {
     const hlsUrl = `/uploads/videos_hls/${safeName}/playlist.m3u8`;
     return { hlsUrl, playlistPath };
   } catch (err) {
-    console.error('HLS encode error:', err.message);
+    logger.error({
+      event: 'hls_encode_failed',
+      err: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
     return null;
   }
 }

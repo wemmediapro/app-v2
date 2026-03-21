@@ -9,6 +9,7 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { bannerValidation } = require('../middleware/validation');
 const Banner = require('../models/Banner');
 const bannersFallback = require('../lib/banners-fallback');
+const { logRouteError } = require('../lib/route-logger');
 
 function localizeBanner(doc, lang) {
   if (!doc) {
@@ -57,7 +58,7 @@ router.get('/', async (req, res) => {
     }
     return res.json([]);
   } catch (error) {
-    console.error('Get banners error:', error);
+    logRouteError(req, 'banners_list_failed', error);
     return res.json([]);
   }
 });
@@ -71,7 +72,7 @@ router.get('/all', authMiddleware, adminMiddleware, async (req, res) => {
     const banners = await Banner.find().sort({ order: 1, createdAt: -1 }).lean();
     return res.json(banners.map((doc) => ({ ...doc, _id: doc._id?.toString() })));
   } catch (error) {
-    console.error('Get all banners error:', error);
+    logRouteError(req, 'banners_admin_list_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -88,7 +89,7 @@ router.post('/:id/impression', async (req, res) => {
     }
     res.json({ ok: true, impressions: banner.impressions || 0 });
   } catch (error) {
-    console.error('Banner impression error:', error);
+    logRouteError(req, 'banners_impression_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -105,7 +106,7 @@ router.post('/:id/click', async (req, res) => {
     }
     res.json({ ok: true, clicks: banner.clicks || 0 });
   } catch (error) {
-    console.error('Banner click error:', error);
+    logRouteError(req, 'banners_click_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -130,7 +131,7 @@ router.get('/:id', async (req, res) => {
     }
     return res.status(404).json({ message: 'Bannière non trouvée' });
   } catch (error) {
-    console.error('Get banner error:', error);
+    logRouteError(req, 'banners_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -165,7 +166,7 @@ router.post('/', authMiddleware, adminMiddleware, bannerValidation, async (req, 
     const doc = banner.toObject();
     res.status(201).json({ ...doc, _id: doc._id?.toString() });
   } catch (error) {
-    console.error('Create banner error:', error);
+    logRouteError(req, 'banners_create_failed', error);
     res
       .status(500)
       .json({ message: process.env.NODE_ENV === 'development' ? error.message || 'Server error' : 'Server error' });
@@ -197,7 +198,7 @@ router.put('/:id', authMiddleware, adminMiddleware, bannerValidation, async (req
     const doc = banner.toObject();
     res.json({ ...doc, _id: doc._id?.toString() });
   } catch (error) {
-    console.error('Update banner error:', error);
+    logRouteError(req, 'banners_update_failed', error);
     res
       .status(500)
       .json({ message: process.env.NODE_ENV === 'development' ? error.message || 'Server error' : 'Server error' });
@@ -217,7 +218,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     res.json({ message: 'Bannière supprimée' });
   } catch (error) {
-    console.error('Delete banner error:', error);
+    logRouteError(req, 'banners_delete_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

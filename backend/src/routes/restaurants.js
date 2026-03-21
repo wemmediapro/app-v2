@@ -4,6 +4,7 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const Restaurant = require('../models/Restaurant');
 const { safeRegexSearch } = require('../utils/regex-escape');
 const restaurantsFallback = require('../lib/restaurants-fallback');
+const { logRouteError } = require('../lib/route-logger');
 
 const router = express.Router();
 
@@ -88,7 +89,7 @@ router.get('/categories/list', async (req, res) => {
     ];
     res.json(categories);
   } catch (error) {
-    console.error('Get categories error:', error);
+    logRouteError(req, 'restaurants_categories_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -153,7 +154,7 @@ router.get('/', async (req, res) => {
     const restaurants = await Restaurant.find(query).read('secondaryPreferred').sort({ name: 1 }).lean();
     res.json(restaurants.map((doc) => localizeRestaurant(doc, lang)));
   } catch (error) {
-    console.error('Get restaurants error:', error);
+    logRouteError(req, 'restaurants_list_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -203,7 +204,7 @@ router.get('/:id', async (req, res) => {
     }
     res.json(localizeRestaurant(restaurant, (req.query.lang && String(req.query.lang).toLowerCase()) || ''));
   } catch (error) {
-    console.error('Get restaurant error:', error);
+    logRouteError(req, 'restaurants_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -222,7 +223,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
       restaurant,
     });
   } catch (error) {
-    console.error('Create restaurant error:', error);
+    logRouteError(req, 'restaurants_create_failed', error);
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors)
         .map((e) => e.message)
@@ -256,7 +257,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       restaurant,
     });
   } catch (error) {
-    console.error('Update restaurant error:', error);
+    logRouteError(req, 'restaurants_update_failed', error);
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors)
         .map((e) => e.message)
@@ -283,7 +284,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 
     res.json({ message: 'Restaurant deactivated successfully' });
   } catch (error) {
-    console.error('Delete restaurant error:', error);
+    logRouteError(req, 'restaurants_delete_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -27,7 +27,7 @@ jest.mock('../../../src/models/User', () => {
 
 jest.mock('../../../src/lib/logger', () => ({
   logFailedLogin: jest.fn(),
-  logApiError: jest.fn(),
+  error: jest.fn(),
 }));
 jest.mock('../../../src/lib/cache-manager', () => ({
   isConnected: false,
@@ -126,6 +126,15 @@ describe('Auth — credentials & sécurité', () => {
       .send({ email: 'ops@company.test', password: 'whatever1' })
       .expect(500);
     expect(res.body.message).toMatch(/ADMIN_EMAIL|ADMIN_PASSWORD|configuration/i);
+    const { error: logError } = require('../../../src/lib/logger');
+    expect(logError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'auth_login_admin_config_missing',
+        err: 'ADMIN_EMAIL and ADMIN_PASSWORD required',
+        hasAdminEmail: true,
+        hasAdminPassword: false,
+      })
+    );
   });
 
   it('POST /login retourne 500 si ADMIN_EMAIL est vide', async () => {
@@ -138,6 +147,15 @@ describe('Auth — credentials & sécurité', () => {
       .send({ email: 'someone@test.com', password: 'whatever1' })
       .expect(500);
     expect(res.body.message).toMatch(/configuration/i);
+    const { error: logError } = require('../../../src/lib/logger');
+    expect(logError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'auth_login_admin_config_missing',
+        err: 'ADMIN_EMAIL and ADMIN_PASSWORD required',
+        hasAdminEmail: false,
+        hasAdminPassword: true,
+      })
+    );
   });
 
   it('POST /login refuse admin@gnv.com en production (403)', async () => {

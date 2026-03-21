@@ -22,6 +22,7 @@ const messagesRouter = require('../../../src/routes/messages');
 const User = require('../../../src/models/User');
 const Message = require('../../../src/models/Message');
 const { generateToken } = require('../../../src/middleware/auth');
+const logger = require('../../../src/lib/logger');
 
 const uid = '507f1f77bcf86cd799439011';
 const peerId = '507f1f77bcf86cd799439012';
@@ -105,19 +106,48 @@ describe('GET /api/messages (conversations)', () => {
     expect(aggregateSpy).toHaveBeenCalled();
   });
 
-  it('pagination : slice skip/limit', async () => {
+  it('pagination : $skip / $limit appliqués dans aggregate (pas de chargement complet en mémoire)', async () => {
     const many = Array.from({ length: 5 }, (_, i) => ({
       ...mockConversations[0],
       _id: `507f1f77bcf86cd7994390${10 + i}`,
     }));
     aggregateSpy.mockRestore();
-    aggregateSpy = jest.spyOn(Message, 'aggregate').mockResolvedValue(many);
+    aggregateSpy = jest.spyOn(Message, 'aggregate').mockImplementation((pipeline) => {
+      const skipStage = pipeline.find((s) => s && typeof s.$skip === 'number');
+      const limitStage = pipeline.find((s) => s && typeof s.$limit === 'number');
+      const sk = skipStage ? skipStage.$skip : 0;
+      const lim = limitStage ? limitStage.$limit : many.length;
+      return Promise.resolve(many.slice(sk, sk + lim));
+    });
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
     const res = await request(app)
       .get('/api/messages?page=1&limit=2')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
     expect(res.body.length).toBe(2);
+    const pipe = aggregateSpy.mock.calls[0][0];
+    expect(pipe.some((s) => s.$skip === 0)).toBe(true);
+    expect(pipe.some((s) => s.$limit === 2)).toBe(true);
+  });
+
+  it('500 si aggregate échoue', async () => {
+    const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+    aggregateSpy.mockRestore();
+    aggregateSpy = jest.spyOn(Message, 'aggregate').mockRejectedValue(new Error('agg failed'));
+    try {
+      const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
+      const res = await request(app)
+        .get('/api/messages?page=1&limit=20')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(500);
+      expect(res.body.message).toMatch(/Server error/i);
+      expect(errSpy).toHaveBeenCalled();
+      expect(errSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ event: 'messages_list_conversations_failed', err: 'agg failed' })
+      );
+    } finally {
+      errSpy.mockRestore();
+    }
   });
 });
 
@@ -133,6 +163,21 @@ describe('GET /api/messages/users/search', () => {
 
   it('401 sans token', async () => {
     await request(app).get('/api/messages/users/search?q=test@test.com').expect(401);
+  });
+
+  it('[] sans paramètre q (q absent)', async () => {
+    const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
+    const res = await request(app).get('/api/messages/users/search').set('Authorization', `Bearer ${token}`).expect(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it('[] si q vide après trim', async () => {
+    const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
+    const res = await request(app)
+      .get('/api/messages/users/search?q=%20%20')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(res.body).toEqual([]);
   });
 
   it('[] si requête trop courte', async () => {
@@ -182,6 +227,44 @@ describe('GET /api/messages/users/search', () => {
       .expect(200);
     expect(res.body.length).toBe(1);
   });
+
+  it('200 recherche téléphone extraite depuis q avec texte (branche isPhone + phone regex)', async () => {
+    User.find.mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        limit: jest.fn().mockResolvedValue([]),
+      }),
+    });
+    const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
+    await request(app)
+      .get('/api/messages/users/search?q=call%20601%2002%2003%2004')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    const qArg = User.find.mock.calls[0][0];
+    expect(qArg.phone).toBeDefined();
+    expect(qArg.email).toBeUndefined();
+  });
+
+  it('500 si User.find échoue', async () => {
+    const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+    User.find.mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        limit: jest.fn().mockRejectedValue(new Error('db down')),
+      }),
+    });
+    const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
+    try {
+      await request(app)
+        .get('/api/messages/users/search?q=someone@example.com')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(500);
+      expect(errSpy).toHaveBeenCalled();
+      expect(errSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ event: 'messages_search_users_failed', err: 'db down' })
+      );
+    } finally {
+      errSpy.mockRestore();
+    }
+  });
 });
 
 describe('GET /api/messages/:userId', () => {
@@ -230,12 +313,42 @@ describe('GET /api/messages/:userId', () => {
   });
 
   it('500 si Message.find lève avant la chaîne (erreur DB)', async () => {
+    const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
     findSpy.mockRestore();
     jest.spyOn(Message, 'find').mockImplementation(() => {
       throw new Error('db');
     });
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
-    await request(app).get(`/api/messages/${peerId}`).set('Authorization', `Bearer ${token}`).expect(500);
+    try {
+      await request(app).get(`/api/messages/${peerId}`).set('Authorization', `Bearer ${token}`).expect(500);
+      expect(errSpy).toHaveBeenCalled();
+      expect(errSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ event: 'messages_thread_failed', err: 'db' })
+      );
+    } finally {
+      errSpy.mockRestore();
+      Message.find.mockRestore();
+    }
+  });
+
+  it('500 si updateMany échoue après lecture des messages', async () => {
+    const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+    updateManySpy.mockRestore();
+    jest.spyOn(Message, 'updateMany').mockRejectedValue(new Error('update failed'));
+    try {
+      const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
+      await request(app)
+        .get(`/api/messages/${peerId}?page=1&limit=50`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(500);
+      expect(errSpy).toHaveBeenCalled();
+      expect(errSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ event: 'messages_thread_failed', err: 'update failed' })
+      );
+    } finally {
+      errSpy.mockRestore();
+      Message.updateMany.mockRestore();
+    }
   });
 });
 
@@ -346,5 +459,133 @@ describe('POST /api/messages', () => {
 
     expect(res.body.message).toMatch(/synced/i);
     Message.findOne.mockRestore();
+  });
+
+  it('200 idempotence après E11000 à save (course clientSyncId)', async () => {
+    const existing = {
+      _id: 'dupmongo',
+      content: 'persisted',
+      clientSyncId: 'race-cs',
+    };
+    let findOneN = 0;
+    User.findById.mockImplementation((id) => {
+      if (String(id) === uid) return authUserChain();
+      return Promise.resolve({ _id: peerId, isActive: true });
+    });
+    jest.spyOn(Message, 'findOne').mockImplementation(() => {
+      const chain = {
+        populate: jest.fn().mockReturnThis(),
+        then(onF, onR) {
+          findOneN += 1;
+          const val = findOneN === 1 ? null : existing;
+          return Promise.resolve(val).then(onF, onR);
+        },
+      };
+      return chain;
+    });
+    const dupErr = Object.assign(new Error('E11000'), { code: 11000 });
+    jest.spyOn(Message.prototype, 'save').mockRejectedValue(dupErr);
+
+    const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
+    const res = await request(app)
+      .post('/api/messages')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ receiver: peerId, content: 'Salut', clientSyncId: 'race-cs' })
+      .expect(200);
+
+    expect(res.body.message).toMatch(/synced/i);
+    expect(res.body.data).toEqual(existing);
+    Message.findOne.mockRestore();
+    Message.prototype.save.mockRestore();
+  });
+
+  it('500 si save échoue sans gestion E11000', async () => {
+    const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+    User.findById.mockImplementation((id) => {
+      if (String(id) === uid) return authUserChain();
+      return Promise.resolve({ _id: peerId, isActive: true });
+    });
+    jest.spyOn(Message.prototype, 'save').mockRejectedValue(new Error('disk full'));
+
+    const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
+    try {
+      await request(app)
+        .post('/api/messages')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ receiver: peerId, content: 'Salut' })
+        .expect(500);
+      expect(errSpy).toHaveBeenCalled();
+      expect(errSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ event: 'messages_send_failed', err: 'disk full' })
+      );
+    } finally {
+      errSpy.mockRestore();
+      Message.prototype.save.mockRestore();
+    }
+  });
+
+  it('500 si findById après save échoue', async () => {
+    const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+    User.findById.mockImplementation((id) => {
+      if (String(id) === uid) return authUserChain();
+      return Promise.resolve({ _id: peerId, isActive: true });
+    });
+    jest.spyOn(Message.prototype, 'save').mockResolvedValue();
+    jest.spyOn(Message, 'findById').mockReturnValue({
+      populate: jest.fn().mockReturnThis(),
+      then(_onOk, onErr) {
+        return Promise.reject(new Error('populate failed')).catch(onErr);
+      },
+    });
+
+    const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
+    try {
+      await request(app)
+        .post('/api/messages')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ receiver: peerId, content: 'Salut' })
+        .expect(500);
+      expect(errSpy).toHaveBeenCalled();
+      expect(errSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ event: 'messages_send_failed', err: 'populate failed' })
+      );
+    } finally {
+      errSpy.mockRestore();
+      Message.prototype.save.mockRestore();
+      Message.findById.mockRestore();
+    }
+  });
+
+  it('500 si E11000 et aucun document après findOne de secours', async () => {
+    const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+    User.findById.mockImplementation((id) => {
+      if (String(id) === uid) return authUserChain();
+      return Promise.resolve({ _id: peerId, isActive: true });
+    });
+    jest.spyOn(Message, 'findOne').mockImplementation(() => ({
+      populate: jest.fn().mockReturnThis(),
+      then(onF) {
+        return Promise.resolve(null).then(onF);
+      },
+    }));
+    const dupErr = Object.assign(new Error('E11000'), { code: 11000 });
+    jest.spyOn(Message.prototype, 'save').mockRejectedValue(dupErr);
+
+    const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
+    try {
+      await request(app)
+        .post('/api/messages')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ receiver: peerId, content: 'Salut', clientSyncId: 'ghost-dup' })
+        .expect(500);
+      expect(errSpy).toHaveBeenCalled();
+      expect(errSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ event: 'messages_send_failed', err: 'E11000' })
+      );
+    } finally {
+      errSpy.mockRestore();
+      Message.findOne.mockRestore();
+      Message.prototype.save.mockRestore();
+    }
   });
 });

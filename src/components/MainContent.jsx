@@ -1,9 +1,10 @@
 /**
  * Contenu principal : routeur de pages (home, radio, movies, webtv, magazine, …).
- * Extrait d'App.jsx pour alléger le composant racine (audit CTO).
+ * Données via PassengerMainContentContext (app) ou props (tests / storybook).
  */
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { usePassengerMainContentOptional } from '../contexts/PassengerMainContentContext';
 import PageTransition from './PageTransition';
 import LoadingFallback from './LoadingFallback';
 
@@ -21,6 +22,8 @@ const FavoritesPageContent = lazy(() => import('../pages/FavoritesPageContent'))
 const MochaFallbackPage = lazy(() => import('../pages/MochaFallbackPage'));
 
 function MainContent(props) {
+  const fromContext = usePassengerMainContentOptional();
+  const merged = useMemo(() => (fromContext != null ? { ...fromContext, ...props } : props), [fromContext, props]);
   const {
     page,
     setPage,
@@ -148,7 +151,7 @@ function MainContent(props) {
     setShopFavorites,
     removeFromShopFavorites,
     chat,
-  } = props;
+  } = merged;
 
   return (
     <>

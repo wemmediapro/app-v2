@@ -52,6 +52,7 @@ const messageSchema = new mongoose.Schema(
 // Index for efficient queries
 messageSchema.index({ sender: 1, receiver: 1, createdAt: -1 });
 messageSchema.index({ receiver: 1, isRead: 1 });
+messageSchema.index({ createdAt: -1 });
 messageSchema.index({ sender: 1, clientSyncId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Message', messageSchema);

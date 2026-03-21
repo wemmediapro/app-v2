@@ -1,6 +1,7 @@
 /**
  * MainContent — version plus performante.
  * - Réutilise la config (mainContentRoutes.js).
+ * - Données via PassengerMainContentContext (app) ou props (tests), comme MainContent.jsx.
  * - Fallback Suspense mémoïsé par (minHeight, t) pour éviter de recréer l’élément à chaque render.
  * - Un seul enfant rendu par page (key={page}) pour limiter le travail de réconciliation.
  * Pour aller plus loin : dans App, passer des callbacks mémoïsés (useCallback) et des objets
@@ -8,16 +9,19 @@
  */
 import React, { Suspense, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { usePassengerMainContentOptional } from '../contexts/PassengerMainContentContext';
 import PageTransition from './PageTransition';
 import LoadingFallback from './LoadingFallback';
 import { PAGE_CONFIG, getFallbackRoute } from './mainContentRoutes';
 
 function MainContentPerformant(props) {
-  const { page, t } = props;
+  const fromContext = usePassengerMainContentOptional();
+  const merged = useMemo(() => (fromContext != null ? { ...fromContext, ...props } : props), [fromContext, props]);
+  const { page, t } = merged;
   const route = PAGE_CONFIG[page] || getFallbackRoute(page);
   const { Component, getProps, useTransition, fallbackHeight } = route;
 
-  const pageProps = getProps(props);
+  const pageProps = getProps(merged);
 
   const fallback = useMemo(() => <LoadingFallback t={t} minHeight={fallbackHeight} />, [t, fallbackHeight]);
 

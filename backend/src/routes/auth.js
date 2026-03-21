@@ -13,10 +13,11 @@ const {
 } = require('../middleware/auth');
 const User = require('../models/User');
 const cacheManager = require('../lib/cache-manager');
-const { logFailedLogin, logApiError } = require('../lib/logger');
+const { logFailedLogin } = require('../lib/logger');
 const authService = require('../services/authService');
 const auditService = require('../services/auditService');
 const { auditContext } = require('../middleware/auditLog');
+const { logRouteError } = require('../lib/route-logger');
 
 async function invalidateAuthUserCache(userId) {
   if (!userId || !cacheManager.isConnected) {
@@ -42,10 +43,14 @@ async function getAdminPasswordHash(adminPassword) {
   return cachedAdminPasswordHash;
 }
 
+function getLoginRateLimitMax() {
+  return parseInt(process.env.LOGIN_RATE_LIMIT_MAX, 10) || 5;
+}
+
 // Limite : 5 tentatives de login par 15 min par IP (brute-force protection, configurable via LOGIN_RATE_LIMIT_MAX)
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX, 10) || 5,
+  max: getLoginRateLimitMax(),
   message: { message: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -210,7 +215,7 @@ router.post(
         },
       });
     } catch (error) {
-      console.error('Registration error:', error);
+      logRouteError(req, 'auth_register_failed', error);
       res.status(500).json({ message: 'Server error during registration' });
     }
   }
@@ -272,7 +277,7 @@ router.post('/login', auditContext, loginLimiter, loginValidation, async (req, r
     // Obligatoire : aucun identifiant codé en dur — configuration serveur incomplète = 500
     const adminPasswordOk = typeof adminPassword === 'string' && adminPassword.length > 0;
     if (!adminEmail || !adminPasswordOk) {
-      logApiError('Auth misconfiguration: ADMIN_EMAIL and ADMIN_PASSWORD required', {
+      logRouteError(req, 'auth_login_admin_config_missing', new Error('ADMIN_EMAIL and ADMIN_PASSWORD required'), {
         hasAdminEmail: !!adminEmail,
         hasAdminPassword: adminPasswordOk,
       });
@@ -458,7 +463,7 @@ router.post('/login', auditContext, loginLimiter, loginValidation, async (req, r
       },
     });
   } catch (error) {
-    logApiError('Login error', { err: error.message, email: req.body?.email });
+    logRouteError(req, 'auth_login_failed', error, { email: req.body?.email });
     res.status(500).json({ message: 'Server error during login' });
   }
 });
@@ -572,7 +577,7 @@ router.post('/2fa/complete-login', auditContext, loginLimiter, async (req, res) 
       },
     });
   } catch (error) {
-    logApiError('2fa complete-login', { err: error.message });
+    logRouteError(req, 'auth_2fa_complete_login_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -604,7 +609,7 @@ router.post('/2fa/setup', authMiddleware, adminMiddleware, async (req, res) => {
       backupCodes: backupPlain,
     });
   } catch (error) {
-    logApiError('2fa setup', { err: error.message });
+    logRouteError(req, 'auth_2fa_setup_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -645,7 +650,7 @@ router.post('/2fa/verify', authMiddleware, adminMiddleware, async (req, res) => 
       backupCodes: [],
     });
   } catch (error) {
-    logApiError('2fa verify', { err: error.message });
+    logRouteError(req, 'auth_2fa_verify_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -684,7 +689,7 @@ router.post('/2fa/disable', authMiddleware, adminMiddleware, async (req, res) =>
     res.cookie('authToken', newTok, getCookieOptions(req));
     res.json({ message: '2FA désactivé', twoFactorEnabled: false });
   } catch (error) {
-    logApiError('2fa disable', { err: error.message });
+    logRouteError(req, 'auth_2fa_disable_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -696,7 +701,9 @@ router.post('/2fa/disable', authMiddleware, adminMiddleware, async (req, res) =>
 router.post('/refresh', authMiddleware, (req, res) => {
   try {
     const raw = getTokenFromRequest(req);
-    const dec = verifyToken(raw);
+    // require() : même export que le destructuring du haut du fichier, mais lu au moment de l’appel
+    // (tests peuvent spyOn verifyToken sur le module ; le binding destructuré serait figé au chargement).
+    const dec = require('../middleware/auth').verifyToken(raw);
     const payload = {
       id: req.user.id,
       email: req.user.email,
@@ -731,7 +738,7 @@ router.get('/me', authMiddleware, async (req, res) => {
     delete json.twoFactorPendingBackupHashes;
     res.json(json);
   } catch (error) {
-    console.error('Get user error:', error);
+    logRouteError(req, 'auth_me_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -789,7 +796,7 @@ router.put('/profile', authMiddleware, profileValidation, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Profile update error:', error);
+    logRouteError(req, 'auth_profile_update_failed', error);
     res.status(500).json({ message: 'Server error during profile update' });
   }
 });
@@ -819,7 +826,7 @@ router.put('/change-password', authMiddleware, async (req, res) => {
     await user.save();
     res.json({ message: 'Mot de passe modifié avec succès' });
   } catch (error) {
-    console.error('Change password error:', error);
+    logRouteError(req, 'auth_change_password_failed', error);
     res.status(500).json({ message: 'Erreur lors du changement de mot de passe' });
   }
 });
@@ -844,7 +851,7 @@ router.get('/user-data', authMiddleware, async (req, res) => {
     const playbackPositions = data.playbackPositions || {};
     res.json({ favorites, playbackPositions });
   } catch (error) {
-    console.error('Get user-data error:', error);
+    logRouteError(req, 'auth_user_data_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -886,9 +893,15 @@ router.put('/user-data', authMiddleware, async (req, res) => {
       playbackPositions: user.userData.playbackPositions,
     });
   } catch (error) {
-    console.error('Put user-data error:', error);
+    logRouteError(req, 'auth_user_data_put_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
 module.exports = router;
+
+/** Exposé uniquement en test pour couvrir la branche défensive sans impacter le chargement prod. */
+if (process.env.NODE_ENV === 'test') {
+  module.exports.__testGetAdminPasswordHash = getAdminPasswordHash;
+  module.exports.__testGetLoginRateLimitMax = getLoginRateLimitMax;
+}

@@ -9,6 +9,8 @@ const ffmpeg = require('fluent-ffmpeg');
 const config = require('../config');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { ok, err } = require('../utils/response');
+const { logRouteError } = require('../lib/route-logger');
+const logger = require('../lib/logger');
 
 const router = express.Router();
 const { paths } = config;
@@ -20,7 +22,11 @@ function getVideoDurationSeconds(fullPath) {
   return new Promise((resolve) => {
     ffmpeg.ffprobe(fullPath, (err, data) => {
       if (err) {
-        console.warn('media-library getVideoDuration:', fullPath, err.message);
+        logger.warn({
+          event: 'media_library_ffprobe_duration_failed',
+          path: fullPath,
+          err: err.message,
+        });
         return resolve(0);
       }
       const dur = data?.format?.duration;
@@ -62,7 +68,7 @@ function scanUploadDir(dirPath, urlPrefix, type) {
       }
     }
   } catch (e) {
-    console.error('media-library scanUploadDir:', e.message);
+    logRouteError(undefined, 'media_library_scan_dir_failed', e);
   }
   return items;
 }
@@ -108,7 +114,7 @@ router.get('/', authMiddleware, adminMiddleware, async (req, res) => {
     const audio = await enrichAudioWithDuration(audioRaw, paths.audio);
     return ok(res, { media: [...videos, ...images, ...audio] });
   } catch (e) {
-    console.error('GET media-library:', e);
+    logRouteError(req, 'media_library_list_failed', e);
     return err(res, 'Erreur lors de la lecture des médias.', 500);
   }
 });
@@ -143,7 +149,7 @@ router.delete('/', authMiddleware, adminMiddleware, (req, res) => {
     fs.unlinkSync(fullPath);
     return ok(res, { message: 'Fichier supprimé du serveur.' });
   } catch (e) {
-    console.error('DELETE media-library:', e);
+    logRouteError(req, 'media_library_delete_failed', e);
     return err(res, 'Erreur lors de la suppression.', 500);
   }
 });

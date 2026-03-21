@@ -4,6 +4,7 @@
  */
 
 const { createClient } = require('redis');
+const logger = require('./logger');
 
 /** TTL par type de contenu (secondes) : banners 300s, GNV 60s, positions 30s, films 86400s, radio 600s, auth 60s */
 const TTL_BY_PREFIX = [
@@ -56,7 +57,7 @@ class CacheManager {
         socket: {
           reconnectStrategy: (retries) => {
             if (retries > 10) {
-              console.error('❌ Redis: Trop de tentatives de reconnexion');
+              logger.error({ event: 'redis_reconnect_max_retries', err: 'Trop de tentatives de reconnexion' });
               return new Error('Trop de tentatives');
             }
             return Math.min(retries * 100, 3000);
@@ -70,28 +71,36 @@ class CacheManager {
       });
 
       this.client.on('error', (err) => {
-        console.error('❌ Redis error:', err.message);
+        logger.error({
+          event: 'redis_client_error',
+          err: err.message,
+          stack: err.stack,
+        });
         this.isConnected = false;
       });
 
       this.client.on('connect', () => {
-        console.log('🔌 Redis: Connexion en cours...');
+        logger.info({ event: 'redis_socket_connecting' });
       });
 
       this.client.on('ready', () => {
         this.isConnected = true;
-        console.log('✅ Redis: Prêt');
+        logger.info({ event: 'redis_ready' });
       });
 
       this.client.on('reconnecting', () => {
-        console.log('🔄 Redis: Reconnexion...');
+        logger.info({ event: 'redis_reconnecting' });
       });
 
       await this.client.connect();
       return true;
     } catch (error) {
-      console.error('❌ Erreur de connexion Redis:', error.message);
-      console.log("⚠️  L'application continuera sans cache Redis");
+      logger.error({
+        event: 'redis_connect_failed',
+        err: error.message,
+        stack: error.stack,
+      });
+      logger.warn({ event: 'redis_cache_unavailable_continue', message: "L'application continuera sans cache Redis" });
       this.isConnected = false;
       return false;
     }
@@ -109,7 +118,7 @@ class CacheManager {
       const value = await this.client.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      console.error(`❌ Erreur Redis GET pour ${key}:`, error.message);
+      logger.error({ event: 'redis_get_failed', key, err: error.message, stack: error.stack });
       return null;
     }
   }
@@ -128,7 +137,7 @@ class CacheManager {
       await this.client.setEx(key, effectiveTTL, serialized);
       return true;
     } catch (error) {
-      console.error(`❌ Erreur Redis SET pour ${key}:`, error.message);
+      logger.error({ event: 'redis_set_failed', key, err: error.message, stack: error.stack });
       return false;
     }
   }
@@ -145,7 +154,7 @@ class CacheManager {
       await this.client.del(key);
       return true;
     } catch (error) {
-      console.error(`❌ Erreur Redis DEL pour ${key}:`, error.message);
+      logger.error({ event: 'redis_del_failed', key, err: error.message, stack: error.stack });
       return false;
     }
   }
@@ -174,7 +183,7 @@ class CacheManager {
       }
       return deleted;
     } catch (error) {
-      console.error(`❌ Erreur Redis DEL PATTERN pour ${pattern}:`, error.message);
+      logger.error({ event: 'redis_del_pattern_failed', pattern, err: error.message, stack: error.stack });
       return 0;
     }
   }
@@ -191,7 +200,7 @@ class CacheManager {
       const result = await this.client.exists(key);
       return result === 1;
     } catch (error) {
-      console.error(`❌ Erreur Redis EXISTS pour ${key}:`, error.message);
+      logger.error({ event: 'redis_exists_failed', key, err: error.message, stack: error.stack });
       return false;
     }
   }
@@ -207,7 +216,7 @@ class CacheManager {
     try {
       return await this.client.incr(key);
     } catch (error) {
-      console.error(`❌ Erreur Redis INCR pour ${key}:`, error.message);
+      logger.error({ event: 'redis_incr_failed', key, err: error.message, stack: error.stack });
       return null;
     }
   }
@@ -226,7 +235,7 @@ class CacheManager {
       }
       return n;
     } catch (error) {
-      console.error(`❌ Erreur Redis DECR pour ${key}:`, error.message);
+      logger.error({ event: 'redis_decr_failed', key, err: error.message, stack: error.stack });
       return null;
     }
   }
@@ -241,7 +250,7 @@ class CacheManager {
     try {
       return await this.client.get(key);
     } catch (error) {
-      console.error(`❌ Erreur Redis GET raw pour ${key}:`, error.message);
+      logger.error({ event: 'redis_get_raw_failed', key, err: error.message, stack: error.stack });
       return null;
     }
   }
@@ -259,7 +268,7 @@ class CacheManager {
       const memory = await this.client.info('memory');
       return { info, memory };
     } catch (error) {
-      console.error('❌ Erreur Redis INFO:', error.message);
+      logger.error({ event: 'redis_info_failed', err: error.message, stack: error.stack });
       return null;
     }
   }
@@ -273,11 +282,27 @@ class CacheManager {
     }
     try {
       await this.client.flushDb();
-      console.log('✅ Cache Redis vidé');
+      logger.info({ event: 'redis_flush_completed' });
       return true;
     } catch (error) {
-      console.error('❌ Erreur Redis FLUSHDB:', error.message);
+      logger.error({ event: 'redis_flush_failed', err: error.message, stack: error.stack });
       return false;
+    }
+  }
+
+  /**
+   * Vérifie que Redis répond (readiness K8s / load balancer).
+   * @returns {Promise<{ ok: boolean, status: 'connected'|'disconnected'|'error' }>}
+   */
+  async pingHealth() {
+    if (!this.client || !this.isConnected) {
+      return { ok: false, status: 'disconnected' };
+    }
+    try {
+      const pong = await this.client.ping();
+      return { ok: pong === 'PONG', status: pong === 'PONG' ? 'connected' : 'error' };
+    } catch (_) {
+      return { ok: false, status: 'error' };
     }
   }
 
@@ -289,9 +314,9 @@ class CacheManager {
       try {
         await this.client.quit();
         this.isConnected = false;
-        console.log('👋 Redis: Connexion fermée');
+        logger.info({ event: 'redis_disconnected' });
       } catch (error) {
-        console.error('❌ Erreur lors de la fermeture Redis:', error.message);
+        logger.error({ event: 'redis_disconnect_failed', err: error.message, stack: error.stack });
       }
     }
   }
@@ -301,3 +326,4 @@ class CacheManager {
 const cacheManager = new CacheManager();
 
 module.exports = cacheManager;
+module.exports.CacheManager = CacheManager;

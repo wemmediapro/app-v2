@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const Trailer = require('../models/Trailer');
+const { logRouteError } = require('../lib/route-logger');
 
 function localizeTrailer(doc, lang) {
   if (!doc) {
@@ -42,7 +43,7 @@ router.get('/', async (req, res) => {
     const langStr = typeof lang === 'string' ? lang.trim() : undefined;
     return res.json(trailers.map((doc) => localizeTrailer(doc, langStr)));
   } catch (error) {
-    console.error('Get trailers error:', error);
+    logRouteError(req, 'trailers_list_failed', error);
     res.json([]);
   }
 });
@@ -60,7 +61,7 @@ router.get('/:id', async (req, res) => {
     }
     return res.json(localizeTrailer(doc, lang));
   } catch (error) {
-    console.error('Get trailer error:', error);
+    logRouteError(req, 'trailers_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -91,7 +92,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     const doc = trailer.toObject();
     res.status(201).json({ ...doc, id: doc._id?.toString() });
   } catch (error) {
-    console.error('Create trailer error:', error);
+    logRouteError(req, 'trailers_create_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -113,7 +114,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     return res.json({ ...doc, id: doc._id?.toString() });
   } catch (error) {
-    console.error('Update trailer error:', error);
+    logRouteError(req, 'trailers_update_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -130,7 +131,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     res.json({ message: "Bande d'annonce désactivée" });
   } catch (error) {
-    console.error('Delete trailer error:', error);
+    logRouteError(req, 'trailers_delete_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

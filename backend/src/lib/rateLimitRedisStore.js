@@ -4,6 +4,7 @@
  */
 
 const redis = require('redis');
+const logger = require('./logger');
 
 class RedisStore {
   constructor(options = {}) {
@@ -25,7 +26,9 @@ class RedisStore {
       return this.client;
     }
     this.client = redis.createClient({ url: redisUri });
-    this.client.on('error', (err) => console.warn('Rate limit Redis:', err.message));
+    this.client.on('error', (err) =>
+      logger.warn({ event: 'rate_limit_redis_client_error', err: err.message, stack: err.stack })
+    );
     await this.client.connect();
     return this.client;
   }
@@ -51,7 +54,7 @@ class RedisStore {
       const rt = new Date(Date.now() + ttlMs);
       return { totalHits, resetTime: rt };
     } catch (err) {
-      console.warn('Rate limit Redis increment:', err.message);
+      logger.warn({ event: 'rate_limit_redis_increment_failed', err: err.message, stack: err.stack });
       return { totalHits: 1, resetTime };
     }
   }
@@ -67,7 +70,7 @@ class RedisStore {
         await this.client.del(k);
       }
     } catch (err) {
-      console.warn('Rate limit Redis decrement:', err.message);
+      logger.warn({ event: 'rate_limit_redis_decrement_failed', err: err.message, stack: err.stack });
     }
   }
 
@@ -78,7 +81,7 @@ class RedisStore {
     try {
       await this.client.del(this.prefixKey(key));
     } catch (err) {
-      console.warn('Rate limit Redis resetKey:', err.message);
+      logger.warn({ event: 'rate_limit_redis_reset_key_failed', err: err.message, stack: err.stack });
     }
   }
 }
@@ -98,7 +101,12 @@ async function createRedisStore(redisUri, prefix = 'rl:api:') {
     await store.connect(redisUri);
     return store;
   } catch (err) {
-    console.warn('Rate limit Redis store non disponible, utilisation mémoire:', err.message);
+    logger.warn({
+      event: 'rate_limit_redis_store_connect_failed',
+      err: err.message,
+      stack: err.stack,
+      message: 'Fallback store mémoire.',
+    });
     return null;
   }
 }

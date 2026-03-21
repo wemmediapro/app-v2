@@ -6,6 +6,7 @@
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
+const logger = require('../lib/logger');
 
 /** Largeur max (px) pour les images (bande passante / affichage mobile). */
 const MAX_WIDTH = 1920;
@@ -65,7 +66,11 @@ async function optimizeImage(inputPath, options = {}) {
     try {
       fs.unlinkSync(inputPath);
     } catch (e) {
-      console.warn('imageOptimization: could not remove original', inputPath, e.message);
+      logger.warn({
+        event: 'image_optimization_unlink_original_failed',
+        path: inputPath,
+        err: e.message,
+      });
     }
   }
 
@@ -306,7 +311,7 @@ async function writeWebpSibling(absolutePath) {
     await sharp(absolutePath).webp({ quality: WEBP_QUALITY }).toFile(webpPath);
     return path.basename(webpPath);
   } catch (e) {
-    console.warn('writeWebpSibling:', e.message);
+    logger.warn({ event: 'image_write_webp_sibling_failed', err: e.message });
     return null;
   }
 }

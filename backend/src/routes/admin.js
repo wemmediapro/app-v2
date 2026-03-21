@@ -31,8 +31,95 @@ const connectionManager = require('../lib/connection-manager');
 const memoryMonitor = require('../lib/memory-monitor');
 const auditService = require('../services/auditService');
 const { auditContext } = require('../middleware/auditLog');
+const { logRouteError } = require('../lib/route-logger');
 
 const router = express.Router();
+
+/**
+ * Agrégation : paires de conversation à partir des N derniers messages (évite scan complet + double populate).
+ * Pagination sur la liste des paires triées par activité récente.
+ */
+function buildAdminConversationsPipeline(adminOid, skip, limit, messageSampleCap) {
+  return [
+    { $sort: { createdAt: -1 } },
+    { $limit: messageSampleCap },
+    {
+      $addFields: {
+        pairKey: {
+          $let: {
+            vars: {
+              s: { $toString: '$sender' },
+              r: { $toString: '$receiver' },
+            },
+            in: {
+              $cond: [{ $lte: ['$$s', '$$r'] }, { $concat: ['$$s', '|', '$$r'] }, { $concat: ['$$r', '|', '$$s'] }],
+            },
+          },
+        },
+      },
+    },
+    {
+      $group: {
+        _id: '$pairKey',
+        lastMsg: { $first: '$$ROOT' },
+      },
+    },
+    { $sort: { 'lastMsg.createdAt': -1 } },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $addFields: {
+        otherUserId: {
+          $cond: [{ $eq: ['$lastMsg.sender', adminOid] }, '$lastMsg.receiver', '$lastMsg.sender'],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        let: { oid: '$otherUserId' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$_id', '$$oid'] } } },
+          {
+            $project: {
+              firstName: 1,
+              lastName: 1,
+              email: 1,
+              avatar: 1,
+              cabinNumber: 1,
+            },
+          },
+        ],
+        as: 'user',
+      },
+    },
+    { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        _id: '$lastMsg._id',
+        user: {
+          $ifNull: [
+            '$user',
+            {
+              _id: '$otherUserId',
+              firstName: '',
+              lastName: '',
+              email: '',
+              avatar: '',
+              cabinNumber: '',
+            },
+          ],
+        },
+        lastMessage: {
+          content: '$lastMsg.content',
+          createdAt: '$lastMsg.createdAt',
+          isRead: '$lastMsg.isRead',
+        },
+        unreadCount: { $literal: 0 },
+      },
+    },
+  ];
+}
 
 // Toutes les routes admin exigent auth + rôle admin + contexte audit
 router.use(authMiddleware, adminMiddleware, auditContext);
@@ -52,7 +139,7 @@ router.get('/connections-stats', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('GET /api/admin/connections-stats:', error);
+    logRouteError(req, 'admin_connections_stats_failed', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la lecture des statistiques de connexions',
@@ -78,7 +165,7 @@ router.get('/memory-stats', (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('GET /api/admin/memory-stats:', error);
+    logRouteError(req, 'admin_memory_stats_failed', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la lecture des statistiques mémoire',
@@ -126,7 +213,7 @@ router.get('/databases', async (req, res) => {
       totalSizeFormatted: formatBytes(totalSize || 0),
     });
   } catch (error) {
-    console.error('List databases error:', error);
+    logRouteError(req, 'admin_list_databases_failed', error);
     res.status(500).json({ message: 'Erreur lors de la récupération des bases', error: error.message });
   }
 });
@@ -247,7 +334,7 @@ router.get('/dashboard', async (req, res) => {
     }
     res.json(payload);
   } catch (error) {
-    console.error('Dashboard error:', error);
+    logRouteError(req, 'admin_dashboard_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -296,7 +383,7 @@ router.get('/users', validatePagination, handleValidationErrors, async (req, res
       total,
     });
   } catch (error) {
-    console.error('Get users error:', error);
+    logRouteError(req, 'admin_users_list_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -354,7 +441,7 @@ router.post('/users', registerValidation, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Create user error:', error);
+    logRouteError(req, 'admin_user_create_failed', error);
     if (error.name === 'ValidationError') {
       return res.status(400).json({ message: error.message });
     }
@@ -448,7 +535,7 @@ router.put('/users/:id', validateMongoId('id'), ...adminUserUpdateValidation, as
       user: updated,
     });
   } catch (error) {
-    console.error('Update user error:', error);
+    logRouteError(req, 'admin_user_update_failed', error);
     if (error.name === 'ValidationError') {
       return res.status(400).json({ message: error.message });
     }
@@ -466,6 +553,26 @@ router.delete('/users/:id', validateMongoId('id'), ...adminDeleteUserQueryValida
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (String(user._id) === String(req.user._id)) {
+      return res.status(400).json({
+        message: 'Vous ne pouvez pas supprimer ou désactiver votre propre compte.',
+        code: 'SELF_DELETE',
+      });
+    }
+
+    if (user.role === 'admin') {
+      const otherAdmins = await User.countDocuments({
+        role: 'admin',
+        _id: { $ne: user._id },
+      });
+      if (otherAdmins < 1) {
+        return res.status(400).json({
+          message: 'Impossible de supprimer ou désactiver le dernier administrateur',
+          code: 'LAST_ADMIN',
+        });
+      }
     }
 
     if (hard) {
@@ -497,7 +604,7 @@ router.delete('/users/:id', validateMongoId('id'), ...adminDeleteUserQueryValida
     });
     res.json({ message: 'User deactivated successfully' });
   } catch (error) {
-    console.error('Delete user error:', error);
+    logRouteError(req, 'admin_user_delete_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -516,7 +623,7 @@ router.get('/conversations/unread-count', async (req, res) => {
     });
     res.json({ count });
   } catch (error) {
-    console.error('Unread count error:', error);
+    logRouteError(req, 'admin_conversations_unread_failed', error);
     res.status(500).json({ count: 0 });
   }
 });
@@ -530,30 +637,17 @@ router.get('/conversations', validatePagination, handleValidationErrors, async (
       return res.json([]);
     }
     const { skip, limit } = req.pagination;
-    const messages = await Message.find()
-      .sort({ createdAt: -1 })
-      .limit(500)
-      .populate('sender', 'firstName lastName email avatar cabinNumber')
-      .populate('receiver', 'firstName lastName email avatar cabinNumber');
-    const seen = new Set();
-    const conversations = [];
-    const adminId = req.user?._id?.toString();
-    for (const m of messages) {
-      const key = [m.sender?._id, m.receiver?._id].sort().join('-');
-      if (!seen.has(key)) {
-        seen.add(key);
-        conversations.push({
-          _id: m._id,
-          user: m.sender?._id?.toString() === adminId ? m.receiver : m.sender,
-          lastMessage: { content: m.content, createdAt: m.createdAt, isRead: m.isRead },
-          unreadCount: 0,
-        });
-      }
-    }
-    const pageSlice = conversations.slice(skip, skip + limit);
-    res.json(pageSlice);
+    const rawCap = parseInt(process.env.ADMIN_CONVERSATIONS_MESSAGE_SAMPLE, 10);
+    const messageSampleCap = Math.min(Math.max(Number.isFinite(rawCap) && rawCap > 0 ? rawCap : 2000, 100), 50000);
+    const adminOid =
+      req.user._id instanceof mongoose.Types.ObjectId
+        ? req.user._id
+        : new mongoose.Types.ObjectId(String(req.user._id));
+    const pipeline = buildAdminConversationsPipeline(adminOid, skip, limit, messageSampleCap);
+    const conversations = await Message.aggregate(pipeline);
+    res.json(conversations);
   } catch (error) {
-    console.error('Get conversations error:', error);
+    logRouteError(req, 'admin_conversations_list_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -569,7 +663,7 @@ router.post('/cache/clear', async (req, res) => {
       redis: redisCleared,
     });
   } catch (error) {
-    console.error('Cache clear error:', error);
+    logRouteError(req, 'admin_cache_clear_failed', error);
     res.status(500).json({ message: 'Erreur lors du vidage du cache' });
   }
 });
@@ -592,7 +686,7 @@ router.get('/audit-logs', async (req, res) => {
     });
     res.json(result);
   } catch (error) {
-    console.error('GET audit-logs error:', error);
+    logRouteError(req, 'admin_audit_logs_list_failed', error);
     res.status(500).json({ message: 'Erreur lors de la récupération des logs', error: error.message });
   }
 });
@@ -615,7 +709,7 @@ router.get('/audit-logs/export', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="audit-logs-${Date.now()}.${ext}"`);
     res.send(content);
   } catch (error) {
-    console.error('GET audit-logs/export error:', error);
+    logRouteError(req, 'admin_audit_logs_export_failed', error);
     res.status(500).json({ message: "Erreur lors de l'export des logs", error: error.message });
   }
 });
@@ -636,7 +730,7 @@ router.get('/audit-logs/user/:userId', validateMongoId('userId'), handleValidati
     });
     res.json(result);
   } catch (error) {
-    console.error('GET audit-logs/user/:userId error:', error);
+    logRouteError(req, 'admin_audit_logs_user_failed', error);
     res.status(500).json({ message: 'Erreur lors de la récupération des logs', error: error.message });
   }
 });
@@ -651,7 +745,7 @@ router.get('/settings/access', async (req, res) => {
     const access = config?.accessByRole || null;
     res.json({ success: true, data: access });
   } catch (error) {
-    console.error('GET settings/access error:', error);
+    logRouteError(req, 'admin_settings_access_get_failed', error);
     res.status(500).json({ success: false, message: 'Erreur lors de la récupération des droits' });
   }
 });
@@ -683,7 +777,7 @@ router.put('/settings/access', ...settingsAccessValidation, async (req, res) => 
     );
     res.json({ success: true, message: 'Droits enregistrés' });
   } catch (error) {
-    console.error('PUT settings/access error:', error);
+    logRouteError(req, 'admin_settings_access_put_failed', error);
     res.status(500).json({ success: false, message: "Erreur lors de l'enregistrement des droits" });
   }
 });

@@ -5,33 +5,47 @@ const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, 'config.env') });
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+const logger = require('./src/lib/logger');
 const { validateSecurityConfig } = require('./src/lib/security-config');
 try {
   validateSecurityConfig();
 } catch (e) {
-  console.error(e.message);
+  logger.error({
+    event: 'security_config_validation_failed',
+    err: e instanceof Error ? e.message : String(e),
+    stack: e instanceof Error ? e.stack : undefined,
+  });
   process.exit(1);
 }
 const config = require('./src/config');
 const connectionCounters = require('./src/lib/connectionCounters');
 const sentry = require('./src/lib/sentry');
 
-if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
+if (process.env.NODE_ENV === 'production') {
   sentry.init();
   process.on('uncaughtException', (err) => {
     sentry.captureException(err);
-    console.error('uncaughtException:', err);
+    logger.error({
+      event: 'process_uncaught_exception',
+      err: err.message,
+      stack: err.stack,
+    });
     process.exit(1);
   });
-  process.on('unhandledRejection', (reason, promise) => {
+  process.on('unhandledRejection', (reason, _promise) => {
     sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)));
-    console.error('unhandledRejection:', reason);
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    const stack = reason instanceof Error ? reason.stack : undefined;
+    logger.error({ event: 'process_unhandled_rejection', err: msg, stack });
   });
 }
 
 // [SEC] RATE_LIMIT_LOAD_TEST : en production, ne jamais l'honorer (éviter relâchement rate limit par erreur)
 if (process.env.NODE_ENV === 'production' && process.env.RATE_LIMIT_LOAD_TEST) {
-  console.warn('⚠️ RATE_LIMIT_LOAD_TEST est défini en production — ignoré (rate limit inchangé).');
+  logger.warn({
+    event: 'rate_limit_load_test_ignored_production',
+    message: 'RATE_LIMIT_LOAD_TEST défini en production — ignoré.',
+  });
   delete process.env.RATE_LIMIT_LOAD_TEST;
 }
 
@@ -49,8 +63,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 
 const { verifyToken } = require('./src/middleware/auth');
-const logger = require('./src/lib/logger');
-const { logSocketAuthFailed } = logger;
+const { logSocketAuthFailed } = require('./src/lib/logger');
 const LocalServerConfig = require('./src/models/LocalServerConfig');
 const { csrfCookie, csrfProtection } = require('./src/middleware/csrf');
 const { videoStreamMiddleware, audioStreamMiddleware } = require('./src/routes/stream');
@@ -72,7 +85,7 @@ const app = express();
 [config.paths.videos, config.paths.images, config.paths.audio, config.paths.videosHls].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
-    console.log('📁 Dossier créé (bibliothèque):', dir);
+    logger.info({ event: 'library_upload_dir_created', dir });
   }
 });
 
@@ -116,13 +129,17 @@ if (config.redis && config.redis.uri) {
     Promise.all([pubClient.connect(), subClient.connect()])
       .then(() => {
         io.adapter(createAdapter(pubClient, subClient));
-        console.log('✅ Socket.io Redis adapter activé');
+        logger.info({ event: 'socket_io_redis_adapter_enabled' });
       })
       .catch((err) => {
-        console.warn('⚠️  Redis non disponible, Socket.io en mode local:', err.message);
+        logger.warn({
+          event: 'socket_io_redis_adapter_unavailable',
+          err: err.message,
+          stack: err.stack,
+        });
       });
   } catch (err) {
-    console.warn('⚠️  Redis adapter non chargé:', err.message);
+    logger.warn({ event: 'socket_io_redis_adapter_init_failed', err: err.message, stack: err.stack });
   }
 }
 
@@ -181,9 +198,31 @@ const corsOptions = {
   credentials: true,
 };
 app.use(cors(corsOptions));
-// En prod : format court + pas de log health/uploads (réduit I/O et bruit — audit CTO)
+// Corrélation avant Morgan (ligne d’accès inclut reqId) + logger enfant pour routes / erreurs
+app.use((req, res, next) => {
+  req.id = req.get('x-request-id') || req.get('X-Request-Id') || crypto.randomBytes(8).toString('hex');
+  req.log = logger.child({ reqId: req.id });
+  res.setHeader('X-Request-Id', req.id);
+  next();
+});
+morgan.token('req-id', (req) => req.id || '-');
+const morganAccessFormat =
+  config.env === 'production'
+    ? ':req-id :remote-addr :method :url :status :res[content-length] - :response-time ms'
+    : ':req-id :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"';
+const morganStream = {
+  write(str) {
+    const line = typeof str === 'string' ? str.trim() : String(str).trim();
+    if (!line) {
+      return;
+    }
+    logger.info({ event: 'http_access', line });
+  },
+};
+// Pas de log health / uploads (réduit I/O) ; sortie JSON via Pino (stream), plus de stdout Apache brut
 app.use(
-  morgan(config.env === 'production' ? 'short' : 'combined', {
+  morgan(morganAccessFormat, {
+    stream: morganStream,
     skip: (req) => {
       const sub = getApiPathSuffix(req.path || '');
       return (
@@ -195,11 +234,6 @@ app.use(
     },
   })
 );
-// Identifiant de requête pour le log d'erreurs et les réponses (requestId)
-app.use((req, res, next) => {
-  req.id = req.get('x-request-id') || crypto.randomBytes(8).toString('hex');
-  next();
-});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(require('./src/middleware/language'));
@@ -326,7 +360,10 @@ async function ensureRedisInProduction() {
   }
   const uri = config.redis?.uri;
   if (!uri || typeof uri !== 'string' || !uri.startsWith('redis')) {
-    console.error('CRITICAL: En production REDIS_URI (ou REDIS_URL) doit être défini.');
+    logger.error({
+      event: 'redis_uri_missing_production',
+      err: 'REDIS_URI (ou REDIS_URL) doit être défini en production.',
+    });
     process.exit(1);
   }
   const { createClient } = require('redis');
@@ -335,12 +372,13 @@ async function ensureRedisInProduction() {
     await client.connect();
     await client.ping();
     await client.quit();
-    console.log('✅ Redis requis en production : vérification OK.');
+    logger.info({ event: 'redis_production_precheck_ok' });
   } catch (err) {
-    console.error(
-      'CRITICAL: Redis inaccessible en production. Vérifiez REDIS_URI et que Redis est démarré:',
-      err.message
-    );
+    logger.error({
+      event: 'redis_unreachable_production',
+      err: err.message,
+      stack: err.stack,
+    });
     process.exit(1);
   }
 }
@@ -355,14 +393,18 @@ async function setupAfterDb() {
   if (config.redis && config.redis.uri) {
     const cacheConnected = await cacheManager.connect(config.redis.uri);
     if (cacheConnected) {
-      console.log('✅ Cache listes (Redis) actif — TTL 60s');
+      logger.info({ event: 'list_cache_redis_active', ttlSeconds: 60 });
       connectionCounters.initRedis(cacheManager);
       await redisConnectionManager.init(cacheManager);
       try {
         const globalConnStats = await redisConnectionManager.loadGlobalStatsOnStartup();
         connectionManager.applyGlobalSnapshotFromRedis(globalConnStats);
       } catch (e) {
-        console.warn('⚠️  Stats connexions Redis au démarrage:', e.message);
+        logger.warn({
+          event: 'redis_connection_stats_startup_failed',
+          err: e.message,
+          stack: e.stack,
+        });
       }
     }
   }
@@ -416,13 +458,15 @@ async function setupAfterDb() {
   });
   app.use('/api/', apiLimiter);
   if (redisStore) {
-    console.log('✅ Rate limit API : store Redis actif');
+    logger.info({ event: 'api_rate_limit_redis_store_active' });
   } else if (process.env.NODE_ENV === 'production') {
-    console.warn(
-      "⚠️ Rate limit API : store mémoire (REDIS_URI non configuré). En multi-process la limite n'est pas partagée."
-    );
+    logger.warn({
+      event: 'rate_limit_memory_store_production',
+      message:
+        "Rate limit API : store mémoire (REDIS_URI non configuré). En multi-process la limite n'est pas partagée.",
+    });
   }
-  mountRoutes(app, { dbManager, connectionCounters });
+  mountRoutes(app, { dbManager, connectionCounters, cacheManager });
 
   // Documentation API Swagger/OpenAPI
   if (process.env.NODE_ENV !== 'production' || process.env.SWAGGER_ENABLED === 'true') {
@@ -440,7 +484,7 @@ async function setupAfterDb() {
       res.setHeader('Content-Type', 'application/json');
       res.send(swaggerSpec);
     });
-    console.log('📚 Documentation API disponible sur /api-docs');
+    logger.info({ event: 'swagger_enabled', path: '/api-docs' });
   }
 
   // SPA fallback : index.html en cache mémoire, seule la substitution du nonce CSP à la volée (évite fs.readFileSync à chaque requête)
@@ -489,16 +533,21 @@ function startServer() {
   server
     .listen(PORT, listenOptions, () => {
       const workerId = typeof cluster !== 'undefined' && cluster.worker ? cluster.worker.id : '-';
-      console.log(`🚀 Server running on port ${PORT}${workerId !== '-' ? ` (worker ${workerId})` : ''}`);
-      console.log(`📱 Environment: ${config.env}`);
+      logger.info({
+        event: 'http_server_listening',
+        port: PORT,
+        workerId: workerId !== '-' ? workerId : undefined,
+        env: config.env,
+      });
     })
     .on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
-        console.error(
-          `❌ Port ${PORT} déjà utilisé. Arrêtez l'autre processus (lsof -i :${PORT}) ou changez PORT dans config.env`
-        );
+        logger.error({
+          event: 'server_listen_eaddrinuse',
+          err: `Port ${PORT} déjà utilisé. Arrêtez l'autre processus (lsof -i :${PORT}) ou changez PORT dans config.env`,
+        });
       } else {
-        console.error('❌ Erreur serveur:', err.message);
+        logger.error({ event: 'server_listen_failed', err: err.message, stack: err.stack });
       }
       process.exit(1);
     });
@@ -506,12 +555,19 @@ function startServer() {
 
 dbManager.connect(config.mongodb.uri).then(async (connected) => {
   if (connected) {
-    console.log('✅ MongoDB connecté — Radio, WebTV, Films, etc. reliés à la base.');
+    logger.info({ event: 'mongodb_startup_connected' });
   } else {
-    console.log(
-      '⚠️  MongoDB non connecté. Démarrez MongoDB (docker run -d -p 27017:27017 mongo) puis redémarrez le backend.'
-    );
-    console.log('   MONGODB_URI utilisé:', config.mongodb.uri);
+    let mongoHost;
+    try {
+      mongoHost = new URL(config.mongodb.uri).hostname;
+    } catch (_) {
+      mongoHost = undefined;
+    }
+    logger.warn({
+      event: 'mongodb_startup_disconnected',
+      message: 'MongoDB non connecté — démarrez MongoDB puis redémarrez le backend.',
+      mongoHost,
+    });
   }
   await setupAfterDb();
   startServer();
@@ -666,18 +722,18 @@ initMemoryMonitoring();
 
 // Graceful shutdown (PM2 restart, Docker stop, etc.)
 function gracefulShutdown(signal) {
-  console.log(`🛑 Signal ${signal} reçu. Arrêt gracieux...`);
+  logger.info({ event: 'graceful_shutdown_signal', signal });
   try {
     memoryMonitor.stop();
   } catch (_) {}
   server.close(() => {
-    console.log('✅ Serveur HTTP fermé');
+    logger.info({ event: 'http_server_closed' });
     Promise.resolve(dbManager.disconnect?.())
       .then(() => process.exit(0))
       .catch(() => process.exit(0));
   });
   setTimeout(() => {
-    console.error('❌ Timeout graceful shutdown — arrêt forcé');
+    logger.error({ event: 'graceful_shutdown_timeout', err: 'Arrêt forcé après timeout' });
     process.exit(1);
   }, 30000);
 }

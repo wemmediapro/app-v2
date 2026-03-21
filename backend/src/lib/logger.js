@@ -46,6 +46,7 @@ function redact(obj) {
   return out;
 }
 
+/** Logger racine. Pour une requête HTTP : utiliser `req.log` (enfant avec `reqId`, défini dans server.js). */
 const logger = pino({
   level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
   serializers: {
@@ -65,7 +66,10 @@ function logFailedLogin(email, reason, req = null) {
   });
 }
 
-/** Log erreur API / requête suspecte */
+/**
+ * @deprecated Préférer `logRouteError` côté routes HTTP (`route-logger.js`, `event` snake_case).
+ * Conservé pour compatibilité ; n’est plus utilisé par `auth.js`.
+ */
 function logApiError(message, meta = {}) {
   logger.warn({ event: 'api_error', message, ...meta });
 }

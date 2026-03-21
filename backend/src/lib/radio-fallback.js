@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const logger = require('./logger');
 
 const BACKEND_ROOT = path.join(__dirname, '..', '..');
 const DATA_DIR = path.join(BACKEND_ROOT, 'data');
@@ -62,7 +63,7 @@ function readStations() {
     const data = JSON.parse(raw);
     return Array.isArray(data) && data.length > 0 ? data : [...DEFAULT_STATIONS];
   } catch (e) {
-    console.warn('radio-fallback: read error', e.message);
+    logger.warn({ event: 'radio_fallback_read_failed', err: e.message });
     return [...DEFAULT_STATIONS];
   }
 }

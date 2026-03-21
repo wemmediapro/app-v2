@@ -3,6 +3,7 @@
  * Charge config.env via dotenv (appelé depuis server.js) et expose des valeurs typées.
  */
 const path = require('path');
+const logger = require('../lib/logger');
 
 const ROOT = path.join(__dirname, '..', '..');
 
@@ -28,11 +29,17 @@ module.exports = {
     const rawSecret = process.env.JWT_SECRET || undefined;
     if (process.env.NODE_ENV === 'production') {
       if (!rawSecret || typeof rawSecret !== 'string' || rawSecret.length < JWT_MIN_LENGTH) {
-        console.error(`CRITICAL: JWT_SECRET must be set and at least ${JWT_MIN_LENGTH} characters in production.`);
+        logger.error({
+          event: 'jwt_secret_invalid_production',
+          err: `JWT_SECRET must be set and at least ${JWT_MIN_LENGTH} characters in production.`,
+        });
         process.exit(1);
       }
     } else if (rawSecret && rawSecret.length < JWT_MIN_LENGTH) {
-      console.warn(`WARN: JWT_SECRET should be at least ${JWT_MIN_LENGTH} characters for production.`);
+      logger.warn({
+        event: 'jwt_secret_short_dev',
+        message: `JWT_SECRET should be at least ${JWT_MIN_LENGTH} characters for production.`,
+      });
     }
     return {
       secret: rawSecret,
@@ -75,9 +82,13 @@ module.exports = {
     const nodeEnv = process.env.NODE_ENV || 'development';
     const devFloor = 8000;
     if (nodeEnv === 'development' && process.env.RATE_LIMIT_STRICT_DEV !== '1' && max < devFloor) {
-      console.warn(
-        `[rate-limit] NODE_ENV=development : RATE_LIMIT_MAX=${max} relevé à ${devFloor} req / fenêtre (RATE_LIMIT_STRICT_DEV=1 pour garder la valeur du .env).`
-      );
+      logger.warn({
+        event: 'rate_limit_dev_floor_applied',
+        previousMax: max,
+        appliedMax: devFloor,
+        message:
+          'NODE_ENV=development : RATE_LIMIT_MAX relevé au plancher dev (RATE_LIMIT_STRICT_DEV=1 pour désactiver).',
+      });
       max = devFloor;
     }
     return {

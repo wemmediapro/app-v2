@@ -7,6 +7,7 @@ const Promotion = require('../models/Promotion');
 const { safeRegexSearch } = require('../utils/regex-escape');
 const shopFallback = require('../lib/shop-fallback');
 const cacheManager = require('../lib/cache-manager');
+const { logRouteError } = require('../lib/route-logger');
 
 const router = express.Router();
 
@@ -77,11 +78,7 @@ router.get('/', optionalAuth, validatePagination, async (req, res) => {
       query.category = category;
     }
     const skip = (pageNum - 1) * limitNum;
-    const list = await Product.find(query)
-      .sort({ isFeatured: -1, createdAt: -1 })
-      .skip(skip)
-      .limit(limitNum)
-      .lean();
+    const list = await Product.find(query).sort({ isFeatured: -1, createdAt: -1 }).skip(skip).limit(limitNum).lean();
     const items = list.map((doc) => localizeProduct(doc, lang));
     if (!req.get('Authorization')) {
       const cacheKey = `list:shop:${catNorm}:${pageNum}:${limitNum}:${langNorm}:${allNorm}`;
@@ -89,7 +86,7 @@ router.get('/', optionalAuth, validatePagination, async (req, res) => {
     }
     res.json(items);
   } catch (error) {
-    console.error('Get products error:', error);
+    logRouteError(req, 'shop_products_list_failed', error);
     res.status(500).json({
       message: 'Failed to get products',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -125,7 +122,7 @@ router.post('/', authMiddleware, adminMiddleware, productCreateValidation, async
     await invalidateShopListCache();
     return res.status(201).json(localizeProduct(doc));
   } catch (error) {
-    console.error('Create product error:', error);
+    logRouteError(req, 'shop_product_create_failed', error);
     res.status(500).json({
       message: 'Failed to create product',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -163,7 +160,7 @@ router.put('/:id', authMiddleware, adminMiddleware, productUpdateValidation, asy
     await invalidateShopListCache();
     return res.json(localizeProduct(updated));
   } catch (error) {
-    console.error('Update product error:', error);
+    logRouteError(req, 'shop_product_update_failed', error);
     res.status(500).json({
       message: 'Failed to update product',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -184,7 +181,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     await invalidateShopListCache();
     return res.json({ message: 'Product deleted' });
   } catch (error) {
-    console.error('Delete product error:', error);
+    logRouteError(req, 'shop_product_delete_failed', error);
     res.status(500).json({
       message: 'Failed to delete product',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -243,7 +240,7 @@ router.get('/search/query', optionalAuth, async (req, res) => {
     }));
     res.json({ products: products_result });
   } catch (error) {
-    console.error('Search products error:', error);
+    logRouteError(req, 'shop_products_search_failed', error);
     res.status(500).json({
       message: 'Failed to search products',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -277,7 +274,7 @@ router.get('/promotions', optionalAuth, async (req, res) => {
     });
     res.json(items);
   } catch (error) {
-    console.error('Get promotions error:', error);
+    logRouteError(req, 'shop_promotions_list_failed', error);
     res.status(500).json({
       message: 'Failed to get promotions',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -311,7 +308,7 @@ router.post('/promotions', authMiddleware, adminMiddleware, async (req, res) => 
     await invalidateShopListCache();
     return res.status(201).json(out);
   } catch (error) {
-    console.error('Create promotion error:', error);
+    logRouteError(req, 'shop_promotion_create_failed', error);
     res.status(500).json({
       message: error.message || 'Failed to create promotion',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -351,7 +348,7 @@ router.put('/promotions/:id', authMiddleware, adminMiddleware, async (req, res) 
     await invalidateShopListCache();
     return res.json(out);
   } catch (error) {
-    console.error('Update promotion error:', error);
+    logRouteError(req, 'shop_promotion_update_failed', error);
     res.status(500).json({
       message: error.message || 'Failed to update promotion',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -372,7 +369,7 @@ router.delete('/promotions/:id', authMiddleware, adminMiddleware, async (req, re
     await invalidateShopListCache();
     return res.json({ message: 'Promotion deleted' });
   } catch (error) {
-    console.error('Delete promotion error:', error);
+    logRouteError(req, 'shop_promotion_delete_failed', error);
     res.status(500).json({
       message: 'Failed to delete promotion',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -397,7 +394,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     }
     res.json(localizeProduct(doc, lang));
   } catch (error) {
-    console.error('Get product error:', error);
+    logRouteError(req, 'shop_product_get_failed', error);
     res.status(500).json({
       message: 'Failed to get product',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -414,7 +411,7 @@ router.get('/cart/items', authenticateToken, async (req, res) => {
       itemCount: 0,
     });
   } catch (error) {
-    console.error('Get cart error:', error);
+    logRouteError(req, 'shop_cart_get_failed', error);
     res.status(500).json({
       message: 'Failed to get cart',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -450,7 +447,7 @@ router.post('/cart/add', authenticateToken, async (req, res) => {
       quantity,
     });
   } catch (error) {
-    console.error('Add to cart error:', error);
+    logRouteError(req, 'shop_cart_add_failed', error);
     res.status(500).json({
       message: 'Failed to add item to cart',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -468,7 +465,7 @@ router.delete('/cart/remove/:productId', authenticateToken, async (req, res) => 
       message: 'Item removed from cart successfully',
     });
   } catch (error) {
-    console.error('Remove from cart error:', error);
+    logRouteError(req, 'shop_cart_remove_failed', error);
     res.status(500).json({
       message: 'Failed to remove item from cart',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
@@ -504,7 +501,7 @@ router.post('/orders/create', authenticateToken, async (req, res) => {
       order,
     });
   } catch (error) {
-    console.error('Create order error:', error);
+    logRouteError(req, 'shop_order_create_failed', error);
     res.status(500).json({
       message: 'Failed to create order',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',

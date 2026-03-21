@@ -5,6 +5,7 @@
  */
 const AuditLog = require('../models/AuditLog');
 const mongoose = require('mongoose');
+const logger = require('../lib/logger');
 
 /** Actions reconnues */
 const ACTIONS = {
@@ -30,17 +31,17 @@ const RESOURCES = {
 
 /**
  * Enregistre une action d'audit.
- * @param {Object} opts
+ * @param {object} opts
  * @param {string|ObjectId} opts.userId - Admin ayant effectué l'action (null pour login échoué)
  * @param {string} opts.action - login | create-user | update-user | delete-user | admin-action | create | update | delete
  * @param {string} opts.resource - user | restaurant | content | settings | auth
  * @param {ObjectId|null} [opts.resourceId] - ID de la ressource ciblée
- * @param {{ before?: Object, after?: Object }} [opts.changes]
+ * @param {{before?: object, after?: object}} [opts.changes]
  * @param {string} [opts.ipAddress]
  * @param {string} [opts.userAgent]
  * @param {string} [opts.status] - success | failure
  * @param {string} [opts.errorMessage]
- * @param {Object} [opts.metadata]
+ * @param {object} [opts.metadata]
  * @returns {Promise<AuditLog|null>} Document créé ou null en cas d'erreur (ne pas faire échouer l'app)
  */
 async function logAction(opts) {
@@ -58,7 +59,7 @@ async function logAction(opts) {
   } = opts;
 
   if (!action || !resource) {
-    console.warn('[auditService] logAction: action et resource requis');
+    logger.warn({ event: 'audit_log_action_missing_fields', message: 'action et resource requis' });
     return null;
   }
 
@@ -80,20 +81,24 @@ async function logAction(opts) {
     });
     return doc;
   } catch (err) {
-    console.error('[auditService] logAction error:', err.message);
+    logger.error({
+      event: 'audit_log_action_persist_failed',
+      err: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
     return null;
   }
 }
 
 /**
  * Récupère les logs admin avec filtres et pagination.
- * @param {Object} filters
+ * @param {object} filters
  * @param {string|ObjectId} [filters.adminId] - Filtrer par admin
  * @param {string} [filters.action]
  * @param {string} [filters.resource]
- * @param {number} [filters.days=30] - Période en jours
- * @param {number} [filters.page=1]
- * @param {number} [filters.limit=50]
+ * @param {number} [filters.days] - Période en jours
+ * @param {number} [filters.page]
+ * @param {number} [filters.limit]
  * @returns {Promise<{ logs: AuditLog[], total: number, page: number, limit: number }>}
  */
 async function getAdminLogs(filters = {}) {
@@ -138,7 +143,7 @@ async function getAdminLogs(filters = {}) {
 /**
  * Exporte les logs au format CSV ou JSON.
  * @param {'csv'|'json'} format
- * @param {Object} [filters] - Mêmes filtres que getAdminLogs
+ * @param {object} [filters] - Mêmes filtres que getAdminLogs
  * @returns {Promise<{ content: string, contentType: string }>}
  */
 async function exportLogs(format = 'json', filters = {}) {

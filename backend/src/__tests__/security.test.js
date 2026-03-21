@@ -159,6 +159,18 @@ describe('Security Tests', () => {
         .expect(200);
       expect(res.body.ok).toBe(true);
     });
+
+    it('rejette POST /api/v1/upload/* sans CSRF (uploads non exemptés)', async () => {
+      const app = express();
+      app.use(express.json());
+      app.use(cookieParser());
+      app.use('/api', csrfCookie);
+      app.use('/api', csrfProtection);
+      app.post('/api/v1/upload/fake-endpoint', (req, res) => res.json({ ok: true }));
+      const res = await request(app).post('/api/v1/upload/fake-endpoint').send({ x: 1 });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('CSRF_INVALID');
+    });
   });
 
   describe('Logging Security', () => {

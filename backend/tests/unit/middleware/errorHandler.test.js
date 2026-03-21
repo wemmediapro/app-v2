@@ -50,4 +50,59 @@ describe('errorHandler middleware', () => {
       expect.objectContaining({ message: 'Internal Server Error', error: 'DB exploded' })
     );
   });
+
+  it('utilise err.statusCode si err.status absent', () => {
+    process.env.NODE_ENV = 'production';
+    const err = Object.assign(new Error('Teapot'), { statusCode: 418 });
+    const res = {
+      statusCode: 200,
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    errorHandler(err, { method: 'GET', url: '/x' }, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(418);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Teapot' }));
+  });
+
+  it('utilise res.statusCode si err sans status ni statusCode', () => {
+    process.env.NODE_ENV = 'production';
+    const err = new Error('Handled');
+    const res = {
+      statusCode: 409,
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    errorHandler(err, { method: 'GET', url: '/x' }, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Handled' }));
+  });
+
+  it('message par défaut si err sans message', () => {
+    process.env.NODE_ENV = 'production';
+    const err = { status: 503 };
+    const res = {
+      statusCode: 200,
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    errorHandler(err, { method: 'GET', url: '/x' }, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Internal Server Error' })
+    );
+  });
+
+  it('statut 500 par défaut si ni err ni res ne définissent de code', () => {
+    process.env.NODE_ENV = 'production';
+    const err = { message: 'Sans code' };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    errorHandler(err, { method: 'GET', url: '/x' }, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Internal Server Error' })
+    );
+  });
 });

@@ -31,21 +31,39 @@ export function useNotifications(page, language) {
   }, [page, lang]);
 
   // Badge "non lues" quand on n'est pas sur la page notifications (polling + visibilité)
-  // En cas d'API indisponible (ex: backend non démarré), backoff pour éviter de saturer la console.
+  // Chaîne setTimeout (pas setInterval relancé à chaque réponse) pour éviter d'empiler des timers.
+  // En cas d'API indisponible (ex: backend non démarré), backoff pour limiter le bruit réseau / console.
   useEffect(() => {
     if (page === 'notifications') return;
+    let cancelled = false;
     let consecutiveFailures = 0;
+    let pollTimeoutId = null;
+    let requestSeq = 0;
+
     const INTERVAL_VISIBLE_MS = 5 * 1000;
     const INTERVAL_HIDDEN_MS = 30 * 1000;
-    const INTERVAL_BACKOFF_MS = 60 * 1000; // quand l'API ne répond pas
+    const INTERVAL_BACKOFF_MS = 60 * 1000;
     const MAX_FAILURES_BEFORE_BACKOFF = 2;
 
-    const fetchUnread = () => {
+    const baseDelayMs = () => {
+      if (consecutiveFailures >= MAX_FAILURES_BEFORE_BACKOFF) return INTERVAL_BACKOFF_MS;
+      return document.visibilityState === 'visible' ? INTERVAL_VISIBLE_MS : INTERVAL_HIDDEN_MS;
+    };
+
+    const scheduleNextPoll = (delayMs) => {
+      if (cancelled) return;
+      clearTimeout(pollTimeoutId);
+      pollTimeoutId = setTimeout(runPoll, delayMs);
+    };
+
+    const runPoll = () => {
+      if (cancelled) return;
+      const mySeq = ++requestSeq;
       apiService
         .getNotifications(`limit=50&lang=${lang}&_=${Date.now()}`)
         .then((r) => {
+          if (cancelled || mySeq !== requestSeq) return;
           consecutiveFailures = 0;
-          startInterval(); // repasser à l'intervalle normal après succès
           const list = normalizeApiList(r?.data);
           let lastOpen = 0;
           try {
@@ -65,25 +83,17 @@ export function useNotifications(page, language) {
           setNotificationsUnreadCount(count);
         })
         .catch(() => {
+          if (cancelled || mySeq !== requestSeq) return;
           setNotificationsUnreadCount(0);
           consecutiveFailures += 1;
-          startInterval(); // passer en backoff si trop d'échecs
+        })
+        .finally(() => {
+          if (cancelled || mySeq !== requestSeq) return;
+          scheduleNextPoll(baseDelayMs());
         });
     };
 
-    let intervalId = null;
-    const startInterval = () => {
-      if (intervalId) clearInterval(intervalId);
-      let ms = document.visibilityState === 'visible' ? INTERVAL_VISIBLE_MS : INTERVAL_HIDDEN_MS;
-      if (consecutiveFailures >= MAX_FAILURES_BEFORE_BACKOFF) {
-        ms = INTERVAL_BACKOFF_MS;
-      }
-      intervalId = setInterval(fetchUnread, ms);
-    };
-
-    fetchUnread();
-    const t1 = setTimeout(fetchUnread, 800);
-    startInterval();
+    runPoll();
 
     let lastVisibilityFetch = 0;
     const VISIBILITY_FETCH_MIN_MS = 30000;
@@ -92,16 +102,20 @@ export function useNotifications(page, language) {
         const now = Date.now();
         if (now - lastVisibilityFetch >= VISIBILITY_FETCH_MIN_MS) {
           lastVisibilityFetch = now;
-          fetchUnread();
+          clearTimeout(pollTimeoutId);
+          pollTimeoutId = null;
+          runPoll();
         }
+      } else {
+        scheduleNextPoll(baseDelayMs());
       }
-      startInterval();
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
-      clearTimeout(t1);
-      if (intervalId) clearInterval(intervalId);
+      cancelled = true;
+      requestSeq += 1;
+      clearTimeout(pollTimeoutId);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [page, lang]);

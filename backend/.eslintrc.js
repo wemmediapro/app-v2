@@ -38,6 +38,13 @@ module.exports = {
   ignorePatterns: ['node_modules/', 'coverage/', 'dist/', '*.min.js'],
   overrides: [
     {
+      files: ['src/**/*.js', 'server.js'],
+      rules: {
+        // Logs via Pino (logger / logRouteError) — scripts/ et tests exclus
+        'no-console': 'error',
+      },
+    },
+    {
       files: ['src/utils/**/*.js', 'src/middleware/**/*.js', 'src/lib/**/*.js'],
       rules: {
         'jsdoc/require-jsdoc': [

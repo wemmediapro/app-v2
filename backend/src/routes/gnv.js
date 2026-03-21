@@ -9,6 +9,7 @@ const Ship = require('../models/Ship');
 const LocalServerConfig = require('../models/LocalServerConfig');
 const { authMiddleware, adminMiddleware, optionalAuth } = require('../middleware/auth');
 const connectionCounters = require('../lib/connectionCounters');
+const { logRouteError } = require('../lib/route-logger');
 
 /** Formate un navire pour la réponse API (id = slug ou _id, route = chaîne) */
 function toShipResponse(doc) {
@@ -63,7 +64,7 @@ router.get('/ships', optionalAuth, async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Erreur route /api/gnv/ships:', error);
+    logRouteError(req, 'gnv_ships_list_failed', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des navires',
@@ -110,7 +111,7 @@ router.get('/ships/:id', async (req, res) => {
       message: 'Navire non trouvé',
     });
   } catch (error) {
-    console.error('Erreur route /api/gnv/ships/:id:', error);
+    logRouteError(req, 'gnv_ships_get_failed', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération du navire',
@@ -205,7 +206,7 @@ router.post('/ships', authMiddleware, adminMiddleware, async (req, res) => {
         message: 'Un navire avec ce nom ou cet identifiant existe déjà.',
       });
     }
-    console.error('Erreur route POST /api/gnv/ships:', error);
+    logRouteError(req, 'gnv_ships_create_failed', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la création du navire',
@@ -290,7 +291,7 @@ router.patch('/ships/:id', authMiddleware, adminMiddleware, async (req, res) => 
         message: 'Un navire avec ce nom ou cet identifiant existe déjà.',
       });
     }
-    console.error('Erreur route PATCH /api/gnv/ships/:id:', error);
+    logRouteError(req, 'gnv_ships_patch_failed', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour du navire',
@@ -326,7 +327,7 @@ router.delete('/ships/:id', authMiddleware, adminMiddleware, async (req, res) =>
       message: 'Navire non trouvé',
     });
   } catch (error) {
-    console.error('Erreur route DELETE /api/gnv/ships/:id:', error);
+    logRouteError(req, 'gnv_ships_delete_failed', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la désactivation du navire',
@@ -362,7 +363,7 @@ router.get('/boat-config', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Erreur route GET /api/gnv/boat-config:', error);
+    logRouteError(req, 'gnv_boat_config_get_failed', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération de la configuration du bateau',
@@ -420,7 +421,7 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Erreur route PATCH /api/gnv/boat-config:', error);
+    logRouteError(req, 'gnv_boat_config_patch_failed', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour de la configuration du bateau',
@@ -452,7 +453,7 @@ router.get('/connection-limit', authMiddleware, adminMiddleware, async (req, res
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Erreur route GET /api/gnv/connection-limit:', error);
+    logRouteError(req, 'gnv_connection_limit_get_failed', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération de la limite',
@@ -502,7 +503,7 @@ router.patch('/connection-limit', authMiddleware, adminMiddleware, async (req, r
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Erreur route PATCH /api/gnv/connection-limit:', error);
+    logRouteError(req, 'gnv_connection_limit_patch_failed', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour de la limite',

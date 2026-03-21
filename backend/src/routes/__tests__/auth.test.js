@@ -27,7 +27,7 @@ jest.mock('../../models/User', () => {
   return MockUser;
 });
 
-jest.mock('../../lib/logger', () => ({ logFailedLogin: jest.fn(), logApiError: jest.fn() }));
+jest.mock('../../lib/logger', () => ({ logFailedLogin: jest.fn(), error: jest.fn() }));
 jest.mock('../../lib/cache-manager', () => ({ isConnected: false, get: jest.fn(), set: jest.fn() }));
 jest.mock('../../services/auditService', () => ({ logAction: jest.fn().mockResolvedValue(null) }));
 

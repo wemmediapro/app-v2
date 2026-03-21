@@ -9,6 +9,7 @@ const { authMiddleware } = require('../middleware/auth');
 const { handleValidationErrors } = require('../middleware/validateInput');
 const Message = require('../models/Message');
 const User = require('../models/User');
+const { logRouteError } = require('../lib/route-logger');
 
 const router = express.Router();
 
@@ -166,7 +167,7 @@ router.post(
         mergeStrategy,
       });
     } catch (error) {
-      console.error('POST /api/sync/offline-queue:', error);
+      logRouteError(req, 'sync_offline_queue_failed', error);
       return res.status(500).json({
         success: false,
         message: 'Erreur lors de la synchronisation des messages',
@@ -177,3 +178,7 @@ router.post(
 );
 
 module.exports = router;
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports.__testParseReceiver = parseReceiverFromChatRoom;
+}

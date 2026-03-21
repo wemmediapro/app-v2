@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const logger = require('./logger');
 
 /**
  * Verifies the strength of the JWT secret key.
@@ -12,7 +13,7 @@ function verifyJWTSecretStrength(secret) {
 
 /**
  * Validates admin credentials configuration.
- * @param {Object} credentials - The admin credentials object.
+ * @param {object} credentials - The admin credentials object.
  * @returns {boolean} - Returns true if credentials are valid, otherwise false.
  */
 function validateAdminCredentials(credentials) {
@@ -29,8 +30,7 @@ function validateAdminCredentials(credentials) {
  * @param {boolean} status - The status of the validation.
  */
 function logSecurityValidationResults(message, status) {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${message}: ${status}`);
+  logger.info({ event: 'security_validation_result', message, status });
 }
 
 module.exports = { verifyJWTSecretStrength, validateAdminCredentials, logSecurityValidationResults };

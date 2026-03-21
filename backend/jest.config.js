@@ -21,6 +21,8 @@ module.exports = {
   maxWorkers: 1,
   // Timers / handles laissés par express-rate-limit ou intégrations — à investiguer avec --detectOpenHandles.
   forceExit: true,
+  // Évite les spies (ex. Restaurant.findByIdAndUpdate) qui survivent mal à resetMocks entre tests.
+  restoreMocks: true,
   roots: ['<rootDir>'],
   setupFiles: ['<rootDir>/tests/setup.js'],
   testMatch: [
@@ -33,16 +35,14 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'text-summary', 'lcov', 'html'],
   /**
-   * Cible produit : 80 % sur le périmètre collectCoverageFrom (routes + middleware + models listés).
-   * Les gros fichiers de routes (restaurants, messages) nécessitent encore des scénarios intégration ;
-   * le seuil global est relevé progressivement (voir docs/tests.md).
+   * Seuils globaux sur collectCoverageFrom (le résumé text-summary peut différer légèrement).
    */
   coverageThreshold: {
     global: {
-      branches: 42,
-      functions: 60,
-      lines: 64,
-      statements: 61,
+      branches: 87,
+      functions: 100,
+      lines: 99,
+      statements: 99,
     },
     'src/middleware/errorHandler.js': {
       branches: 60,

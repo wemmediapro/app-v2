@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const logger = require('./logger');
 
 const BACKEND_ROOT = path.join(__dirname, '..', '..');
 const DATA_DIR = path.join(BACKEND_ROOT, 'data');
@@ -29,7 +30,7 @@ function readShop() {
       promotions: Array.isArray(data.promotions) ? data.promotions : [],
     };
   } catch (e) {
-    console.warn('shop-fallback: read error', e.message);
+    logger.warn({ event: 'shop_fallback_read_failed', err: e.message });
     return { products: [], promotions: [] };
   }
 }

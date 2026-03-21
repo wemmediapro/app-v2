@@ -27,8 +27,11 @@ function globalErrorHandler(config = {}) {
       return next(err);
     }
 
+    const log = req?.log || logger;
+    const rid = req?.id;
+
     if (err instanceof AppError) {
-      logger.warn({
+      log.warn({
         event: 'app_error',
         message: err.message,
         statusCode: err.statusCode,
@@ -40,6 +43,7 @@ function globalErrorHandler(config = {}) {
         success: false,
         message: err.message,
         code: err.code,
+        ...(rid ? { requestId: rid } : {}),
         ...(isProduction ? {} : { stack: err.stack }),
       });
     }
@@ -48,7 +52,7 @@ function globalErrorHandler(config = {}) {
     if (sentry && sentry.captureException) {
       sentry.captureException(err);
     }
-    logger.error({
+    log.error({
       event: 'unhandled_error',
       err: err.message,
       stack: err.stack,
@@ -61,6 +65,7 @@ function globalErrorHandler(config = {}) {
       success: false,
       message: isProduction ? 'Internal server error' : err.message || 'Erreur serveur',
       code: 'INTERNAL_ERROR',
+      ...(rid ? { requestId: rid } : {}),
       ...(isProduction ? {} : { stack: err.stack }),
     });
   };

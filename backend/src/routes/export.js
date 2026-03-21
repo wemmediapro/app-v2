@@ -14,6 +14,7 @@ const webtvFallback = require('../lib/webtv-fallback');
 const bannersFallback = require('../lib/banners-fallback');
 const restaurantsFallback = require('../lib/restaurants-fallback');
 const shopFallback = require('../lib/shop-fallback');
+const { logRouteError } = require('../lib/route-logger');
 
 // @route   GET /api/export/snapshot
 // @query   lang=fr|en|es|it|de|ar  — optionnel : key=<EXPORT_SNAPSHOT_KEY> ou header X-Export-Key
@@ -120,7 +121,7 @@ router.get('/snapshot', async (req, res) => {
       _meta: { lang, exportedAt: new Date().toISOString(), source: 'fallback' },
     });
   } catch (error) {
-    console.error('Export snapshot error:', error);
+    logRouteError(req, 'export_snapshot_failed', error);
     res.status(500).json({
       message: 'Server error',
       ...(process.env.NODE_ENV === 'development' && { error: error.message }),

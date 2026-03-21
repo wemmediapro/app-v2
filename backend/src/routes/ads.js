@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const Ad = require('../models/Ad');
+const { logRouteError } = require('../lib/route-logger');
 
 function toResponse(doc) {
   if (!doc) {
@@ -42,7 +43,7 @@ router.get('/', authMiddleware, adminMiddleware, async (req, res) => {
       })
     );
   } catch (error) {
-    console.error('Get ads error:', error);
+    logRouteError(req, 'ads_list_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -92,7 +93,7 @@ router.get('/next', async (req, res) => {
       skipAfterPercent,
     });
   } catch (error) {
-    console.error('Get next ad error:', error);
+    logRouteError(req, 'ads_next_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -144,7 +145,7 @@ router.post('/:id/impression', async (req, res) => {
     }
     res.json({ ok: true, impressions: doc.impressions || 0 });
   } catch (error) {
-    console.error('Ad impression error:', error);
+    logRouteError(req, 'ads_impression_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -174,7 +175,7 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req, res) => {
         : 50;
     return res.json({ ...doc, skipAfterPercent, triggerAtPercent, id: (doc._id || doc.id)?.toString() });
   } catch (error) {
-    console.error('Get ad error:', error);
+    logRouteError(req, 'ads_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -226,7 +227,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     const saved = await Ad.findById(ad._id).lean();
     res.status(201).json({ ...saved, id: (saved._id || saved.id)?.toString() });
   } catch (error) {
-    console.error('Create ad error:', error);
+    logRouteError(req, 'ads_create_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -289,7 +290,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     return res.json({ ...doc, id: doc._id?.toString() });
   } catch (error) {
-    console.error('Update ad error:', error);
+    logRouteError(req, 'ads_update_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -306,7 +307,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     res.json({ message: 'Pub supprimée' });
   } catch (error) {
-    console.error('Delete ad error:', error);
+    logRouteError(req, 'ads_delete_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

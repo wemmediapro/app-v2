@@ -6,6 +6,7 @@
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 const path = require('path');
+const logger = require('../lib/logger');
 
 // Résolution 480p (854x480 pour 16:9)
 const TARGET_HEIGHT = 480;
@@ -66,7 +67,7 @@ function compressTo480p(inputPath, outputPath) {
       ])
       .output(outputPath)
       .on('start', (cmd) => {
-        console.log('🎬 Compression vidéo démarrée:', path.basename(inputPath));
+        logger.info({ event: 'video_compression_started', file: path.basename(inputPath) });
       })
       .on('progress', (progress) => {
         if (progress.percent) {
@@ -74,11 +75,15 @@ function compressTo480p(inputPath, outputPath) {
         }
       })
       .on('end', () => {
-        console.log('\n   ✓ Compression terminée');
+        logger.info({ event: 'video_compression_finished', file: path.basename(outputPath) });
         resolve(outputPath);
       })
       .on('error', (err) => {
-        console.error('   ✗ Erreur compression:', err.message);
+        logger.error({
+          event: 'video_compression_failed',
+          err: err.message,
+          stack: err.stack,
+        });
         reject(err);
       })
       .run();
@@ -109,7 +114,7 @@ async function processVideo(inputPath, outputFilename) {
   try {
     ffmpegAvailable = await checkFfmpegAvailable();
   } catch (e) {
-    console.warn('⚠️ Vérification FFmpeg:', e.message);
+    logger.warn({ event: 'video_ffmpeg_check_failed', err: e.message });
   }
 
   const copyWithoutCompression = (targetPath) => {
@@ -124,14 +129,18 @@ async function processVideo(inputPath, outputFilename) {
   };
 
   if (!ffmpegAvailable) {
-    console.warn('⚠️ FFmpeg non trouvé - La vidéo sera copiée sans compression');
+    logger.warn({ event: 'video_ffmpeg_missing_copy_raw', message: 'FFmpeg absent — copie sans compression' });
     return copyWithoutCompression(outputPathSameExt);
   }
 
   try {
     await compressTo480p(inputPath, outputPathMp4);
   } catch (compressErr) {
-    console.warn('⚠️ Compression échouée, copie sans compression:', compressErr.message);
+    logger.warn({
+      event: 'video_compression_fallback_copy',
+      err: compressErr.message,
+      stack: compressErr.stack,
+    });
     return copyWithoutCompression(outputPathSameExt);
   }
 
@@ -140,7 +149,7 @@ async function processVideo(inputPath, outputFilename) {
       fs.unlinkSync(inputPath);
     }
   } catch (e) {
-    console.warn('Impossible de supprimer le fichier temporaire:', inputPath);
+    logger.warn({ event: 'video_temp_input_unlink_failed', path: inputPath, err: e.message });
   }
 
   return { path: outputPathMp4, url: `/uploads/videos/${path.basename(outputPathMp4)}` };

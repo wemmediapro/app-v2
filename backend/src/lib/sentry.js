@@ -1,7 +1,8 @@
 /**
  * Sentry — monitoring des erreurs en production.
- * Actif uniquement si SENTRY_DSN est défini (recommandé en production).
+ * En production, SENTRY_DSN est exigé au démarrage (validateSecurityConfig) ; sans DSN valide, init() est sans effet.
  */
+const logger = require('./logger');
 let Sentry = null;
 let isActive = false;
 
@@ -26,9 +27,9 @@ function init() {
       },
     });
     isActive = true;
-    console.log('✅ Sentry: monitoring des erreurs actif');
+    logger.info({ event: 'sentry_initialized' });
   } catch (err) {
-    console.warn('⚠️  Sentry: init échouée', err.message);
+    logger.warn({ event: 'sentry_init_failed', err: err.message, stack: err.stack });
   }
 }
 

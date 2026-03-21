@@ -15,6 +15,7 @@ const IP_PREFIX = `${PREFIX}ip:`;
 const SKT_PREFIX = `${PREFIX}skt:`;
 
 const MAX_PER_IP_DEFAULT = parseInt(process.env.MAX_CONNECTIONS_PER_IP, 10) || 50;
+const logger = require('./logger');
 
 /** Suffixe clé Redis sûr pour une IP (évite : et caractères spéciaux). */
 function ipKeySuffix(ip) {
@@ -66,9 +67,9 @@ async function init(cacheManagerOrClient) {
   client = c && typeof c.eval === 'function' ? c : null;
   enabled = !!(client && typeof client.isOpen === 'function' && client.isOpen);
   if (enabled) {
-    console.log('✅ redis-connection-manager : suivi cross-worker gnv:connections:*');
+    logger.info({ event: 'redis_connection_manager_enabled' });
   } else {
-    console.log('⚠️  redis-connection-manager : inactif (pas de client Redis)');
+    logger.info({ event: 'redis_connection_manager_disabled', message: 'Pas de client Redis' });
   }
 }
 
@@ -89,7 +90,7 @@ async function isIpAtOrOverLimit(ip, maxPerIp = MAX_PER_IP_DEFAULT) {
     const n = v == null ? 0 : parseInt(v, 10);
     return !Number.isNaN(n) && n >= maxPerIp;
   } catch (e) {
-    console.warn('[redis-connection-manager] isIpAtOrOverLimit:', e.message);
+    logger.warn({ event: 'redis_connection_manager_ip_limit_check_failed', err: e.message });
     return false;
   }
 }
@@ -110,7 +111,7 @@ async function addConnectionGlobal(socketId, ip, maxPerIp = MAX_PER_IP_DEFAULT) 
     const res = await client.eval(LUA_ADD, { keys, arguments: args });
     return Number(res) === 1;
   } catch (e) {
-    console.warn('[redis-connection-manager] addConnectionGlobal:', e.message);
+    logger.warn({ event: 'redis_connection_manager_add_failed', err: e.message });
     return false;
   }
 }
@@ -140,7 +141,7 @@ async function removeConnectionGlobal(socketId) {
     await client.expire(KEY_ACTIVE, TTL_SEC);
     // total (cumul) ne décroit pas
   } catch (e) {
-    console.warn('[redis-connection-manager] removeConnectionGlobal:', e.message);
+    logger.warn({ event: 'redis_connection_manager_remove_failed', err: e.message });
   }
 }
 
@@ -198,7 +199,7 @@ async function getStatsGlobal() {
     byIP.sort((x, y) => y.count - x.count);
     out.byIP = byIP.slice(0, 20);
   } catch (e) {
-    console.warn('[redis-connection-manager] getStatsGlobal:', e.message);
+    logger.warn({ event: 'redis_connection_manager_get_stats_failed', err: e.message });
   }
   return out;
 }
@@ -207,9 +208,11 @@ async function getStatsGlobal() {
 async function loadGlobalStatsOnStartup() {
   const stats = await getStatsGlobal();
   if (stats.redis) {
-    console.log(
-      `[redis-connection-manager] Stats Redis au démarrage — actives: ${stats.active}, total acceptées: ${stats.totalAccepted}`
-    );
+    logger.info({
+      event: 'redis_connection_manager_startup_stats',
+      active: stats.active,
+      totalAccepted: stats.totalAccepted,
+    });
   }
   return stats;
 }

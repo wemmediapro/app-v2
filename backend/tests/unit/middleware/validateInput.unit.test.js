@@ -28,6 +28,16 @@ describe('validateInput', () => {
       mw(req, res, next);
       expect(next).toHaveBeenCalled();
     });
+
+    it('sans argument valide le param id par défaut', () => {
+      const mw = validateMongoId();
+      const id = new mongoose.Types.ObjectId().toString();
+      const req = { params: { id } };
+      const res = { status: jest.fn(), json: jest.fn() };
+      const next = jest.fn();
+      mw(req, res, next);
+      expect(next).toHaveBeenCalled();
+    });
   });
 
   describe('sanitizeSearchString', () => {
@@ -48,6 +58,15 @@ describe('validateInput', () => {
       const next = jest.fn();
       mw(req, res, next);
       expect(req.pagination).toEqual({ page: 2, limit: 10, skip: 10 });
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('sans options : defaultLimit 20 et repli si page/limit invalides', () => {
+      const mw = createValidatePagination();
+      const req = { query: { page: 'not-a-number', limit: 'also-bad' } };
+      const next = jest.fn();
+      mw(req, {}, next);
+      expect(req.pagination).toEqual({ page: 1, limit: 20, skip: 0 });
       expect(next).toHaveBeenCalled();
     });
   });

@@ -8,6 +8,7 @@ const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const EnfantActivity = require('../models/EnfantActivity');
 const { generateTranslationsForEnfant } = require('../lib/enfant-translations-openai');
+const { logRouteError } = require('../lib/route-logger');
 
 const AGE_RANGE_SUFFIX = {
   en: ' years',
@@ -67,7 +68,7 @@ router.get('/activities', async (req, res) => {
     }
     res.json([]);
   } catch (error) {
-    console.error('Get enfant activities error:', error);
+    logRouteError(req, 'enfant_activities_list_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -85,7 +86,7 @@ router.get('/activities/:id', async (req, res) => {
     }
     return res.status(404).json({ message: 'Activité non trouvée' });
   } catch (error) {
-    console.error('Get enfant activity error:', error);
+    logRouteError(req, 'enfant_activity_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -124,7 +125,7 @@ router.post('/activities', authMiddleware, adminMiddleware, async (req, res) => 
     const doc = activity.toObject();
     res.status(201).json({ ...doc, _id: doc._id?.toString(), image: doc.imageUrl });
   } catch (error) {
-    console.error('Create enfant activity error:', error);
+    logRouteError(req, 'enfant_activity_create_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -158,7 +159,7 @@ router.put('/activities/:id', authMiddleware, adminMiddleware, async (req, res) 
     const doc = activity.toObject();
     res.json({ ...doc, _id: doc._id?.toString(), image: doc.imageUrl });
   } catch (error) {
-    console.error('Update enfant activity error:', error);
+    logRouteError(req, 'enfant_activity_update_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -218,7 +219,7 @@ router.post('/activities/:id/translate', authMiddleware, adminMiddleware, async 
     const doc = { ...updated, _id: updated._id?.toString(), image: updated.imageUrl };
     res.json(doc);
   } catch (error) {
-    console.error('Translate enfant activity error:', error);
+    logRouteError(req, 'enfant_activity_translate_failed', error);
     res.status(500).json({ message: error.message || 'Erreur lors de la traduction OpenAI.' });
   }
 });
@@ -236,7 +237,7 @@ router.delete('/activities/:id', authMiddleware, adminMiddleware, async (req, re
     }
     res.json({ message: 'Activité supprimée' });
   } catch (error) {
-    console.error('Delete enfant activity error:', error);
+    logRouteError(req, 'enfant_activity_delete_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

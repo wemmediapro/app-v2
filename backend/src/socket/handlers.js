@@ -1,9 +1,10 @@
 /**
- * Handlers Socket.io : autorisation stricte, sanitization messages (XSS), rate limiting par socket.
+ * Handlers Socket.io : autorisation stricte, sanitization messages (XSS via DOMPurify), rate limiting par socket.
  * Sécurité : roomUtils — préfixe + appartenance (notifications = soi, ship = navire du handshake, chat = paire userId).
  * C6 : rate limit send-message 60 msg/min/socket (flood), compteur nettoyé au disconnect.
  * Protection flood globale : max SOCKET_RATE_LIMIT_MAX événements par socket par fenêtre (ex. 1h) pour join-room + send-message.
  */
+const DOMPurify = require('isomorphic-dompurify');
 const logger = require('../lib/logger');
 const connectionManager = require('../lib/connection-manager');
 const { hasAllowedPrefix, isRoomAuthorizedForUser } = require('./roomUtils');
@@ -67,15 +68,33 @@ function isRoomAllowed(room) {
   return hasAllowedPrefix(room);
 }
 
-/** Sanitize contenu (XSS) : strip HTML, limite longueur. En Node sans DOMPurify. */
+/** Sanitize contenu (XSS) : DOMPurify sans balises, contenu texte conservé, longueur plafonnée. */
 function sanitizeContent(str) {
   if (str == null) {
     return '';
   }
-  const s = String(str)
-    .replace(/<[^>]*>/g, '')
-    .trim();
-  return s.slice(0, MAX_MESSAGE_LENGTH);
+  const clean = DOMPurify.sanitize(String(str), {
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: [],
+    KEEP_CONTENT: true,
+  });
+  return String(clean).trim().slice(0, MAX_MESSAGE_LENGTH);
+}
+
+/**
+ * Champ optionnel type « légende / URL texte » pour send-message : uniquement une chaîne.
+ * Les objets/tableaux sont ignorés (évite [object Object] et champs non contrôlés côté clients).
+ */
+function sanitizeSocketAttachment(value) {
+  if (value == null) {
+    return undefined;
+  }
+  if (typeof value !== 'string') {
+    logger.warn({ event: 'socket_attachment_ignored', reason: 'non_string_type' });
+    return undefined;
+  }
+  const s = sanitizeContent(value);
+  return s.length > 0 ? s : undefined;
 }
 
 /** Applique les handlers sur une instance io déjà authentifiée. */
@@ -145,8 +164,17 @@ function attachSocketHandlers(io, connectionCounters) {
         }
         return;
       }
-      const content = sanitizeContent(data.content ?? data.text);
-      if (content.length === 0 && !data.attachment) {
+      const rawMsg = data.content ?? data.text;
+      if (rawMsg != null && typeof rawMsg !== 'string') {
+        logger.warn({ event: 'socket_send_message_denied', reason: 'invalid_content_type', socketId: socket.id });
+        if (typeof cb === 'function') {
+          cb(new Error('Invalid message content'));
+        }
+        return;
+      }
+      const content = sanitizeContent(rawMsg ?? '');
+      const attachment = sanitizeSocketAttachment(data.attachment);
+      if (content.length === 0 && attachment == null) {
         if (typeof cb === 'function') {
           cb(new Error('Empty message'));
         }
@@ -159,7 +187,7 @@ function attachSocketHandlers(io, connectionCounters) {
         senderId: socket.userId,
         sender: socket.userId,
         timestamp: new Date(),
-        ...(data.attachment && { attachment: sanitizeContent(data.attachment) }),
+        ...(attachment != null && { attachment }),
       };
       socket.to(data.room).emit('new-message', payload);
       if (typeof cb === 'function') {
@@ -182,6 +210,7 @@ module.exports = {
   attachSocketHandlers,
   isRoomAllowed,
   sanitizeContent,
+  sanitizeSocketAttachment,
   checkSocketRateLimit,
   checkSendMessageRateLimit,
   clearSocketRateLimit,

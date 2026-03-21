@@ -3,6 +3,7 @@
  */
 
 const mongoose = require('mongoose');
+const logger = require('./logger');
 
 class DatabaseManager {
   constructor() {
@@ -97,15 +98,19 @@ class DatabaseManager {
    */
   async connect(uri) {
     if (!uri) {
-      console.error('❌ MONGODB_URI non défini');
+      logger.error({ event: 'mongodb_uri_missing', err: 'MONGODB_URI non défini' });
       return false;
     }
 
     const serverType = this.detectServerType(uri);
     const options = this.getConnectionOptions(serverType);
 
-    console.log(`🔌 Connexion MongoDB optimisée (${serverType.toUpperCase()})...`);
-    console.log(`📊 Pool: ${options.minPoolSize}-${options.maxPoolSize} connexions`);
+    logger.info({
+      event: 'mongodb_connect_attempt',
+      serverType,
+      poolMin: options.minPoolSize,
+      poolMax: options.maxPoolSize,
+    });
 
     try {
       this.uri = uri;
@@ -113,22 +118,31 @@ class DatabaseManager {
       this.connectionState = 'connected';
       this.retryCount = 0;
 
-      console.log('✅ MongoDB connecté avec succès');
-      console.log(`📊 Pool configuré: ${options.minPoolSize}-${options.maxPoolSize} connexions`);
+      logger.info({
+        event: 'mongodb_connected',
+        serverType,
+        poolMin: options.minPoolSize,
+        poolMax: options.maxPoolSize,
+      });
 
       this.setupEventListeners();
 
       return true;
     } catch (error) {
       this.connectionState = 'error';
-      console.error('❌ Erreur de connexion MongoDB:', error.message);
+      logger.error({
+        event: 'mongodb_connect_failed',
+        err: error.message,
+        stack: error.stack,
+      });
       const retryUnlimited = this.maxRetries <= 0;
       if (retryUnlimited || this.retryCount < this.maxRetries) {
         this.scheduleReconnect(uri);
       } else {
-        console.error(
-          `🛑 Nombre max de tentatives (${this.maxRetries}) atteint. Redémarrez le backend pour réessayer.`
-        );
+        logger.error({
+          event: 'mongodb_max_retries_exceeded',
+          err: `Nombre max de tentatives (${this.maxRetries}) atteint. Redémarrez le backend pour réessayer.`,
+        });
       }
       return false;
     }
@@ -142,17 +156,17 @@ class DatabaseManager {
 
     connection.on('connected', () => {
       this.connectionState = 'connected';
-      console.log('✅ MongoDB: Connexion établie');
+      logger.info({ event: 'mongodb_driver_connected' });
     });
 
     connection.on('error', (err) => {
       this.connectionState = 'error';
-      console.error('❌ MongoDB: Erreur', err.message);
+      logger.error({ event: 'mongodb_connection_error', err: err.message, stack: err.stack });
     });
 
     connection.on('disconnected', () => {
       this.connectionState = 'disconnected';
-      console.warn('⚠️  MongoDB: Déconnecté — reconnexion automatique en cours...');
+      logger.warn({ event: 'mongodb_disconnected', message: 'Déconnecté — reconnexion automatique en cours' });
       if (this.uri) {
         this.scheduleReconnect(this.uri);
       }
@@ -160,12 +174,12 @@ class DatabaseManager {
 
     connection.on('reconnected', () => {
       this.connectionState = 'connected';
-      console.log('🔄 MongoDB: Reconnexion réussie');
+      logger.info({ event: 'mongodb_reconnected' });
     });
 
     // Monitoring du pool
     connection.on('fullsetup', () => {
-      console.log('📊 MongoDB: Pool de connexions initialisé');
+      logger.info({ event: 'mongodb_pool_initialized' });
     });
   }
 
@@ -176,7 +190,11 @@ class DatabaseManager {
     this.retryCount++;
     const delay = Math.min(this.retryDelay * this.retryCount, this.retryDelayMax);
     const label = this.maxRetries <= 0 ? `${this.retryCount}` : `${this.retryCount}/${this.maxRetries}`;
-    console.log(`🔄 Reconnexion MongoDB dans ${delay / 1000}s (tentative ${label})...`);
+    logger.info({
+      event: 'mongodb_reconnect_scheduled',
+      delaySeconds: delay / 1000,
+      attempt: label,
+    });
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
     }
@@ -230,7 +248,7 @@ class DatabaseManager {
     if (this.connection) {
       await mongoose.connection.close();
       this.connectionState = 'disconnected';
-      console.log('👋 MongoDB: Connexion fermée');
+      logger.info({ event: 'mongodb_disconnected_graceful' });
     }
   }
 }

@@ -8,6 +8,7 @@ const {
   sanitizeSearchString,
   handleValidationErrors,
 } = require('../middleware/validateInput');
+const { logRouteError } = require('../lib/route-logger');
 
 const router = express.Router();
 
@@ -48,7 +49,7 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
 
     res.json({ data, total, page, limit });
   } catch (error) {
-    console.error('Get users error:', error);
+    logRouteError(req, 'users_list_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -66,7 +67,7 @@ router.get('/:id', authMiddleware, validateMongoId('id'), handleValidationErrors
 
     res.json(user);
   } catch (error) {
-    console.error('Get user error:', error);
+    logRouteError(req, 'users_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

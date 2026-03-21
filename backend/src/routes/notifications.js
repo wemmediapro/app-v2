@@ -14,6 +14,7 @@ const {
   validateMongoId,
   handleValidationErrors,
 } = require('../middleware/validateInput');
+const { logRouteError } = require('../lib/route-logger');
 
 /** Dashboard admin : liste complète, défaut 100 entrées (plafonné par validatePagination à 100 max) */
 const validateNotificationsAdminPagination = createValidatePagination({ defaultLimit: 100 });
@@ -55,7 +56,7 @@ function normalizeNotificationBody(body) {
 
 // GET /api/notifications — liste publique pour l'app passagers (notifications envoyées, pas d'auth)
 // Ne renvoie jamais 500 : en cas d'erreur (DB déconnectée, etc.) on renvoie toujours 200 + { data: [], total: 0, ... }.
-function sendEmptyNotifications(res, pagination) {
+function sendEmptyNotifications(req, res, pagination) {
   if (res.headersSent) {
     return;
   }
@@ -64,7 +65,7 @@ function sendEmptyNotifications(res, pagination) {
   try {
     res.json({ data: [], total: 0, page, limit });
   } catch (e) {
-    console.error('sendEmptyNotifications:', e);
+    logRouteError(req, 'notifications_send_empty_failed', e);
   }
 }
 
@@ -77,7 +78,7 @@ router.get('/', validatePagination, handleValidationErrors, (req, res) => {
       const { skip, limit } = req.pagination;
 
       if (mongoose.connection.readyState !== 1) {
-        return sendEmptyNotifications(res, pagination);
+        return sendEmptyNotifications(req, res, pagination);
       }
       const now = new Date();
       const query = {
@@ -117,12 +118,12 @@ router.get('/', validatePagination, handleValidationErrors, (req, res) => {
         res.json({ data: list, total, page: req.pagination.page, limit });
       }
     } catch (error) {
-      console.error('Get notifications error:', error);
-      sendEmptyNotifications(res, pagination);
+      logRouteError(req, 'notifications_list_failed', error);
+      sendEmptyNotifications(req, res, pagination);
     }
   })().catch((err) => {
-    console.error('Get notifications unhandled:', err);
-    sendEmptyNotifications(res, pagination);
+    logRouteError(req, 'notifications_list_unhandled', err);
+    sendEmptyNotifications(req, res, pagination);
   });
 });
 
@@ -148,7 +149,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     });
     res.status(201).json(notification);
   } catch (error) {
-    console.error('Create notification error:', error);
+    logRouteError(req, 'notifications_create_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -201,7 +202,7 @@ router.get(
       });
       res.json(list);
     } catch (error) {
-      console.error('Get all notifications error:', error);
+      logRouteError(req, 'notifications_admin_list_failed', error);
       res.status(500).json({ message: 'Server error' });
     }
   }
@@ -226,7 +227,7 @@ router.delete(
       }
       res.json({ message: 'Notification supprimée', _id: idStr });
     } catch (error) {
-      console.error('Delete notification error:', error);
+      logRouteError(req, 'notifications_delete_failed', error);
       res.status(500).json({ message: 'Server error' });
     }
   }

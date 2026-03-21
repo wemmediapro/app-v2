@@ -7,6 +7,8 @@ const Article = require('../models/Article');
 const { safeRegexSearch } = require('../utils/regex-escape');
 const magazineFallback = require('../lib/magazine-fallback');
 const cacheManager = require('../lib/cache-manager');
+const { logRouteError } = require('../lib/route-logger');
+const logger = require('../lib/logger');
 
 // Localise le contenu depuis la base uniquement (aucun appel de traduction en ligne).
 // Langues : fr (champs principaux), en, es, it, de, ar (translations[code]). Si une traduction manque, on garde le français.
@@ -36,13 +38,19 @@ function localizeArticle(article, lang) {
     delete out.translations;
     return out;
   } catch (e) {
-    console.warn('localizeArticle skip:', e.message);
+    logger.warn({ event: 'magazine_localize_article_skipped', err: e.message });
     return { ...article, readTime: article.readingTime ?? 0 };
   }
 }
 
 // Cache Redis 60s pour listes publiques (sans Authorization) — audit CTO
 const LIST_CACHE_TTL = 60;
+
+async function invalidateMagazineListCache() {
+  if (cacheManager.isConnected) {
+    await cacheManager.delPattern('list:magazine:*');
+  }
+}
 
 // @route   GET /api/magazine
 // @desc    Get magazine articles (DB or demo). Query: lang=fr|en|es|it|de|ar pour le contenu multilingue. Si withTranslations=1 et admin, retourne les articles avec le champ translations (pour l’édition).
@@ -122,7 +130,7 @@ router.get('/', optionalAuth, async (req, res) => {
     }
     return res.json(body);
   } catch (error) {
-    console.error('Get magazine articles error:', error);
+    logRouteError(req, 'magazine_list_failed', error);
     // 503 + données vides pour retry côté front (audit CTO — fallback sous charge)
     res.status(503).json({
       message: 'Service temporairement indisponible. Réessayez dans un instant.',
@@ -177,9 +185,10 @@ router.post('/', authMiddleware, adminMiddleware, articleValidation, async (req,
     }
     const created = await Article.create(payload);
     const doc = created.toObject ? created.toObject() : created;
+    await invalidateMagazineListCache();
     return res.status(201).json({ data: { ...doc, readTime: doc.readingTime || 0 } });
   } catch (error) {
-    console.error('Create article error:', error);
+    logRouteError(req, 'magazine_create_failed', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -209,7 +218,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     }
     return res.json({ data });
   } catch (error) {
-    console.error('Get article error:', error);
+    logRouteError(req, 'magazine_get_failed', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -277,9 +286,10 @@ router.put('/:id', authMiddleware, adminMiddleware, articleValidation, async (re
     if (!updated) {
       return res.status(404).json({ message: 'Article non trouvé' });
     }
+    await invalidateMagazineListCache();
     return res.json({ data: { ...updated, readTime: updated.readingTime || 0 } });
   } catch (error) {
-    console.error('Update article error:', error);
+    logRouteError(req, 'magazine_update_failed', error);
     if (error.name === 'ValidationError') {
       const first = Object.values(error.errors)[0];
       const msg = first?.message || error.message;
@@ -308,9 +318,10 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ message: 'Article non trouvé' });
     }
+    await invalidateMagazineListCache();
     return res.json({ message: 'Article supprimé' });
   } catch (error) {
-    console.error('Delete article error:', error);
+    logRouteError(req, 'magazine_delete_failed', error);
     if (error.name === 'CastError') {
       return res.status(400).json({ message: 'Identifiant article invalide' });
     }

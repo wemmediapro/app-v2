@@ -9,6 +9,8 @@ const config = require('../config');
 const User = require('../models/User');
 const cacheManager = require('../lib/cache-manager');
 const authService = require('../services/authService');
+const { getApiPathSuffix } = require('../lib/apiPath');
+const logger = require('../lib/logger');
 
 const AUTH_USER_CACHE_TTL = 60; // 1 min
 const AUTH_USER_CACHE_PREFIX = 'auth:user:';
@@ -26,9 +28,10 @@ function getSecret() {
     }
     if (!secretMissingWarned) {
       secretMissingWarned = true;
-      console.error(
-        'CRITICAL: JWT_SECRET is not set. Set it in backend/config.env or backend/.env. Refusing to use a fallback secret.'
-      );
+      logger.error({
+        event: 'jwt_secret_not_set',
+        err: 'JWT_SECRET is not set. Set it in backend/config.env or backend/.env. Refusing to use a fallback secret.',
+      });
     }
     throw new Error('JWT_SECRET must be set in config.env or .env');
   }
@@ -206,6 +209,21 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
+/** En production : tout compte admin doit activer le 2FA avant toute autre action « admin ». */
+const ADMIN_2FA_ONBOARDING_PATHS = new Set([
+  '/auth/2fa/setup',
+  '/auth/2fa/verify',
+  '/auth/me',
+  '/auth/logout',
+  '/auth/register',
+]);
+
+function isAdminTwoFactorOnboardingPath(req) {
+  const sub = getApiPathSuffix(req.originalUrl || req.url || req.path || '');
+  const pathOnly = (sub || '/').split('?')[0];
+  return ADMIN_2FA_ONBOARDING_PATHS.has(pathOnly);
+}
+
 const adminMiddleware = async (req, res, next) => {
   try {
     if (!req.user) {
@@ -213,6 +231,18 @@ const adminMiddleware = async (req, res, next) => {
     }
     if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+    }
+    const need2fa =
+      process.env.NODE_ENV === 'production' &&
+      process.env.ADMIN_2FA_OPTIONAL !== '1' &&
+      !req.user.twoFactorEnabled &&
+      !isAdminTwoFactorOnboardingPath(req);
+    if (need2fa) {
+      return res.status(403).json({
+        message:
+          'En production, les administrateurs doivent activer l’authentification à deux facteurs (2FA) avant d’utiliser le tableau de bord. Utilisez POST /api/auth/2fa/setup puis /api/auth/2fa/verify.',
+        code: 'ADMIN_2FA_SETUP_REQUIRED',
+      });
     }
     next();
   } catch (error) {
@@ -311,3 +341,7 @@ module.exports = {
   requireRole,
   optionalAuth,
 };
+
+if (process.env.NODE_ENV === 'test') {
+  module.exports.__testIsAdminTwoFactorOnboardingPath = isAdminTwoFactorOnboardingPath;
+}

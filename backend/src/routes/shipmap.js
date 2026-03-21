@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const Shipmap = require('../models/Shipmap');
+const { logRouteError } = require('../lib/route-logger');
 
 const SUPPORTED_LANGS = ['fr', 'en', 'es', 'it', 'de', 'ar'];
 
@@ -104,7 +105,7 @@ router.get('/decks', async (req, res) => {
     }
     res.json([]);
   } catch (error) {
-    console.error('Get shipmap decks error:', error);
+    logRouteError(req, 'shipmap_decks_list_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -137,7 +138,7 @@ router.get('/', async (req, res) => {
     }
     res.json({ decks: [], services: [] });
   } catch (error) {
-    console.error('Get shipmap error:', error);
+    logRouteError(req, 'shipmap_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -161,7 +162,7 @@ router.get('/decks/:id', async (req, res) => {
     }
     return res.status(404).json({ message: 'Pont non trouvé' });
   } catch (error) {
-    console.error('Get shipmap deck error:', error);
+    logRouteError(req, 'shipmap_deck_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -197,7 +198,7 @@ router.post('/decks', authMiddleware, adminMiddleware, async (req, res) => {
     const doc = deck.toObject();
     res.status(201).json({ ...doc, _id: doc._id?.toString() });
   } catch (error) {
-    console.error('Create shipmap deck error:', error);
+    logRouteError(req, 'shipmap_deck_create_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -221,7 +222,7 @@ router.put('/decks/:id', authMiddleware, adminMiddleware, async (req, res) => {
     const doc = deck.toObject();
     res.json({ ...doc, _id: doc._id?.toString() });
   } catch (error) {
-    console.error('Update shipmap deck error:', error);
+    logRouteError(req, 'shipmap_deck_update_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -260,7 +261,7 @@ router.put('/', authMiddleware, adminMiddleware, async (req, res) => {
       services: [...new Set(normalized.flatMap((d) => (d.services || []).map((s) => s.name).filter(Boolean)))],
     });
   } catch (error) {
-    console.error('Update shipmap error:', error);
+    logRouteError(req, 'shipmap_update_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -278,7 +279,7 @@ router.delete('/decks/:id', authMiddleware, adminMiddleware, async (req, res) =>
     }
     res.json({ message: 'Pont supprimé' });
   } catch (error) {
-    console.error('Delete shipmap deck error:', error);
+    logRouteError(req, 'shipmap_deck_delete_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

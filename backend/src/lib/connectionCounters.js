@@ -4,6 +4,7 @@
  * La limite maxConnections est celle du serveur où tourne le backend (configurable au dashboard).
  */
 
+const logger = require('./logger');
 const REDIS_KEY = 'socket:connections:total';
 
 let redisStore = null; // cacheManager ou client Redis
@@ -28,7 +29,10 @@ async function increment() {
       await redisStore.incr(REDIS_KEY);
       return;
     } catch (err) {
-      console.warn('connectionCounters Redis INCR:', err?.message || err);
+      logger.warn({
+        event: 'connection_counters_redis_incr_failed',
+        err: err?.message != null ? err.message : String(err),
+      });
     }
   }
   localTotal += 1;
@@ -42,7 +46,10 @@ async function decrement() {
       }
       return;
     } catch (err) {
-      console.warn('connectionCounters Redis DECR:', err?.message || err);
+      logger.warn({
+        event: 'connection_counters_redis_decr_failed',
+        err: err?.message != null ? err.message : String(err),
+      });
     }
   }
   if (localTotal > 0) {
@@ -61,7 +68,10 @@ async function getTotalCountAsync() {
       const n = parseInt(val, 10);
       return Number.isNaN(n) ? 0 : Math.max(0, n);
     } catch (err) {
-      console.warn('connectionCounters Redis GET:', err?.message || err);
+      logger.warn({
+        event: 'connection_counters_redis_get_failed',
+        err: err?.message != null ? err.message : String(err),
+      });
       return localTotal;
     }
   }

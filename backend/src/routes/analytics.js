@@ -12,6 +12,7 @@ const Restaurant = require('../models/Restaurant');
 const WebTVChannel = require('../models/WebTVChannel');
 const Feedback = require('../models/Feedback');
 const connectionCounters = require('../lib/connectionCounters');
+const { logRouteError } = require('../lib/route-logger');
 
 /** Uptime en pourcentage (basé sur process.uptime(), plafonné à 100 %) */
 function getSystemUptimePercent() {
@@ -57,7 +58,7 @@ router.get('/connections', authMiddleware, adminMiddleware, async (req, res) => 
       bandwidthUsage: { total: null, average: null, peak: null, byContent: [] },
     });
   } catch (err) {
-    console.error('Analytics connections error:', err);
+    logRouteError(req, 'analytics_connections_failed', err);
     res.status(500).json({ message: 'Erreur lors du chargement des connexions' });
   }
 });
@@ -111,7 +112,7 @@ router.get('/content', authMiddleware, adminMiddleware, async (req, res) => {
       totalViewers,
     });
   } catch (err) {
-    console.error('Analytics content error:', err);
+    logRouteError(req, 'analytics_content_failed', err);
     res.status(500).json({ message: 'Erreur lors du chargement du contenu' });
   }
 });
@@ -130,7 +131,7 @@ router.get('/performance', authMiddleware, adminMiddleware, async (req, res) => 
       databaseQueries: { total: null, average: null, slowQueries: null, optimization: null },
     });
   } catch (err) {
-    console.error('Analytics performance error:', err);
+    logRouteError(req, 'analytics_performance_failed', err);
     res.status(500).json({ message: 'Erreur lors du chargement des performances' });
   }
 });
@@ -250,7 +251,7 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
       alerts: alertsFormatted,
     });
   } catch (err) {
-    console.error('Analytics overview error:', err);
+    logRouteError(req, 'analytics_overview_failed', err);
     res.status(500).json({ message: "Erreur lors du chargement de la vue d'ensemble" });
   }
 });

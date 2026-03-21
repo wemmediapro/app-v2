@@ -2,15 +2,15 @@
  * Point d’entrée des routes API : monte toutes les routes sur l’app Express.
  * Versionnement : préfixe canonique `/api/v1` ; `/api` reste un alias (MVP / rétrocompatibilité).
  * @param {import('express').Application} app
- * @param {{ dbManager: { isConnected: () => boolean }, connectionCounters?: object, apiBases?: string[] }} deps
+ * @param {{ dbManager: { isConnected: () => boolean }, connectionCounters?: object, apiBases?: string[], cacheManager?: { pingHealth?: () => Promise<{ ok: boolean, status: string }> } }} deps
  */
 function mountRoutes(app, deps = {}) {
-  const { dbManager, connectionCounters, apiBases } = deps;
+  const { dbManager, connectionCounters, apiBases, cacheManager } = deps;
   const { API_BASE_PATHS } = require('../constants/apiVersion');
   const bases = Array.isArray(apiBases) && apiBases.length ? apiBases : API_BASE_PATHS;
 
   for (const base of bases) {
-    mountRoutesAtBase(app, base, { dbManager, connectionCounters });
+    mountRoutesAtBase(app, base, { dbManager, connectionCounters, cacheManager });
   }
 }
 
@@ -18,7 +18,7 @@ function mountRoutes(app, deps = {}) {
  * @param {import('express').Application} app
  * @param {string} base ex. /api/v1 ou /api
  */
-function mountRoutesAtBase(app, base, { dbManager, connectionCounters }) {
+function mountRoutesAtBase(app, base, { dbManager, connectionCounters, cacheManager }) {
   const mediaLibraryRouter = require('./media-library');
   app.use(`${base}/media-library`, mediaLibraryRouter);
   app.use(`${base}/upload/media`, mediaLibraryRouter);
@@ -123,20 +123,32 @@ function mountRoutesAtBase(app, base, { dbManager, connectionCounters }) {
    *               properties:
    *                 ready: { type: boolean, example: true }
    *                 mongodb: { type: string, example: 'connected' }
+   *                 redis: { type: string, example: 'connected', description: 'connected|disconnected|error|skipped (dev sans Redis)' }
    *                 apiVersion: { type: string, example: 'v1' }
    *                 timestamp: { type: string, format: date-time }
    *       503:
    *         description: Base indisponible
    */
-  app.get(`${base}/health/ready`, (req, res) => {
+  app.get(`${base}/health/ready`, async (req, res) => {
     const dbConnected = dbManager && typeof dbManager.isConnected === 'function' && dbManager.isConnected();
+    const isProd = process.env.NODE_ENV === 'production';
+
+    let redis = { ok: true, status: 'skipped' };
+    if (cacheManager && typeof cacheManager.pingHealth === 'function') {
+      redis = await cacheManager.pingHealth();
+    }
+
+    const redisBlocksReady = isProd && !redis.ok;
+    const ready = dbConnected && !redisBlocksReady;
+
     const body = {
-      ready: dbConnected,
+      ready,
       mongodb: dbConnected ? 'connected' : 'disconnected',
+      redis: redis.status,
       apiVersion: 'v1',
       timestamp: new Date().toISOString(),
     };
-    if (dbConnected) {
+    if (ready) {
       return res.status(200).json(body);
     }
     return res.status(503).json(body);

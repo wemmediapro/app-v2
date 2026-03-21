@@ -1,6 +1,8 @@
 // Module de gestion des utilisateurs
 const express = require('express');
 const { authMiddleware: authenticateToken, adminMiddleware: requireAdmin } = require('../../middleware/auth');
+const { logRouteError } = require('../../lib/route-logger');
+const logger = require('../../lib/logger');
 
 const router = express.Router();
 
@@ -252,7 +254,7 @@ router.get('/', authenticateToken, (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Get users error:', error);
+    logRouteError(req, 'module_users_list_failed', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs' });
   }
 });
@@ -276,7 +278,7 @@ router.get('/:id', authenticateToken, (req, res) => {
       res.json(publicUser);
     }
   } catch (error) {
-    console.error('Get user error:', error);
+    logRouteError(req, 'module_users_get_failed', error);
     res.status(500).json({ error: "Erreur lors de la récupération de l'utilisateur" });
   }
 });
@@ -311,7 +313,7 @@ router.put('/:id', authenticateToken, (req, res) => {
       user: updatedUser,
     });
   } catch (error) {
-    console.error('Update user error:', error);
+    logRouteError(req, 'module_users_update_failed', error);
     res.status(500).json({ error: "Erreur lors de la mise à jour de l'utilisateur" });
   }
 });
@@ -332,7 +334,7 @@ router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
 
     res.json({ message: 'Utilisateur désactivé avec succès' });
   } catch (error) {
-    console.error('Delete user error:', error);
+    logRouteError(req, 'module_users_delete_failed', error);
     res.status(500).json({ error: "Erreur lors de la désactivation de l'utilisateur" });
   }
 });
@@ -352,7 +354,7 @@ router.post('/:id/activate', authenticateToken, requireAdmin, (req, res) => {
 
     res.json({ message: 'Utilisateur réactivé avec succès' });
   } catch (error) {
-    console.error('Activate user error:', error);
+    logRouteError(req, 'module_users_activate_failed', error);
     res.status(500).json({ error: "Erreur lors de la réactivation de l'utilisateur" });
   }
 });
@@ -382,7 +384,7 @@ router.get('/:id/activity', authenticateToken, (req, res) => {
 
     res.json(activity);
   } catch (error) {
-    console.error('Get user activity error:', error);
+    logRouteError(req, 'module_users_activity_failed', error);
     res.status(500).json({ error: "Erreur lors de la récupération de l'activité" });
   }
 });
@@ -414,7 +416,7 @@ router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
 
     res.json(stats);
   } catch (error) {
-    console.error('Get user stats error:', error);
+    logRouteError(req, 'module_users_stats_failed', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
   }
 });
@@ -422,7 +424,7 @@ router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
 // Fonction d'initialisation du module
 const initialize = (app, io) => {
   app.use('/api/users', router);
-  console.log('✅ Module Users initialisé');
+  logger.info({ event: 'module_users_initialized' });
 };
 
 module.exports = {

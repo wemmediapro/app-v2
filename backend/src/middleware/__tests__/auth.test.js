@@ -64,6 +64,68 @@ describe('auth middleware', () => {
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
     });
+
+    it('production : 403 ADMIN_2FA_SETUP_REQUIRED si admin sans 2FA hors onboarding', async () => {
+      const prev = process.env.NODE_ENV;
+      delete process.env.ADMIN_2FA_OPTIONAL;
+      process.env.NODE_ENV = 'production';
+      const req = {
+        user: { id: '1', role: 'admin', twoFactorEnabled: false },
+        originalUrl: '/api/v1/movies',
+      };
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+      const next = jest.fn();
+      await adminMiddleware(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'ADMIN_2FA_SETUP_REQUIRED' }));
+      expect(next).not.toHaveBeenCalled();
+      process.env.NODE_ENV = prev;
+    });
+
+    it('production : laisse passer admin sans 2FA pour POST /auth/2fa/setup', async () => {
+      const prev = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      const req = {
+        user: { id: '1', role: 'admin', twoFactorEnabled: false },
+        originalUrl: '/api/v1/auth/2fa/setup',
+      };
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+      const next = jest.fn();
+      await adminMiddleware(req, res, next);
+      expect(next).toHaveBeenCalled();
+      process.env.NODE_ENV = prev;
+    });
+
+    it('production : laisse passer /auth/register avant 2FA (bootstrap comptes)', async () => {
+      const prev = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      const req = {
+        user: { id: '1', role: 'admin', twoFactorEnabled: false },
+        originalUrl: '/api/v1/auth/register',
+      };
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+      const next = jest.fn();
+      await adminMiddleware(req, res, next);
+      expect(next).toHaveBeenCalled();
+      process.env.NODE_ENV = prev;
+    });
+
+    it('production : ADMIN_2FA_OPTIONAL=1 désactive le blocage 2FA', async () => {
+      const prevEnv = process.env.NODE_ENV;
+      const prevOpt = process.env.ADMIN_2FA_OPTIONAL;
+      process.env.NODE_ENV = 'production';
+      process.env.ADMIN_2FA_OPTIONAL = '1';
+      const req = {
+        user: { id: '1', role: 'admin', twoFactorEnabled: false },
+        originalUrl: '/api/v1/movies',
+      };
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+      const next = jest.fn();
+      await adminMiddleware(req, res, next);
+      expect(next).toHaveBeenCalled();
+      process.env.NODE_ENV = prevEnv;
+      process.env.ADMIN_2FA_OPTIONAL = prevOpt;
+    });
   });
 
   describe('requireRole', () => {

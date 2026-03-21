@@ -1,6 +1,8 @@
 // Module de gestion des restaurants et gastronomie
 const express = require('express');
 const { authMiddleware: authenticateToken, adminMiddleware: requireAdmin } = require('../../middleware/auth');
+const { logRouteError } = require('../../lib/route-logger');
+const logger = require('../../lib/logger');
 
 const router = express.Router();
 
@@ -404,7 +406,7 @@ router.get('/', (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Get restaurants error:', error);
+    logRouteError(req, 'module_restaurants_list_failed', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des restaurants' });
   }
 });
@@ -421,7 +423,7 @@ router.get('/:id', (req, res) => {
 
     res.json(restaurant);
   } catch (error) {
-    console.error('Get restaurant error:', error);
+    logRouteError(req, 'module_restaurants_get_failed', error);
     res.status(500).json({ error: 'Erreur lors de la récupération du restaurant' });
   }
 });
@@ -474,7 +476,7 @@ router.get('/:id/menu', (req, res) => {
       menu,
     });
   } catch (error) {
-    console.error('Get restaurant menu error:', error);
+    logRouteError(req, 'module_restaurants_menu_failed', error);
     res.status(500).json({ error: 'Erreur lors de la récupération du menu' });
   }
 });
@@ -500,7 +502,7 @@ router.post('/', authenticateToken, requireAdmin, (req, res) => {
       restaurant: newRestaurant,
     });
   } catch (error) {
-    console.error('Create restaurant error:', error);
+    logRouteError(req, 'module_restaurants_create_failed', error);
     res.status(500).json({ error: 'Erreur lors de la création du restaurant' });
   }
 });
@@ -529,7 +531,7 @@ router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
       restaurant: updatedRestaurant,
     });
   } catch (error) {
-    console.error('Update restaurant error:', error);
+    logRouteError(req, 'module_restaurants_update_failed', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour du restaurant' });
   }
 });
@@ -548,7 +550,7 @@ router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
 
     res.json({ message: 'Restaurant supprimé avec succès' });
   } catch (error) {
-    console.error('Delete restaurant error:', error);
+    logRouteError(req, 'module_restaurants_delete_failed', error);
     res.status(500).json({ error: 'Erreur lors de la suppression du restaurant' });
   }
 });
@@ -569,7 +571,7 @@ router.get('/categories/list', (req, res) => {
 
     res.json(categories);
   } catch (error) {
-    console.error('Get categories error:', error);
+    logRouteError(req, 'module_restaurants_categories_failed', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des catégories' });
   }
 });
@@ -603,7 +605,7 @@ router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
 
     res.json(stats);
   } catch (error) {
-    console.error('Get restaurant stats error:', error);
+    logRouteError(req, 'module_restaurants_stats_failed', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
   }
 });
@@ -611,7 +613,7 @@ router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
 // Fonction d'initialisation du module
 const initialize = (app, io) => {
   app.use('/api/restaurants', router);
-  console.log('✅ Module Restaurants initialisé');
+  logger.info({ event: 'module_restaurants_initialized' });
 };
 
 module.exports = {

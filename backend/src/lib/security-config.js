@@ -6,6 +6,8 @@
  * CSRF : les exemptions sont dans src/middleware/csrf.js (EXEMPT_PATHS, EXEMPT_PATH_PATTERNS).
  * Ne doivent figurer que login/register/refresh et tracking public (banners/ads/radio) — aucune route sensible.
  */
+const logger = require('./logger');
+
 function validateSecurityConfig() {
   const isProduction = process.env.NODE_ENV === 'production';
 
@@ -55,15 +57,28 @@ function validateSecurityConfig() {
         'CRITICAL: ADMIN_PASSWORD must not be a known default or trivial password. Choose a unique strong password (12+ characters).'
       );
     }
+
+    const sentryDsn = (process.env.SENTRY_DSN || '').trim();
+    if (!sentryDsn) {
+      throw new Error('CRITICAL: SENTRY_DSN must be set (non-empty) in production.');
+    }
+    if (!sentryDsn.startsWith('https://')) {
+      throw new Error('CRITICAL: SENTRY_DSN must be a valid HTTPS DSN URL in production.');
+    }
   } else {
     // En dev : avertissements seulement
     if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-      console.warn('WARN: JWT_SECRET should be at least 32 characters for production.');
+      logger.warn({
+        event: 'security_config_jwt_short_dev',
+        message: 'JWT_SECRET should be at least 32 characters for production.',
+      });
     }
     if (!(process.env.ADMIN_EMAIL || '').trim() || !process.env.ADMIN_PASSWORD) {
-      console.warn(
-        'WARN: ADMIN_EMAIL et ADMIN_PASSWORD doivent être définis dans config.env pour le login admin (sinon POST /api/auth/login renverra 500).'
-      );
+      logger.warn({
+        event: 'security_config_admin_credentials_missing_dev',
+        message:
+          'ADMIN_EMAIL et ADMIN_PASSWORD doivent être définis dans config.env pour le login admin (sinon POST /api/auth/login renverra 500).',
+      });
     }
   }
 }

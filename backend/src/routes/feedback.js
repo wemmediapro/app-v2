@@ -2,6 +2,7 @@ const express = require('express');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { feedbackValidation } = require('../middleware/validation');
 const Feedback = require('../models/Feedback');
+const { logRouteError } = require('../lib/route-logger');
 
 const router = express.Router();
 
@@ -26,7 +27,7 @@ router.post('/', authMiddleware, feedbackValidation, async (req, res) => {
       feedback,
     });
   } catch (error) {
-    console.error('Submit feedback error:', error);
+    logRouteError(req, 'feedback_submit_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -62,7 +63,7 @@ router.get('/', authMiddleware, async (req, res) => {
       total,
     });
   } catch (error) {
-    console.error('Get feedback error:', error);
+    logRouteError(req, 'feedback_list_mine_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -87,7 +88,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
     res.json(feedback);
   } catch (error) {
-    console.error('Get feedback error:', error);
+    logRouteError(req, 'feedback_get_one_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -128,7 +129,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       feedback: updatedFeedback,
     });
   } catch (error) {
-    console.error('Update feedback error:', error);
+    logRouteError(req, 'feedback_update_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -168,7 +169,7 @@ router.get('/admin/all', authMiddleware, adminMiddleware, async (req, res) => {
       total,
     });
   } catch (error) {
-    console.error('Get all feedback error:', error);
+    logRouteError(req, 'feedback_admin_list_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -205,7 +206,7 @@ router.put('/admin/:id', authMiddleware, adminMiddleware, async (req, res) => {
       feedback,
     });
   } catch (error) {
-    console.error('Admin update feedback error:', error);
+    logRouteError(req, 'feedback_admin_update_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

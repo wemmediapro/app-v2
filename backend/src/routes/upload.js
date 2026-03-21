@@ -11,6 +11,8 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { processVideo, checkFfmpegAvailable } = require('../services/videoCompression');
 const { encodeToHls } = require('../services/hlsEncode');
 const { optimizeImage, optimizeImageBuffer, writeWebpSibling } = require('../services/imageOptimization');
+const { logRouteError } = require('../lib/route-logger');
+const logger = require('../lib/logger');
 
 const router = express.Router();
 
@@ -49,7 +51,7 @@ const { temp: UPLOAD_DIR, videos: VIDEOS_DIR, images: IMAGES_DIR, audio: AUDIO_D
 [UPLOAD_DIR, VIDEOS_DIR, IMAGES_DIR, AUDIO_DIR].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
-    console.log('📁 Dossier créé:', dir);
+    logger.info({ event: 'upload_dir_created', dir });
   }
 });
 
@@ -192,10 +194,10 @@ router.post(
         encodeToHls(outputPath)
           .then((hls) => {
             if (hls) {
-              console.log('HLS généré:', hls.hlsUrl);
+              logger.info({ event: 'upload_hls_generated', hlsUrl: hls.hlsUrl });
             }
           })
-          .catch((e) => console.warn('HLS encode (async):', e.message));
+          .catch((e) => logger.warn({ event: 'upload_hls_encode_async_failed', err: e.message }));
       }
 
       const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
@@ -209,7 +211,7 @@ router.post(
         },
       });
     } catch (error) {
-      console.error('Erreur upload vidéo:', error);
+      logRouteError(req, 'upload_video_failed', error);
 
       if (req.file?.path && fs.existsSync(req.file.path)) {
         try {
@@ -277,7 +279,7 @@ router.post(
           filePath = result.path;
           filename = result.filename;
         } catch (optErr) {
-          console.warn('Optimisation image (fallback sans optimisation):', optErr.message);
+          logger.warn({ event: 'upload_image_optimize_fallback', err: optErr.message });
         }
         const webpFilename = await writeWebpSibling(filePath);
         const port = process.env.PORT || 3000;
@@ -300,7 +302,7 @@ router.post(
           },
         });
       } catch (error) {
-        console.error('Upload image error:', error);
+        logRouteError(req, 'upload_image_failed', error);
         if (!res.headersSent) {
           res.status(500).json({
             success: false,
@@ -367,7 +369,7 @@ router.post(
         },
       });
     } catch (error) {
-      console.error('Upload audio error:', error);
+      logRouteError(req, 'upload_audio_failed', error);
       if (!res.headersSent) {
         res.status(500).json({
           success: false,
@@ -425,7 +427,7 @@ router.get('/media', authMiddleware, adminMiddleware, (req, res) => {
       media: [...videos, ...images, ...audio],
     });
   } catch (error) {
-    console.error('List media error:', error);
+    logRouteError(req, 'upload_media_list_failed', error);
     res.status(500).json({
       success: false,
       message: process.env.NODE_ENV === 'development' ? error.message : 'Erreur lors de la lecture des médias.',
@@ -486,7 +488,7 @@ router.delete('/media', authMiddleware, adminMiddleware, (req, res) => {
       message: 'Fichier supprimé du serveur.',
     });
   } catch (error) {
-    console.error('Delete media error:', error);
+    logRouteError(req, 'upload_media_delete_failed', error);
     res.status(500).json({
       success: false,
       message: process.env.NODE_ENV === 'development' ? error.message : 'Erreur lors de la suppression.',
@@ -565,7 +567,7 @@ router.post('/image-from-base64', async (req, res) => {
       finalBuffer = optimized.buffer;
       filename = optimized.filename;
     } catch (optErr) {
-      console.warn('Optimisation image-from-base64 (fallback):', optErr.message);
+      logger.warn({ event: 'upload_image_base64_optimize_fallback', err: optErr.message });
     }
     const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
     if (!/\.(png|jpe?g|gif|webp)$/i.test(safeName)) {
@@ -599,7 +601,7 @@ router.post('/image-from-base64', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Upload image-from-base64 error:', error);
+    logRouteError(req, 'upload_image_from_base64_failed', error);
     res.status(500).json({
       success: false,
       message: process.env.NODE_ENV === 'development' ? error.message : "Erreur lors de l'enregistrement de l'image.",

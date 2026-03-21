@@ -30,6 +30,7 @@ npm run test:ci       # CI stricte
 
 - **Isolation** : mocker `mongoose` / modèles quand le test ne vise pas la persistance ; le projet utilise `maxWorkers: 1` pour limiter les interférences.
 - **Handlers HTTP** : monter une mini-app `express()` avec `express.json()`, brancher le routeur sous test, appeler avec `supertest` (voir `backend/tests/unit/routes/`).
+- **Logs d’erreur route** : spy sur `logger.error` et assert `event` / `err` comme décrit dans [`backend/tests/README.md`](../backend/tests/README.md) (section _Erreurs de route_).
 - **Handles ouverts** : si Jest ne se termine pas, `npx jest --detectOpenHandles` (timers / rate-limit).
 
 ### Couverture
@@ -59,14 +60,14 @@ Le workflow GitHub Actions (`.github/workflows/tests.yml`) exécute en général
 
 ## Exemples concrets dans le dépôt (copier / s’inspirer)
 
-| Type                       | Fichiers                                                                                                                                     |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Route API + supertest**  | `backend/tests/unit/routes/auth.extended.test.js`, `messages.routes.test.js`, `restaurants.routes.test.js`, `critical.routes.test.js`        |
-| **Middleware**             | `backend/tests/unit/middleware/authMiddleware.flow.test.js`, `validateInput.unit.test.js`, `errorHandler.test.js`                            |
-| **Sécurité / credentials** | `backend/tests/unit/routes/auth.security-credentials.test.js`, `backend/src/__tests__/security.test.js`                                      |
-| **Fixtures**               | `backend/tests/fixtures/` (users, restaurants, messages, feedback) — voir [backend/tests/README.md](../backend/tests/README.md)              |
-| **E2E Playwright**         | `tests/*.spec.js` (ex. `navigation.spec.js`, `critical-paths.spec.js`, `dashboard-auth.spec.js`, `magazine.spec.js`, `offline.spec.js`)      |
-| **E2E dashboard + admin**  | Variables `PLAYWRIGHT_DASHBOARD_URL`, `PLAYWRIGHT_ADMIN_EMAIL`, `PLAYWRIGHT_ADMIN_PASSWORD` — voir en-tête de `tests/critical-paths.spec.js` |
-| **Charge**                 | `tests/load/gnv-1500-connections.js`, [tests/load/README.md](../tests/load/README.md)                                                        |
+| Type                       | Fichiers                                                                                                                                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Route API + supertest**  | `auth.extended.test.js`, `messages.routes.test.js`, `restaurants.routes.test.js`, `critical.routes.test.js`, `admin.conversations.test.js`, `admin.routes-errors.test.js` (dans `backend/tests/unit/routes/`) |
+| **Middleware**             | `backend/tests/unit/middleware/authMiddleware.flow.test.js`, `validateInput.unit.test.js`, `errorHandler.test.js`                                                                                             |
+| **Sécurité / credentials** | `backend/tests/unit/routes/auth.security-credentials.test.js`, `backend/src/__tests__/security.test.js`                                                                                                       |
+| **Fixtures**               | `backend/tests/fixtures/` (users, restaurants, messages, feedback) — voir [backend/tests/README.md](../backend/tests/README.md)                                                                               |
+| **E2E Playwright**         | `tests/*.spec.js` (ex. `navigation.spec.js`, `critical-paths.spec.js`, `dashboard-auth.spec.js`, `magazine.spec.js`, `offline.spec.js`)                                                                       |
+| **E2E dashboard + admin**  | Variables `PLAYWRIGHT_DASHBOARD_URL`, `PLAYWRIGHT_ADMIN_EMAIL`, `PLAYWRIGHT_ADMIN_PASSWORD` — voir en-tête de `tests/critical-paths.spec.js`                                                                  |
+| **Charge**                 | `tests/load/gnv-1500-connections.js`, [tests/load/README.md](../tests/load/README.md)                                                                                                                         |
 
 Pour ajouter un test : dupliquer une suite proche du module modifié, mocker Mongoose si la persistance n’est pas nécessaire, puis `cd backend && npm test -- --testPathPattern=nomDuFichier`.

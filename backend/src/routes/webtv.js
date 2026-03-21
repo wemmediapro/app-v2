@@ -8,6 +8,7 @@ const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const WebTVChannel = require('../models/WebTVChannel');
 const { generateTranslationsForWebTV } = require('../lib/webtv-translations-openai');
+const { logRouteError } = require('../lib/route-logger');
 
 const DB_UNAVAILABLE_MSG =
   'Base de données indisponible. Démarrez MongoDB (ex: docker run -d -p 27017:27017 mongo) ou vérifiez MONGODB_URI dans backend/config.env.';
@@ -53,7 +54,7 @@ router.get('/channels', async (req, res) => {
     const channels = await WebTVChannel.find({}).lean().sort({ createdAt: -1 });
     res.json(channels.map((doc) => localizeChannel(doc, lang)));
   } catch (error) {
-    console.error('Get WebTV channels error:', error);
+    logRouteError(req, 'webtv_channels_list_failed', error);
     res.json([]);
   }
 });
@@ -71,7 +72,7 @@ router.get('/channels/:id', async (req, res) => {
     }
     res.json(localizeChannel(channel, lang));
   } catch (error) {
-    console.error('Get WebTV channel error:', error);
+    logRouteError(req, 'webtv_channel_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -102,7 +103,7 @@ router.post('/channels/:id/translate', authMiddleware, adminMiddleware, async (r
     await channel.save();
     return res.json(toResponse(channel));
   } catch (error) {
-    console.error('WebTV translate error:', error);
+    logRouteError(req, 'webtv_translate_failed', error);
     const msg = error.message || 'Erreur lors de la traduction';
     return res.status(500).json({ message: msg });
   }
@@ -125,7 +126,7 @@ router.post('/translate', authMiddleware, adminMiddleware, async (req, res) => {
     const translations = await generateTranslationsForWebTV(openai, name, description);
     return res.json({ translations });
   } catch (error) {
-    console.error('WebTV translate (preview) error:', error);
+    logRouteError(req, 'webtv_translate_preview_failed', error);
     return res.status(500).json({ message: error.message || 'Erreur lors de la traduction' });
   }
 });
@@ -159,7 +160,7 @@ router.post('/channels', authMiddleware, adminMiddleware, async (req, res) => {
     await channel.save();
     res.status(201).json(toResponse(channel));
   } catch (error) {
-    console.error('Create WebTV channel error:', error);
+    logRouteError(req, 'webtv_channel_create_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -182,7 +183,7 @@ router.put('/channels/:id', authMiddleware, adminMiddleware, async (req, res) =>
     }
     res.json(toResponse(channel));
   } catch (error) {
-    console.error('Update WebTV channel error:', error);
+    logRouteError(req, 'webtv_channel_update_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -200,7 +201,7 @@ router.delete('/channels/:id', authMiddleware, adminMiddleware, async (req, res)
     }
     res.json({ message: 'Chaîne supprimée' });
   } catch (error) {
-    console.error('Delete WebTV channel error:', error);
+    logRouteError(req, 'webtv_channel_delete_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

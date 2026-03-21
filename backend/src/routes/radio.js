@@ -8,6 +8,7 @@ const router = express.Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const RadioStation = require('../models/RadioStation');
 const radioFallback = require('../lib/radio-fallback');
+const { logRouteError } = require('../lib/route-logger');
 
 const DB_UNAVAILABLE_MSG =
   'Base de données indisponible. Démarrez MongoDB (ex: docker run -d -p 27017:27017 mongo) ou vérifiez MONGODB_URI dans backend/config.env.';
@@ -82,7 +83,7 @@ router.get('/', async (req, res) => {
     const list = req.query.all === '1' ? all : all.filter((s) => s.isActive !== false);
     res.json(list.map(formatFallbackStation));
   } catch (error) {
-    console.error('Get radio stations error:', error);
+    logRouteError(req, 'radio_list_failed', error);
     res.json([]);
   }
 });
@@ -110,7 +111,7 @@ router.patch('/:id/listeners', async (req, res) => {
     }
     res.json({ listeners: updated.listeners ?? 0 });
   } catch (error) {
-    console.error('Update listeners error:', error);
+    logRouteError(req, 'radio_listeners_update_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -132,7 +133,7 @@ router.get('/:id', async (req, res) => {
     }
     res.json(formatFallbackStation(station));
   } catch (error) {
-    console.error('Get radio station error:', error);
+    logRouteError(req, 'radio_get_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -171,7 +172,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     }
     res.status(201).json(formatFallbackStation(station));
   } catch (error) {
-    console.error('Create radio station error:', error);
+    logRouteError(req, 'radio_create_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -224,7 +225,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     res.json(formatFallbackStation(station));
   } catch (error) {
-    console.error('Update radio station error:', error);
+    logRouteError(req, 'radio_update_failed', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -245,7 +246,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     res.json({ message: 'Station supprimée définitivement' });
   } catch (error) {
-    console.error('Delete radio station error:', error);
+    logRouteError(req, 'radio_delete_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const logger = require('./logger');
 
 const BACKEND_ROOT = path.join(__dirname, '..', '..');
 const DATA_DIR = path.join(BACKEND_ROOT, 'data');
@@ -26,7 +27,7 @@ function readArticles() {
     const data = JSON.parse(raw);
     return Array.isArray(data) ? data : [];
   } catch (e) {
-    console.warn('magazine-fallback: read error', e.message);
+    logger.warn({ event: 'magazine_fallback_read_failed', err: e.message });
     return [];
   }
 }

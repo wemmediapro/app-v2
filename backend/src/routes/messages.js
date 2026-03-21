@@ -13,6 +13,7 @@ const {
 const validateMessagesPagination = createValidatePagination({ defaultLimit: 50 });
 const Message = require('../models/Message');
 const User = require('../models/User');
+const { logRouteError } = require('../lib/route-logger');
 
 const router = express.Router();
 
@@ -50,9 +51,7 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
           $or: [{ sender: req.user.id }, { receiver: req.user.id }],
         },
       },
-      {
-        $sort: { createdAt: -1 },
-      },
+      { $sort: { createdAt: -1 } },
       {
         $group: {
           _id: {
@@ -80,9 +79,7 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
           as: 'user',
         },
       },
-      {
-        $unwind: '$user',
-      },
+      { $unwind: '$user' },
       {
         $project: {
           user: {
@@ -97,11 +94,14 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
           unreadCount: 1,
         },
       },
+      { $sort: { 'lastMessage.createdAt': -1 } },
+      { $skip: skip },
+      { $limit: limit },
     ]);
 
-    res.json(conversations.slice(skip, skip + limit));
+    res.json(conversations);
   } catch (error) {
-    console.error('Get conversations error:', error);
+    logRouteError(req, 'messages_list_conversations_failed', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -155,7 +155,7 @@ router.get(
 
       res.json(users);
     } catch (error) {
-      console.error('Search users error:', error);
+      logRouteError(req, 'messages_search_users_failed', error);
       res.status(500).json({ message: 'Server error' });
     }
   }
@@ -201,7 +201,7 @@ router.get(
 
       res.json(messages.reverse());
     } catch (error) {
-      console.error('Get messages error:', error);
+      logRouteError(req, 'messages_thread_failed', error);
       res.status(500).json({ message: 'Server error' });
     }
   }
@@ -289,7 +289,7 @@ router.post(
         data: populatedMessage,
       });
     } catch (error) {
-      console.error('Send message error:', error);
+      logRouteError(req, 'messages_send_failed', error);
       res.status(500).json({ message: 'Server error' });
     }
   }

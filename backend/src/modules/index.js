@@ -12,6 +12,7 @@ const adminModule = require('./admin');
 const notificationModule = require('./notifications');
 const bookingModule = require('./booking');
 const loyaltyModule = require('./loyalty');
+const logger = require('../lib/logger');
 
 module.exports = {
   // Modules principaux
@@ -29,7 +30,7 @@ module.exports = {
 
   // Fonction utilitaire pour initialiser tous les modules
   initializeModules: (app, io) => {
-    console.log('🚀 Initialisation des modules backend...');
+    logger.info({ event: 'backend_modules_init_start' });
 
     // Initialisation de chaque module
     authModule.initialize(app, io);
@@ -44,7 +45,7 @@ module.exports = {
     bookingModule.initialize(app, io);
     loyaltyModule.initialize(app, io);
 
-    console.log('✅ Tous les modules backend initialisés');
+    logger.info({ event: 'backend_modules_init_done' });
   },
 
   // Statistiques des modules
