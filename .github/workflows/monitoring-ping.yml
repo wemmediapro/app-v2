@@ -1,0 +1,37 @@
+# Monitoring synthétique : appels HTTP planifiés vers staging / prod (readiness)
+name: Monitoring ping
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping-staging:
+    name: Staging — GET /api/health/ready
+    runs-on: ubuntu-latest
+    if: vars.STAGING_PUBLIC_URL != ''
+    steps:
+      - name: Readiness staging
+        run: |
+          set -euo pipefail
+          URL="${{ vars.STAGING_PUBLIC_URL }}/api/health/ready"
+          echo "GET $URL"
+          curl -sfS --max-time 25 "$URL" | head -c 600
+          echo ""
+
+  ping-production:
+    name: Production — GET /api/health/ready
+    runs-on: ubuntu-latest
+    if: vars.PRODUCTION_PUBLIC_URL != '' && vars.MONITORING_PING_PRODUCTION == 'true'
+    steps:
+      - name: Readiness production
+        run: |
+          set -euo pipefail
+          URL="${{ vars.PRODUCTION_PUBLIC_URL }}/api/health/ready"
+          echo "GET $URL"
+          curl -sfS --max-time 25 "$URL" | head -c 600
+          echo ""

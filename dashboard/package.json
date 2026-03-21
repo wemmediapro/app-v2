@@ -13,8 +13,11 @@
     "expose:public": "./expose-frontend.sh",
     "verify-translations": "node scripts/verify-translations.cjs"
   },
+  "overrides": {
+    "axios": "^1.7.9"
+  },
   "dependencies": {
-    "axios": "^1.6.2",
+    "axios": "^1.7.9",
     "date-fns": "^2.30.0",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.378.0",

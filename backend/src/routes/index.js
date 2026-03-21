@@ -87,6 +87,23 @@ function mountRoutes(app, deps = {}) {
   });
 
   /**
+   * Readiness Kubernetes / load balancer : 503 si MongoDB indisponible.
+   * Liveness : utiliser GET /api/health (200 tant que le process répond).
+   */
+  app.get('/api/health/ready', (req, res) => {
+    const dbConnected = dbManager && typeof dbManager.isConnected === 'function' && dbManager.isConnected();
+    const body = {
+      ready: dbConnected,
+      mongodb: dbConnected ? 'connected' : 'disconnected',
+      timestamp: new Date().toISOString(),
+    };
+    if (dbConnected) {
+      return res.status(200).json(body);
+    }
+    return res.status(503).json(body);
+  });
+
+  /**
    * @swagger
    * /api/time:
    *   get:

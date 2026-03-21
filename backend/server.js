@@ -307,7 +307,7 @@ async function setupAfterDb() {
   }
   const skipApiLimit = (req) => {
     const p = (req.path || '').toLowerCase();
-    if (p === '/health' || p === '/time') {return true;}
+    if (p === '/health' || p === '/health/ready' || p === '/time') {return true;}
     if (p.startsWith('/stream') || p.startsWith('/upload') || p.startsWith('/media-library')) {return true;}
     try {
       const token = req.get('Authorization')?.replace('Bearer ', '') || req.cookies?.authToken;

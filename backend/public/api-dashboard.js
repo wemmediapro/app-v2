@@ -1,6 +1,7 @@
 (function () {
   const endpoints = [
-    { method: 'GET', path: '/api/health', desc: 'Health check du serveur' },
+    { method: 'GET', path: '/api/health', desc: 'Health check du serveur (liveness)' },
+    { method: 'GET', path: '/api/health/ready', desc: 'Readiness (503 si MongoDB down)' },
     { method: 'GET', path: '/api/admin/dashboard', desc: 'Statistiques du dashboard' },
     { method: 'GET', path: '/api/admin/users', desc: 'Liste des utilisateurs' },
     { method: 'GET', path: '/api/restaurants', desc: 'Liste des restaurants' },

@@ -53,7 +53,13 @@
     "test:load:artillery": "artillery run -e full tests/load/gnv-1500-connections.yaml",
     "test:load:artillery:ci": "artillery run -e ci tests/load/gnv-1500-connections.yaml",
     "test:load:report": "node scripts/load-test-report.cjs",
-    "verify:all": "npm run test:coverage && npm run build && npm run lint && npm run test --prefix backend && npm run lint --prefix backend && (npm run audit:ci || true) && (npm run audit:ci --prefix backend || true)"
+    "verify:all": "npm run test:coverage && npm run build && npm run lint && npm run test --prefix backend && npm run lint --prefix backend && npm run audit:ci && npm run audit:ci --prefix backend",
+    "quality": "node scripts/code-quality.cjs",
+    "quality:check": "node scripts/code-quality.cjs --check-only",
+    "quality:fix": "node scripts/code-quality.cjs --fix-only",
+    "devops:gate": "bash scripts/devops-gate.sh --with-tests",
+    "devops:gate:quick": "bash scripts/devops-gate.sh --quick",
+    "devops:audit": "bash scripts/devops-gate.sh --audit-only"
   },
   "overrides": {
     "serialize-javascript": "^7.0.3"

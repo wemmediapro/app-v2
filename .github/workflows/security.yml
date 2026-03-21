@@ -6,6 +6,10 @@ on:
     - cron: '0 6 * * *' # quotidien 06:00 UTC
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: write
+
 concurrency:
   group: security-${{ github.ref }}
   cancel-in-progress: true
@@ -40,8 +44,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # SHA figé (déc. 2025) — évite @main mutable côté supply chain
       - name: Dependency-Check
-        uses: dependency-check/Dependency-Check_Action@main
+        uses: dependency-check/Dependency-Check_Action@1e54355a8b4c8abaa8cc7d0b70aa655a3bb15a6c
         with:
           project: 'GNV OnBoard'
           path: '.'

@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  contents: read
+  actions: write
+
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -149,6 +153,27 @@ jobs:
           files: ./backend/coverage/lcov.info
           flags: backend
           fail_ci_if_error: false
+
+  dashboard-build:
+    name: Dashboard build + audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
+      - name: Audit dashboard (moderate → fail)
+        run: npm audit --audit-level=moderate
 
   load-tests-pr:
     name: Load Tests (k6, PR)

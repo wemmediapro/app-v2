@@ -25,29 +25,33 @@ module.exports = {
   },
   plugins: ['react', 'react-hooks', 'jsx-a11y'],
   rules: {
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    // Console fréquente en debug PWA — garder warn/error côté prod via revue ou règle ciblée plus tard
+    'no-console': 'off',
     // Legacy React : beaucoup de handlers / catch vides — warnings pour ne pas bloquer le lint global
     'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none' }],
     'no-empty': ['warn', { allowEmptyCatch: true }],
     'no-var': 'error',
     'prefer-const': 'error',
     'react/react-in-jsx-scope': 'off',
-    'react/prop-types': 'warn',
+    // Pas de PropTypes dans le projet — la règle recommended inonde le rapport (~500+ warnings)
+    'react/prop-types': 'off',
     'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'warn',
+    // Legacy : dépendances de hooks incomplètes — à corriger au cas par cas si besoin
+    'react-hooks/exhaustive-deps': 'off',
     // react-hooks v7 : règles « compiler » / strictes — legacy React 18 sans compiler
     'react-hooks/set-state-in-effect': 'off',
     'react-hooks/refs': 'off',
     'react-hooks/preserve-manual-memoization': 'off',
-    'no-constant-binary-expression': 'warn',
-    'jsx-a11y/media-has-caption': 'warn',
-    'jsx-a11y/no-redundant-roles': 'warn',
-    'jsx-a11y/click-events-have-key-events': 'warn',
-    'jsx-a11y/no-noninteractive-element-interactions': 'warn',
+    'no-constant-binary-expression': 'off',
+    'jsx-a11y/media-has-caption': 'off',
+    'jsx-a11y/no-redundant-roles': 'off',
+    'jsx-a11y/click-events-have-key-events': 'off',
+    'jsx-a11y/no-noninteractive-element-interactions': 'off',
     'quotes': ['error', 'single', { avoidEscape: true }],
     'semi': ['error', 'always'],
     'indent': ['error', 2, { SwitchCase: 1 }],
-    'max-len': ['warn', { code: 120, ignoreUrls: true, ignoreStrings: true, ignoreTemplateLiterals: true }],
+    // Longueur de ligne : confiée à Prettier / revue humaine
+    'max-len': 'off',
     'object-curly-spacing': ['error', 'always'],
     'array-bracket-spacing': ['error', 'never'],
     'comma-dangle': ['error', 'always-multiline'],

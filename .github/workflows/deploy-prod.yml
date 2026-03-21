@@ -9,6 +9,10 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+  actions: write
+
 concurrency:
   group: deploy-production
   cancel-in-progress: false
@@ -92,10 +96,10 @@ jobs:
     outputs:
       ok: ${{ steps.curl.outputs.ok }}
     steps:
-      - name: GET /api/health
+      - name: GET /api/health/ready
         id: curl
         run: |
-          if curl -sfS --max-time 30 "${{ vars.PRODUCTION_PUBLIC_URL }}/api/health" -o /tmp/h.json; then
+          if curl -sfS --max-time 30 "${{ vars.PRODUCTION_PUBLIC_URL }}/api/health/ready" -o /tmp/h.json; then
             echo "ok=true" >> "$GITHUB_OUTPUT"
             cat /tmp/h.json | head -c 800
           else

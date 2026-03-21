@@ -16,6 +16,9 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 env:
   NODE_VERSION: '22'
 

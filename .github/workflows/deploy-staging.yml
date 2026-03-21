@@ -5,6 +5,10 @@ on:
   push:
     branches: [develop]
 
+permissions:
+  contents: read
+  actions: write
+
 concurrency:
   group: deploy-staging-${{ github.ref }}
   cancel-in-progress: true
@@ -99,7 +103,7 @@ jobs:
     needs: [deploy-staging]
     if: success() && vars.STAGING_DEPLOY_ENABLED == 'true' && vars.STAGING_PUBLIC_URL != ''
     steps:
-      - name: Health check
+      - name: Readiness check
         run: |
-          curl -sfS "${{ vars.STAGING_PUBLIC_URL }}/api/health" | head -c 500
+          curl -sfS "${{ vars.STAGING_PUBLIC_URL }}/api/health/ready" | head -c 500
           echo ""

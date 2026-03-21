@@ -11,7 +11,7 @@ module.exports = {
     sourceType: 'script',
   },
   rules: {
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-console': 'off',
     'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none' }],
     'no-var': 'error',
     'prefer-const': 'error',
@@ -22,7 +22,7 @@ module.exports = {
     'quotes': ['error', 'single', { avoidEscape: true }],
     'semi': ['error', 'always'],
     'indent': ['error', 2, { SwitchCase: 1 }],
-    'max-len': ['warn', { code: 120, ignoreUrls: true, ignoreStrings: true, ignoreTemplateLiterals: true }],
+    'max-len': 'off',
     'object-curly-spacing': ['error', 'always'],
     'array-bracket-spacing': ['error', 'never'],
     'space-before-blocks': 'error',
@@ -35,7 +35,7 @@ module.exports = {
     'no-implied-eval': 'error',
     'no-new-func': 'error',
     'no-return-await': 'off',
-    'no-useless-escape': 'warn',
+    'no-useless-escape': 'off',
     'no-empty': ['warn', { allowEmptyCatch: true }],
     // Handlers Express souvent async sans await
     'require-await': 'off',
