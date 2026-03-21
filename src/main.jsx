@@ -1,7 +1,8 @@
 /**
  * Bootstrap React (Vite) : providers globaux, PWA / service worker, Framer Motion lazy.
  *
- * Arborescence : `BrowserRouter` → `LanguageProvider` → `LazyMotion` → `App` (`PassengerApp`).
+ * Arborescence : `ErrorBoundary` (root) → `LanguageProvider` → `ThemeProvider` → `BrowserRouter` → `LazyMotion` → `App` (`PassengerApp`).
+ * Sentry passager : `initPassengerSentry()` si `VITE_SENTRY_DSN` est défini.
  * Les Web Vitals sont initialisés une fois au chargement (`initWebVitalsReporting`).
  */
 import React from 'react';
@@ -12,9 +13,13 @@ import App from './App.jsx';
 import './styles/fonts.css';
 import './styles/index.css';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { initWebVitalsReporting } from './lib/webVitals';
+import { initPassengerSentry } from './lib/sentryPassenger';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 initWebVitalsReporting();
+initPassengerSentry();
 
 const loadMotionFeatures = () => import('./lib/framerLazyFeatures.js').then((m) => m.domAnimation);
 
@@ -51,34 +56,6 @@ if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
     });
 }
 
-class ErrorBoundary extends React.Component {
-  state = { hasError: false, error: null };
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error, info) {
-    console.error('Erreur React:', error, info.componentStack);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '100%', margin: '0 auto' }}>
-          <h1 style={{ color: '#c00' }}>Erreur de chargement</h1>
-          <p>{this.state.error?.message || 'Une erreur est survenue.'}</p>
-          <button
-            type="button"
-            onClick={() => this.setState({ hasError: false, error: null })}
-            style={{ marginTop: '1rem', padding: '0.5rem 1rem', cursor: 'pointer' }}
-          >
-            Réessayer
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 const rootEl = document.getElementById('root');
 if (!rootEl) {
   console.error('Élément #root introuvable.');
@@ -88,13 +65,15 @@ if (!rootEl) {
     const root = ReactDOM.createRoot(rootEl);
     root.render(
       <React.StrictMode>
-        <ErrorBoundary>
+        <ErrorBoundary variant="root">
           <LanguageProvider>
-            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-              <LazyMotion features={loadMotionFeatures}>
-                <App />
-              </LazyMotion>
-            </BrowserRouter>
+            <ThemeProvider>
+              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <LazyMotion features={loadMotionFeatures}>
+                  <App />
+                </LazyMotion>
+              </BrowserRouter>
+            </ThemeProvider>
           </LanguageProvider>
         </ErrorBoundary>
       </React.StrictMode>

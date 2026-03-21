@@ -27,6 +27,11 @@ function generateId() {
   return `oq-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+/** Id stable pour `clientSyncId` (API + socket) et clé de file hors ligne. */
+export function generateOfflineQueueId() {
+  return generateId();
+}
+
 let useLocalStorageFallback = false;
 let dbPromise = null;
 
@@ -245,6 +250,7 @@ export function setOfflineFlushHandler(fn) {
 
 /**
  * Envoie tous les messages pending/failed via le handler enregistré (API + socket côté app).
+ * Le backoff entre tentatives est géré par `useOfflineQueue` (événement `online` + boucle).
  */
 export async function flushPendingQueue() {
   if (!flushHandler) return { sent: 0, remaining: 0 };
@@ -263,7 +269,8 @@ export async function flushPendingQueue() {
       sent++;
     } catch (e) {
       console.warn('[offlineQueue] Échec envoi message', item.id, e);
-      await updateItemById(item.id, { status: QUEUE_STATUS.FAILED });
+      const failCount = (item.failCount || 0) + 1;
+      await updateItemById(item.id, { status: QUEUE_STATUS.FAILED, failCount });
     }
   }
 

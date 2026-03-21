@@ -15,6 +15,7 @@ jest.mock('../../../src/models/Product', () => ({
 jest.mock('../../../src/models/User', () => {
   const M = function UserMock() {};
   M.findById = jest.fn();
+  M.exists = jest.fn();
   return M;
 });
 
@@ -26,6 +27,20 @@ jest.mock('../../../src/models/Message', () => {
     Object.assign(this, data);
   }
   MessageMock.prototype.save = mockSave;
+  MessageMock.prototype.populate = jest.fn().mockImplementation(function mockPopulate() {
+    return Promise.resolve(this);
+  });
+  MessageMock.prototype.toJSON = function toJSON() {
+    return {
+      _id: this._id,
+      sender: this.sender,
+      receiver: this.receiver,
+      content: this.content,
+      type: this.type,
+      attachments: this.attachments,
+    };
+  };
+  MessageMock.prototype.toObject = MessageMock.prototype.toJSON;
   MessageMock.findOne = jest.fn().mockResolvedValue(null);
   MessageMock.findById = jest.fn();
   return MessageMock;
@@ -187,6 +202,7 @@ describe('P0 — POST /api/messages (envoi)', () => {
     jest.clearAllMocks();
     mockSave.mockResolvedValue(undefined);
     Message.findOne.mockResolvedValue(null);
+    User.exists.mockResolvedValue({ _id: peer });
     mountUserFindByIdForAuthAndPeer();
     const populated = { _id: '507f1f77bcf86cd799439099', content: 'hello', sender: {}, receiver: {} };
     const chain = {
@@ -245,6 +261,7 @@ describe('P0 — POST /api/messages (envoi)', () => {
         },
       };
     });
+    User.exists.mockResolvedValue(null);
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
     await request(app)
       .post('/api/messages')

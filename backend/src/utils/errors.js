@@ -38,6 +38,7 @@ function globalErrorHandler(config = {}) {
         code: err.code,
         path: req?.path,
         method: req?.method,
+        ...(rid ? { reqId: rid, correlationId: req?.correlationId || rid } : {}),
       });
       return res.status(err.statusCode).json({
         success: false,
@@ -59,6 +60,7 @@ function globalErrorHandler(config = {}) {
       path: req?.path,
       method: req?.method,
       body: redact(req?.body),
+      ...(rid ? { reqId: rid, correlationId: req?.correlationId || rid } : {}),
     });
 
     res.status(500).json({

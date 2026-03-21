@@ -5,11 +5,13 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { apiService } from '../services/apiService';
 import { buildPassengerSocketIoOptions } from '../lib/socketIoClientOptions';
+import { appendIncomingSocketMessages } from '../lib/chatSocketMessages';
 import {
   enqueue,
   flushPendingQueue,
   setOfflineFlushHandler,
   parseReceiverFromChatRoom,
+  generateOfflineQueueId,
 } from '../services/offlineQueue';
 
 /** Extrait l’id utilisateur du JWT (payload) — aligné sur le backend (champ id). */
@@ -45,6 +47,23 @@ function peerChatRoom(selectedChat) {
   const myId = getUserIdFromToken();
   if (!peerId || !myId) return null;
   return chatDmRoomName(myId, peerId);
+}
+
+/** ACK serveur sur `send-message` (évite d’assumer la livraison sans réponse). */
+function emitSendMessageWithAck(sock, payload, timeoutMs = 12_000) {
+  return new Promise((resolve, reject) => {
+    if (!sock || typeof sock.emit !== 'function') {
+      reject(new Error('socket indisponible'));
+      return;
+    }
+    sock.timeout(timeoutMs).emit('send-message', payload, (err, ack) => {
+      if (err) {
+        reject(err instanceof Error ? err : new Error(String(err)));
+        return;
+      }
+      resolve(ack);
+    });
+  });
 }
 
 /**
@@ -83,6 +102,11 @@ export function useChat(options = {}) {
   const conversationMenuRefs = useRef({});
   /** Réf. pour déconnecter la socket si le cleanup s’exécute avant/après la fin de l’import dynamique. */
   const socketInstanceRef = useRef(null);
+  /** Compteur file hors ligne — ref pour le handler `connect` (effet socket en deps `[]`). */
+  const refreshOfflineQueueCountRef = useRef(refreshOfflineQueueCount);
+  useEffect(() => {
+    refreshOfflineQueueCountRef.current = refreshOfflineQueueCount;
+  }, [refreshOfflineQueueCount]);
   /** Conversation active — utilisé au `connect` / reconnect pour rejoindre la room DM sans effet dépendant. */
   const selectedChatRef = useRef(selectedChat);
   useEffect(() => {
@@ -101,12 +125,22 @@ export function useChat(options = {}) {
         type: 'text',
         clientSyncId: item.id,
       });
-      if (socket?.connected && item.room) {
-        socket.emit('send-message', { room: item.room, content: item.content, text: item.content });
+      const sock = socketInstanceRef.current;
+      if (sock?.connected && item.room) {
+        try {
+          await emitSendMessageWithAck(sock, {
+            room: item.room,
+            content: item.content,
+            text: item.content,
+            clientSyncId: item.id,
+          });
+        } catch (e) {
+          console.warn('[useChat] ACK socket après REST file hors ligne (message déjà persisté):', e);
+        }
       }
     });
     return () => setOfflineFlushHandler(null);
-  }, [socket]);
+  }, []);
 
   // Socket.io — import dynamique pour réduire le JS initial (chunk séparé).
   useEffect(() => {
@@ -142,16 +176,20 @@ export function useChat(options = {}) {
           if (cancelled) return;
           setSocket(s);
           joinNotificationAndDmRooms();
+          void (async () => {
+            try {
+              await flushPendingQueue();
+            } catch (e) {
+              console.warn('Flush file après reconnexion socket (non bloquant):', e);
+            }
+            await refreshOfflineQueueCountRef.current?.();
+          })();
         });
         // Ne pas détruire la socket ici : reconnexion bornée (voir socketIoClientOptions.js).
         s.on('connect_error', () => {});
         s.on('disconnect', () => {});
         s.on('new-message', (message) => {
-          if (message && message.__batch === true && Array.isArray(message.messages)) {
-            setChatMessages((prev) => [...prev, ...message.messages]);
-            return;
-          }
-          setChatMessages((prev) => [...prev, message]);
+          setChatMessages((prev) => appendIncomingSocketMessages(prev, message));
         });
         s.on('typing', (data) => {
           setTypingUsers((prev) => ({ ...prev, [data.userId]: data.isTyping }));
@@ -370,6 +408,7 @@ export function useChat(options = {}) {
     const dmRoom = peerChatRoom(selectedChat);
     if (!dmRoom) return;
 
+    const clientSyncId = generateOfflineQueueId();
     const newMsg = {
       id: Date.now(),
       chatId: selectedChat,
@@ -380,6 +419,7 @@ export function useChat(options = {}) {
       type: 'text',
       attachments: [],
       reactions: [],
+      clientSyncId,
     };
 
     const online = typeof navigator === 'undefined' ? true : navigator.onLine;
@@ -387,6 +427,7 @@ export function useChat(options = {}) {
     if (!online) {
       try {
         await enqueue({
+          id: clientSyncId,
           room: dmRoom,
           content: newMsg.content,
         });
@@ -409,15 +450,35 @@ export function useChat(options = {}) {
 
     setChatMessages((prev) => [...prev, newMsg]);
     setNewMessage('');
-    if (socket?.connected && dmRoom) {
-      socket.emit('send-message', { room: dmRoom, content: newMsg.content, text: newMsg.content });
-    }
+
     try {
-      await apiService.sendMessage({ receiver: selectedChat, content: newMsg.content, type: 'text' });
+      await apiService.sendMessage({
+        receiver: selectedChat,
+        content: newMsg.content,
+        type: 'text',
+        clientSyncId,
+      });
+      const sock = socketInstanceRef.current;
+      if (sock?.connected && dmRoom) {
+        try {
+          await emitSendMessageWithAck(sock, {
+            room: dmRoom,
+            content: newMsg.content,
+            text: newMsg.content,
+            clientSyncId,
+          });
+        } catch (sockErr) {
+          console.warn('[useChat] ACK socket après REST (message déjà persisté):', sockErr);
+        }
+      }
     } catch (error) {
       console.error("Erreur lors de l'envoi du message:", error);
       try {
-        await enqueue({ room: dmRoom, content: newMsg.content });
+        await enqueue({
+          id: clientSyncId,
+          room: dmRoom,
+          content: newMsg.content,
+        });
         await refreshOfflineQueueCount?.();
       } catch (qerr) {
         console.error('Impossible de mettre en file après échec réseau:', qerr);
@@ -425,10 +486,11 @@ export function useChat(options = {}) {
     }
     setIsTyping(false);
     const tr = peerChatRoom(selectedChat);
-    if (socket?.connected && tr) {
-      socket.emit('typing', { room: tr, userId: 0, isTyping: false });
+    const sockTyping = socketInstanceRef.current;
+    if (sockTyping?.connected && tr) {
+      sockTyping.emit('typing', { room: tr, userId: 0, isTyping: false });
     }
-  }, [newMessage, selectedChat, socket, refreshOfflineQueueCount]);
+  }, [newMessage, selectedChat, refreshOfflineQueueCount]);
 
   const handleTyping = useCallback(
     (e) => {

@@ -7,7 +7,7 @@ Ce document regroupe **comment** lancer et étendre les tests du dépôt. Le dé
 | Couche                  | Outil                        | Emplacement                                                                                      |
 | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
 | Backend API & libs      | Jest                         | `backend/tests/`, `backend/src/**/__tests__/`                                                    |
-| Frontend (unitaire)     | Vitest                       | racine — `npm test`                                                                              |
+| Frontend (unitaire)     | Vitest                       | racine — `npm test` ; structure app : [ARCHITECTURE-PASSENGER.md](./ARCHITECTURE-PASSENGER.md)   |
 | Parcours E2E            | Playwright                   | `tests/*.spec.js`, `playwright.config.js`                                                        |
 | Charge HTTP / WebSocket | k6, Artillery                | `tests/load/`, voir [`tests/load/README.md`](../tests/load/README.md)                            |
 | Micro-benchmarks CPU    | Vitest `bench`, scripts Node | `npm run test:bench` ; `cd backend && npm run bench` — voir [`PERFORMANCE.md`](./PERFORMANCE.md) |

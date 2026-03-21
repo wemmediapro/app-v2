@@ -41,6 +41,10 @@ html {
   width: 100%;
 }
 
+html.dark {
+  background-color: rgb(15 23 42);
+}
+
 body {
   width: 100%;
   min-height: 100vh;
@@ -64,6 +68,11 @@ body {
   -webkit-touch-callout: none;
 }
 
+html.dark body {
+  background-color: rgb(15 23 42);
+  color: rgb(241 245 249);
+}
+
 #root {
   width: 100%;
   min-height: 100vh;
@@ -73,6 +82,10 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   position: relative;
+}
+
+html.dark #root {
+  background-color: rgb(15 23 42);
 }
 
 /* Tablette et plus : largeur max format tablette (768px), pas plus */

@@ -5,6 +5,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import LanguageSelector from './LanguageSelector';
+import ThemeToggle from './ThemeToggle';
 
 export const CONDITIONS_ACCEPTED_KEY = 'gnv_conditions_accepted';
 
@@ -25,7 +26,10 @@ export default function ConditionsGate({ t, onAccept }) {
           <img src="/logo-gnv.png" alt="GNV" className="h-6 md:h-7 w-auto object-contain" />
           <span className="font-bold text-lg md:text-xl">GNV OnBoard</span>
         </div>
-        <LanguageSelector variant="light" />
+        <div className="flex items-center gap-1">
+          <ThemeToggle variant="light" />
+          <LanguageSelector variant="light" />
+        </div>
       </header>
       <div className="relative z-10 min-h-screen w-full flex flex-col items-center overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 pt-20 md:pt-24 pb-[max(2.5rem,calc(2.5rem+env(safe-area-inset-bottom,0px)))] md:pb-16">
         <motion.div

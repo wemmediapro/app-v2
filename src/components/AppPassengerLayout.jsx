@@ -38,7 +38,7 @@ export function AppPassengerLayout(props) {
   } = props;
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#264FFF] to-[#264FFF]">
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#264FFF] to-[#264FFF] dark:from-slate-950 dark:to-slate-900">
       <AnimatePresence mode="wait">
         {!conditionsAccepted ? (
           <ConditionsGate
@@ -54,7 +54,7 @@ export function AppPassengerLayout(props) {
             key="app"
             initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
-            className="min-h-screen w-full max-w-full flex flex-col relative bg-gray-50 px-2 sm:px-3 overflow-x-hidden pb-[max(3rem,calc(3rem+env(safe-area-inset-bottom,0px)))] sm:pb-12"
+            className="min-h-screen w-full max-w-full flex flex-col relative bg-gray-50 dark:bg-slate-900 px-2 sm:px-3 overflow-x-hidden pb-[max(3rem,calc(3rem+env(safe-area-inset-bottom,0px)))] sm:pb-12"
           >
             <AppHeader page={page} setPage={setPage} t={t} />
 
@@ -127,7 +127,7 @@ export function AppPassengerLayout(props) {
                 onBannerClick={banners.handleBannerClick}
               />
 
-              <ErrorBoundary t={t} onRetry onGoHome={() => setPage('home')}>
+              <ErrorBoundary t={t} showRetryButton onGoHome={() => setPage('home')}>
                 <PassengerMainContentProvider value={mainContentProps}>
                   <MainContent />
                 </PassengerMainContentProvider>

@@ -1,7 +1,15 @@
+/**
+ * Logs structurés JSON (Pino) — une ligne JSON par entrée, adaptée à ELK / OpenSearch / Loki / CloudWatch.
+ *
+ * Niveaux : fatal, error, warn, info, debug, trace — `LOG_LEVEL` (défaut `info` en production, `debug` sinon).
+ * Contexte requête : utiliser `req.log` (champs `reqId`, `correlationId`, `http`) défini dans `request-context.js`.
+ * Éviter `console.log` dans le code d’API ; préférer `req.log.info({ event: '...', ... })` ou `logger`.
+ */
 const crypto = require('crypto');
 const pino = require('pino');
 
 const isProduction = process.env.NODE_ENV === 'production';
+const serviceName = (process.env.LOG_SERVICE_NAME || 'gnv-backend').trim() || 'gnv-backend';
 
 /**
  * Hachage SHA-256 tronqué pour les logs : corrélation possible sans email en clair (anti-énumération).
@@ -49,9 +57,13 @@ function redact(obj) {
   return out;
 }
 
-/** Logger racine. Pour une requête HTTP : utiliser `req.log` (enfant avec `reqId`, défini dans server.js). */
+/** Logger racine. Pour une requête HTTP : utiliser `req.log` (enfant avec `reqId` / `correlationId`). */
 const logger = pino({
   level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
+  base: {
+    service: serviceName,
+    environment: process.env.NODE_ENV || 'development',
+  },
   serializers: {
     req: (req) => (req && req.body ? { ...req, body: redact(req.body) } : req),
     err: (err) => (err ? { message: err.message, stack: err.stack } : err),

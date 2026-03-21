@@ -4,6 +4,7 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import LanguageSelector from './LanguageSelector';
+import ThemeToggle from './ThemeToggle';
 
 function AppHeader({ page, setPage, t }) {
   return (
@@ -34,6 +35,7 @@ function AppHeader({ page, setPage, t }) {
         </button>
       </div>
       <div className="flex items-center justify-end gap-1.5 sm:gap-3 flex-shrink-0">
+        <ThemeToggle variant="light" />
         <LanguageSelector variant="light" />
       </div>
     </header>

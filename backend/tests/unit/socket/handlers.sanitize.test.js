@@ -17,7 +17,7 @@ jest.mock('../../../src/lib/logger', () => ({
   error: jest.fn(),
 }));
 
-const { sanitizeContent, sanitizeSocketAttachment } = require('../../../src/socket/handlers');
+const { sanitizeContent, sanitizeSocketAttachment, sanitizeClientSyncId } = require('../../../src/socket/handlers');
 
 describe('socket handlers — sanitizeContent', () => {
   it('retire les balises script et conserve le texte', () => {
@@ -47,5 +47,22 @@ describe('socket handlers — sanitizeSocketAttachment', () => {
   it('retourne undefined pour chaîne vide après purge', () => {
     expect(sanitizeSocketAttachment('   ')).toBeUndefined();
     expect(sanitizeSocketAttachment('<script></script>')).toBeUndefined();
+  });
+});
+
+describe('socket handlers — sanitizeClientSyncId', () => {
+  it('trim et refuse chaîne vide', () => {
+    expect(sanitizeClientSyncId('  abc  ')).toBe('abc');
+    expect(sanitizeClientSyncId('   ')).toBeUndefined();
+  });
+
+  it('tronque à 128 caractères', () => {
+    const long = 'x'.repeat(200);
+    expect(sanitizeClientSyncId(long).length).toBe(128);
+  });
+
+  it('ignore les non-chaînes', () => {
+    expect(sanitizeClientSyncId({ x: 1 })).toBeUndefined();
+    expect(sanitizeClientSyncId(12)).toBeUndefined();
   });
 });

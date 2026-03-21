@@ -4,7 +4,7 @@
  * Ordre global (à respecter lors d’ajouts) :
  * 1. Chargement env (`config.env` puis `.env`) et validation sécurité (`validateSecurityConfig`).
  * 2. Sentry + handlers process en production.
- * 3. `express()` : compression, helmet/CSP, CORS, cookies CSRF, corrélation `X-Request-Id`, Morgan→Pino.
+ * 3. `express()` : compression, helmet/CSP, CORS, cookies CSRF, corrélation `X-Request-Id` / `X-Correlation-Id`, logs d’accès JSON (`request-context.js`).
  * 4. Connexion Mongo / Redis (fichiers requis plus bas) puis rate-limit et montage `mountRoutes`.
  * 5. `http.Server` + Socket.io (auth JWT, handlers dans `src/socket/handlers.js`), adaptateur Redis optionnel.
  *
@@ -65,7 +65,6 @@ const express = require('express');
 const compression = require('compression');
 const cors = require('cors');
 const helmet = require('helmet');
-const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const { createServer } = require('http');
@@ -101,6 +100,7 @@ const {
   RE_PUBLIC_STATIC_LONG_CACHE,
   jwtAdminSkipCache,
 } = require('./src/lib/http-middleware-tuning');
+const { requestContextMiddleware, httpAccessStructuredMiddleware } = require('./src/lib/request-context');
 const { initPrometheusMetrics, mountPrometheusMetricsRoute } = require('./src/lib/prometheus-metrics');
 
 const app = express();
@@ -181,43 +181,8 @@ const corsOptions = {
   credentials: true,
 };
 app.use(cors(corsOptions));
-// Corrélation avant Morgan (ligne d’accès inclut reqId) + logger enfant pour routes / erreurs
-app.use((req, res, next) => {
-  req.id = req.get('x-request-id') || req.get('X-Request-Id') || crypto.randomBytes(8).toString('hex');
-  req.log = logger.child({ reqId: req.id });
-  res.setHeader('X-Request-Id', req.id);
-  next();
-});
-morgan.token('req-id', (req) => req.id || '-');
-const morganAccessFormat =
-  config.env === 'production'
-    ? ':req-id :remote-addr :method :url :status :res[content-length] - :response-time ms'
-    : ':req-id :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"';
-const morganStream = {
-  write(str) {
-    const line = typeof str === 'string' ? str.trim() : String(str).trim();
-    if (!line) {
-      return;
-    }
-    logger.info({ event: 'http_access', line });
-  },
-};
-// Pas de log health / uploads (réduit I/O) ; sortie JSON via Pino (stream), plus de stdout Apache brut
-app.use(
-  morgan(morganAccessFormat, {
-    stream: morganStream,
-    skip: (req) => {
-      const sub = getApiPathSuffix(req.path || '');
-      return (
-        sub === '/health' ||
-        sub.startsWith('/health/') ||
-        sub === '/metrics/web-vitals' ||
-        req.path === '/metrics' ||
-        req.path?.startsWith('/uploads/')
-      );
-    },
-  })
-);
+app.use(requestContextMiddleware());
+app.use(httpAccessStructuredMiddleware());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(require('./src/middleware/language'));

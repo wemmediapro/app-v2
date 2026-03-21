@@ -1,5 +1,5 @@
 /**
- * Logs d’erreur HTTP homogènes : Pino JSON + reqId quand req.log est défini (server.js).
+ * Logs d’erreur HTTP homogènes : Pino JSON ; utiliser `req.log` pour inclure reqId / correlationId (request-context).
  */
 const logger = require('./logger');
 

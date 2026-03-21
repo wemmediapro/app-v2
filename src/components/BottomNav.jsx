@@ -24,7 +24,7 @@ function BottomNav({ page, setPage, t, notificationsUnreadCount = 0, hidden = fa
   return (
     <nav
       aria-label={t('common.mainNav')}
-      className="fixed bottom-0 left-0 right-0 z-50 w-full max-w-[768px] min-h-[44px] sm:min-h-[48px] mx-auto bg-gray-50 border-t border-gray-200 overflow-visible safe-area-bottom flex items-center"
+      className="fixed bottom-0 left-0 right-0 z-50 w-full max-w-[768px] min-h-[44px] sm:min-h-[48px] mx-auto bg-gray-50 dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 overflow-visible safe-area-bottom flex items-center"
       style={{
         paddingLeft: 'max(1rem, env(safe-area-inset-left))',
         paddingRight: 'max(1rem, env(safe-area-inset-right))',
@@ -37,14 +37,16 @@ function BottomNav({ page, setPage, t, notificationsUnreadCount = 0, hidden = fa
             onClick={() => setPage(item.key)}
             whileTap={{ scale: 0.95 }}
             aria-label={item.label}
-            className="relative flex flex-col items-center justify-center flex-1 min-w-0 min-h-[44px] sm:min-h-[48px] px-2 sm:px-4 py-1.5 transition-all touch-manipulation active:bg-gray-100 rounded-lg sm:rounded-none overflow-visible"
+            className="relative flex flex-col items-center justify-center flex-1 min-w-0 min-h-[44px] sm:min-h-[48px] px-2 sm:px-4 py-1.5 transition-all touch-manipulation active:bg-gray-100 dark:active:bg-slate-800 rounded-lg sm:rounded-none overflow-visible"
           >
-            <div className={`relative transition-colors ${page === item.key ? 'text-blue-600' : 'text-gray-600'}`}>
+            <div
+              className={`relative transition-colors ${page === item.key ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-slate-400'}`}
+            >
               {item.icon}
             </div>
             {item.key === 'notifications' && notificationsUnreadCount > 0 && (
               <span
-                className="absolute top-0 right-1 h-3 w-3 rounded-full border-2 border-gray-50 pointer-events-none bg-red-500"
+                className="absolute top-0 right-1 h-3 w-3 rounded-full border-2 border-gray-50 dark:border-slate-900 pointer-events-none bg-red-500"
                 style={{ zIndex: 99, minWidth: 12, minHeight: 12 }}
                 aria-label={`${notificationsUnreadCount} non lue(s)`}
               />

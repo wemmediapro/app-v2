@@ -10,6 +10,7 @@ const connectionManager = require('../lib/connection-manager');
 const { hasAllowedPrefix, isRoomAuthorizedForUser } = require('./roomUtils');
 const { createMessageBroadcaster } = require('./broadcast-batcher');
 const MAX_MESSAGE_LENGTH = 5000;
+const MAX_CLIENT_SYNC_ID_LENGTH = 128;
 
 /** Plafond de rooms Socket.io par connexion (évite fuites join + charge mémoire). */
 const MAX_ROOMS_PER_SOCKET = parseInt(process.env.SOCKET_MAX_ROOMS_PER_SOCKET, 10) || 40;
@@ -98,6 +99,19 @@ function sanitizeSocketAttachment(value) {
     return undefined;
   }
   const s = sanitizeContent(value);
+  return s.length > 0 ? s : undefined;
+}
+
+/** Aligné sur POST /api/messages — chaîne courte, pas d’objet arbitraire. */
+function sanitizeClientSyncId(raw) {
+  if (raw == null) {
+    return undefined;
+  }
+  if (typeof raw !== 'string') {
+    logger.warn({ event: 'socket_client_sync_id_ignored', reason: 'non_string_type' });
+    return undefined;
+  }
+  const s = String(raw).trim().slice(0, MAX_CLIENT_SYNC_ID_LENGTH);
   return s.length > 0 ? s : undefined;
 }
 
@@ -206,6 +220,7 @@ function attachSocketHandlers(io, connectionCounters) {
       }
       const content = sanitizeContent(rawMsg ?? '');
       const attachment = sanitizeSocketAttachment(data.attachment);
+      const clientSyncId = sanitizeClientSyncId(data.clientSyncId);
       if (content.length === 0 && attachment == null) {
         if (typeof cb === 'function') {
           cb(new Error('Empty message'));
@@ -220,6 +235,7 @@ function attachSocketHandlers(io, connectionCounters) {
         sender: socket.userId,
         timestamp: new Date(),
         ...(attachment != null && { attachment }),
+        ...(clientSyncId != null && { clientSyncId }),
       };
       messageBroadcaster.emitChatMessage(socket, data.room, payload);
       if (typeof cb === 'function') {
@@ -243,6 +259,7 @@ module.exports = {
   isRoomAllowed,
   sanitizeContent,
   sanitizeSocketAttachment,
+  sanitizeClientSyncId,
   checkSocketRateLimit,
   checkSendMessageRateLimit,
   clearSocketRateLimit,
