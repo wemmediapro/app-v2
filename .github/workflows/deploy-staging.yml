@@ -28,6 +28,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+            dashboard/package-lock.json
 
       - name: Frontend — Vitest couverture
         run: |
@@ -61,6 +65,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+          cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run build
       - uses: actions/upload-artifact@v4

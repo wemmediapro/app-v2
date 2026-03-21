@@ -28,6 +28,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
 
       - name: Audit racine — moderate
         run: npm audit --audit-level=moderate
@@ -73,6 +76,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
 
       - run: npm ci
       - working-directory: backend
