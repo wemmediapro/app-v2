@@ -168,11 +168,11 @@ export default function WebtvPageContent({
                   ? dbSchedule.map(s => ({ time: s.time || '', program: toProgramLabel(s.program) || toProgramLabel(s.title) || '' }))
                   : buildFromPrograms
                     ? selectedChannel.programs
-                        .filter(p => p.startTime || p.endTime)
-                        .map(p => ({
-                            time: [p.startTime, p.endTime].filter(Boolean).join(' - ').trim() || '00:00',
-                            program: toProgramLabel(p.title) || toProgramLabel(p.program) || ''
-                          }))
+                      .filter(p => p.startTime || p.endTime)
+                      .map(p => ({
+                        time: [p.startTime, p.endTime].filter(Boolean).join(' - ').trim() || '00:00',
+                        program: toProgramLabel(p.title) || toProgramLabel(p.program) || '',
+                      }))
                     : [];
                 if (displaySchedule.length === 0) return null;
                 const toMins = (str) => {

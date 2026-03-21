@@ -30,7 +30,7 @@ function normalizeNotificationBody(body) {
       if (content && (content.title != null || content.message != null)) {
         translations[lang] = {
           title: String(content.title || '').trim(),
-          message: String(content.message || '').trim()
+          message: String(content.message || '').trim(),
         };
       }
     }
@@ -49,14 +49,14 @@ function normalizeNotificationBody(body) {
     message,
     translations: { fr: { title, message } },
     type,
-    scheduledAt
+    scheduledAt,
   };
 }
 
 // GET /api/notifications — liste publique pour l'app passagers (notifications envoyées, pas d'auth)
 // Ne renvoie jamais 500 : en cas d'erreur (DB déconnectée, etc.) on renvoie toujours 200 + { data: [], total: 0, ... }.
 function sendEmptyNotifications(res, pagination) {
-  if (res.headersSent) return;
+  if (res.headersSent) {return;}
   const page = (pagination && pagination.page) || 1;
   const limit = (pagination && pagination.limit) || 20;
   try {
@@ -82,8 +82,8 @@ router.get('/', validatePagination, handleValidationErrors, (req, res) => {
         isActive: true,
         $or: [
           { scheduledAt: null },
-          { scheduledAt: { $lte: now } }
-        ]
+          { scheduledAt: { $lte: now } },
+        ],
       };
       const [notifications, total] = await Promise.all([
         Notification.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
@@ -111,10 +111,10 @@ router.get('/', validatePagination, handleValidationErrors, (req, res) => {
           title,
           message,
           type: n.type,
-          createdAt: n.createdAt
+          createdAt: n.createdAt,
         };
       });
-      if (!res.headersSent) res.json({ data: list, total, page: req.pagination.page, limit });
+      if (!res.headersSent) {res.json({ data: list, total, page: req.pagination.page, limit });}
     } catch (error) {
       console.error('Get notifications error:', error);
       sendEmptyNotifications(res, pagination);
@@ -142,7 +142,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
       type: normalized.type,
       scheduledAt: normalized.scheduledAt,
       title: normalized.title ?? (firstContent && firstContent.title) ?? '',
-      message: normalized.message ?? (firstContent && firstContent.message) ?? ''
+      message: normalized.message ?? (firstContent && firstContent.message) ?? '',
     });
     res.status(201).json(notification);
   } catch (error) {
@@ -191,7 +191,7 @@ router.get('/all', authMiddleware, adminMiddleware, validateNotificationsAdminPa
         _id: n._id != null ? String(n._id) : n._id,
         title,
         message,
-        status: n.scheduledAt == null || n.scheduledAt <= now ? 'sent' : 'scheduled'
+        status: n.scheduledAt == null || n.scheduledAt <= now ? 'sent' : 'scheduled',
       };
     });
     res.json(list);

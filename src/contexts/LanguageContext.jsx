@@ -14,7 +14,7 @@ const translations = {
   ar: arTranslations,
   es: esTranslations,
   it: itTranslations,
-  de: deTranslations
+  de: deTranslations,
 };
 
 export const LanguageProvider = ({ children }) => {
@@ -45,7 +45,7 @@ export const LanguageProvider = ({ children }) => {
       return v;
     };
 
-    let value = getByKeys(translations[language]);
+    const value = getByKeys(translations[language]);
 
     // Fallback fr puis en si la clé manque (ex. cache Vite sur les JSON)
     if (value === undefined) {
@@ -87,7 +87,7 @@ export const LanguageProvider = ({ children }) => {
   const contextValue = useMemo(() => ({
     language,
     changeLanguage,
-    t
+    t,
   }), [language, t, changeLanguage]);
 
   return (

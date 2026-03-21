@@ -2,33 +2,33 @@
  * Point d’entrée principal de l’app passagers.
  * Logique Radio/WebTV extraite dans src/hooks/useRadio.js et src/hooks/useWebtv.js.
  */
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 // Icônes Lucide : importées dans les composants enfants (BottomNav, AppHeader, pages) pour alléger le bundle racine
-import { apiService, getPosterUrl } from "./services/apiService";
-import { getPlaybackStorageKey } from "./hooks/useMoviePlayback";
-import { useLanguage } from "./contexts/LanguageContext";
-import { useMagazine } from "./hooks/useMagazine";
-import { useRestaurant } from "./hooks/useRestaurant";
-import { useEnfant } from "./hooks/useEnfant";
-import { useNotifications } from "./hooks/useNotifications";
-import { useMoviesState } from "./hooks/useMoviesState";
-import { useBanners } from "./hooks/useBanners";
-import { useShipmap } from "./hooks/useShipmap";
-import { useRadio } from "./hooks/useRadio";
-import { useWebtv } from "./hooks/useWebtv";
-import { useChat } from "./hooks/useChat";
-import { useOfflineQueue } from "./hooks/useOfflineQueue";
-import { useOnline } from "./hooks/useOnline";
-import BottomNav from "./components/BottomNav";
-import AppHeader from "./components/AppHeader";
-import BannersCarousel from "./components/BannersCarousel";
-import OfflineBanner from "./components/OfflineBanner";
-import ConditionsGate, { CONDITIONS_ACCEPTED_KEY } from "./components/ConditionsGate";
-import ErrorBoundary from "./components/ErrorBoundary";
-import MainContent from "./components/MainContent";
-import { gnvShipsList, currentShip } from "./data/ships";
+import { apiService, getPosterUrl } from './services/apiService';
+import { getPlaybackStorageKey } from './hooks/useMoviePlayback';
+import { useLanguage } from './contexts/LanguageContext';
+import { useMagazine } from './hooks/useMagazine';
+import { useRestaurant } from './hooks/useRestaurant';
+import { useEnfant } from './hooks/useEnfant';
+import { useNotifications } from './hooks/useNotifications';
+import { useMoviesState } from './hooks/useMoviesState';
+import { useBanners } from './hooks/useBanners';
+import { useShipmap } from './hooks/useShipmap';
+import { useRadio } from './hooks/useRadio';
+import { useWebtv } from './hooks/useWebtv';
+import { useChat } from './hooks/useChat';
+import { useOfflineQueue } from './hooks/useOfflineQueue';
+import { useOnline } from './hooks/useOnline';
+import BottomNav from './components/BottomNav';
+import AppHeader from './components/AppHeader';
+import BannersCarousel from './components/BannersCarousel';
+import OfflineBanner from './components/OfflineBanner';
+import ConditionsGate, { CONDITIONS_ACCEPTED_KEY } from './components/ConditionsGate';
+import ErrorBoundary from './components/ErrorBoundary';
+import MainContent from './components/MainContent';
+import { gnvShipsList, currentShip } from './data/ships';
 
 // Image défaut 100% offline (data URI) — plus de dépendance Unsplash
 const DEFAULT_RESTAURANT_IMAGE = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400"><rect fill="%23e5e7eb" width="800" height="400"/><text x="400" y="220" font-size="24" fill="%239ca3af" text-anchor="middle" font-family="system-ui,sans-serif">Restaurant</text></svg>');
@@ -190,7 +190,7 @@ function App() {
     repeatMode,
     toggleRepeat,
     isShuffle,
-    toggleShuffle
+    toggleShuffle,
   } = useRadio(language, page, isAnyVideoPlaying);
 
   const [offlineSentNotice, setOfflineSentNotice] = useState(null);
@@ -282,7 +282,7 @@ function App() {
     dutyfree: t('common.dutyFreeShop'),
     kids: t('common.kidsZone'),
     info: t('common.moreInfo'),
-    notifications: t('notifications.title')
+    notifications: t('notifications.title'),
   }), [language, t]);
 
   // Clé de stockage des favoris : par profil connecté ou "guest"
@@ -348,7 +348,7 @@ function App() {
             if (magazineIds.length > 0 || restaurantIds.length > 0 || enfantIds.length > 0 || watchlistData.length > 0 || shopItems.length > 0 || Object.keys(playbackData).length > 0) {
               apiService.putUserData({
                 favorites: { magazineIds, restaurantIds, enfantIds, watchlist: watchlistData, shopItems },
-                playbackPositions: playbackData
+                playbackPositions: playbackData,
               }).catch(() => {});
             }
           } catch (_) {}
@@ -405,8 +405,8 @@ function App() {
           restaurantIds: restaurantFavoritesIds,
           enfantIds: enfantFavoritesIds,
           watchlist,
-          shopItems: shopFavorites
-        }
+          shopItems: shopFavorites,
+        },
       }).catch(() => {});
     }, 1500);
     return () => {
@@ -434,7 +434,7 @@ function App() {
     { id: 'dutyfree', name: t('shop.categories.dutyfree'), icon: '🍷' },
     { id: 'fashion', name: t('shop.categories.fashion'), icon: '👕' },
     { id: 'electronics', name: t('shop.categories.electronics'), icon: '📱' },
-    { id: 'food', name: t('shop.categories.food'), icon: '🍯' }
+    { id: 'food', name: t('shop.categories.food'), icon: '🍯' },
   ], [t]);
 
   // Promos boutique pour la page d’accueil uniquement (page Shop charge les siennes via useShop)
@@ -475,7 +475,7 @@ function App() {
   };
   const restaurantFavoritesList = useMemo(
     () => restaurants.filter(r => restaurantFavoritesIds.some(id => String(id) === String(r.id))),
-    [restaurants, restaurantFavoritesIds]
+    [restaurants, restaurantFavoritesIds],
   );
 
   /** Promos : 1 resto + 1 boutique, sélection déterministe (évite re-renders et sauts visuels). */
@@ -512,7 +512,7 @@ function App() {
       setCart(prev => prev.filter(item => item.id !== itemId));
     } else {
       setCart(prev => prev.map(item =>
-        item.id === itemId ? { ...item, quantity } : item
+        item.id === itemId ? { ...item, quantity } : item,
       ));
     }
   }, []);
@@ -565,17 +565,17 @@ function App() {
   // Favoris films (watchlist) — mémoïsés pour limiter les re-renders de MainContent/FavoritesPage
   const myWatchlist = useMemo(
     () => moviesAndSeries.filter(item => watchlist.includes(item.id)),
-    [moviesAndSeries, watchlist]
+    [moviesAndSeries, watchlist],
   );
 
   const magazineFavoritesArticles = useMemo(
     () => magazineArticles.filter(a => magazineFavoritesIds.some(id => String(id) === String(a.id ?? a._id))),
-    [magazineArticles, magazineFavoritesIds]
+    [magazineArticles, magazineFavoritesIds],
   );
 
   const enfantFavoritesActivities = useMemo(
     () => enfantActivities.filter(a => enfantFavoritesIds.some(id => String(id) === String(a.id))),
-    [enfantActivities, enfantFavoritesIds]
+    [enfantActivities, enfantFavoritesIds],
   );
 
   useEffect(() => {
@@ -675,107 +675,107 @@ function App() {
 
               <ErrorBoundary t={t} onRetry onGoHome={() => setPage('home')}>
                 <MainContent
-                page={page}
-                setPage={setPage}
-                t={t}
-                language={language}
-                pageTitles={pageTitles}
-                homePromosCombined={homePromosCombined}
-                getPromoTitle={getPromoTitle}
-                getPromoDescription={getPromoDescription}
-                setSelectedRestaurant={setSelectedRestaurant}
-                radioStations={radioStations}
-                currentRadio={currentRadio}
-                toggleRadio={toggleRadio}
-                isPlaying={isPlaying}
-                volume={volume}
-                handleVolumeChange={handleVolumeChange}
-                isFavorite={isFavorite}
-                toggleFavorite={toggleFavorite}
-                radioLoading={radioLoading}
-                getRadioLogoUrl={getRadioLogoUrl}
-                radioPlaylistTracks={radioPlaylistTracks}
-                getRadioStreamProgress={getRadioStreamProgress}
-                moviesAndSeries={moviesAndSeries}
-                moviesLoading={moviesLoading}
-                watchlist={watchlist}
-                toggleWatchlist={toggleWatchlist}
-                favoritesStorageSuffix={favoritesStorageSuffix}
-                syncPlaybackToServer={syncPlaybackToServer}
-                movieToOpenFromFavorites={movieToOpenFromFavorites}
-                setMovieToOpenFromFavorites={setMovieToOpenFromFavorites}
-                setIsMoviesVideoPlaying={setIsMoviesVideoPlaying}
-                selectedChannelCategory={selectedChannelCategory}
-                setSelectedChannelCategory={setSelectedChannelCategory}
-                channelCategories={channelCategories}
-                selectedChannel={selectedChannel}
-                setSelectedChannel={setSelectedChannel}
-                selectedWebtvProgram={selectedWebtvProgram}
-                webtvVideoRefRef={webtvVideoRefRef}
-                setWebtvVideoRef={setWebtvVideoRef}
-                handleWebtvVideoEnded={handleWebtvVideoEnded}
-                handleWebtvPlayByServerTime={handleWebtvPlayByServerTime}
-                webtvVideoError={webtvVideoError}
-                setWebtvVideoError={setWebtvVideoError}
-                webtvPlaySyncing={webtvPlaySyncing}
-                setIsWebtvVideoPlaying={setIsWebtvVideoPlaying}
-                webtvLoading={webtvLoading}
-                filteredChannels={filteredChannels}
-                getWebtvCategoryLabel={getWebtvCategoryLabel}
-                magazineLoading={magazineLoading}
-                magazineError={magazineError}
-                setMagazineRetryTrigger={setMagazineRetryTrigger}
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
-                magazineCategories={magazineCategories}
-                filteredArticles={filteredArticles}
-                featuredArticles={featuredArticles}
-                breakingNews={breakingNews}
-                selectedArticle={selectedArticle}
-                setSelectedArticle={setSelectedArticle}
-                isMagazineFavorite={isMagazineFavorite}
-                toggleMagazineFavorite={toggleMagazineFavorite}
-                currentShipName={currentShipName}
-                restaurants={restaurants}
-                restaurantSearchQuery={restaurantSearchQuery}
-                setRestaurantSearchQuery={setRestaurantSearchQuery}
-                selectedRestaurantCategory={selectedRestaurantCategory}
-                setSelectedRestaurantCategory={setSelectedRestaurantCategory}
-                restaurantCategories={restaurantCategories}
-                allPromotions={allPromotions}
-                filteredRestaurants={filteredRestaurants}
-                restaurantsLoading={restaurantsLoading}
-                selectedRestaurant={selectedRestaurant}
-                DEFAULT_RESTAURANT_IMAGE={DEFAULT_RESTAURANT_IMAGE}
-                isRestaurantFavorite={isRestaurantFavorite}
-                toggleRestaurantFavorite={toggleRestaurantFavorite}
-                cart={cart}
-                addToCart={addToCart}
-                enfantActivities={enfantActivities}
-                enfantLoading={enfantLoading}
-                selectedEnfantCategory={selectedEnfantCategory}
-                setSelectedEnfantCategory={setSelectedEnfantCategory}
-                enfantCategories={enfantCategories}
-                enfantHighlights={enfantHighlights}
-                filteredEnfantActivities={filteredEnfantActivities}
-                selectedActivity={selectedActivity}
-                setSelectedActivity={setSelectedActivity}
-                isEnfantFavorite={isEnfantFavorite}
-                toggleEnfantFavorite={toggleEnfantFavorite}
-                {...shipmap}
-                notificationsList={notificationsList}
-                notificationsLoading={notificationsLoading}
-                shopFavorites={shopFavorites}
-                myWatchlist={myWatchlist}
-                magazineFavoritesArticles={magazineFavoritesArticles}
-                enfantFavoritesActivities={enfantFavoritesActivities}
-                restaurantFavoritesList={restaurantFavoritesList}
-                shopCategories={shopCategories}
-                setShopFavorites={setShopFavorites}
-                removeFromShopFavorites={removeFromShopFavorites}
-                getPosterUrl={getPosterUrl}
-                chat={chat}
-              />
+                  page={page}
+                  setPage={setPage}
+                  t={t}
+                  language={language}
+                  pageTitles={pageTitles}
+                  homePromosCombined={homePromosCombined}
+                  getPromoTitle={getPromoTitle}
+                  getPromoDescription={getPromoDescription}
+                  setSelectedRestaurant={setSelectedRestaurant}
+                  radioStations={radioStations}
+                  currentRadio={currentRadio}
+                  toggleRadio={toggleRadio}
+                  isPlaying={isPlaying}
+                  volume={volume}
+                  handleVolumeChange={handleVolumeChange}
+                  isFavorite={isFavorite}
+                  toggleFavorite={toggleFavorite}
+                  radioLoading={radioLoading}
+                  getRadioLogoUrl={getRadioLogoUrl}
+                  radioPlaylistTracks={radioPlaylistTracks}
+                  getRadioStreamProgress={getRadioStreamProgress}
+                  moviesAndSeries={moviesAndSeries}
+                  moviesLoading={moviesLoading}
+                  watchlist={watchlist}
+                  toggleWatchlist={toggleWatchlist}
+                  favoritesStorageSuffix={favoritesStorageSuffix}
+                  syncPlaybackToServer={syncPlaybackToServer}
+                  movieToOpenFromFavorites={movieToOpenFromFavorites}
+                  setMovieToOpenFromFavorites={setMovieToOpenFromFavorites}
+                  setIsMoviesVideoPlaying={setIsMoviesVideoPlaying}
+                  selectedChannelCategory={selectedChannelCategory}
+                  setSelectedChannelCategory={setSelectedChannelCategory}
+                  channelCategories={channelCategories}
+                  selectedChannel={selectedChannel}
+                  setSelectedChannel={setSelectedChannel}
+                  selectedWebtvProgram={selectedWebtvProgram}
+                  webtvVideoRefRef={webtvVideoRefRef}
+                  setWebtvVideoRef={setWebtvVideoRef}
+                  handleWebtvVideoEnded={handleWebtvVideoEnded}
+                  handleWebtvPlayByServerTime={handleWebtvPlayByServerTime}
+                  webtvVideoError={webtvVideoError}
+                  setWebtvVideoError={setWebtvVideoError}
+                  webtvPlaySyncing={webtvPlaySyncing}
+                  setIsWebtvVideoPlaying={setIsWebtvVideoPlaying}
+                  webtvLoading={webtvLoading}
+                  filteredChannels={filteredChannels}
+                  getWebtvCategoryLabel={getWebtvCategoryLabel}
+                  magazineLoading={magazineLoading}
+                  magazineError={magazineError}
+                  setMagazineRetryTrigger={setMagazineRetryTrigger}
+                  selectedCategory={selectedCategory}
+                  setSelectedCategory={setSelectedCategory}
+                  magazineCategories={magazineCategories}
+                  filteredArticles={filteredArticles}
+                  featuredArticles={featuredArticles}
+                  breakingNews={breakingNews}
+                  selectedArticle={selectedArticle}
+                  setSelectedArticle={setSelectedArticle}
+                  isMagazineFavorite={isMagazineFavorite}
+                  toggleMagazineFavorite={toggleMagazineFavorite}
+                  currentShipName={currentShipName}
+                  restaurants={restaurants}
+                  restaurantSearchQuery={restaurantSearchQuery}
+                  setRestaurantSearchQuery={setRestaurantSearchQuery}
+                  selectedRestaurantCategory={selectedRestaurantCategory}
+                  setSelectedRestaurantCategory={setSelectedRestaurantCategory}
+                  restaurantCategories={restaurantCategories}
+                  allPromotions={allPromotions}
+                  filteredRestaurants={filteredRestaurants}
+                  restaurantsLoading={restaurantsLoading}
+                  selectedRestaurant={selectedRestaurant}
+                  DEFAULT_RESTAURANT_IMAGE={DEFAULT_RESTAURANT_IMAGE}
+                  isRestaurantFavorite={isRestaurantFavorite}
+                  toggleRestaurantFavorite={toggleRestaurantFavorite}
+                  cart={cart}
+                  addToCart={addToCart}
+                  enfantActivities={enfantActivities}
+                  enfantLoading={enfantLoading}
+                  selectedEnfantCategory={selectedEnfantCategory}
+                  setSelectedEnfantCategory={setSelectedEnfantCategory}
+                  enfantCategories={enfantCategories}
+                  enfantHighlights={enfantHighlights}
+                  filteredEnfantActivities={filteredEnfantActivities}
+                  selectedActivity={selectedActivity}
+                  setSelectedActivity={setSelectedActivity}
+                  isEnfantFavorite={isEnfantFavorite}
+                  toggleEnfantFavorite={toggleEnfantFavorite}
+                  {...shipmap}
+                  notificationsList={notificationsList}
+                  notificationsLoading={notificationsLoading}
+                  shopFavorites={shopFavorites}
+                  myWatchlist={myWatchlist}
+                  magazineFavoritesArticles={magazineFavoritesArticles}
+                  enfantFavoritesActivities={enfantFavoritesActivities}
+                  restaurantFavoritesList={restaurantFavoritesList}
+                  shopCategories={shopCategories}
+                  setShopFavorites={setShopFavorites}
+                  removeFromShopFavorites={removeFromShopFavorites}
+                  getPosterUrl={getPosterUrl}
+                  chat={chat}
+                />
               </ErrorBoundary>
             </main>
           </motion.div>

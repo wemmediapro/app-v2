@@ -15,8 +15,8 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
  *   pour ne pas exposer la longueur attendue par le temps de réponse.
  */
 function csrfTokensEqual(cookieToken, headerToken) {
-  if (cookieToken == null || headerToken == null) return false;
-  if (typeof cookieToken !== 'string' || typeof headerToken !== 'string') return false;
+  if (cookieToken == null || headerToken == null) {return false;}
+  if (typeof cookieToken !== 'string' || typeof headerToken !== 'string') {return false;}
   const bufCookie = Buffer.from(cookieToken, 'utf8');
   const bufHeader = Buffer.from(headerToken, 'utf8');
   if (bufCookie.length !== bufHeader.length) {
@@ -77,12 +77,12 @@ const EXEMPT_PATH_PATTERNS = [
  * À monter sur les routes API qui modifient des données.
  */
 function csrfProtection(req, res, next) {
-  if (SAFE_METHODS.has(req.method)) return next();
+  if (SAFE_METHODS.has(req.method)) {return next();}
   // originalUrl = path + query ; path peut être relatif au mount (/api) selon Express
   const raw = (req.originalUrl || req.url || req.path || '').split('?')[0];
   const path = raw.replace(/^\/api\/?/, '/') || '/';
-  if (EXEMPT_PATHS.some((p) => path === p || path.startsWith(p + '/'))) return next();
-  if (EXEMPT_PATH_PATTERNS.some((re) => re.test(path))) return next();
+  if (EXEMPT_PATHS.some((p) => path === p || path.startsWith(p + '/'))) {return next();}
+  if (EXEMPT_PATH_PATTERNS.some((re) => re.test(path))) {return next();}
   const cookieToken = req.cookies[COOKIE_NAME];
   const headerToken = req.get(HEADER_NAME) || req.body?._csrf;
   if (!csrfTokensEqual(cookieToken, headerToken)) {

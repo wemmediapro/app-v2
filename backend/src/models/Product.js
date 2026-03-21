@@ -4,90 +4,90 @@ const productSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Product name is required'],
-    trim: true
+    trim: true,
   },
   description: {
     type: String,
-    required: [true, 'Description is required']
+    required: [true, 'Description is required'],
   },
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: ['souvenirs', 'fashion', 'accessories', 'food', 'beverages', 'electronics', 'books', 'toys', 'dutyfree']
+    enum: ['souvenirs', 'fashion', 'accessories', 'food', 'beverages', 'electronics', 'books', 'toys', 'dutyfree'],
   },
   price: {
     type: Number,
     required: [true, 'Price is required'],
-    min: [0, 'Price cannot be negative']
+    min: [0, 'Price cannot be negative'],
   },
   originalPrice: {
     type: Number,
-    min: [0, 'Original price cannot be negative']
+    min: [0, 'Original price cannot be negative'],
   },
   stock: {
     type: Number,
     default: 0,
-    min: [0, 'Stock cannot be negative']
+    min: [0, 'Stock cannot be negative'],
   },
   sku: {
     type: String,
     unique: true,
     sparse: true,
-    trim: true
+    trim: true,
   },
   type: {
     type: String,
     enum: ['physical', 'digital', 'service'],
-    default: 'physical'
+    default: 'physical',
   },
   rating: {
     type: Number,
     min: 0,
     max: 5,
-    default: 0
+    default: 0,
   },
   tags: [{
     type: String,
-    trim: true
+    trim: true,
   }],
   images: [{
     url: String,
     alt: String,
-    isPrimary: Boolean
+    isPrimary: Boolean,
   }],
   ships: [{
-    type: Number // Ship IDs
+    type: Number, // Ship IDs
   }],
   countries: [{
-    type: String // Country names
+    type: String, // Country names
   }],
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   isFeatured: {
     type: Boolean,
-    default: false
+    default: false,
   },
   weight: {
     type: Number,
-    min: 0
+    min: 0,
   },
   dimensions: {
     length: Number,
     width: Number,
-    height: Number
+    height: Number,
   },
   brand: {
-    type: String
+    type: String,
   },
   specifications: {
     type: Map,
-    of: String
+    of: String,
   },
-  translations: { type: mongoose.Schema.Types.Mixed }
+  translations: { type: mongoose.Schema.Types.Mixed },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 productSchema.index({ category: 1, isActive: 1 });

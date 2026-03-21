@@ -91,7 +91,7 @@ export function getRadioStreamUrl(streamUrl) {
  */
 export function getStreamingVideoUrl(videoUrl) {
   if (!videoUrl || typeof videoUrl !== 'string') return '';
-  let trimmed = videoUrl.trim().replace(/\\/g, '/').replace(/\/+/g, '/');
+  const trimmed = videoUrl.trim().replace(/\\/g, '/').replace(/\/+/g, '/');
 
   if (trimmed.startsWith('blob:')) return '';
 
@@ -187,7 +187,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor
@@ -222,7 +222,7 @@ api.interceptors.response.use(
     }
     
     return Promise.reject(error);
-  }
+  },
 );
 
 export const apiService = {

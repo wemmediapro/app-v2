@@ -12,7 +12,7 @@ const connectionCounters = require('../lib/connectionCounters');
 
 /** Formate un navire pour la réponse API (id = slug ou _id, route = chaîne) */
 function toShipResponse(doc) {
-  if (!doc) return null;
+  if (!doc) {return null;}
   const d = doc.toObject ? doc.toObject() : { ...doc };
   const id = d.slug || (d._id && d._id.toString());
   const routeStr = Array.isArray(d.routes) && d.routes.length > 0
@@ -23,7 +23,7 @@ function toShipResponse(doc) {
     out.capacity = {
       passengers: d.passengers ?? d.capacity,
       vehicles: d.capacityVehicles,
-      cabins: d.capacityCabins
+      cabins: d.capacityCabins,
     };
   }
   return out;
@@ -40,7 +40,7 @@ router.get('/ships', optionalAuth, async (req, res) => {
         success: true,
         data: [],
         count: 0,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
     const allRequested = req.query.all === 'true' && req.user && req.user.role === 'admin';
@@ -48,21 +48,21 @@ router.get('/ships', optionalAuth, async (req, res) => {
     const ships = await Ship.find(filter).read('secondaryPreferred').sort({ name: 1 }).lean();
     const data = ships.map((d) => {
       const out = toShipResponse(d);
-      if (allRequested) out.isActive = d.isActive !== false;
+      if (allRequested) {out.isActive = d.isActive !== false;}
       return out;
     });
     res.json({
       success: true,
       data,
       count: data.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Erreur route /api/gnv/ships:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des navires',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -76,7 +76,7 @@ router.get('/ships/:id', async (req, res) => {
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({
         success: false,
-        message: 'Base de données indisponible'
+        message: 'Base de données indisponible',
       });
     }
     const { id } = req.params;
@@ -86,7 +86,7 @@ router.get('/ships/:id', async (req, res) => {
       return res.json({
         success: true,
         data: out,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
     if (mongoose.Types.ObjectId.isValid(id)) {
@@ -96,27 +96,27 @@ router.get('/ships/:id', async (req, res) => {
         return res.json({
           success: true,
           data: out,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
     }
     res.status(404).json({
       success: false,
-      message: 'Navire non trouvé'
+      message: 'Navire non trouvé',
     });
   } catch (error) {
     console.error('Erreur route /api/gnv/ships/:id:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération du navire',
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 /** Génère un slug à partir d'un nom (pour POST ships) */
 function slugify(text) {
-  if (!text || typeof text !== 'string') return '';
+  if (!text || typeof text !== 'string') {return '';}
   return text
     .trim()
     .toLowerCase()
@@ -135,29 +135,29 @@ router.post('/ships', authMiddleware, adminMiddleware, async (req, res) => {
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({
         success: false,
-        message: 'Base de données indisponible'
+        message: 'Base de données indisponible',
       });
     }
     const { name, slug: slugInput, type, capacity } = req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Le nom du navire est requis'
+        message: 'Le nom du navire est requis',
       });
     }
     const capacityNum = typeof capacity === 'number' ? capacity : parseInt(capacity, 10);
     if (Number.isNaN(capacityNum) || capacityNum < 0) {
       return res.status(400).json({
         success: false,
-        message: 'La capacité doit être un nombre positif ou zéro'
+        message: 'La capacité doit être un nombre positif ou zéro',
       });
     }
     let slug = typeof slugInput === 'string' ? slugInput.trim() : '';
-    if (!slug) slug = slugify(name);
+    if (!slug) {slug = slugify(name);}
     if (!slug) {
       return res.status(400).json({
         success: false,
-        message: 'Impossible de générer un identifiant (slug) à partir du nom'
+        message: 'Impossible de générer un identifiant (slug) à partir du nom',
       });
     }
     const shipType = ['Ferry', 'Cruise', 'Cargo'].includes(type) ? type : 'Ferry';
@@ -165,13 +165,13 @@ router.post('/ships', authMiddleware, adminMiddleware, async (req, res) => {
     const existing = await Ship.findOne({
       $or: [
         { name: name.trim() },
-        { slug }
-      ]
+        { slug },
+      ],
     });
     if (existing) {
       return res.status(409).json({
         success: false,
-        message: existing.slug === slug ? 'Un navire avec cet identifiant (slug) existe déjà.' : 'Un navire avec ce nom existe déjà.'
+        message: existing.slug === slug ? 'Un navire avec cet identifiant (slug) existe déjà.' : 'Un navire avec ce nom existe déjà.',
       });
     }
 
@@ -181,26 +181,26 @@ router.post('/ships', authMiddleware, adminMiddleware, async (req, res) => {
       type: shipType,
       capacity: capacityNum,
       isActive: true,
-      status: 'En service'
+      status: 'En service',
     });
     const out = toShipResponse(ship.toObject());
     res.status(201).json({
       success: true,
       data: out,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: 'Un navire avec ce nom ou cet identifiant existe déjà.'
+        message: 'Un navire avec ce nom ou cet identifiant existe déjà.',
       });
     }
     console.error('Erreur route POST /api/gnv/ships:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la création du navire',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -214,7 +214,7 @@ router.patch('/ships/:id', authMiddleware, adminMiddleware, async (req, res) => 
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({
         success: false,
-        message: 'Base de données indisponible'
+        message: 'Base de données indisponible',
       });
     }
     const { id } = req.params;
@@ -235,13 +235,13 @@ router.patch('/ships/:id', authMiddleware, adminMiddleware, async (req, res) => 
       update.capacity = capacity;
     } else if (capacity !== undefined && capacity !== null && capacity !== '') {
       const capacityNum = parseInt(capacity, 10);
-      if (!Number.isNaN(capacityNum) && capacityNum >= 0) update.capacity = capacityNum;
+      if (!Number.isNaN(capacityNum) && capacityNum >= 0) {update.capacity = capacityNum;}
     }
     if (maxConnections === null || maxConnections === undefined || maxConnections === '') {
       update.maxConnections = null;
     } else {
       const maxConn = typeof maxConnections === 'number' ? maxConnections : parseInt(maxConnections, 10);
-      if (maxConn != null && !Number.isNaN(maxConn) && maxConn >= 0) update.maxConnections = maxConn;
+      if (maxConn != null && !Number.isNaN(maxConn) && maxConn >= 0) {update.maxConnections = maxConn;}
     }
     if (typeof isActive === 'boolean') {
       update.isActive = isActive;
@@ -250,7 +250,7 @@ router.patch('/ships/:id', authMiddleware, adminMiddleware, async (req, res) => 
     if (Object.keys(update).length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Aucune modification fournie'
+        message: 'Aucune modification fournie',
       });
     }
 
@@ -260,7 +260,7 @@ router.patch('/ships/:id', authMiddleware, adminMiddleware, async (req, res) => 
     const updated = await Ship.findOneAndUpdate(
       query,
       { $set: update },
-      { new: true }
+      { new: true },
     ).lean();
 
     if (updated) {
@@ -269,25 +269,25 @@ router.patch('/ships/:id', authMiddleware, adminMiddleware, async (req, res) => 
       return res.json({
         success: true,
         data: out,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
     res.status(404).json({
       success: false,
-      message: 'Navire non trouvé'
+      message: 'Navire non trouvé',
     });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: 'Un navire avec ce nom ou cet identifiant existe déjà.'
+        message: 'Un navire avec ce nom ou cet identifiant existe déjà.',
       });
     }
     console.error('Erreur route PATCH /api/gnv/ships/:id:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour du navire',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -301,7 +301,7 @@ router.delete('/ships/:id', authMiddleware, adminMiddleware, async (req, res) =>
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({
         success: false,
-        message: 'Base de données indisponible'
+        message: 'Base de données indisponible',
       });
     }
     const { id } = req.params;
@@ -311,25 +311,25 @@ router.delete('/ships/:id', authMiddleware, adminMiddleware, async (req, res) =>
     const updated = await Ship.findOneAndUpdate(
       query,
       { $set: { isActive: false } },
-      { new: true }
+      { new: true },
     ).lean();
     if (updated) {
       return res.json({
         success: true,
         message: 'Navire désactivé',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
     res.status(404).json({
       success: false,
-      message: 'Navire non trouvé'
+      message: 'Navire non trouvé',
     });
   } catch (error) {
     console.error('Erreur route DELETE /api/gnv/ships/:id:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la désactivation du navire',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -344,7 +344,7 @@ router.get('/boat-config', async (req, res) => {
       return res.json({
         success: true,
         data: { shipName: '', shipCapacity: null, shipInfo: '', shipId: 7 },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
     const config = await LocalServerConfig.findOne({ id: 'local' }).lean();
@@ -353,19 +353,19 @@ router.get('/boat-config', async (req, res) => {
       shipName: config?.shipName ?? '',
       shipCapacity: config?.shipCapacity != null ? config.shipCapacity : null,
       shipInfo: config?.shipInfo ?? '',
-      shipId: config?.shipId != null && config.shipId >= 1 ? config.shipId : defaultShipId
+      shipId: config?.shipId != null && config.shipId >= 1 ? config.shipId : defaultShipId,
     };
     res.json({
       success: true,
       data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Erreur route GET /api/gnv/boat-config:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération de la configuration du bateau',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -401,7 +401,7 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
     const config = await LocalServerConfig.findOneAndUpdate(
       { id: 'local' },
       { $set: update },
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     ).lean();
     res.json({
       success: true,
@@ -409,16 +409,16 @@ router.patch('/boat-config', authMiddleware, adminMiddleware, async (req, res) =
         shipName: config.shipName ?? '',
         shipCapacity: config.shipCapacity != null ? config.shipCapacity : null,
         shipInfo: config.shipInfo ?? '',
-        shipId: config.shipId != null && config.shipId >= 1 ? config.shipId : 7
+        shipId: config.shipId != null && config.shipId >= 1 ? config.shipId : 7,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Erreur route PATCH /api/gnv/boat-config:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour de la configuration du bateau',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -440,14 +440,14 @@ router.get('/connection-limit', authMiddleware, adminMiddleware, async (req, res
     res.json({
       success: true,
       data: { currentConnections, maxConnections },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Erreur route GET /api/gnv/connection-limit:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération de la limite',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -471,7 +471,7 @@ router.patch('/connection-limit', authMiddleware, adminMiddleware, async (req, r
     const config = await LocalServerConfig.findOneAndUpdate(
       { id: 'local' },
       { $set: { maxConnections: value } },
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     ).lean();
     const currentConnections = typeof connectionCounters.getTotalCountAsync === 'function'
       ? await connectionCounters.getTotalCountAsync()
@@ -480,16 +480,16 @@ router.patch('/connection-limit', authMiddleware, adminMiddleware, async (req, r
       success: true,
       data: {
         currentConnections,
-        maxConnections: config.maxConnections != null ? config.maxConnections : null
+        maxConnections: config.maxConnections != null ? config.maxConnections : null,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Erreur route PATCH /api/gnv/connection-limit:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour de la limite',
-      error: error.message
+      error: error.message,
     });
   }
 });

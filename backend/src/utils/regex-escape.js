@@ -6,7 +6,7 @@
 const MAX_SEARCH_LENGTH = 100;
 
 function escapeRegex(str) {
-  if (str == null || typeof str !== 'string') return '';
+  if (str == null || typeof str !== 'string') {return '';}
   const trimmed = str.trim().slice(0, MAX_SEARCH_LENGTH);
   return trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

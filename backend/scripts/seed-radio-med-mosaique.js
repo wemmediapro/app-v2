@@ -28,7 +28,7 @@ const RADIO_MED_DESCRIPTION = {
   it: 'Un\'onda di felicità',
   es: 'Una ola de felicidad',
   ar: 'موجة من السعادة',
-  de: 'Eine Welle des Glücks'
+  de: 'Eine Welle des Glücks',
 };
 
 // Description pour Mosaïque (thème variété / mosaïque culturelle)
@@ -38,7 +38,7 @@ const MOSAIQUE_DESCRIPTION = {
   it: 'Il mosaico di suoni e culture',
   es: 'Un mosaico de sonidos y culturas',
   ar: 'فسيفساء الأصوات والثقافات',
-  de: 'Ein Mosaik aus Klängen und Kulturen'
+  de: 'Ein Mosaik aus Klängen und Kulturen',
 };
 
 /**
@@ -72,13 +72,13 @@ const stations = [
       it: { name: 'Radio Med', description: RADIO_MED_DESCRIPTION.it },
       es: { name: 'Radio Med', description: RADIO_MED_DESCRIPTION.es },
       ar: { name: 'راديو ميد', description: RADIO_MED_DESCRIPTION.ar },
-      de: { name: 'Radio Med', description: RADIO_MED_DESCRIPTION.de }
+      de: { name: 'Radio Med', description: RADIO_MED_DESCRIPTION.de },
     },
     genre: 'Variété',
     streamUrl: '',
     logo: '', // rempli après copie
     isActive: true,
-    playlistId: ''
+    playlistId: '',
   },
   {
     name: 'Mosaïque',
@@ -89,14 +89,14 @@ const stations = [
       it: { name: 'Mosaico', description: MOSAIQUE_DESCRIPTION.it },
       es: { name: 'Mosaico', description: MOSAIQUE_DESCRIPTION.es },
       ar: { name: 'فسيفساء', description: MOSAIQUE_DESCRIPTION.ar },
-      de: { name: 'Mosaik', description: MOSAIQUE_DESCRIPTION.de }
+      de: { name: 'Mosaik', description: MOSAIQUE_DESCRIPTION.de },
     },
     genre: 'Variété',
     streamUrl: '',
     logo: '',
     isActive: true,
-    playlistId: ''
-  }
+    playlistId: '',
+  },
 ];
 
 async function seedRadioMedMosaique() {
@@ -111,10 +111,8 @@ async function seedRadioMedMosaique() {
     stations[0].logo = radioMedLogo;
     stations[1].logo = mosaiqueLogo;
 
-    if (radioMedLogo) console.log('   Logo Radio Med copié:', radioMedLogo);
-    else console.log('   ⚠️  Aucun logo Radio Med dans scripts/assets/ (radio-med-logo.png ou .jpg)');
-    if (mosaiqueLogo) console.log('   Logo Mosaïque copié:', mosaiqueLogo);
-    else console.log('   ⚠️  Aucun logo Mosaïque dans scripts/assets/ (mosaique-logo.png ou .jpg)');
+    if (radioMedLogo) {console.log('   Logo Radio Med copié:', radioMedLogo);} else {console.log('   ⚠️  Aucun logo Radio Med dans scripts/assets/ (radio-med-logo.png ou .jpg)');}
+    if (mosaiqueLogo) {console.log('   Logo Mosaïque copié:', mosaiqueLogo);} else {console.log('   ⚠️  Aucun logo Mosaïque dans scripts/assets/ (mosaique-logo.png ou .jpg)');}
 
     for (const s of stations) {
       const found = await RadioStation.findOne({ name: s.name });
@@ -125,8 +123,8 @@ async function seedRadioMedMosaique() {
             translations: s.translations,
             genre: s.genre,
             logo: s.logo || found.logo,
-            isActive: s.isActive
-          }
+            isActive: s.isActive,
+          },
         });
         console.log('✅ Station mise à jour:', s.name);
       } else {

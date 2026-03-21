@@ -4,7 +4,7 @@ const notificationSchema = new mongoose.Schema({
   // Contenu par langue (fr, en, ar, es, it, de, etc.) — clé = code langue, valeur = { title, message }
   translations: {
     type: mongoose.Schema.Types.Mixed,
-    default: () => ({})
+    default: () => ({}),
   },
   // Champs legacy : titre et message uniques (si pas de translations, utilisé pour l'app)
   title: { type: String, trim: true },
@@ -12,10 +12,10 @@ const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ['restaurant', 'boarding', 'info', 'alert', 'other'],
-    default: 'info'
+    default: 'info',
   },
   isActive: { type: Boolean, default: true },
-  scheduledAt: { type: Date, default: null }
+  scheduledAt: { type: Date, default: null },
 }, { timestamps: true });
 
 notificationSchema.index({ createdAt: -1 });

@@ -12,24 +12,24 @@ const { generateTranslationsForWebTV } = require('../lib/webtv-translations-open
 const DB_UNAVAILABLE_MSG = 'Base de données indisponible. Démarrez MongoDB (ex: docker run -d -p 27017:27017 mongo) ou vérifiez MONGODB_URI dans backend/config.env.';
 
 function toResponse(doc) {
-  if (!doc) return null;
+  if (!doc) {return null;}
   const obj = doc.toObject ? doc.toObject() : { ...doc };
   obj._id = obj._id?.toString();
   return obj;
 }
 
 function localizeChannel(doc, lang) {
-  if (!doc) return doc;
+  if (!doc) {return doc;}
   const obj = {
     ...doc,
     _id: doc._id?.toString(),
     programs: doc.programs || [],
-    schedule: Array.isArray(doc.schedule) ? doc.schedule : []
+    schedule: Array.isArray(doc.schedule) ? doc.schedule : [],
   };
   if (lang && doc.translations && doc.translations[lang]) {
     const t = doc.translations[lang];
-    if (t.name) obj.name = t.name;
-    if (t.description !== undefined) obj.description = t.description;
+    if (t.name) {obj.name = t.name;}
+    if (t.description !== undefined) {obj.description = t.description;}
   }
   return obj;
 }
@@ -37,7 +37,7 @@ function localizeChannel(doc, lang) {
 // @route   GET /api/webtv/channels — ?lang= pour contenu localisé (schedule = programme du jour depuis la BDD)
 router.get('/channels', async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) return res.json([]);
+    if (mongoose.connection.readyState !== 1) {return res.json([]);}
     const { lang } = req.query;
     const channels = await WebTVChannel.find({}).lean().sort({ createdAt: -1 });
     res.json(channels.map(doc => localizeChannel(doc, lang)));
@@ -50,10 +50,10 @@ router.get('/channels', async (req, res) => {
 // @route   GET /api/webtv/channels/:id — ?lang= (programme du jour / schedule depuis la BDD)
 router.get('/channels/:id', async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) return res.status(503).json({ message: DB_UNAVAILABLE_MSG });
+    if (mongoose.connection.readyState !== 1) {return res.status(503).json({ message: DB_UNAVAILABLE_MSG });}
     const { lang } = req.query;
     const channel = await WebTVChannel.findById(req.params.id).lean();
-    if (!channel) return res.status(404).json({ message: 'Chaîne non trouvée' });
+    if (!channel) {return res.status(404).json({ message: 'Chaîne non trouvée' });}
     res.json(localizeChannel(channel, lang));
   } catch (error) {
     console.error('Get WebTV channel error:', error);
@@ -65,7 +65,7 @@ router.get('/channels/:id', async (req, res) => {
 // @desc    Traduire titre et description de la chaîne dans toutes les langues (OpenAI)
 router.post('/channels/:id/translate', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) return res.status(503).json({ message: DB_UNAVAILABLE_MSG });
+    if (mongoose.connection.readyState !== 1) {return res.status(503).json({ message: DB_UNAVAILABLE_MSG });}
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return res.status(503).json({
@@ -73,7 +73,7 @@ router.post('/channels/:id/translate', authMiddleware, adminMiddleware, async (r
       });
     }
     const channel = await WebTVChannel.findById(req.params.id);
-    if (!channel) return res.status(404).json({ message: 'Chaîne non trouvée' });
+    if (!channel) {return res.status(404).json({ message: 'Chaîne non trouvée' });}
     const name = req.body.name != null ? req.body.name : (channel.name || '');
     const description = req.body.description != null ? req.body.description : (channel.description || '');
     const OpenAI = require('openai').default;
@@ -115,7 +115,7 @@ router.post('/translate', authMiddleware, adminMiddleware, async (req, res) => {
 // @desc    Créer une chaîne WebTV
 router.post('/channels', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) return res.status(503).json({ message: DB_UNAVAILABLE_MSG });
+    if (mongoose.connection.readyState !== 1) {return res.status(503).json({ message: DB_UNAVAILABLE_MSG });}
     const channel = new WebTVChannel({
       name: req.body.name,
       category: req.body.category || 'entertainment',
@@ -132,7 +132,7 @@ router.post('/channels', authMiddleware, adminMiddleware, async (req, res) => {
       countries: req.body.countries || [],
       shipId: req.body.shipId,
       destination: req.body.destination,
-      translations: req.body.translations && typeof req.body.translations === 'object' ? req.body.translations : undefined
+      translations: req.body.translations && typeof req.body.translations === 'object' ? req.body.translations : undefined,
     });
     await channel.save();
     res.status(201).json(toResponse(channel));
@@ -146,12 +146,12 @@ router.post('/channels', authMiddleware, adminMiddleware, async (req, res) => {
 // @desc    Modifier une chaîne WebTV
 router.put('/channels/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) return res.status(503).json({ message: DB_UNAVAILABLE_MSG });
+    if (mongoose.connection.readyState !== 1) {return res.status(503).json({ message: DB_UNAVAILABLE_MSG });}
     const updates = { ...req.body };
     delete updates._id;
-    if (updates.translations && typeof updates.translations !== 'object') delete updates.translations;
+    if (updates.translations && typeof updates.translations !== 'object') {delete updates.translations;}
     const channel = await WebTVChannel.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
-    if (!channel) return res.status(404).json({ message: 'Chaîne non trouvée' });
+    if (!channel) {return res.status(404).json({ message: 'Chaîne non trouvée' });}
     res.json(toResponse(channel));
   } catch (error) {
     console.error('Update WebTV channel error:', error);
@@ -163,9 +163,9 @@ router.put('/channels/:id', authMiddleware, adminMiddleware, async (req, res) =>
 // @desc    Supprimer une chaîne WebTV
 router.delete('/channels/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) return res.status(503).json({ message: DB_UNAVAILABLE_MSG });
+    if (mongoose.connection.readyState !== 1) {return res.status(503).json({ message: DB_UNAVAILABLE_MSG });}
     const channel = await WebTVChannel.findByIdAndDelete(req.params.id);
-    if (!channel) return res.status(404).json({ message: 'Chaîne non trouvée' });
+    if (!channel) {return res.status(404).json({ message: 'Chaîne non trouvée' });}
     res.json({ message: 'Chaîne supprimée' });
   } catch (error) {
     console.error('Delete WebTV channel error:', error);

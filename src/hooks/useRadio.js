@@ -163,7 +163,7 @@ export function useRadio(language, page, isAnyVideoPlaying) {
     const positionInSegment = now - programIndexInDay * segmentLength;
     const positionInSeconds = Math.min(
       Math.floor((positionInSegment / segmentLength) * dur),
-      Math.max(0, dur - 1)
+      Math.max(0, dur - 1),
     );
     return { index: i, positionInSeconds, matched: true };
   }, [getCurrentTimeSecondsFromMidnight, getServerDayName, programAppliesToDay, parseTimeToSecondsFromMidnight, segmentEndSeconds]);
@@ -306,7 +306,7 @@ export function useRadio(language, page, isAnyVideoPlaying) {
               ...prev,
               streamUrl: urlToPlay || (track && track.streamUrl) || prev.streamUrl,
               currentlyPlaying: (track && track.title) || prev.currentlyPlaying,
-              artist: (track && track.artist) || prev.artist || ''
+              artist: (track && track.artist) || prev.artist || '',
             } : null);
             if (urlToPlay) {
               if (seekPos != null) radioSeekHandledInClickRef.current = true;
@@ -384,7 +384,7 @@ export function useRadio(language, page, isAnyVideoPlaying) {
           ...station,
           streamUrl: urlToPlay || (track && track.streamUrl) || station.streamUrl || '',
           currentlyPlaying: (track && track.title) || station.currentlyPlaying || '—',
-          artist: (track && track.artist) || station.artist || ''
+          artist: (track && track.artist) || station.artist || '',
         });
         setIsPlaying(true);
         if (urlToPlay) {
@@ -415,7 +415,7 @@ export function useRadio(language, page, isAnyVideoPlaying) {
           ...station,
           streamUrl: first.streamUrl,
           currentlyPlaying: first.title || first.name,
-          artist: first.artist || ''
+          artist: first.artist || '',
         });
         setIsPlaying(true);
         const urlToPlay = getRadioStreamUrl(first.streamUrl);
@@ -501,7 +501,7 @@ export function useRadio(language, page, isAnyVideoPlaying) {
             color: station.color || 'from-blue-500 to-cyan-500',
             currentlyPlaying: station.currentSong || 'En direct',
             listeners: station.listeners?.toString() || '0',
-            bitrate: station.bitrate || '128k'
+            bitrate: station.bitrate || '128k',
           }));
           if (cancelled) return;
           setRadioStations(transformed);
@@ -720,7 +720,7 @@ export function useRadio(language, page, isAnyVideoPlaying) {
             ...prev,
             streamUrl: nextTrack.streamUrl,
             currentlyPlaying: nextTrack.title || nextTrack.name,
-            artist: nextTrack.artist || ''
+            artist: nextTrack.artist || '',
           } : null);
         }
       } else if (repeatMode === 'all') {
@@ -733,7 +733,7 @@ export function useRadio(language, page, isAnyVideoPlaying) {
             ...prev,
             streamUrl: first.streamUrl,
             currentlyPlaying: first.title || first.name,
-            artist: first.artist || ''
+            artist: first.artist || '',
           } : null);
         } else {
           setIsPlaying(false);
@@ -760,7 +760,7 @@ export function useRadio(language, page, isAnyVideoPlaying) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentRadio.name || 'GNV Radio',
         artist: currentRadio.currentlyPlaying && currentRadio.currentlyPlaying !== 'En direct' ? currentRadio.currentlyPlaying : 'En direct',
-        album: 'GNV OnBoard'
+        album: 'GNV OnBoard',
       });
       navigator.mediaSession.playbackState = 'playing';
     } else {
@@ -797,6 +797,6 @@ export function useRadio(language, page, isAnyVideoPlaying) {
     repeatMode,
     toggleRepeat,
     isShuffle,
-    toggleShuffle
+    toggleShuffle,
   };
 }

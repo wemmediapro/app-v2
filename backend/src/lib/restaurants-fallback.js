@@ -18,7 +18,7 @@ function ensureDir() {
 
 function readRestaurants() {
   ensureDir();
-  if (!fs.existsSync(RESTAURANTS_FILE)) return [];
+  if (!fs.existsSync(RESTAURANTS_FILE)) {return [];}
   try {
     const raw = fs.readFileSync(RESTAURANTS_FILE, 'utf8');
     const data = JSON.parse(raw);
@@ -30,17 +30,17 @@ function readRestaurants() {
 }
 
 function localizeRestaurant(doc, lang) {
-  if (!doc) return doc;
+  if (!doc) {return doc;}
   const normalizedLang = (lang && String(lang).toLowerCase()) || '';
   const out = { ...doc };
   if (normalizedLang && doc.translations && doc.translations[normalizedLang]) {
     const t = doc.translations[normalizedLang];
-    if (t.name) out.name = t.name;
-    if (t.description) out.description = t.description;
-    if (t.type) out.type = t.type;
-    if (t.location) out.location = t.location;
-    if (t.openingHours) out.openingHours = t.openingHours;
-    if (Array.isArray(t.specialties)) out.specialties = t.specialties;
+    if (t.name) {out.name = t.name;}
+    if (t.description) {out.description = t.description;}
+    if (t.type) {out.type = t.type;}
+    if (t.location) {out.location = t.location;}
+    if (t.openingHours) {out.openingHours = t.openingHours;}
+    if (Array.isArray(t.specialties)) {out.specialties = t.specialties;}
     if (Array.isArray(out.menu) && Array.isArray(t.menu)) {
       out.menu = out.menu.map((item, idx) => {
         const tr = t.menu[idx];

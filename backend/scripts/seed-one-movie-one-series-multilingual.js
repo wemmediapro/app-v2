@@ -70,7 +70,7 @@ Règles :
 - Choisis un film et une série populaires et récents (titres français).
 - NE fournis AUCUNE URL (pas de bande-annonce, pas de vidéo).`;
 
-  const userPrompt = `Génère 1 film et 1 série au format JSON : { "items": [ { type: "movie", ... }, { type: "series", ... } ] }. Réponse : uniquement le JSON, pas de \`\`\`json.`;
+  const userPrompt = 'Génère 1 film et 1 série au format JSON : { "items": [ { type: "movie", ... }, { type: "series", ... } ] }. Réponse : uniquement le JSON, pas de ```json.';
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -83,19 +83,18 @@ Règles :
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
 
   let data;
   try {
     data = JSON.parse(raw);
   } catch (e) {
     const match = raw.match(/\{[\s\S]*\}/);
-    if (match) data = JSON.parse(match[0]);
-    else throw new Error('Impossible de parser le JSON: ' + raw.slice(0, 300));
+    if (match) {data = JSON.parse(match[0]);} else {throw new Error('Impossible de parser le JSON: ' + raw.slice(0, 300));}
   }
 
   const list = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : null);
-  if (!list || list.length < 2) throw new Error('Il faut au moins 1 film et 1 série dans la réponse');
+  if (!list || list.length < 2) {throw new Error('Il faut au moins 1 film et 1 série dans la réponse');}
   return [
     { ...list[0], type: list[0].type === 'series' ? 'series' : 'movie' },
     { ...list[1], type: list[1].type === 'series' ? 'series' : 'movie' },
@@ -113,7 +112,7 @@ async function generateAndSavePoster(openai, item, index) {
     prompt,
   });
   const img = response.data?.[0];
-  if (!img?.b64_json) throw new Error('Pas d’image retournée par OpenAI');
+  if (!img?.b64_json) {throw new Error('Pas d’image retournée par OpenAI');}
 
   const safeName = slug(item.title) || (item.type === 'series' ? 'series' : 'movie');
   const filename = `${item.type === 'series' ? 'series' : 'movie'}-${index + 1}-${safeName}.png`;
@@ -124,7 +123,7 @@ async function generateAndSavePoster(openai, item, index) {
   if (health?.ok) {
     const uploadUrl = `${API_BASE_URL}/api/upload/image-from-base64`;
     const headers = { 'Content-Type': 'application/json' };
-    if (SEED_SECRET) headers['X-Seed-Secret'] = SEED_SECRET;
+    if (SEED_SECRET) {headers['X-Seed-Secret'] = SEED_SECRET;}
     const res = await fetch(uploadUrl, {
       method: 'POST',
       headers,
@@ -133,11 +132,11 @@ async function generateAndSavePoster(openai, item, index) {
     if (res.ok) {
       const data = await res.json();
       const pathRel = data?.image?.path || (data?.image?.url || '').replace(/^https?:\/\/[^/]+/, '');
-      if (pathRel) return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;
+      if (pathRel) {return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;}
     }
   }
 
-  if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
+  if (!fs.existsSync(IMAGES_DIR)) {fs.mkdirSync(IMAGES_DIR, { recursive: true });}
   const fullPath = path.join(IMAGES_DIR, nameWithExt);
   fs.writeFileSync(fullPath, Buffer.from(img.b64_json, 'base64'));
   return `/uploads/images/${nameWithExt}`;
@@ -155,8 +154,7 @@ async function run() {
   try {
     console.log('🔌 Connexion MongoDB...');
     await mongoose.connect(MONGODB_URI).catch(() => {});
-    if (useMongo()) console.log('✅ Connecté:', mongoose.connection.name);
-    else console.log('ℹ️ MongoDB non disponible → utilisation de backend/data/movies.json\n');
+    if (useMongo()) {console.log('✅ Connecté:', mongoose.connection.name);} else {console.log('ℹ️ MongoDB non disponible → utilisation de backend/data/movies.json\n');}
 
     console.log('🤖 Génération de 1 film + 1 série (OpenAI)...');
     const items = await generateOneMovieOneSeries(openai);
@@ -188,7 +186,7 @@ async function run() {
         openai,
         titleFr,
         (item.description || '').trim().slice(0, 2000),
-        typeLabel
+        typeLabel,
       );
 
       console.log('   🖼️ Génération de l\'affiche (DALL-E 3)...');
@@ -215,7 +213,7 @@ async function run() {
         translations,
         episodes: item.type === 'series' ? [] : undefined,
       };
-      if (doc.episodes === undefined) delete doc.episodes;
+      if (doc.episodes === undefined) {delete doc.episodes;}
 
       if (useMongo()) {
         await Movie.create(doc);
@@ -232,7 +230,7 @@ async function run() {
     console.log('\n✅ Terminé. 1 film + 1 série ajoutés (multilingue, affiches générées, sans URL vidéo). Total actifs:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect().catch(() => {});

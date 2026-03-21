@@ -137,10 +137,10 @@ async function main() {
     model: 'gpt-4o',
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: `${USER_PROMPT}\n\n---\n\n${AUDIT_CONTEXT}` }
+      { role: 'user', content: `${USER_PROMPT}\n\n---\n\n${AUDIT_CONTEXT}` },
     ],
     max_tokens: 8192,
-    temperature: 0.3
+    temperature: 0.3,
   });
 
   const content = completion.choices[0]?.message?.content;

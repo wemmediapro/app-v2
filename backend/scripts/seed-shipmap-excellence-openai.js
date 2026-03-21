@@ -19,10 +19,10 @@ const BACKEND_TYPES = ['passenger', 'vehicle', 'cabin', 'service', 'public'];
 
 function mapTypeToBackend(label) {
   const l = (label || '').toLowerCase();
-  if (l.includes('garage') || l.includes('véhicule') || l.includes('vehicle')) return 'vehicle';
-  if (l.includes('cabine') || l.includes('cabin') || l.includes('chambre')) return 'cabin';
-  if (l.includes('restaurant') || l.includes('bar') || l.includes('service')) return 'service';
-  if (l.includes('pont') || l.includes('sun') || l.includes('public')) return 'public';
+  if (l.includes('garage') || l.includes('véhicule') || l.includes('vehicle')) {return 'vehicle';}
+  if (l.includes('cabine') || l.includes('cabin') || l.includes('chambre')) {return 'cabin';}
+  if (l.includes('restaurant') || l.includes('bar') || l.includes('service')) {return 'service';}
+  if (l.includes('pont') || l.includes('sun') || l.includes('public')) {return 'public';}
   return 'passenger';
 }
 
@@ -46,7 +46,7 @@ Règles:
 - Chaque "services" doit contenir 2 à 6 intitulés courts (ex: "Zone poids lourds", "Ascenseurs passagers", "Cabines standard", "Ristorante Allegra", "Piscine adultes").
 - Tout en français. Pas de markdown, pas de commentaire.`;
 
-  const userPrompt = `Génère le plan complet des ponts pour le ferry GNV Excellent (Gênes - Palerme). Réponse: uniquement l'objet JSON avec la clé "decks".`;
+  const userPrompt = 'Génère le plan complet des ponts pour le ferry GNV Excellent (Gênes - Palerme). Réponse: uniquement l\'objet JSON avec la clé "decks".';
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -59,7 +59,7 @@ Règles:
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
   const data = JSON.parse(raw);
   const decks = data.decks || (Array.isArray(data) ? data : []);
   return Array.isArray(decks) ? decks : [];
@@ -124,7 +124,7 @@ async function seedShipmapExcellence() {
     console.log('\n✅ Seed plan navire Excellence (GNV Excellent) terminé. Ponts en base:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

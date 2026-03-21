@@ -4,116 +4,116 @@ const restaurantSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Restaurant name is required'],
-    trim: true
+    trim: true,
   },
   type: {
     type: String,
     required: [true, 'Restaurant type is required'],
-    trim: true
+    trim: true,
   },
   category: {
     type: String,
     default: '',
-    trim: true
+    trim: true,
   },
   location: {
     type: String,
-    default: ''
+    default: '',
   },
   description: {
     type: String,
-    required: [true, 'Description is required']
+    required: [true, 'Description is required'],
   },
   rating: {
     type: Number,
     min: 0,
     max: 5,
-    default: 0
+    default: 0,
   },
   priceRange: {
     type: String,
     enum: ['€', '€€', '€€€', '€€€€'],
-    default: '€€'
+    default: '€€',
   },
   image: {
     type: String,
-    default: ''
+    default: '',
   },
   isOpen: {
     type: Boolean,
-    default: true
+    default: true,
   },
   openingHours: {
     type: String,
-    default: ''
+    default: '',
   },
   specialties: [{
     type: String,
-    trim: true
+    trim: true,
   }],
   menu: [{
     id: Number,
     name: {
       type: String,
-      required: true
+      required: true,
     },
     description: {
       type: String,
-      default: ''
+      default: '',
     },
     price: {
       type: Number,
       required: true,
-      min: 0
+      min: 0,
     },
     category: {
       type: String,
-      required: true
+      required: true,
     },
     isPopular: {
       type: Boolean,
-      default: false
+      default: false,
     },
     allergens: [String],
-    image: String
+    image: String,
   }],
   promotions: [{
     id: Number,
     title: {
       type: String,
-      required: true
+      required: true,
     },
     description: {
       type: String,
-      required: true
+      required: true,
     },
     price: {
       type: Number,
-      required: true
+      required: true,
     },
     originalPrice: {
       type: Number,
-      required: true
+      required: true,
     },
     discount: {
       type: Number,
-      required: true
+      required: true,
     },
     validUntil: {
       type: Date,
-      required: true
+      required: true,
     },
-    translations: { type: mongoose.Schema.Types.Mixed }
+    translations: { type: mongoose.Schema.Types.Mixed },
   }],
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   shipId: { type: String, trim: true },
   shipName: { type: String, trim: true },
-  translations: { type: mongoose.Schema.Types.Mixed }
+  translations: { type: mongoose.Schema.Types.Mixed },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 module.exports = mongoose.model('Restaurant', restaurantSchema);

@@ -30,18 +30,18 @@ async function fixArticlesTranslations() {
       translations.fr = {
         title: (fr.title || doc.title || '').slice(0, 200),
         excerpt: (fr.excerpt || doc.excerpt || '').slice(0, 500),
-        content: fr.content || doc.content || ''
+        content: fr.content || doc.content || '',
       };
 
       // Conserver les autres langues existantes, ajouter des objets vides pour les manquantes
       for (const code of LANG_CODES) {
-        if (code === 'fr') continue;
+        if (code === 'fr') {continue;}
         const t = translations[code];
         if (t && typeof t === 'object' && (t.title || t.excerpt || t.content)) {
           translations[code] = {
             title: (t.title || '').slice(0, 200),
             excerpt: (t.excerpt || '').slice(0, 500),
-            content: t.content || ''
+            content: t.content || '',
           };
         } else if (!translations[code] || typeof translations[code] !== 'object') {
           translations[code] = { title: '', excerpt: '', content: '' };
@@ -50,7 +50,7 @@ async function fixArticlesTranslations() {
 
       await Article.updateOne(
         { _id: doc._id },
-        { $set: { translations } }
+        { $set: { translations } },
       );
       updated++;
       console.log(`  ✓ ${doc._id} — "${(doc.title || '').slice(0, 50)}..."`);

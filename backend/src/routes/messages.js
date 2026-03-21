@@ -27,12 +27,12 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
         $match: {
           $or: [
             { sender: req.user.id },
-            { receiver: req.user.id }
-          ]
-        }
+            { receiver: req.user.id },
+          ],
+        },
       },
       {
-        $sort: { createdAt: -1 }
+        $sort: { createdAt: -1 },
       },
       {
         $group: {
@@ -40,8 +40,8 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
             $cond: [
               { $eq: ['$sender', req.user.id] },
               '$receiver',
-              '$sender'
-            ]
+              '$sender',
+            ],
           },
           lastMessage: { $first: '$$ROOT' },
           unreadCount: {
@@ -50,26 +50,26 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
                 {
                   $and: [
                     { $eq: ['$receiver', req.user.id] },
-                    { $eq: ['$isRead', false] }
-                  ]
+                    { $eq: ['$isRead', false] },
+                  ],
                 },
                 1,
-                0
-              ]
-            }
-          }
-        }
+                0,
+              ],
+            },
+          },
+        },
       },
       {
         $lookup: {
           from: 'users',
           localField: '_id',
           foreignField: '_id',
-          as: 'user'
-        }
+          as: 'user',
+        },
       },
       {
-        $unwind: '$user'
+        $unwind: '$user',
       },
       {
         $project: {
@@ -79,12 +79,12 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
             lastName: 1,
             email: 1,
             avatar: 1,
-            cabinNumber: 1
+            cabinNumber: 1,
           },
           lastMessage: 1,
-          unreadCount: 1
-        }
-      }
+          unreadCount: 1,
+        },
+      },
     ]);
 
     res.json(conversations.slice(skip, skip + limit));
@@ -103,48 +103,48 @@ router.get(
   [query('q').optional().isString().isLength({ max: 200 })],
   handleValidationErrors,
   async (req, res) => {
-  try {
-    const { q } = req.query;
-    const qTrimmed = typeof q === 'string' ? q.trim() : '';
+    try {
+      const { q } = req.query;
+      const qTrimmed = typeof q === 'string' ? q.trim() : '';
 
-    if (!qTrimmed || qTrimmed.length < 2) {
-      return res.json([]);
+      if (!qTrimmed || qTrimmed.length < 2) {
+        return res.json([]);
+      }
+
+      // Check if query is an email (contains @)
+      const isEmail = qTrimmed.includes('@');
+      // Extract phone number (digits only)
+      const phoneNumber = qTrimmed.replace(/\D/g, '');
+      const isPhone = phoneNumber.length >= 3;
+
+      if (!isEmail && !isPhone) {
+        return res.json([]);
+      }
+
+      // Build search query
+      const searchQuery = {
+        _id: { $ne: req.user.id },
+        isActive: true,
+      };
+
+      if (isEmail) {
+        const safe = sanitizeSearchString(qTrimmed);
+        if (safe) {searchQuery.email = { $regex: safe, $options: 'i' };}
+      } else if (isPhone) {
+        const safe = sanitizeSearchString(phoneNumber);
+        if (safe) {searchQuery.phone = { $regex: safe, $options: 'i' };}
+      }
+
+      const users = await User.find(searchQuery)
+        .select('firstName lastName email phone cabinNumber avatar')
+        .limit(10);
+
+      res.json(users);
+    } catch (error) {
+      console.error('Search users error:', error);
+      res.status(500).json({ message: 'Server error' });
     }
-
-    // Check if query is an email (contains @)
-    const isEmail = qTrimmed.includes('@');
-    // Extract phone number (digits only)
-    const phoneNumber = qTrimmed.replace(/\D/g, '');
-    const isPhone = phoneNumber.length >= 3;
-
-    if (!isEmail && !isPhone) {
-      return res.json([]);
-    }
-
-    // Build search query
-    const searchQuery = {
-      _id: { $ne: req.user.id },
-      isActive: true
-    };
-
-    if (isEmail) {
-      const safe = sanitizeSearchString(qTrimmed);
-      if (safe) searchQuery.email = { $regex: safe, $options: 'i' };
-    } else if (isPhone) {
-      const safe = sanitizeSearchString(phoneNumber);
-      if (safe) searchQuery.phone = { $regex: safe, $options: 'i' };
-    }
-
-    const users = await User.find(searchQuery)
-      .select('firstName lastName email phone cabinNumber avatar')
-      .limit(10);
-
-    res.json(users);
-  } catch (error) {
-    console.error('Search users error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-  }
+  },
 );
 
 // @route   GET /api/messages/:userId
@@ -163,8 +163,8 @@ router.get(
       const messages = await Message.find({
         $or: [
           { sender: req.user.id, receiver: req.params.userId },
-          { sender: req.params.userId, receiver: req.user.id }
-        ]
+          { sender: req.params.userId, receiver: req.user.id },
+        ],
       })
         .sort({ createdAt: -1 })
         .limit(limit)
@@ -177,12 +177,12 @@ router.get(
         {
           sender: req.params.userId,
           receiver: req.user.id,
-          isRead: false
+          isRead: false,
         },
         {
           isRead: true,
-          readAt: new Date()
-        }
+          readAt: new Date(),
+        },
       );
 
       res.json(messages.reverse());
@@ -190,7 +190,7 @@ router.get(
       console.error('Get messages error:', error);
       res.status(500).json({ message: 'Server error' });
     }
-  }
+  },
 );
 
 // @route   POST /api/messages
@@ -208,72 +208,72 @@ router.post(
   ],
   handleValidationErrors,
   async (req, res) => {
-  try {
-    const { receiver, content, type = 'text', attachments = [], clientSyncId } = req.body;
-
-    // Check if receiver exists
-    const receiverUser = await User.findById(receiver);
-    if (!receiverUser) {
-      return res.status(404).json({ message: 'Receiver not found' });
-    }
-
-    if (clientSyncId) {
-      const existing = await Message.findOne({
-        sender: req.user.id,
-        clientSyncId: String(clientSyncId).trim(),
-      })
-        .populate('sender', 'firstName lastName avatar')
-        .populate('receiver', 'firstName lastName avatar');
-      if (existing) {
-        return res.status(200).json({
-          message: 'Message already synced',
-          data: existing,
-        });
-      }
-    }
-
-    const message = new Message({
-      sender: req.user.id,
-      receiver,
-      content,
-      type,
-      attachments,
-      ...(clientSyncId ? { clientSyncId: String(clientSyncId).trim() } : {}),
-    });
-
     try {
-      await message.save();
-    } catch (saveErr) {
-      if (saveErr && saveErr.code === 11000 && clientSyncId) {
-        const again = await Message.findOne({
+      const { receiver, content, type = 'text', attachments = [], clientSyncId } = req.body;
+
+      // Check if receiver exists
+      const receiverUser = await User.findById(receiver);
+      if (!receiverUser) {
+        return res.status(404).json({ message: 'Receiver not found' });
+      }
+
+      if (clientSyncId) {
+        const existing = await Message.findOne({
           sender: req.user.id,
           clientSyncId: String(clientSyncId).trim(),
         })
           .populate('sender', 'firstName lastName avatar')
           .populate('receiver', 'firstName lastName avatar');
-        if (again) {
+        if (existing) {
           return res.status(200).json({
             message: 'Message already synced',
-            data: again,
+            data: existing,
           });
         }
       }
-      throw saveErr;
+
+      const message = new Message({
+        sender: req.user.id,
+        receiver,
+        content,
+        type,
+        attachments,
+        ...(clientSyncId ? { clientSyncId: String(clientSyncId).trim() } : {}),
+      });
+
+      try {
+        await message.save();
+      } catch (saveErr) {
+        if (saveErr && saveErr.code === 11000 && clientSyncId) {
+          const again = await Message.findOne({
+            sender: req.user.id,
+            clientSyncId: String(clientSyncId).trim(),
+          })
+            .populate('sender', 'firstName lastName avatar')
+            .populate('receiver', 'firstName lastName avatar');
+          if (again) {
+            return res.status(200).json({
+              message: 'Message already synced',
+              data: again,
+            });
+          }
+        }
+        throw saveErr;
+      }
+
+      const populatedMessage = await Message.findById(message._id)
+        .populate('sender', 'firstName lastName avatar')
+        .populate('receiver', 'firstName lastName avatar');
+
+      res.status(201).json({
+        message: 'Message sent successfully',
+        data: populatedMessage,
+      });
+    } catch (error) {
+      console.error('Send message error:', error);
+      res.status(500).json({ message: 'Server error' });
     }
-
-    const populatedMessage = await Message.findById(message._id)
-      .populate('sender', 'firstName lastName avatar')
-      .populate('receiver', 'firstName lastName avatar');
-
-    res.status(201).json({
-      message: 'Message sent successfully',
-      data: populatedMessage
-    });
-  } catch (error) {
-    console.error('Send message error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-  }
+  },
 );
 
 module.exports = router;

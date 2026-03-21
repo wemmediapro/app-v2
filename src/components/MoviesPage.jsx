@@ -166,7 +166,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
 
   const playbackKey = getMoviePlaybackKey(
     selectedMovie?.id,
-    selectedMovie?.type === 'serie' ? selectedEpisodeIndex : null
+    selectedMovie?.type === 'serie' ? selectedEpisodeIndex : null,
   );
   const savedPosition = playbackKey ? getSavedPlaybackPosition(playbackKey, playbackStorageSuffix) : null;
   const startTime = savedPosition?.time > 0 ? savedPosition.time : 0;
@@ -340,7 +340,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
         }
       }
     },
-    [playbackKey, selectedMovie?.id, selectedMovie?.type, selectedEpisodeIndex, playbackStorageSuffix, playbackPhase, triggerMidroll, onSyncPlaybackToServer]
+    [playbackKey, selectedMovie?.id, selectedMovie?.type, selectedEpisodeIndex, playbackStorageSuffix, playbackPhase, triggerMidroll, onSyncPlaybackToServer],
   );
 
   // Réactiver le plein écran quand une pub (preroll ou mid-roll) s'affiche — le conteneur reste monté, on repasse en plein écran après rendu de l'ad
@@ -395,7 +395,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
         setMovieProgress((p) => ({ ...p, [selectedMovie.id]: percent }));
       }
     },
-    [playbackKey, selectedMovie?.id, selectedMovie?.type, selectedEpisodeIndex, playbackStorageSuffix, onSyncPlaybackToServer]
+    [playbackKey, selectedMovie?.id, selectedMovie?.type, selectedEpisodeIndex, playbackStorageSuffix, onSyncPlaybackToServer],
   );
 
   // Synchroniser les barres de progression depuis le storage
@@ -450,7 +450,7 @@ export default function MoviesPage({ t, language, moviesAndSeries = [], moviesLo
         const typeOk = filterType === 'all' || item.type === filterType;
         return genreOk && typeOk;
       }),
-    [moviesAndSeries, selectedGenre, filterType]
+    [moviesAndSeries, selectedGenre, filterType],
   );
 
   const featured = useMemo(() => moviesAndSeries.find((item) => item.isFeatured), [moviesAndSeries]);

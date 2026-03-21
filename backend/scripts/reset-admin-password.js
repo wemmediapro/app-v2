@@ -22,7 +22,7 @@ async function resetAdminPassword() {
     }
     if (!NEW_PASSWORD || String(NEW_PASSWORD).trim().length < 8) {
       console.error(
-        '❌ ADMIN_PASSWORD_RESET doit être défini (min. 8 caractères), ex. : ADMIN_PASSWORD_RESET=\'VotreMotDePasse\' node scripts/reset-admin-password.js'
+        '❌ ADMIN_PASSWORD_RESET doit être défini (min. 8 caractères), ex. : ADMIN_PASSWORD_RESET=\'VotreMotDePasse\' node scripts/reset-admin-password.js',
       );
       process.exit(1);
     }

@@ -185,10 +185,10 @@ async function main() {
     model: 'gpt-4o',
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: `${USER_PROMPT}\n\n---\n\n${PAGES_DESCRIPTION}` }
+      { role: 'user', content: `${USER_PROMPT}\n\n---\n\n${PAGES_DESCRIPTION}` },
     ],
     max_tokens: 4096,
-    temperature: 0.4
+    temperature: 0.4,
   });
 
   const content = completion.choices[0]?.message?.content;

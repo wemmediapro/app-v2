@@ -18,7 +18,7 @@ function hashEmailForLog(email) {
  * Masque un email pour affichage (debug / messages utilisateur), pas pour les logs d’audit structurés.
  */
 function redactEmail(email) {
-  if (!email || typeof email !== 'string' || email.length < 5) return '***';
+  if (!email || typeof email !== 'string' || email.length < 5) {return '***';}
   const [local = '', domain] = email.split('@');
   const redactedLocal = local.slice(0, 2) + '*'.repeat(Math.max(0, local.length - 2));
   const redactedDomain = domain ? '*'.repeat(domain.length) : '***';
@@ -28,13 +28,11 @@ function redactEmail(email) {
 // Masquer les champs sensibles dans les logs (OWASP Logging)
 const SENSITIVE_KEYS = /password|token|secret|authorization|cookie|csrf|jwt|adminToken/i;
 function redact(obj) {
-  if (obj == null) return obj;
-  if (typeof obj !== 'object') return obj;
+  if (obj == null) {return obj;}
+  if (typeof obj !== 'object') {return obj;}
   const out = {};
   for (const [k, v] of Object.entries(obj)) {
-    if (SENSITIVE_KEYS.test(k)) out[k] = '[REDACTED]';
-    else if (typeof v === 'object' && v !== null && !Array.isArray(v)) out[k] = redact(v);
-    else out[k] = v;
+    if (SENSITIVE_KEYS.test(k)) {out[k] = '[REDACTED]';} else if (typeof v === 'object' && v !== null && !Array.isArray(v)) {out[k] = redact(v);} else {out[k] = v;}
   }
   return out;
 }

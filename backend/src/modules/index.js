@@ -26,11 +26,11 @@ module.exports = {
   notifications: notificationModule,
   booking: bookingModule,
   loyalty: loyaltyModule,
-  
+
   // Fonction utilitaire pour initialiser tous les modules
   initializeModules: (app, io) => {
     console.log('🚀 Initialisation des modules backend...');
-    
+
     // Initialisation de chaque module
     authModule.initialize(app, io);
     userModule.initialize(app, io);
@@ -43,10 +43,10 @@ module.exports = {
     notificationModule.initialize(app, io);
     bookingModule.initialize(app, io);
     loyaltyModule.initialize(app, io);
-    
+
     console.log('✅ Tous les modules backend initialisés');
   },
-  
+
   // Statistiques des modules
   getModuleStats: () => {
     return {
@@ -62,10 +62,10 @@ module.exports = {
         { name: 'Admin', status: 'active', endpoints: 25 },
         { name: 'Notifications', status: 'active', endpoints: 6 },
         { name: 'Booking', status: 'active', endpoints: 14 },
-        { name: 'Loyalty', status: 'active', endpoints: 8 }
+        { name: 'Loyalty', status: 'active', endpoints: 8 },
       ],
-      totalEndpoints: 148
+      totalEndpoints: 148,
     };
-  }
+  },
 };
 

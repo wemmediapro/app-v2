@@ -34,15 +34,15 @@ function transformMovie(movie) {
     translations: movie.translations || undefined,
     episodes: Array.isArray(movie.episodes)
       ? movie.episodes
-          .slice()
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-          .map((ep) => ({
-            title: ep.title || '',
-            duration: ep.duration || '',
-            description: ep.description || '',
-            videoUrl: ep.videoUrl || '',
-            order: ep.order ?? 0,
-          }))
+        .slice()
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .map((ep) => ({
+          title: ep.title || '',
+          duration: ep.duration || '',
+          description: ep.description || '',
+          videoUrl: ep.videoUrl || '',
+          order: ep.order ?? 0,
+        }))
       : [],
   };
 }

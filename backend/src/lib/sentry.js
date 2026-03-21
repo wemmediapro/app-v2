@@ -19,7 +19,7 @@ function init() {
       tracesSampleRate: env === 'production' ? 0.1 : 1,
       maxBreadcrumbs: 50,
       beforeSend(event, hint) {
-        if (process.env.SENTRY_IGNORE_LOGS === '1') return null;
+        if (process.env.SENTRY_IGNORE_LOGS === '1') {return null;}
         return event;
       },
     });

@@ -64,7 +64,7 @@ const auditLogSchema = new mongoose.Schema(
   {
     timestamps: true,
     collection: 'auditlogs',
-  }
+  },
 );
 
 // Index composites pour requêtes fréquentes (userId + timestamp, action + timestamp)

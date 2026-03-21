@@ -4,60 +4,60 @@ const bannerSchema = new mongoose.Schema({
   title: {
     type: String,
     required: [true, 'Title is required'],
-    trim: true
+    trim: true,
   },
   description: {
     type: String,
-    trim: true
+    trim: true,
   },
   position: {
     type: String,
     required: [true, 'Position is required'],
-    enum: ['home', 'home-top', 'home-middle', 'home-bottom', 'sidebar', 'header', 'footer']
+    enum: ['home', 'home-top', 'home-middle', 'home-bottom', 'sidebar', 'header', 'footer'],
   },
   order: {
     type: Number,
-    default: 0
+    default: 0,
   },
   image: {
     type: String,
-    required: [true, 'Image URL is required']
+    required: [true, 'Image URL is required'],
   },
   imageMobile: { type: String },
   imageTablet: { type: String },
   link: {
-    type: String
+    type: String,
   },
   startDate: {
-    type: Date
+    type: Date,
   },
   endDate: {
-    type: Date
+    type: Date,
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   countries: [{
-    type: String
+    type: String,
   }],
   ships: [{
-    type: Number // Ship IDs
+    type: Number, // Ship IDs
   }],
   pages: [{
-    type: String // Page identifiers: 'home', 'restaurants', 'shop', etc.
+    type: String, // Page identifiers: 'home', 'restaurants', 'shop', etc.
   }],
   clicks: {
     type: Number,
-    default: 0
+    default: 0,
   },
   impressions: {
     type: Number,
-    default: 0
+    default: 0,
   },
-  translations: { type: mongoose.Schema.Types.Mixed }
+  translations: { type: mongoose.Schema.Types.Mixed },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 bannerSchema.index({ position: 1, isActive: 1 });

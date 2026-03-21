@@ -17,7 +17,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const SKIP_IF_TRANSLATED = process.env.SKIP_IF_TRANSLATED !== '0';
 const LANGS = ['fr', 'en', 'es', 'it', 'de', 'ar'];
 function hasAllTranslations(doc) {
-  if (!doc.translations || typeof doc.translations !== 'object') return false;
+  if (!doc.translations || typeof doc.translations !== 'object') {return false;}
   return LANGS.every(l => doc.translations[l] && doc.translations[l].title);
 }
 
@@ -71,11 +71,11 @@ async function run() {
           titleFr,
           excerptFr,
           contentFr,
-          category
+          category,
         );
         await Article.updateOne({ _id: id }, { $set: { translations } });
         updated++;
-        console.log(`      ✅ Traductions enregistrées.`);
+        console.log('      ✅ Traductions enregistrées.');
       } catch (err) {
         console.error(`   ❌ ${titleFr.slice(0, 40)}:`, err.message);
       }
@@ -84,7 +84,7 @@ async function run() {
     console.log(`\n✅ Terminé. ${updated}/${toProcess.length} article(s) mis à jour avec les traductions.`);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

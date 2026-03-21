@@ -18,7 +18,7 @@ function ensureDir() {
 
 function readChannels() {
   ensureDir();
-  if (!fs.existsSync(WEBTV_FILE)) return [];
+  if (!fs.existsSync(WEBTV_FILE)) {return [];}
   try {
     const raw = fs.readFileSync(WEBTV_FILE, 'utf8');
     const data = JSON.parse(raw);
@@ -38,7 +38,7 @@ function nextId(channels) {
   let max = 0;
   channels.forEach(c => {
     const id = typeof c._id === 'string' && c._id.match(/^\d+$/) ? parseInt(c._id, 10) : 0;
-    if (id > max) max = id;
+    if (id > max) {max = id;}
   });
   return String(max + 1);
 }
@@ -60,7 +60,7 @@ function toDoc(body) {
     countries: Array.isArray(body.countries) ? body.countries : [],
     shipId: body.shipId,
     destination: body.destination || '',
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   };
 }
 
@@ -78,7 +78,7 @@ module.exports = {
     const channel = {
       _id,
       ...toDoc(body),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     channels.push(channel);
     writeChannels(channels);
@@ -87,7 +87,7 @@ module.exports = {
   update(id, body) {
     const channels = readChannels();
     const idx = channels.findIndex(c => String(c._id) === String(id));
-    if (idx === -1) return null;
+    if (idx === -1) {return null;}
     const updates = toDoc(body);
     channels[idx] = { ...channels[idx], ...updates };
     writeChannels(channels);
@@ -96,10 +96,10 @@ module.exports = {
   remove(id) {
     const channels = readChannels();
     const idx = channels.findIndex(c => String(c._id) === String(id));
-    if (idx === -1) return null;
+    if (idx === -1) {return null;}
     channels[idx].isActive = false;
     channels[idx].updatedAt = new Date().toISOString();
     writeChannels(channels);
     return channels[idx];
-  }
+  },
 };

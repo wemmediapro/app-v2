@@ -19,7 +19,7 @@ describe('errorHandler middleware', () => {
     errorHandler(err, req, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Bad' })
+      expect.objectContaining({ message: 'Bad' }),
     );
   });
 
@@ -35,7 +35,7 @@ describe('errorHandler middleware', () => {
     errorHandler(err, req, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Internal Server Error' })
+      expect.objectContaining({ message: 'Internal Server Error' }),
     );
     expect(res.json.mock.calls[0][0].error).toBeUndefined();
   });
@@ -51,7 +51,7 @@ describe('errorHandler middleware', () => {
     };
     errorHandler(err, req, res, jest.fn());
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Internal Server Error', error: 'DB exploded' })
+      expect.objectContaining({ message: 'Internal Server Error', error: 'DB exploded' }),
     );
   });
 });

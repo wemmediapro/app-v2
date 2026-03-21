@@ -50,15 +50,14 @@ Génère l'objet JSON avec "translations" pour les 6 langues (fr, en, es, it, de
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
 
   let data;
   try {
     data = JSON.parse(raw);
   } catch (e) {
     const match = raw.match(/\{[\s\S]*\}/);
-    if (match) data = JSON.parse(match[0]);
-    else throw new Error('JSON invalide: ' + raw.slice(0, 200));
+    if (match) {data = JSON.parse(match[0]);} else {throw new Error('JSON invalide: ' + raw.slice(0, 200));}
   }
 
   const translations = data.translations || data;
@@ -72,7 +71,7 @@ Génère l'objet JSON avec "translations" pour les 6 langues (fr, en, es, it, de
       };
     }
   }
-  if (!out.fr) out.fr = { title: titleFr, description: descriptionFr || '' };
+  if (!out.fr) {out.fr = { title: titleFr, description: descriptionFr || '' };}
   return out;
 }
 

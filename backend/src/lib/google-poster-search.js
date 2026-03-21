@@ -32,7 +32,7 @@ async function fetchPosterUrlFromGoogle(title) {
     searchType: 'image',
     num: '5',
     safe: 'active',
-    imgSize: 'large'
+    imgSize: 'large',
   });
   const url = `${CSE_BASE}?${qs.toString()}`;
 

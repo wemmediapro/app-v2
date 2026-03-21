@@ -12,7 +12,7 @@ const SUPPORTED_LANGS = ['fr', 'en', 'es', 'it', 'de', 'ar'];
 
 function getRequestLang(req) {
   const q = (req.query.lang || '').toLowerCase();
-  if (SUPPORTED_LANGS.includes(q)) return q;
+  if (SUPPORTED_LANGS.includes(q)) {return q;}
   const r = (req.language || 'fr').toLowerCase();
   return SUPPORTED_LANGS.includes(r) ? r : 'fr';
 }
@@ -20,13 +20,13 @@ function getRequestLang(req) {
 /** Applique la langue demandée : name/description depuis nameByLocale/descriptionByLocale si présents. */
 function localizeDeck(doc, lang) {
   const out = { ...doc };
-  if (doc.nameByLocale && doc.nameByLocale[lang]) out.name = doc.nameByLocale[lang];
-  if (doc.descriptionByLocale && doc.descriptionByLocale[lang]) out.description = doc.descriptionByLocale[lang];
+  if (doc.nameByLocale && doc.nameByLocale[lang]) {out.name = doc.nameByLocale[lang];}
+  if (doc.descriptionByLocale && doc.descriptionByLocale[lang]) {out.description = doc.descriptionByLocale[lang];}
   return out;
 }
 
 function normalizeServices(services) {
-  if (!Array.isArray(services)) return [];
+  if (!Array.isArray(services)) {return [];}
   return services.map((s) => {
     if (typeof s === 'string') {
       return { name: s.trim(), icon: '', openingHours: '', nameByLocale: {} };
@@ -37,14 +37,14 @@ function normalizeServices(services) {
       name,
       icon: (s && s.icon) ? String(s.icon).trim() : '',
       openingHours: (s && s.openingHours) ? String(s.openingHours).trim() : '',
-      nameByLocale
+      nameByLocale,
     };
   });
 }
 
 /** Retourne les services avec le nom localisé selon lang (name = nameByLocale[lang] || name). Inclut nameByLocale pour le dashboard. */
 function localizeServices(services, lang) {
-  if (!Array.isArray(services)) return [];
+  if (!Array.isArray(services)) {return [];}
   return services.map((s) => {
     const base = typeof s === 'string'
       ? { name: s.trim(), icon: '', openingHours: '', nameByLocale: {} }
@@ -65,7 +65,7 @@ router.get('/decks', async (req, res) => {
       const shipIdParam = req.query.shipId;
       if (shipIdParam != null && shipIdParam !== '' && String(shipIdParam) !== 'undefined') {
         const n = Number(shipIdParam);
-        if (!Number.isNaN(n) && n >= 1) query.shipId = n;
+        if (!Number.isNaN(n) && n >= 1) {query.shipId = n;}
       }
       let decks = await Shipmap.find(query).lean().sort({ name: 1 });
       // Si aucun pont pour ce navire, proposer ceux du navire 7 (GNV Excellent / seed)
@@ -126,7 +126,7 @@ router.get('/decks/:id', async (req, res) => {
     if (mongoose.connection.readyState === 1) {
       const lang = getRequestLang(req);
       const deck = await Shipmap.findById(req.params.id).lean();
-      if (!deck) return res.status(404).json({ message: 'Pont non trouvé' });
+      if (!deck) {return res.status(404).json({ message: 'Pont non trouvé' });}
       const localized = localizeDeck(deck, lang);
       return res.json({
         ...localized,
@@ -166,7 +166,7 @@ router.post('/decks', authMiddleware, adminMiddleware, async (req, res) => {
       poolInfo: body.poolInfo,
       isActive: body.isActive !== false,
       nameByLocale: body.nameByLocale || {},
-      descriptionByLocale: body.descriptionByLocale || {}
+      descriptionByLocale: body.descriptionByLocale || {},
     });
     await deck.save();
     const doc = deck.toObject();
@@ -186,9 +186,9 @@ router.put('/decks/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     const updates = { ...req.body };
     delete updates._id;
-    if (Array.isArray(updates.services)) updates.services = normalizeServices(updates.services);
+    if (Array.isArray(updates.services)) {updates.services = normalizeServices(updates.services);}
     const deck = await Shipmap.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
-    if (!deck) return res.status(404).json({ message: 'Pont non trouvé' });
+    if (!deck) {return res.status(404).json({ message: 'Pont non trouvé' });}
     const doc = deck.toObject();
     res.json({ ...doc, _id: doc._id?.toString() });
   } catch (error) {
@@ -210,7 +210,7 @@ router.put('/', authMiddleware, adminMiddleware, async (req, res) => {
     }
     for (const d of decks) {
       const payload = { ...d };
-      if (Array.isArray(payload.services)) payload.services = normalizeServices(payload.services);
+      if (Array.isArray(payload.services)) {payload.services = normalizeServices(payload.services);}
       if (d._id) {
         await Shipmap.findByIdAndUpdate(d._id, { $set: payload });
       } else {
@@ -242,7 +242,7 @@ router.delete('/decks/:id', authMiddleware, adminMiddleware, async (req, res) =>
       return res.status(503).json({ message: 'Base de données indisponible. Mode démo actif.' });
     }
     const deck = await Shipmap.findByIdAndDelete(req.params.id);
-    if (!deck) return res.status(404).json({ message: 'Pont non trouvé' });
+    if (!deck) {return res.status(404).json({ message: 'Pont non trouvé' });}
     res.json({ message: 'Pont supprimé' });
   } catch (error) {
     console.error('Delete shipmap deck error:', error);

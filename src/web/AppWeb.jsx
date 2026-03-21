@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Ship,
   Radio,
@@ -20,10 +20,10 @@ import {
   WifiOff,
   Play,
   Bell,
-} from 'lucide-react'
-import { useLanguage } from '../contexts/LanguageContext'
-import LanguageSelector from '../components/LanguageSelector'
-import { apiService } from '../services/apiService'
+} from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
+import { apiService } from '../services/apiService';
 
 const categories = [
   { key: 'webtv', icon: Tv, labelKey: 'common.webtv' },
@@ -35,7 +35,7 @@ const categories = [
   { key: 'shipmap', icon: Map, labelKey: 'common.shipmap' },
   { key: 'enfant', icon: Grid3X3, labelKey: 'common.enfant' },
   { key: 'chat', icon: MessageSquare, labelKey: 'common.chat' },
-]
+];
 
 // Contenu type "chaînes" par catégorie (pour la liste + panneau détail)
 const channelByCategory = {
@@ -70,132 +70,132 @@ const channelByCategory = {
   chat: [
     { id: '1', name: 'Messagerie', views: '5K', desc: 'Échangez avec l’équipage et les autres passagers.' },
   ],
-}
+};
 
 const bottomNavItems = [
   { key: 'webtv', icon: Tv, labelKey: 'common.webtv' },
   { key: 'restaurant', icon: Utensils, labelKey: 'common.restaurants' },
   { key: 'shipmap', icon: Map, labelKey: 'common.shipmap' },
   { key: 'more', icon: Grid3X3, labelKey: 'More' },
-]
+];
 
-const defaultChannels = channelByCategory.webtv
+const defaultChannels = channelByCategory.webtv;
 
 export default function AppWeb() {
-  const { t, language } = useLanguage()
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [activeCategory, setActiveCategory] = useState('webtv')
-  const [selectedChannel, setSelectedChannel] = useState(defaultChannels[0])
-  const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' && !navigator.onLine)
-  const [showNotificationsPanel, setShowNotificationsPanel] = useState(false)
-  const [notificationsList, setNotificationsList] = useState([])
-  const [notificationsLoading, setNotificationsLoading] = useState(false)
-  const [notificationsUnreadCount, setNotificationsUnreadCount] = useState(0)
-  const notificationsPanelRef = useRef(null)
-  const NOTIFICATIONS_LAST_OPEN_KEY = 'gnv_notifications_last_open'
+  const { t, language } = useLanguage();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('webtv');
+  const [selectedChannel, setSelectedChannel] = useState(defaultChannels[0]);
+  const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' && !navigator.onLine);
+  const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
+  const [notificationsList, setNotificationsList] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsUnreadCount, setNotificationsUnreadCount] = useState(0);
+  const notificationsPanelRef = useRef(null);
+  const NOTIFICATIONS_LAST_OPEN_KEY = 'gnv_notifications_last_open';
 
   useEffect(() => {
-    if (!showNotificationsPanel) return
-    setNotificationsLoading(true)
-    setNotificationsUnreadCount(0)
+    if (!showNotificationsPanel) return;
+    setNotificationsLoading(true);
+    setNotificationsUnreadCount(0);
     try {
-      localStorage.setItem(NOTIFICATIONS_LAST_OPEN_KEY, String(Date.now()))
+      localStorage.setItem(NOTIFICATIONS_LAST_OPEN_KEY, String(Date.now()));
     } catch (_) {}
-    const lang = language === 'fr' ? 'fr' : language === 'en' ? 'en' : 'fr'
+    const lang = language === 'fr' ? 'fr' : language === 'en' ? 'en' : 'fr';
     apiService.getNotifications(`limit=20&lang=${lang}&_=${Date.now()}`)
       .then((r) => {
-        const raw = r?.data
+        const raw = r?.data;
         const list = Array.isArray(raw)
           ? raw
           : Array.isArray(raw?.data)
             ? raw.data
             : Array.isArray(raw?.notifications)
               ? raw.notifications
-              : []
-        setNotificationsList(list)
+              : [];
+        setNotificationsList(list);
       })
       .catch(() => setNotificationsList([]))
-      .finally(() => setNotificationsLoading(false))
-  }, [showNotificationsPanel, language])
+      .finally(() => setNotificationsLoading(false));
+  }, [showNotificationsPanel, language]);
 
   // Point rouge : afficher dès qu'il y a au moins une notification (ou plus récentes que la dernière ouverture)
   useEffect(() => {
-    if (showNotificationsPanel) return
-    const lang = language === 'fr' ? 'fr' : language === 'en' ? 'en' : 'fr'
+    if (showNotificationsPanel) return;
+    const lang = language === 'fr' ? 'fr' : language === 'en' ? 'en' : 'fr';
     const fetchUnread = () => {
       apiService.getNotifications(`limit=50&lang=${lang}&_=${Date.now()}`)
         .then((r) => {
-          const raw = r?.data
+          const raw = r?.data;
           const list = Array.isArray(raw)
             ? raw
             : Array.isArray(raw?.data)
               ? raw.data
               : Array.isArray(raw?.notifications)
                 ? raw.notifications
-                : []
-          let lastOpen = 0
+                : [];
+          let lastOpen = 0;
           try {
-            lastOpen = parseInt(localStorage.getItem(NOTIFICATIONS_LAST_OPEN_KEY) || '0', 10)
+            lastOpen = parseInt(localStorage.getItem(NOTIFICATIONS_LAST_OPEN_KEY) || '0', 10);
           } catch (_) {}
-          let count
+          let count;
           if (list.length === 0) {
-            count = 0
+            count = 0;
           } else if (lastOpen <= 0) {
-            count = list.length
+            count = list.length;
           } else {
             count = list.filter((n) => {
-              const t = n.createdAt != null ? new Date(n.createdAt).getTime() : 0
-              return t > lastOpen
-            }).length
+              const t = n.createdAt != null ? new Date(n.createdAt).getTime() : 0;
+              return t > lastOpen;
+            }).length;
           }
-          setNotificationsUnreadCount(count)
+          setNotificationsUnreadCount(count);
         })
-        .catch(() => setNotificationsUnreadCount(0))
-    }
-    fetchUnread()
-    const t1 = setTimeout(fetchUnread, 800)
-    const interval = setInterval(fetchUnread, 5 * 1000) // 5 s pour que le point rouge apparaisse vite après envoi depuis le dashboard
+        .catch(() => setNotificationsUnreadCount(0));
+    };
+    fetchUnread();
+    const t1 = setTimeout(fetchUnread, 800);
+    const interval = setInterval(fetchUnread, 5 * 1000); // 5 s pour que le point rouge apparaisse vite après envoi depuis le dashboard
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') fetchUnread()
-    }
-    document.addEventListener('visibilitychange', onVisibilityChange)
+      if (document.visibilityState === 'visible') fetchUnread();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
-      clearTimeout(t1)
-      clearInterval(interval)
-      document.removeEventListener('visibilitychange', onVisibilityChange)
-    }
-  }, [showNotificationsPanel, language])
+      clearTimeout(t1);
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [showNotificationsPanel, language]);
 
   useEffect(() => {
     function handleClickOutside(e) {
       if (notificationsPanelRef.current && !notificationsPanelRef.current.contains(e.target)) {
-        setShowNotificationsPanel(false)
+        setShowNotificationsPanel(false);
       }
     }
     if (showNotificationsPanel) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [showNotificationsPanel])
+  }, [showNotificationsPanel]);
 
   React.useEffect(() => {
-    const onOnline = () => setOffline(false)
-    const onOffline = () => setOffline(true)
-    window.addEventListener('online', onOnline)
-    window.addEventListener('offline', onOffline)
+    const onOnline = () => setOffline(false);
+    const onOffline = () => setOffline(true);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
     return () => {
-      window.removeEventListener('online', onOnline)
-      window.removeEventListener('offline', onOffline)
-    }
-  }, [])
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
 
-  const channels = channelByCategory[activeCategory] || defaultChannels
+  const channels = channelByCategory[activeCategory] || defaultChannels;
 
   React.useEffect(() => {
-    const list = channelByCategory[activeCategory] || defaultChannels
-    setSelectedChannel(list[0])
-  }, [activeCategory])
+    const list = channelByCategory[activeCategory] || defaultChannels;
+    setSelectedChannel(list[0]);
+  }, [activeCategory]);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-900 text-slate-100">
@@ -311,13 +311,13 @@ export default function AppWeb() {
             >
               <nav className="p-2 space-y-0.5 overflow-y-auto">
                 {categories.map((cat) => {
-                  const Icon = cat.icon
-                  const isActive = activeCategory === cat.key
+                  const Icon = cat.icon;
+                  const isActive = activeCategory === cat.key;
                   return (
                     <button
                       key={cat.key}
                       type="button"
-                      onClick={() => { setActiveCategory(cat.key); setMenuOpen(false) }}
+                      onClick={() => { setActiveCategory(cat.key); setMenuOpen(false); }}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
                         isActive
                           ? 'bg-blue-600 text-white'
@@ -327,7 +327,7 @@ export default function AppWeb() {
                       <Icon size={22} className="flex-shrink-0" />
                       <span className="font-medium text-sm truncate">{t(cat.labelKey)}</span>
                     </button>
-                  )
+                  );
                 })}
               </nav>
             </motion.aside>
@@ -345,13 +345,13 @@ export default function AppWeb() {
             >
               <nav className="grid grid-cols-2 gap-2 py-4">
                 {categories.map((cat) => {
-                  const Icon = cat.icon
-                  const isActive = activeCategory === cat.key
+                  const Icon = cat.icon;
+                  const isActive = activeCategory === cat.key;
                   return (
                     <button
                       key={cat.key}
                       type="button"
-                      onClick={() => { setActiveCategory(cat.key); setMenuOpen(false) }}
+                      onClick={() => { setActiveCategory(cat.key); setMenuOpen(false); }}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
                         isActive ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
                       }`}
@@ -359,7 +359,7 @@ export default function AppWeb() {
                       <Icon size={24} className="flex-shrink-0" />
                       <span className="font-medium text-sm">{t(cat.labelKey)}</span>
                     </button>
-                  )
+                  );
                 })}
               </nav>
             </motion.div>
@@ -376,7 +376,7 @@ export default function AppWeb() {
               </h2>
               <ul className="space-y-2">
                 {channels.map((ch) => {
-                  const isSelected = selectedChannel?.id === ch.id
+                  const isSelected = selectedChannel?.id === ch.id;
                   return (
                     <li key={ch.id}>
                       <button
@@ -409,7 +409,7 @@ export default function AppWeb() {
                         </div>
                       </button>
                     </li>
-                  )
+                  );
                 })}
               </ul>
             </div>
@@ -461,37 +461,37 @@ export default function AppWeb() {
         {/* ——— Bottom bar (mobile) ——— */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-center">
           <nav className="w-full max-w-[768px] flex items-center justify-around py-2 px-2 bg-slate-900 border-t border-slate-700 safe-area-pb">
-          {bottomNavItems.map((item) => {
-            const Icon = item.icon
-            const isActive = item.key === 'more' ? false : activeCategory === item.key
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => {
-                  if (item.key === 'more') setMenuOpen(true)
-                  else setActiveCategory(item.key)
-                }}
-                className={`flex flex-col items-center justify-center flex-1 min-w-0 py-2 px-1 transition-colors ${
-                  isActive ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                <Icon size={22} />
-                <span className="text-[10px] mt-1 font-medium">
-                  {item.key === 'more' ? t('common.services') : t(item.labelKey)}
-                </span>
-              </button>
-            )
-          })}
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-500">
-            {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        </nav>
+            {bottomNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.key === 'more' ? false : activeCategory === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    if (item.key === 'more') setMenuOpen(true);
+                    else setActiveCategory(item.key);
+                  }}
+                  className={`flex flex-col items-center justify-center flex-1 min-w-0 py-2 px-1 transition-colors ${
+                    isActive ? 'text-blue-400' : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <Icon size={22} />
+                  <span className="text-[10px] mt-1 font-medium">
+                    {item.key === 'more' ? t('common.services') : t(item.labelKey)}
+                  </span>
+                </button>
+              );
+            })}
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-500">
+              {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </nav>
         </div>
       </div>
 
       {/* Padding bas pour éviter que le contenu soit sous la bottom bar */}
       <div className="h-16 lg:hidden" aria-hidden />
     </div>
-  )
+  );
 }

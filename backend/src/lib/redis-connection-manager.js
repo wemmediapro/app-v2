@@ -18,7 +18,7 @@ const MAX_PER_IP_DEFAULT = parseInt(process.env.MAX_CONNECTIONS_PER_IP, 10) || 5
 
 /** Suffixe clé Redis sûr pour une IP (évite : et caractères spéciaux). */
 function ipKeySuffix(ip) {
-  if (!ip || typeof ip !== 'string') return 'unknown';
+  if (!ip || typeof ip !== 'string') {return 'unknown';}
   return Buffer.from(ip, 'utf8').toString('base64url');
 }
 
@@ -78,7 +78,7 @@ function isEnabled() {
  * Vérifie si l’IP a déjà atteint la limite (lecture rapide pour io.use — évite un round-trip inutile si plein).
  */
 async function isIpAtOrOverLimit(ip, maxPerIp = MAX_PER_IP_DEFAULT) {
-  if (!isEnabled() || !ip) return false;
+  if (!isEnabled() || !ip) {return false;}
   const ipKey = `${IP_PREFIX}${ipKeySuffix(ip)}`;
   try {
     const v = await client.get(ipKey);
@@ -94,7 +94,7 @@ async function isIpAtOrOverLimit(ip, maxPerIp = MAX_PER_IP_DEFAULT) {
  * @returns {Promise<boolean>}
  */
 async function addConnectionGlobal(socketId, ip, maxPerIp = MAX_PER_IP_DEFAULT) {
-  if (!isEnabled()) return true;
+  if (!isEnabled()) {return true;}
   const ipPlain = ip || 'unknown';
   const ipKey = `${IP_PREFIX}${ipKeySuffix(ipPlain)}`;
   const sktKey = `${SKT_PREFIX}${socketId}`;
@@ -110,18 +110,17 @@ async function addConnectionGlobal(socketId, ip, maxPerIp = MAX_PER_IP_DEFAULT) 
 }
 
 async function removeConnectionGlobal(socketId) {
-  if (!isEnabled() || !socketId) return;
+  if (!isEnabled() || !socketId) {return;}
   const sktKey = `${SKT_PREFIX}${socketId}`;
   try {
     const ipPlain = await client.get(sktKey);
     await client.del(sktKey);
-    if (!ipPlain) return;
+    if (!ipPlain) {return;}
     const ipKey = `${IP_PREFIX}${ipKeySuffix(ipPlain)}`;
     const newIp = await client.decr(ipKey);
-    if (newIp <= 0) await client.del(ipKey);
-    else await client.expire(ipKey, TTL_SEC);
+    if (newIp <= 0) {await client.del(ipKey);} else {await client.expire(ipKey, TTL_SEC);}
     const act = await client.decr(KEY_ACTIVE);
-    if (act < 0) await client.set(KEY_ACTIVE, '0');
+    if (act < 0) {await client.set(KEY_ACTIVE, '0');}
     await client.expire(KEY_ACTIVE, TTL_SEC);
     // total (cumul) ne décroit pas
   } catch (e) {
@@ -162,10 +161,10 @@ async function getStatsGlobal() {
 
     const byIP = [];
     for await (const key of client.scanIterator({ MATCH: `${IP_PREFIX}*`, COUNT: 200 })) {
-      if (key === KEY_ACTIVE || key === KEY_TOTAL) continue;
+      if (key === KEY_ACTIVE || key === KEY_TOTAL) {continue;}
       const cnt = await client.get(key);
       const n = parseInt(cnt || '0', 10);
-      if (Number.isNaN(n) || n <= 0) continue;
+      if (Number.isNaN(n) || n <= 0) {continue;}
       const b64 = key.slice(IP_PREFIX.length);
       let ipLabel = b64;
       try {
@@ -187,7 +186,7 @@ async function loadGlobalStatsOnStartup() {
   const stats = await getStatsGlobal();
   if (stats.redis) {
     console.log(
-      `[redis-connection-manager] Stats Redis au démarrage — actives: ${stats.active}, total acceptées: ${stats.totalAccepted}`
+      `[redis-connection-manager] Stats Redis au démarrage — actives: ${stats.active}, total acceptées: ${stats.totalAccepted}`,
     );
   }
   return stats;

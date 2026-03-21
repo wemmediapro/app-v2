@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 function BottomNav({ page, setPage, t, notificationsUnreadCount = 0, hidden = false }) {
   const items = useMemo(
     () => NAV_ITEMS.map(({ key, Icon, labelKey }) => ({ key, icon: <Icon size={26} />, label: t(labelKey) })),
-    [t]
+    [t],
   );
 
   if (hidden) return null;

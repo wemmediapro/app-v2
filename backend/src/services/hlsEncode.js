@@ -44,7 +44,7 @@ async function checkFfmpeg() {
  * @returns {Promise<{ hlsUrl: string, playlistPath: string }|null>} - URL relative et chemin de la playlist, ou null si échec
  */
 async function encodeToHls(inputPath) {
-  if (!fs.existsSync(inputPath)) return null;
+  if (!fs.existsSync(inputPath)) {return null;}
 
   const available = await checkFfmpeg();
   if (!available) {
@@ -100,11 +100,11 @@ async function encodeToHls(inputPath) {
  * Le nom du dossier HLS est le basename du fichier (sans extension), caractères spéciaux remplacés par _.
  */
 function getHlsUrlFromVideoUrl(videoUrl) {
-  if (!videoUrl || typeof videoUrl !== 'string') return null;
+  if (!videoUrl || typeof videoUrl !== 'string') {return null;}
   const trimmed = videoUrl.trim();
   const match = trimmed.match(/\/uploads\/videos\/([^/]+?)(\.\w+)?$/i) ||
                 trimmed.match(/\/videos\/([^/]+?)(\.\w+)?$/i);
-  if (!match) return null;
+  if (!match) {return null;}
   const filename = match[1];
   const base = path.basename(filename, path.extname(filename));
   const safeName = base.replace(/[^a-zA-Z0-9_-]/g, '_');

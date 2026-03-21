@@ -15,22 +15,21 @@ const AGE_RANGE_SUFFIX = {
   it: ' anni',
   de: ' Jahre',
   ar: ' سنوات',
-  fr: ' ans'
+  fr: ' ans',
 };
 
 function localizeActivity(doc, lang) {
-  if (!doc) return doc;
+  if (!doc) {return doc;}
   const obj = { ...doc, _id: doc._id?.toString(), image: doc.imageUrl || doc.image, isFeatured: doc.isFeatured || false };
   if (lang && doc.translations && doc.translations[lang]) {
     const t = doc.translations[lang];
-    if (t.name) obj.name = t.name;
-    if (t.description !== undefined) obj.description = t.description;
-    if (t.ageRange) obj.ageRange = t.ageRange;
-    else if (doc.ageRange && AGE_RANGE_SUFFIX[lang]) {
+    if (t.name) {obj.name = t.name;}
+    if (t.description !== undefined) {obj.description = t.description;}
+    if (t.ageRange) {obj.ageRange = t.ageRange;} else if (doc.ageRange && AGE_RANGE_SUFFIX[lang]) {
       obj.ageRange = String(doc.ageRange).replace(/\s*ans\s*$/i, AGE_RANGE_SUFFIX[lang]).trim();
     }
-    if (t.schedule) obj.schedule = t.schedule;
-    if (Array.isArray(t.features) && t.features.length > 0) obj.features = t.features;
+    if (t.schedule) {obj.schedule = t.schedule;}
+    if (Array.isArray(t.features) && t.features.length > 0) {obj.features = t.features;}
   } else if (lang && AGE_RANGE_SUFFIX[lang] && doc.ageRange && /ans\s*$/i.test(String(doc.ageRange))) {
     obj.ageRange = String(doc.ageRange).replace(/\s*ans\s*$/i, AGE_RANGE_SUFFIX[lang]).trim();
   }
@@ -58,7 +57,7 @@ router.get('/activities/:id', async (req, res) => {
     const { lang } = req.query;
     if (mongoose.connection.readyState === 1) {
       const activity = await EnfantActivity.findById(req.params.id).lean();
-      if (!activity) return res.status(404).json({ message: 'Activité non trouvée' });
+      if (!activity) {return res.status(404).json({ message: 'Activité non trouvée' });}
       return res.json(localizeActivity(activity, lang));
     }
     return res.status(404).json({ message: 'Activité non trouvée' });
@@ -96,7 +95,7 @@ router.post('/activities', authMiddleware, adminMiddleware, async (req, res) => 
       destination: body.destination,
       participants: body.participants || 0,
       maxParticipants: body.maxParticipants,
-      translations: body.translations && typeof body.translations === 'object' ? body.translations : undefined
+      translations: body.translations && typeof body.translations === 'object' ? body.translations : undefined,
     });
     await activity.save();
     const doc = activity.toObject();
@@ -117,12 +116,12 @@ router.put('/activities/:id', authMiddleware, adminMiddleware, async (req, res) 
     const body = req.body;
     const updates = { ...body };
     delete updates._id;
-    if (typeof updates.duration === 'number') updates.duration = `${updates.duration} min`;
-    if (typeof updates.capacity === 'number') updates.capacity = String(updates.capacity);
-    if (updates.image) updates.imageUrl = updates.image;
-    if (updates.translations && typeof updates.translations !== 'object') delete updates.translations;
+    if (typeof updates.duration === 'number') {updates.duration = `${updates.duration} min`;}
+    if (typeof updates.capacity === 'number') {updates.capacity = String(updates.capacity);}
+    if (updates.image) {updates.imageUrl = updates.image;}
+    if (updates.translations && typeof updates.translations !== 'object') {delete updates.translations;}
     const activity = await EnfantActivity.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
-    if (!activity) return res.status(404).json({ message: 'Activité non trouvée' });
+    if (!activity) {return res.status(404).json({ message: 'Activité non trouvée' });}
     const doc = activity.toObject();
     res.json({ ...doc, _id: doc._id?.toString(), image: doc.imageUrl });
   } catch (error) {
@@ -146,7 +145,7 @@ router.post('/activities/:id/translate', authMiddleware, adminMiddleware, async 
     const openai = new OpenAI({ apiKey });
 
     const activity = await EnfantActivity.findById(req.params.id).lean();
-    if (!activity) return res.status(404).json({ message: 'Activité non trouvée' });
+    if (!activity) {return res.status(404).json({ message: 'Activité non trouvée' });}
 
     const nameFr = activity.name || '';
     const descriptionFr = activity.description || '';
@@ -159,7 +158,7 @@ router.post('/activities/:id/translate', authMiddleware, adminMiddleware, async 
       : (Array.isArray(activity.features) ? activity.features : []);
 
     const generated = await generateTranslationsForEnfant(
-      openai, nameFr, descriptionFr, category, ageRangeFr, scheduleFr, featuresFr
+      openai, nameFr, descriptionFr, category, ageRangeFr, scheduleFr, featuresFr,
     );
 
     const existing = activity.translations && typeof activity.translations === 'object' ? activity.translations : {};
@@ -170,7 +169,7 @@ router.post('/activities/:id/translate', authMiddleware, adminMiddleware, async 
 
     await EnfantActivity.updateOne(
       { _id: activity._id },
-      { $set: { translations: merged } }
+      { $set: { translations: merged } },
     );
     const updated = await EnfantActivity.findById(activity._id).lean();
     const doc = { ...updated, _id: updated._id?.toString(), image: updated.imageUrl };
@@ -189,7 +188,7 @@ router.delete('/activities/:id', authMiddleware, adminMiddleware, async (req, re
       return res.status(503).json({ message: 'Base de données indisponible. Mode démo actif.' });
     }
     const activity = await EnfantActivity.findByIdAndDelete(req.params.id);
-    if (!activity) return res.status(404).json({ message: 'Activité non trouvée' });
+    if (!activity) {return res.status(404).json({ message: 'Activité non trouvée' });}
     res.json({ message: 'Activité supprimée' });
   } catch (error) {
     console.error('Delete enfant activity error:', error);

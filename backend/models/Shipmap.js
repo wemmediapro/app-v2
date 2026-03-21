@@ -3,37 +3,37 @@ const mongoose = require('mongoose');
 const deckSchema = new mongoose.Schema({
   deckNumber: {
     type: String,
-    required: [true, 'Deck number is required']
+    required: [true, 'Deck number is required'],
   },
   name: {
     type: String,
-    required: [true, 'Deck name is required']
+    required: [true, 'Deck name is required'],
   },
   level: {
     type: Number,
-    required: [true, 'Deck level is required']
+    required: [true, 'Deck level is required'],
   },
   facilities: [{
     type: {
       type: String,
-      enum: ['restaurant', 'cafe', 'bar', 'shop', 'cinema', 'pool', 'gym', 'spa', 'cabin', 'deck', 'elevator', 'stairs', 'restroom', 'other']
+      enum: ['restaurant', 'cafe', 'bar', 'shop', 'cinema', 'pool', 'gym', 'spa', 'cabin', 'deck', 'elevator', 'stairs', 'restroom', 'other'],
     },
     name: String,
     coordinates: {
       x: Number,
-      y: Number
+      y: Number,
     },
-    description: String
+    description: String,
   }],
   imageUrl: {
-    type: String
+    type: String,
   },
   isActive: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 // Indexes

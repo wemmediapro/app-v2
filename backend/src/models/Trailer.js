@@ -8,36 +8,36 @@ const trailerSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Title is required'],
     trim: true,
-    maxlength: [200, 'Title cannot exceed 200 characters']
+    maxlength: [200, 'Title cannot exceed 200 characters'],
   },
   description: {
     type: String,
-    trim: true
+    trim: true,
   },
   poster: {
     type: String,
-    trim: true
+    trim: true,
   },
   videoUrl: {
     type: String,
-    trim: true
+    trim: true,
   },
   type: {
     type: String,
     enum: ['movie', 'series'],
-    default: 'movie'
+    default: 'movie',
   },
   order: {
     type: Number,
-    default: 0
+    default: 0,
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
-  translations: { type: mongoose.Schema.Types.Mixed }
+  translations: { type: mongoose.Schema.Types.Mixed },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 trailerSchema.index({ type: 1, isActive: 1 });

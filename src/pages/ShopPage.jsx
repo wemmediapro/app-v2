@@ -410,7 +410,7 @@ export default function ShopPage({
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl max-w-full w-full sm:max-w-lg max-h-[94vh] sm:max-h-[88vh] overflow-hidden shadow-xl border border-slate-200/80 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shop-product-detail-modal"
           >

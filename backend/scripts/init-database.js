@@ -63,7 +63,7 @@ async function createAdminUser() {
 
     if (!adminEmail) {
       console.error('CRITICAL: ADMIN_EMAIL must be set in config.env (no default email).');
-      if (isProduction) throw new Error('ADMIN_EMAIL required');
+      if (isProduction) {throw new Error('ADMIN_EMAIL required');}
       return null;
     }
 
@@ -103,17 +103,17 @@ async function createAdminUser() {
         notifications: {
           email: true,
           push: true,
-          sms: false
-        }
+          sms: false,
+        },
       },
       isActive: true,
-      mustChangePassword
+      mustChangePassword,
     });
 
     console.log(
       mustChangePassword
         ? '✅ Compte admin créé avec mot de passe temporaire — changez-le au premier login.'
-        : '✅ Compte admin créé (ADMIN_EMAIL / ADMIN_PASSWORD depuis config.env).'
+        : '✅ Compte admin créé (ADMIN_EMAIL / ADMIN_PASSWORD depuis config.env).',
     );
     return admin;
   } catch (error) {
@@ -134,7 +134,7 @@ async function createTestUsers() {
         role: 'passenger',
         phone: '+33 6 12 34 56 78',
         cabinNumber: 'A-101',
-        preferences: { language: 'fr' }
+        preferences: { language: 'fr' },
       },
       {
         firstName: 'Maria',
@@ -144,7 +144,7 @@ async function createTestUsers() {
         role: 'passenger',
         phone: '+39 3 45 67 89 01',
         cabinNumber: 'B-205',
-        preferences: { language: 'it' }
+        preferences: { language: 'it' },
       },
       {
         firstName: 'John',
@@ -154,7 +154,7 @@ async function createTestUsers() {
         role: 'passenger',
         phone: '+44 7 89 01 23 45',
         cabinNumber: 'C-310',
-        preferences: { language: 'en' }
+        preferences: { language: 'en' },
       },
       {
         firstName: 'Sophie',
@@ -164,8 +164,8 @@ async function createTestUsers() {
         role: 'crew',
         phone: '+33 6 98 76 54 32',
         cabinNumber: 'CREW-001',
-        preferences: { language: 'fr' }
-      }
+        preferences: { language: 'fr' },
+      },
     ];
 
     const createdUsers = [];
@@ -215,7 +215,7 @@ async function createRestaurants() {
             price: 18,
             category: 'Entrées',
             isPopular: true,
-            allergens: ['Poisson']
+            allergens: ['Poisson'],
           },
           {
             id: 2,
@@ -224,7 +224,7 @@ async function createRestaurants() {
             price: 32,
             category: 'Plats',
             isPopular: true,
-            allergens: []
+            allergens: [],
           },
           {
             id: 3,
@@ -233,8 +233,8 @@ async function createRestaurants() {
             price: 12,
             category: 'Desserts',
             isPopular: false,
-            allergens: ['Gluten', 'Lait', 'Œufs']
-          }
+            allergens: ['Gluten', 'Lait', 'Œufs'],
+          },
         ],
         promotions: [
           {
@@ -244,9 +244,9 @@ async function createRestaurants() {
             price: 45,
             originalPrice: 62,
             discount: 27,
-            validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 jours
-          }
-        ]
+            validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 jours
+          },
+        ],
       },
       {
         name: 'Self-Service',
@@ -268,10 +268,10 @@ async function createRestaurants() {
             price: 25,
             category: 'Plats',
             isPopular: true,
-            allergens: []
-          }
+            allergens: [],
+          },
         ],
-        promotions: []
+        promotions: [],
       },
       {
         name: 'Café des Arts',
@@ -293,7 +293,7 @@ async function createRestaurants() {
             price: 4.5,
             category: 'Boissons',
             isPopular: true,
-            allergens: ['Lait']
+            allergens: ['Lait'],
           },
           {
             id: 2,
@@ -302,11 +302,11 @@ async function createRestaurants() {
             price: 2.5,
             category: 'Viennoiseries',
             isPopular: true,
-            allergens: ['Gluten', 'Lait', 'Œufs']
-          }
+            allergens: ['Gluten', 'Lait', 'Œufs'],
+          },
         ],
-        promotions: []
-      }
+        promotions: [],
+      },
     ];
 
     const createdRestaurants = [];
@@ -346,8 +346,8 @@ async function createRadioStations() {
         metadata: {
           currentSong: 'Dernière chanson',
           artist: 'Artiste',
-          lastUpdated: new Date()
-        }
+          lastUpdated: new Date(),
+        },
       },
       {
         name: 'GNV Radio Jazz',
@@ -358,7 +358,7 @@ async function createRadioStations() {
         isActive: true,
         isLive: true,
         language: 'fr',
-        quality: 'high'
+        quality: 'high',
       },
       {
         name: 'GNV News',
@@ -369,8 +369,8 @@ async function createRadioStations() {
         isActive: true,
         isLive: true,
         language: 'fr',
-        quality: 'medium'
-      }
+        quality: 'medium',
+      },
     ];
 
     const createdStations = [];
@@ -413,12 +413,12 @@ async function createMovies() {
         director: 'Jean Dupont',
         cast: [
           { name: 'Acteur 1', character: 'Héros' },
-          { name: 'Actrice 1', character: 'Héroïne' }
+          { name: 'Actrice 1', character: 'Héroïne' },
         ],
         isActive: true,
         isFeatured: true,
         isNewRelease: true,
-        categories: ['trending', 'new']
+        categories: ['trending', 'new'],
       },
       {
         title: 'Comédie Maritime',
@@ -435,8 +435,8 @@ async function createMovies() {
         director: 'Marie Martin',
         isActive: true,
         isFeatured: false,
-        categories: ['popular']
-      }
+        categories: ['popular'],
+      },
     ];
 
     const createdMovies = [];
@@ -475,7 +475,7 @@ async function createFeedbacks(users) {
         title: 'Service lent au restaurant',
         description: 'Le service était très lent lors du dîner hier soir',
         priority: 'medium',
-        status: 'open'
+        status: 'open',
       },
       {
         user: users[1]._id,
@@ -484,7 +484,7 @@ async function createFeedbacks(users) {
         title: 'Suggestion pour améliorer le WiFi',
         description: 'Le WiFi pourrait être amélioré dans certaines zones',
         priority: 'low',
-        status: 'open'
+        status: 'open',
       },
       {
         user: users[0]._id,
@@ -493,8 +493,8 @@ async function createFeedbacks(users) {
         title: 'Excellent service',
         description: 'Le personnel était très professionnel et serviable',
         priority: 'low',
-        status: 'resolved'
-      }
+        status: 'resolved',
+      },
     ];
 
     const createdFeedbacks = [];
@@ -525,7 +525,7 @@ async function createMessages(users) {
         receiver: users[1]._id,
         content: 'Bonjour ! Comment allez-vous ?',
         type: 'text',
-        isRead: false
+        isRead: false,
       },
       {
         sender: users[1]._id,
@@ -533,22 +533,22 @@ async function createMessages(users) {
         content: 'Très bien merci ! Et vous ?',
         type: 'text',
         isRead: true,
-        readAt: new Date()
+        readAt: new Date(),
       },
       {
         sender: users[0]._id,
         receiver: users[1]._id,
         content: 'Parfait ! Avez-vous visité le restaurant ?',
         type: 'text',
-        isRead: false
-      }
+        isRead: false,
+      },
     ];
 
     const createdMessages = [];
     for (const messageData of messages) {
       const message = await Message.create(messageData);
       createdMessages.push(message);
-      console.log(`✅ Message créé`);
+      console.log('✅ Message créé');
     }
 
     return createdMessages;
@@ -571,7 +571,7 @@ async function createArticles() {
         imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200',
         isPublished: true,
         isFeatured: true,
-        tags: ['voyage', 'méditerranée', 'découverte']
+        tags: ['voyage', 'méditerranée', 'découverte'],
       },
       {
         title: 'Les spécialités culinaires à bord',
@@ -582,8 +582,8 @@ async function createArticles() {
         imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200',
         isPublished: true,
         isFeatured: false,
-        tags: ['cuisine', 'restaurant', 'gastronomie']
-      }
+        tags: ['cuisine', 'restaurant', 'gastronomie'],
+      },
     ];
 
     const createdArticles = [];
@@ -621,7 +621,7 @@ async function createProducts() {
         stock: 50,
         sku: 'TSH-GNV-001',
         image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800',
-        isAvailable: true
+        isAvailable: true,
       },
       {
         name: 'Casquette GNV',
@@ -632,7 +632,7 @@ async function createProducts() {
         stock: 30,
         sku: 'CAP-GNV-001',
         image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800',
-        isAvailable: true
+        isAvailable: true,
       },
       {
         name: 'Mug GNV Excelsior',
@@ -645,8 +645,8 @@ async function createProducts() {
         stock: 25,
         sku: 'MUG-GNV-001',
         image: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?w=800',
-        isAvailable: true
-      }
+        isAvailable: true,
+      },
     ];
 
     const createdProducts = [];
@@ -687,9 +687,9 @@ async function createWebTVChannels() {
           day: 'monday',
           programs: [
             { title: 'Matin Info', startTime: '08:00', endTime: '09:00', description: 'Actualités du matin' },
-            { title: 'Midi Actualités', startTime: '12:00', endTime: '13:00', description: 'Actualités de midi' }
-          ]
-        }]
+            { title: 'Midi Actualités', startTime: '12:00', endTime: '13:00', description: 'Actualités de midi' },
+          ],
+        }],
       },
       {
         name: 'GNV Sports',
@@ -700,8 +700,8 @@ async function createWebTVChannels() {
         isLive: true,
         isActive: true,
         quality: 'HD',
-        language: 'fr'
-      }
+        language: 'fr',
+      },
     ];
 
     const createdChannels = [];
@@ -734,7 +734,7 @@ async function createEnfantActivities() {
         description: 'Atelier de peinture pour enfants',
         ageRange: {
           min: 4,
-          max: 10
+          max: 10,
         },
         duration: 90,
         location: 'Espace Enfant - Pont 6',
@@ -743,16 +743,16 @@ async function createEnfantActivities() {
         schedule: {
           day: 'monday',
           startTime: '14:00',
-          endTime: '15:30'
+          endTime: '15:30',
         },
         supervisor: {
           name: 'Marie Dupont',
-          contact: 'marie.dupont@gnv.com'
+          contact: 'marie.dupont@gnv.com',
         },
         requirements: ['Matériel fourni'],
         materials: ['Pinceaux', 'Peintures', 'Toiles'],
         imageUrl: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800',
-        isActive: true
+        isActive: true,
       },
       {
         title: 'Jeux de Société',
@@ -760,7 +760,7 @@ async function createEnfantActivities() {
         description: 'Jeux de société pour tous les âges',
         ageRange: {
           min: 6,
-          max: 12
+          max: 12,
         },
         duration: 60,
         location: 'Espace Enfant - Pont 6',
@@ -769,12 +769,12 @@ async function createEnfantActivities() {
         schedule: {
           day: 'monday',
           startTime: '16:00',
-          endTime: '17:00'
+          endTime: '17:00',
         },
         requirements: ['Grande variété de jeux'],
         imageUrl: 'https://images.unsplash.com/photo-1606166188517-11bbd375be0e?w=800',
-        isActive: true
-      }
+        isActive: true,
+      },
     ];
 
     const createdActivities = [];
@@ -810,7 +810,7 @@ async function createBanners() {
         linkUrl: '/shop',
         startDate: new Date(),
         endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-        isActive: true
+        isActive: true,
       },
       {
         title: 'Nouveau Restaurant',
@@ -819,8 +819,8 @@ async function createBanners() {
         priority: 2,
         imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200',
         linkUrl: '/restaurants',
-        isActive: true
-      }
+        isActive: true,
+      },
     ];
 
     const createdBanners = [];
@@ -850,17 +850,17 @@ async function createShipmaps() {
             type: 'bar',
             name: 'Bar panoramique',
             coordinates: { x: 50, y: 30 },
-            description: 'Bar avec vue sur la mer'
+            description: 'Bar avec vue sur la mer',
           },
           {
             type: 'deck',
             name: 'Terrasse extérieure',
             coordinates: { x: 50, y: 70 },
-            description: 'Terrasse pour profiter du soleil'
-          }
+            description: 'Terrasse pour profiter du soleil',
+          },
         ],
         imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200',
-        isActive: true
+        isActive: true,
       },
       {
         deckNumber: '6',
@@ -871,18 +871,18 @@ async function createShipmaps() {
             type: 'restaurant',
             name: 'Restaurant Self-Service',
             coordinates: { x: 40, y: 50 },
-            description: 'Restaurant buffet'
+            description: 'Restaurant buffet',
           },
           {
             type: 'shop',
             name: 'Boutique',
             coordinates: { x: 60, y: 30 },
-            description: 'Boutique souvenirs'
-          }
+            description: 'Boutique souvenirs',
+          },
         ],
         imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200',
-        isActive: true
-      }
+        isActive: true,
+      },
     ];
 
     const createdShipmaps = [];

@@ -23,7 +23,7 @@
 
   function initCards() {
     const endpointsContainer = document.getElementById('endpoints');
-    if (!endpointsContainer) return;
+    if (!endpointsContainer) {return;}
 
     endpoints.forEach((endpoint) => {
       const card = document.createElement('div');
@@ -56,7 +56,7 @@
 
   async function testEndpoint(path) {
     const responseDiv = document.getElementById('response-' + pathToDomId(path));
-    if (!responseDiv) return;
+    if (!responseDiv) {return;}
     responseDiv.textContent = 'Chargement...';
     responseDiv.classList.add('show');
 
@@ -71,7 +71,7 @@
 
   async function checkStatus() {
     const el = document.getElementById('status');
-    if (!el) return;
+    if (!el) {return;}
     try {
       const response = await fetch('/api/health');
       await response.json();
@@ -84,7 +84,7 @@
   }
 
   const originEl = document.getElementById('origin');
-  if (originEl) originEl.textContent = window.location.origin;
+  if (originEl) {originEl.textContent = window.location.origin;}
 
   initCards();
   checkStatus();

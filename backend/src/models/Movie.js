@@ -7,7 +7,7 @@ const episodeSchema = new mongoose.Schema({
   videoUrl: { type: String },
   videoFile: { type: String },
   order: { type: Number, default: 0 },
-  translations: { type: mongoose.Schema.Types.Mixed }
+  translations: { type: mongoose.Schema.Types.Mixed },
 }, { _id: true });
 
 const movieSchema = new mongoose.Schema({
@@ -15,75 +15,75 @@ const movieSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Title is required'],
     trim: true,
-    maxlength: [200, 'Title cannot exceed 200 characters']
+    maxlength: [200, 'Title cannot exceed 200 characters'],
   },
   type: {
     type: String,
     enum: ['movie', 'series'],
-    default: 'movie'
+    default: 'movie',
   },
   genre: {
     type: String,
-    trim: true
+    trim: true,
   },
   year: {
     type: Number,
     min: 1900,
-    max: 2100
+    max: 2100,
   },
   duration: {
     type: String,
-    trim: true
+    trim: true,
   },
   rating: {
     type: Number,
     min: 0,
     max: 5,
-    default: 0
+    default: 0,
   },
   description: {
     type: String,
-    trim: true
+    trim: true,
   },
   poster: {
-    type: String
+    type: String,
   },
   /** Chemin TMDB (ex: /abc123.jpg) pour construire l'URL affiche : https://image.tmdb.org/t/p/w500 + tmdbPosterPath */
   tmdbPosterPath: {
     type: String,
-    trim: true
+    trim: true,
   },
   videoUrl: {
-    type: String
+    type: String,
   },
   isPopular: {
     type: Boolean,
-    default: false
+    default: false,
   },
   /** Nombre de vues (film ou série) — pour statistiques et affichage dashboard */
   viewCount: {
     type: Number,
     default: 0,
-    min: 0
+    min: 0,
   },
   countries: [{
     type: String,
-    trim: true
+    trim: true,
   }],
   episodes: [episodeSchema],
   tags: [{
     type: String,
-    trim: true
+    trim: true,
   }],
   shipId: { type: Number },
   destination: { type: String },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
-  translations: { type: mongoose.Schema.Types.Mixed }
+  translations: { type: mongoose.Schema.Types.Mixed },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 movieSchema.index({ type: 1, isActive: 1 });

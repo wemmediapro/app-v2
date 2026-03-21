@@ -77,7 +77,7 @@ describe('API Radio', () => {
         .patch('/api/radio/abc123/listeners')
         .send({ action: 'join' });
       expect([200, 404]).toContain(res.status);
-      if (res.status === 200) expect(res.body).toHaveProperty('listeners');
+      if (res.status === 200) {expect(res.body).toHaveProperty('listeners');}
     });
 
     it('accepte action leave', async () => {
@@ -85,7 +85,7 @@ describe('API Radio', () => {
         .patch('/api/radio/abc123/listeners')
         .send({ action: 'leave' });
       expect([200, 404]).toContain(res.status);
-      if (res.status === 200) expect(res.body).toHaveProperty('listeners');
+      if (res.status === 200) {expect(res.body).toHaveProperty('listeners');}
     });
   });
 

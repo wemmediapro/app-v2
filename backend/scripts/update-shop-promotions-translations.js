@@ -22,7 +22,7 @@ const KNOWN_TRANSLATIONS = {
     es: { title: 'Descuento de verano 2026', description: 'Disfruta de -20% en todos los recuerdos' },
     it: { title: 'Sconto estate 2026', description: 'Approfitta del -20% su tutti i souvenir' },
     de: { title: 'Sommerrabatt 2026', description: '-20% auf alle Souvenirs' },
-    ar: { title: 'خصم الصيف 2026', description: 'استمتع بخصم 20٪ على جميع الهدايا التذكارية' }
+    ar: { title: 'خصم الصيف 2026', description: 'استمتع بخصم 20٪ على جميع الهدايا التذكارية' },
   },
   'reduction ete 2024': {
     fr: { title: 'Réduction été 2024', description: 'Profitez de -20% sur tous les souvenirs' },
@@ -30,7 +30,7 @@ const KNOWN_TRANSLATIONS = {
     es: { title: 'Descuento de verano 2024', description: 'Disfruta de -20% en todos los recuerdos' },
     it: { title: 'Sconto estate 2024', description: 'Approfitta del -20% su tutti i souvenir' },
     de: { title: 'Sommerrabatt 2024', description: '-20% auf alle Souvenirs' },
-    ar: { title: 'خصم الصيف 2024', description: 'استمتع بخصم 20٪ على جميع الهدايا التذكارية' }
+    ar: { title: 'خصم الصيف 2024', description: 'استمتع بخصم 20٪ على جميع الهدايا التذكارية' },
   },
   'offre duty free -10€': {
     fr: { title: 'Offre Duty Free -10€', description: '10€ de réduction sur une sélection de produits duty free à partir de 50€ d\'achat' },
@@ -38,7 +38,7 @@ const KNOWN_TRANSLATIONS = {
     es: { title: 'Oferta Duty Free -10€', description: '10€ de descuento en una selección de productos duty free a partir de 50€ de compra' },
     it: { title: 'Offerta Duty Free -10€', description: '10€ di sconto su una selezione di prodotti duty free per acquisti oltre 50€' },
     de: { title: 'Duty-Free-Angebot -10€', description: '10€ Rabatt auf eine Auswahl an Duty-Free-Produkten ab 50€ Einkaufswert' },
-    ar: { title: 'عرض الديوتي فري -10 يورو', description: 'خصم 10 يورو على مجموعة مختارة من منتجات الديوتي فري عند الشراء بقيمة 50 يورو فأكثر' }
+    ar: { title: 'عرض الديوتي فري -10 يورو', description: 'خصم 10 يورو على مجموعة مختارة من منتجات الديوتي فري عند الشراء بقيمة 50 يورو فأكثر' },
   },
   'black friday boutique': {
     fr: { title: 'Black Friday Boutique', description: 'Jusqu\'à -30% sur la mode et l\'électronique à bord' },
@@ -46,12 +46,12 @@ const KNOWN_TRANSLATIONS = {
     es: { title: 'Black Friday Boutique', description: 'Hasta -30% en moda y electrónica a bordo' },
     it: { title: 'Black Friday Boutique', description: 'Fino a -30% su moda ed elettronica a bordo' },
     de: { title: 'Black Friday Boutique', description: 'Bis zu -30% auf Mode und Elektronik an Bord' },
-    ar: { title: 'بلاك فرايداي بوتيك', description: 'حتى -30٪ على الأزياء والإلكترونيات على متن السفينة' }
-  }
+    ar: { title: 'بلاك فرايداي بوتيك', description: 'حتى -30٪ على الأزياء والإلكترونيات على متن السفينة' },
+  },
 };
 
 function normalizeTitle(s) {
-  if (!s || typeof s !== 'string') return '';
+  if (!s || typeof s !== 'string') {return '';}
   return s
     .toLowerCase()
     .normalize('NFD')
@@ -89,7 +89,7 @@ async function run() {
         const frDesc = description || (translations.fr && translations.fr.description) || '';
         translations.fr = { title: frTitle, description: frDesc };
         for (const lang of LANGS) {
-          if (lang === 'fr') continue;
+          if (lang === 'fr') {continue;}
           if (!translations[lang] || !translations[lang].title) {
             translations[lang] = { title: frTitle, description: frDesc };
           }
@@ -99,7 +99,7 @@ async function run() {
 
       await Promotion.updateOne(
         { _id: promo._id },
-        { $set: { translations } }
+        { $set: { translations } },
       );
       updated++;
     }

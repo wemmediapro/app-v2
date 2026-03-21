@@ -6,8 +6,8 @@ const jwt = require('jsonwebtoken');
  * @returns {boolean} - Returns true if the secret is strong, otherwise false.
  */
 function verifyJWTSecretStrength(secret) {
-    const minLength = 32; // Minimum length for a strong secret
-    return typeof secret === 'string' && secret.length >= minLength;
+  const minLength = 32; // Minimum length for a strong secret
+  return typeof secret === 'string' && secret.length >= minLength;
 }
 
 /**
@@ -16,9 +16,9 @@ function verifyJWTSecretStrength(secret) {
  * @returns {boolean} - Returns true if credentials are valid, otherwise false.
  */
 function validateAdminCredentials(credentials) {
-    if (!credentials || typeof credentials !== 'object') return false;
-    const { username, password } = credentials;
-    return typeof username === 'string' && typeof password === 'string' && password.length >= 8;
+  if (!credentials || typeof credentials !== 'object') {return false;}
+  const { username, password } = credentials;
+  return typeof username === 'string' && typeof password === 'string' && password.length >= 8;
 }
 
 /**
@@ -27,8 +27,8 @@ function validateAdminCredentials(credentials) {
  * @param {boolean} status - The status of the validation.
  */
 function logSecurityValidationResults(message, status) {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] ${message}: ${status}`);
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${message}: ${status}`);
 }
 
 module.exports = { verifyJWTSecretStrength, validateAdminCredentials, logSecurityValidationResults };

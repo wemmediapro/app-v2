@@ -19,7 +19,7 @@ function getSystemUptimePercent() {
     const seconds = process.uptime();
     const hours = seconds / 3600;
     // Au-delà de 24h on considère 100 %, sinon proportionnel (ex: 12h = 50 %)
-    if (hours >= 24) return 100;
+    if (hours >= 24) {return 100;}
     return Math.min(100, Math.round((hours / 24) * 1000) / 10);
   } catch {
     return 0;
@@ -28,7 +28,7 @@ function getSystemUptimePercent() {
 
 /** Croissance en % entre période actuelle et période précédente */
 function growthPercent(current, previous) {
-  if (previous === 0) return current > 0 ? 100 : 0;
+  if (previous === 0) {return current > 0 ? 100 : 0;}
   const pct = ((current - previous) / previous) * 100;
   return Math.round(pct * 10) / 10;
 }
@@ -48,7 +48,7 @@ router.get('/connections', authMiddleware, adminMiddleware, async (req, res) => 
       connectionTypes: [],
       hourlyConnections: [],
       deviceTypes: [],
-      bandwidthUsage: { total: null, average: null, peak: null, byContent: [] }
+      bandwidthUsage: { total: null, average: null, peak: null, byContent: [] },
     });
   } catch (err) {
     console.error('Analytics connections error:', err);
@@ -70,7 +70,7 @@ router.get('/content', authMiddleware, adminMiddleware, async (req, res) => {
       EnfantActivity.countDocuments().catch(() => 0),
       Product.countDocuments().catch(() => 0),
       Restaurant.countDocuments({ isActive: true }).catch(() => 0),
-      WebTVChannel.aggregate([{ $group: { _id: null, total: { $sum: '$viewers' } } }]).catch(() => [])
+      WebTVChannel.aggregate([{ $group: { _id: null, total: { $sum: '$viewers' } } }]).catch(() => []),
     ]);
     const totalViewers = (viewersResult && viewersResult[0] && viewersResult[0].total) || 0;
     const totalContent = totalMovies + totalArticles + totalRadio + totalActivities + totalProducts + totalRestaurants;
@@ -80,7 +80,7 @@ router.get('/content', authMiddleware, adminMiddleware, async (req, res) => {
       { type: 'Stations radio', count: totalRadio, views: 0, rating: null },
       { type: 'Activités enfant', count: totalActivities, views: 0, rating: null },
       { type: 'Produits shop', count: totalProducts, views: 0, rating: null },
-      { type: 'Restaurants', count: totalRestaurants, views: 0, rating: null }
+      { type: 'Restaurants', count: totalRestaurants, views: 0, rating: null },
     ].filter((c) => c.count > 0);
 
     res.json({
@@ -89,7 +89,7 @@ router.get('/content', authMiddleware, adminMiddleware, async (req, res) => {
       popularContent: [],
       contentEngagement: { averageWatchTime: null, completionRate: null, favoriteGenres: [], peakViewingHours: [] },
       userBehavior: { averageSessionTime: null, bounceRate: null, returnVisitors: null, newVisitors: null, mostActiveUsers: [] },
-      totalViewers
+      totalViewers,
     });
   } catch (err) {
     console.error('Analytics content error:', err);
@@ -108,7 +108,7 @@ router.get('/performance', authMiddleware, adminMiddleware, async (req, res) => 
       errorRate: null,
       uptime,
       cacheHitRate: null,
-      databaseQueries: { total: null, average: null, slowQueries: null, optimization: null }
+      databaseQueries: { total: null, average: null, slowQueries: null, optimization: null },
     });
   } catch (err) {
     console.error('Analytics performance error:', err);
@@ -124,7 +124,7 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
       return res.json({
         summary: { totalUsers: 0, activeUsers: 0, totalContent: 0, systemUptime: 0 },
         trends: { userGrowth: 0, contentGrowth: 0, engagementGrowth: 0, performanceImprovement: 0 },
-        alerts: []
+        alerts: [],
       });
     }
 
@@ -149,7 +149,7 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
       articlesPrevious30Days,
       recentFeedbacks,
       recentMovies,
-      recentArticles
+      recentArticles,
     ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ isActive: true }),
@@ -167,7 +167,7 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
       Article.countDocuments({ createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } }).catch(() => 0),
       Feedback.find().sort({ createdAt: -1 }).limit(5).lean(),
       Movie.find().sort({ createdAt: -1 }).limit(3).select('title translations createdAt').lean(),
-      Article.find().sort({ createdAt: -1 }).limit(3).select('translations createdAt').lean()
+      Article.find().sort({ createdAt: -1 }).limit(3).select('translations createdAt').lean(),
     ]);
 
     const totalContent = totalMovies + totalArticles + totalRadio + totalActivities + totalProducts + totalRestaurants;
@@ -185,7 +185,7 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
       alerts.push({
         type,
         message: `${(f.message || '').slice(0, 60)}${(f.message && f.message.length > 60) ? '…' : ''}`,
-        timestamp: f.createdAt
+        timestamp: f.createdAt,
       });
     });
     if (recentMovies.length > 0) {
@@ -193,7 +193,7 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
       alerts.push({
         type: 'info',
         message: `Nouveau(x) film(s) ajouté(s): ${titles.join(', ')}`,
-        timestamp: recentMovies[0].createdAt
+        timestamp: recentMovies[0].createdAt,
       });
     }
     if (recentArticles.length > 0) {
@@ -201,14 +201,14 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
       alerts.push({
         type: 'info',
         message: `Nouveau(x) article(s) magazine: ${titles.join(', ')}`,
-        timestamp: recentArticles[0].createdAt
+        timestamp: recentArticles[0].createdAt,
       });
     }
     alerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     const alertsFormatted = alerts.slice(0, 10).map((a) => ({
       type: a.type,
       message: a.message,
-      timestamp: a.timestamp instanceof Date ? a.timestamp.toISOString() : a.timestamp
+      timestamp: a.timestamp instanceof Date ? a.timestamp.toISOString() : a.timestamp,
     }));
 
     res.json({
@@ -216,15 +216,15 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
         totalUsers,
         activeUsers,
         totalContent,
-        systemUptime
+        systemUptime,
       },
       trends: {
         userGrowth,
         contentGrowth,
         engagementGrowth: 0,
-        performanceImprovement: systemUptime >= 99 ? 0 : Math.round((systemUptime / 100) * 10 * 10) / 10
+        performanceImprovement: systemUptime >= 99 ? 0 : Math.round((systemUptime / 100) * 10 * 10) / 10,
       },
-      alerts: alertsFormatted
+      alerts: alertsFormatted,
     });
   } catch (err) {
     console.error('Analytics overview error:', err);

@@ -108,8 +108,8 @@ async function getAdminLogs(filters = {}) {
   if (adminId && mongoose.Types.ObjectId.isValid(adminId)) {
     query.userId = adminId;
   }
-  if (action) query.action = action;
-  if (resource) query.resource = resource;
+  if (action) {query.action = action;}
+  if (resource) {query.resource = resource;}
   if (resourceId && mongoose.Types.ObjectId.isValid(resourceId)) {
     query.resourceId = resourceId;
   }

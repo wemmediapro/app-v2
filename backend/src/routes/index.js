@@ -75,7 +75,7 @@ function mountRoutes(app, deps = {}) {
     };
     if (dbConnected && dbManager.getStats) {
       const stats = dbManager.getStats();
-      if (stats.name) payload.mongodbDatabase = stats.name;
+      if (stats.name) {payload.mongodbDatabase = stats.name;}
     }
     if (configModule.env !== 'production') {
       payload.environment = configModule.env;

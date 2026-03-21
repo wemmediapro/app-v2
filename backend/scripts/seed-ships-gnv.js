@@ -31,7 +31,7 @@ if (!Array.isArray(rawShips) || rawShips.length === 0) {
 
 /** Dérive un slug à partir du nom (ex: "GNV Excelsior" -> "excelsior") */
 function nameToSlug(name) {
-  if (!name || typeof name !== 'string') return '';
+  if (!name || typeof name !== 'string') {return '';}
   return name
     .replace(/\bGNV\s+/i, '')
     .trim()
@@ -73,7 +73,7 @@ async function run() {
     await Ship.findOneAndUpdate(
       { slug: s.slug },
       { $set: s },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
     console.log('  ', s.name);
   }

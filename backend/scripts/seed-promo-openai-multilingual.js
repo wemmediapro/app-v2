@@ -62,7 +62,7 @@ Règles :
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
   const data = JSON.parse(raw);
   const list = data.promotions || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list : [];
@@ -135,7 +135,7 @@ async function seedPromosMultilingual() {
               };
             }
           }
-          if (Object.keys(translations).length) promo.translations = translations;
+          if (Object.keys(translations).length) {promo.translations = translations;}
 
           doc.promotions = doc.promotions || [];
           doc.promotions.push(promo);
@@ -152,7 +152,7 @@ async function seedPromosMultilingual() {
     console.log('\n✅ Seed promotions multilingues terminé. Total ajouté:', totalAdded);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

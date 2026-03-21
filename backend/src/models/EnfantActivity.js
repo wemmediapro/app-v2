@@ -4,79 +4,79 @@ const enfantActivitySchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Activity name is required'],
-    trim: true
+    trim: true,
   },
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: ['Jeux', 'Arts & Créativité', 'Sport', 'Éducation', 'Divertissement', 'Musique', 'Danse', 'Lecture', 'Créatif']
+    enum: ['Jeux', 'Arts & Créativité', 'Sport', 'Éducation', 'Divertissement', 'Musique', 'Danse', 'Lecture', 'Créatif'],
   },
   description: {
     type: String,
-    required: [true, 'Description is required']
+    required: [true, 'Description is required'],
   },
   ageRange: {
     type: String,
-    required: [true, 'Age range is required']
+    required: [true, 'Age range is required'],
   },
   duration: {
     type: String,
-    required: [true, 'Duration is required']
+    required: [true, 'Duration is required'],
   },
   location: {
     type: String,
-    required: [true, 'Location is required']
+    required: [true, 'Location is required'],
   },
   capacity: {
     type: String,
-    required: [true, 'Capacity is required']
+    required: [true, 'Capacity is required'],
   },
   price: {
     type: Number,
     default: 0,
-    min: [0, 'Price cannot be negative']
+    min: [0, 'Price cannot be negative'],
   },
   schedule: {
     type: String,
-    required: [true, 'Schedule is required']
+    required: [true, 'Schedule is required'],
   },
   instructor: {
-    type: String
+    type: String,
   },
   features: [{
     type: String,
-    trim: true
+    trim: true,
   }],
   imageUrl: {
-    type: String
+    type: String,
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   isFeatured: {
     type: Boolean,
-    default: false
+    default: false,
   },
   countries: [{
-    type: String
+    type: String,
   }],
   shipId: {
-    type: Number
+    type: Number,
   },
   destination: {
-    type: String
+    type: String,
   },
   participants: {
     type: Number,
-    default: 0
+    default: 0,
   },
   maxParticipants: {
-    type: Number
+    type: Number,
   },
-  translations: { type: mongoose.Schema.Types.Mixed }
+  translations: { type: mongoose.Schema.Types.Mixed },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 enfantActivitySchema.index({ category: 1, isActive: 1 });

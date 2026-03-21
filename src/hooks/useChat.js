@@ -110,7 +110,7 @@ export function useChat(options = {}) {
         transports: ['websocket'],
         reconnection: false,
         timeout: 2000,
-        autoConnect: false
+        autoConnect: false,
       });
       connectTimeout = setTimeout(() => {
         if (newSocket && !newSocket.connected) {
@@ -143,7 +143,7 @@ export function useChat(options = {}) {
       });
       newSocket.on('message-read', (data) => {
         setChatMessages(prev => prev.map(msg =>
-          msg.id === data.messageId ? { ...msg, isRead: true } : msg
+          msg.id === data.messageId ? { ...msg, isRead: true } : msg,
         ));
       });
     } catch (err) {
@@ -193,7 +193,7 @@ export function useChat(options = {}) {
               status: 'online',
               lastSeen: 'En ligne',
               isTyping: false,
-              unreadCount: conv.unreadCount || 0
+              unreadCount: conv.unreadCount || 0,
             }));
             setChatUsers(transformedUsers);
             return;
@@ -265,7 +265,7 @@ export function useChat(options = {}) {
           status: 'online',
           lastSeen: 'En ligne',
           isTyping: false,
-          unreadCount: 0
+          unreadCount: 0,
         }));
         setSearchResults(transformed);
       }
@@ -318,7 +318,7 @@ export function useChat(options = {}) {
       isRead: false,
       type: 'text',
       attachments: [],
-      reactions: []
+      reactions: [],
     };
 
     const online = typeof navigator === 'undefined' ? true : navigator.onLine;
@@ -518,11 +518,11 @@ export function useChat(options = {}) {
   const filteredChatUsers = chatUsers.filter(user =>
     user.name.toLowerCase().includes(chatSearchQuery.toLowerCase()) &&
     !archivedConversations.includes(user.id) &&
-    !blockedUsers.includes(user.id)
+    !blockedUsers.includes(user.id),
   );
   const filteredArchivedConversations = chatUsers.filter(user =>
     archivedConversations.includes(user.id) &&
-    user.name.toLowerCase().includes(chatSearchQuery.toLowerCase())
+    user.name.toLowerCase().includes(chatSearchQuery.toLowerCase()),
   );
   const filteredMessages = selectedChat ? getChatMessages(selectedChat).filter(msg => {
     if (!messageSearchQuery?.trim()) return true;
@@ -600,6 +600,6 @@ export function useChat(options = {}) {
     markAsUnread,
     blockUser,
     unblockUser,
-    formatTime
+    formatTime,
   };
 }

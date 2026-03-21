@@ -44,10 +44,10 @@ Inclus ageRange, schedule et features dans chaque langue UNIQUEMENT si ces champ
   let userPrompt = `Catégorie : ${category || 'Activité'}.
 Nom (français) : ${nameFr}
 Description (français) : ${descriptionFr || '(aucune)'}`;
-  if (ageRangeFr) userPrompt += `\nTranche d'âge (français) : ${ageRangeFr}`;
-  if (scheduleFr) userPrompt += `\nHoraires (français) : ${scheduleFr}`;
-  if (Array.isArray(featuresFr) && featuresFr.length > 0) userPrompt += `\nÉtiquettes/features (français) : ${JSON.stringify(featuresFr)}`;
-  userPrompt += `\n\nGénère l'objet JSON avec "translations" pour les 6 langues (fr, en, es, it, de, ar).`;
+  if (ageRangeFr) {userPrompt += `\nTranche d'âge (français) : ${ageRangeFr}`;}
+  if (scheduleFr) {userPrompt += `\nHoraires (français) : ${scheduleFr}`;}
+  if (Array.isArray(featuresFr) && featuresFr.length > 0) {userPrompt += `\nÉtiquettes/features (français) : ${JSON.stringify(featuresFr)}`;}
+  userPrompt += '\n\nGénère l\'objet JSON avec "translations" pour les 6 langues (fr, en, es, it, de, ar).';
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -60,15 +60,14 @@ Description (français) : ${descriptionFr || '(aucune)'}`;
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
 
   let data;
   try {
     data = JSON.parse(raw);
   } catch (e) {
     const match = raw.match(/\{[\s\S]*\}/);
-    if (match) data = JSON.parse(match[0]);
-    else throw new Error('JSON invalide: ' + raw.slice(0, 200));
+    if (match) {data = JSON.parse(match[0]);} else {throw new Error('JSON invalide: ' + raw.slice(0, 200));}
   }
 
   const translations = data.translations || data;
@@ -80,8 +79,8 @@ Description (français) : ${descriptionFr || '(aucune)'}`;
         name: String(t.name || nameFr).trim().slice(0, 200),
         description: String(t.description ?? descriptionFr ?? '').trim().slice(0, 2000),
       };
-      if (hasExtra && t.ageRange) out[lang].ageRange = String(t.ageRange).trim().slice(0, 50);
-      if (hasExtra && t.schedule) out[lang].schedule = String(t.schedule).trim().slice(0, 200);
+      if (hasExtra && t.ageRange) {out[lang].ageRange = String(t.ageRange).trim().slice(0, 50);}
+      if (hasExtra && t.schedule) {out[lang].schedule = String(t.schedule).trim().slice(0, 200);}
       if (hasExtra && Array.isArray(t.features) && t.features.length > 0) {
         out[lang].features = t.features.map(f => String(f).trim().slice(0, 100));
       }
@@ -89,9 +88,9 @@ Description (français) : ${descriptionFr || '(aucune)'}`;
   }
   if (!out.fr) {
     out.fr = { name: nameFr, description: descriptionFr || '' };
-    if (ageRangeFr) out.fr.ageRange = ageRangeFr;
-    if (scheduleFr) out.fr.schedule = scheduleFr;
-    if (Array.isArray(featuresFr) && featuresFr.length > 0) out.fr.features = [...featuresFr];
+    if (ageRangeFr) {out.fr.ageRange = ageRangeFr;}
+    if (scheduleFr) {out.fr.schedule = scheduleFr;}
+    if (Array.isArray(featuresFr) && featuresFr.length > 0) {out.fr.features = [...featuresFr];}
   }
   return out;
 }

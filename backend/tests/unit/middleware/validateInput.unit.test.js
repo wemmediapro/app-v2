@@ -16,7 +16,7 @@ describe('validateInput', () => {
       mw(req, res, next);
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'INVALID_ID' })
+        expect.objectContaining({ code: 'INVALID_ID' }),
       );
       expect(next).not.toHaveBeenCalled();
     });

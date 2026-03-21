@@ -92,7 +92,7 @@ module.exports = {
 
 // Config mid-roll : uniquement par % de la durée (MIDROLL_CUE_POINTS_PERCENT)
 const parseCuePoints = (envVal, defaultList) => {
-  if (envVal == null || String(envVal).trim() === '') return defaultList;
+  if (envVal == null || String(envVal).trim() === '') {return defaultList;}
   const arr = String(envVal).split(',').map(s => parseInt(s.trim(), 10)).filter(n => !Number.isNaN(n) && n >= 0);
   return arr.length ? arr : defaultList;
 };

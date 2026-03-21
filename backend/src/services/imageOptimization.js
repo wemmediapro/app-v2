@@ -211,7 +211,7 @@ async function optimizeImageInPlaceAggressive(inputPath, options = {}) {
   if (ext === '.png' && tryConvertPngToJpeg) {
     try {
       let p = sharp(inputPath);
-      if (shouldResize) p = p.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });
+      if (shouldResize) {p = p.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });}
       const jpegBuffer = await p.jpeg({ quality: jpegQuality, mozjpeg: true }).toBuffer();
       if (jpegBuffer.length < bestSize && jpegBuffer.length < sizeBefore) {
         bestSize = jpegBuffer.length;
@@ -225,7 +225,7 @@ async function optimizeImageInPlaceAggressive(inputPath, options = {}) {
 
   if (ext === '.jpg' || ext === '.jpeg') {
     let p = sharp(inputPath);
-    if (shouldResize) p = p.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });
+    if (shouldResize) {p = p.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });}
     const buf = await p.jpeg({ quality: jpegQuality, mozjpeg: true }).toBuffer();
     if (buf.length < bestSize) {
       bestSize = buf.length;
@@ -235,7 +235,7 @@ async function optimizeImageInPlaceAggressive(inputPath, options = {}) {
   }
 
   pipeline = sharp(inputPath);
-  if (shouldResize) pipeline = pipeline.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });
+  if (shouldResize) {pipeline = pipeline.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });}
   if (ext === '.png') {
     const pngOpts = { compressionLevel: 9 };
     try {

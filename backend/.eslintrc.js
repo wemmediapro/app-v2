@@ -1,4 +1,5 @@
 module.exports = {
+  root: true,
   env: {
     node: true,
     es2022: true,
@@ -11,7 +12,7 @@ module.exports = {
   },
   rules: {
     'no-console': ['warn', { allow: ['warn', 'error'] }],
-    'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none' }],
     'no-var': 'error',
     'prefer-const': 'error',
     'prefer-arrow-callback': 'error',
@@ -29,12 +30,15 @@ module.exports = {
     'space-infix-ops': 'error',
     'brace-style': ['error', '1tbs', { allowSingleLine: true }],
     'curly': ['error', 'all'],
-    'eqeqeq': ['error', 'always'],
+    'eqeqeq': ['error', 'always', { null: 'ignore' }],
     'no-eval': 'error',
     'no-implied-eval': 'error',
     'no-new-func': 'error',
-    'no-return-await': 'error',
-    'require-await': 'error',
+    'no-return-await': 'off',
+    'no-useless-escape': 'warn',
+    'no-empty': ['warn', { allowEmptyCatch: true }],
+    // Handlers Express souvent async sans await
+    'require-await': 'off',
     'no-throw-literal': 'error',
   },
   ignorePatterns: ['node_modules/', 'coverage/', 'dist/', '*.min.js'],

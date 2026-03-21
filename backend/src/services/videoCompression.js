@@ -53,7 +53,7 @@ function compressTo480p(inputPath, outputPath) {
         '-bufsize', '1600k',
         '-c:a', 'aac',
         '-b:a', AUDIO_BITRATE,
-        '-movflags', '+faststart' // Optimisation pour le streaming web
+        '-movflags', '+faststart', // Optimisation pour le streaming web
       ])
       .output(outputPath)
       .on('start', (cmd) => {
@@ -106,7 +106,7 @@ async function processVideo(inputPath, outputFilename) {
   const copyWithoutCompression = (targetPath) => {
     fs.copyFileSync(inputPath, targetPath);
     try {
-      if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+      if (fs.existsSync(inputPath)) {fs.unlinkSync(inputPath);}
     } catch (e) {}
     const filename = path.basename(targetPath);
     return { path: targetPath, url: `/uploads/videos/${filename}` };
@@ -125,7 +125,7 @@ async function processVideo(inputPath, outputFilename) {
   }
 
   try {
-    if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+    if (fs.existsSync(inputPath)) {fs.unlinkSync(inputPath);}
   } catch (e) {
     console.warn('Impossible de supprimer le fichier temporaire:', inputPath);
   }
@@ -138,5 +138,5 @@ module.exports = {
   processVideo,
   checkFfmpegAvailable,
   TARGET_HEIGHT,
-  TARGET_WIDTH
+  TARGET_WIDTH,
 };

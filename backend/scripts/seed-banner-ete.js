@@ -14,7 +14,7 @@ const MONGODB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mong
 const ALL_PAGES = [
   'home', 'radio', 'movies', 'webtv', 'magazine', 'messaging',
   'restaurant', 'enfant', 'shipmap', 'feedback', 'favorites', 'shop',
-  'profile', 'signup'
+  'profile', 'signup',
 ];
 
 const BANNER = {
@@ -27,7 +27,7 @@ const BANNER = {
   isActive: true,
   pages: ALL_PAGES,
   clicks: 0,
-  impressions: 0
+  impressions: 0,
 };
 
 async function seedBanner() {
@@ -37,7 +37,7 @@ async function seedBanner() {
 
     const existing = await Banner.findOne({
       title: BANNER.title,
-      image: BANNER.image
+      image: BANNER.image,
     });
 
     if (existing) {
@@ -47,8 +47,8 @@ async function seedBanner() {
           isActive: true,
           title: BANNER.title,
           description: BANNER.description,
-          image: BANNER.image
-        }
+          image: BANNER.image,
+        },
       });
       console.log('✅ Bannière existante mise à jour (toutes les pages).');
     } else {

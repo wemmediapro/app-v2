@@ -18,7 +18,7 @@ function ensureDir() {
 
 function readShop() {
   ensureDir();
-  if (!fs.existsSync(SHOP_FILE)) return { products: [], promotions: [] };
+  if (!fs.existsSync(SHOP_FILE)) {return { products: [], promotions: [] };}
   try {
     const raw = fs.readFileSync(SHOP_FILE, 'utf8');
     const data = JSON.parse(raw);
@@ -33,12 +33,12 @@ function readShop() {
 }
 
 function localizeProduct(doc, lang) {
-  if (!doc) return doc;
+  if (!doc) {return doc;}
   const out = { ...doc, id: doc._id?.toString(), imageUrl: doc.images?.[0]?.url || doc.images?.[0] || '', image: doc.images?.[0]?.url || doc.images?.[0] || '' };
   if (lang && doc.translations && doc.translations[lang]) {
     const t = doc.translations[lang];
-    if (t.name) out.name = t.name;
-    if (t.description) out.description = t.description;
+    if (t.name) {out.name = t.name;}
+    if (t.description) {out.description = t.description;}
   }
   return out;
 }

@@ -78,13 +78,13 @@ async function generateAndUploadImage(openai, prompt, filename) {
     style: 'natural',
   });
   const img = response.data?.[0];
-  if (!img?.b64_json) throw new Error('Pas d’image retournée par OpenAI');
+  if (!img?.b64_json) {throw new Error('Pas d’image retournée par OpenAI');}
 
   const uploadUrl = `${API_BASE_URL}/api/upload/image-from-base64`;
   const headers = {
     'Content-Type': 'application/json',
   };
-  if (SEED_SECRET) headers['X-Seed-Secret'] = SEED_SECRET;
+  if (SEED_SECRET) {headers['X-Seed-Secret'] = SEED_SECRET;}
 
   const res = await fetch(uploadUrl, {
     method: 'POST',
@@ -101,7 +101,7 @@ async function generateAndUploadImage(openai, prompt, filename) {
   }
   const data = await res.json();
   const url = data?.image?.url || data?.image?.path;
-  if (!url) throw new Error('Réponse upload sans image.url/path');
+  if (!url) {throw new Error('Réponse upload sans image.url/path');}
   const pathRel = data.image.path || url.replace(/^https?:\/\/[^/]+/, '');
   return { url: pathRel.startsWith('/') ? pathRel : url, path: data.image.path };
 }
@@ -140,14 +140,14 @@ async function main() {
       const promptResto = buildRestaurantImagePrompt(r);
       const { url } = await generateAndUploadImage(openai, promptResto, filenameResto);
       await Restaurant.updateOne({ _id: r._id }, { $set: { image: url } });
-      console.log(`      ✅ Image restaurant uploadée et lien enregistré.`);
+      console.log('      ✅ Image restaurant uploadée et lien enregistré.');
 
       if (MAX_DISH_IMAGES > 0 && Array.isArray(r.menu) && r.menu.length > 0) {
         const menuToProcess = r.menu.slice(0, MAX_DISH_IMAGES);
         console.log(`      📋 ${menuToProcess.length} plat(s)/boisson(s) à illustrer...`);
         for (let j = 0; j < menuToProcess.length; j++) {
           const item = menuToProcess[j];
-          if (!item.name) continue;
+          if (!item.name) {continue;}
           try {
             const dishPrompt = buildDishImagePrompt(item.name, item.category);
             const dishSlug = slug(item.name) || `plat-${j + 1}`;
@@ -155,7 +155,7 @@ async function main() {
             const { url: dishUrl } = await generateAndUploadImage(openai, dishPrompt, dishFilename);
             await Restaurant.updateOne(
               { _id: r._id, 'menu.id': item.id },
-              { $set: { 'menu.$.image': dishUrl } }
+              { $set: { 'menu.$.image': dishUrl } },
             );
             console.log(`      ✅ Plat: ${item.name}`);
           } catch (err) {
@@ -165,7 +165,7 @@ async function main() {
       }
     } catch (err) {
       console.error(`   ❌ ${label}: ${err.message}`);
-      if (err.response?.data) console.error('      ', err.response.data);
+      if (err.response?.data) {console.error('      ', err.response.data);}
     }
   }
 

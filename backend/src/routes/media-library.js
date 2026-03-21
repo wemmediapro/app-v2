@@ -24,7 +24,7 @@ function getVideoDurationSeconds(fullPath) {
         return resolve(0);
       }
       const dur = data?.format?.duration;
-      if (dur == null) return resolve(0);
+      if (dur == null) {return resolve(0);}
       const sec = typeof dur === 'number' ? dur : parseFloat(dur, 10);
       resolve(Number.isFinite(sec) ? Math.round(sec) : 0);
     });
@@ -38,7 +38,7 @@ function getAudioDurationSeconds(fullPath) {
 
 function scanUploadDir(dirPath, urlPrefix, type) {
   const items = [];
-  if (!fs.existsSync(dirPath)) return items;
+  if (!fs.existsSync(dirPath)) {return items;}
   try {
     const names = fs.readdirSync(dirPath);
     for (const name of names) {
@@ -84,7 +84,7 @@ async function enrichAudioWithDuration(audioItems, audioDir) {
 }
 
 function getBaseUrl(req) {
-  if (config.apiBaseUrl) return config.apiBaseUrl.replace(/\/$/, '');
+  if (config.apiBaseUrl) {return config.apiBaseUrl.replace(/\/$/, '');}
   const port = config.port;
   const host = req.get('host') || `localhost:${port}`;
   const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
@@ -116,7 +116,7 @@ router.delete('/', authMiddleware, adminMiddleware, (req, res) => {
     }
     const normalized = path.normalize(filePath).replace(/^(\.\.(\/|\\))+/, '').replace(/^\//, '');
     const okPath = ALLOWED_PREFIXES.some((p) => normalized.startsWith(p));
-    if (!okPath) return err(res, 'Chemin non autorisé.', 403);
+    if (!okPath) {return err(res, 'Chemin non autorisé.', 403);}
     const publicDirResolved = path.resolve(PUBLIC_DIR);
     const fullPath = path.resolve(PUBLIC_DIR, normalized);
     if (!fullPath.startsWith(publicDirResolved)) {
@@ -126,7 +126,7 @@ router.delete('/', authMiddleware, adminMiddleware, (req, res) => {
     if (relative.startsWith('..') || path.isAbsolute(relative)) {
       return err(res, 'Chemin non autorisé.', 403);
     }
-    if (!fs.existsSync(fullPath)) return err(res, 'Fichier introuvable.', 404);
+    if (!fs.existsSync(fullPath)) {return err(res, 'Fichier introuvable.', 404);}
     fs.unlinkSync(fullPath);
     return ok(res, { message: 'Fichier supprimé du serveur.' });
   } catch (e) {

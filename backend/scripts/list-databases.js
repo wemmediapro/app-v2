@@ -12,7 +12,7 @@ const mongoose = require('mongoose');
 const uri = process.env.DATABASE_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017/gnv_onboard?directConnection=true';
 
 function formatBytes(bytes) {
-  if (bytes === 0) return '0 o';
+  if (bytes === 0) {return '0 o';}
   const k = 1024;
   const sizes = ['o', 'Ko', 'Mo', 'Go', 'To'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));

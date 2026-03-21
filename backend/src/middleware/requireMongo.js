@@ -11,7 +11,7 @@ function requireMongo(req, res, next) {
   res.status(503).json({
     message: 'Service temporairement indisponible : base de données non connectée.',
     code: 'DB_DISCONNECTED',
-    hint: 'Vérifiez que MongoDB est démarré et que MONGODB_URI est correct dans config.env'
+    hint: 'Vérifiez que MongoDB est démarré et que MONGODB_URI est correct dans config.env',
   });
 }
 

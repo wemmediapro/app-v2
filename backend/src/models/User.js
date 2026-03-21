@@ -6,84 +6,84 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'First name is required'],
     trim: true,
-    maxlength: [50, 'First name cannot exceed 50 characters']
+    maxlength: [50, 'First name cannot exceed 50 characters'],
   },
   lastName: {
     type: String,
     required: [true, 'Last name is required'],
     trim: true,
-    maxlength: [50, 'Last name cannot exceed 50 characters']
+    maxlength: [50, 'Last name cannot exceed 50 characters'],
   },
   email: {
     type: String,
     required: [true, 'Email is required'],
     unique: true,
     lowercase: true,
-    match: [/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, 'Please enter a valid email']
+    match: [/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, 'Please enter a valid email'],
   },
   password: {
     type: String,
     required: [true, 'Password is required'],
     minlength: [8, 'Password must be at least 8 characters'],
-    select: false
+    select: false,
   },
   phone: {
     type: String,
     trim: true,
-    match: [/^[+]?[\d\s\-\(\)]+$/, 'Please enter a valid phone number']
+    match: [/^[+]?[\d\s\-\(\)]+$/, 'Please enter a valid phone number'],
   },
   cabinNumber: {
     type: String,
-    trim: true
+    trim: true,
   },
   country: {
     type: String,
     trim: true,
-    maxlength: [100, 'Country name cannot exceed 100 characters']
+    maxlength: [100, 'Country name cannot exceed 100 characters'],
   },
   dateOfBirth: {
-    type: Date
+    type: Date,
   },
   role: {
     type: String,
     enum: ['passenger', 'crew', 'admin'],
-    default: 'passenger'
+    default: 'passenger',
   },
   preferences: {
     language: {
       type: String,
       enum: ['fr', 'en', 'it', 'es'],
-      default: 'fr'
+      default: 'fr',
     },
     notifications: {
       email: { type: Boolean, default: true },
       push: { type: Boolean, default: true },
-      sms: { type: Boolean, default: false }
+      sms: { type: Boolean, default: false },
     },
     dietaryRestrictions: [String],
-    accessibilityNeeds: [String]
+    accessibilityNeeds: [String],
   },
   consents: {
     marketing: { type: Boolean, default: false },
     analytics: { type: Boolean, default: false },
     termsAccepted: { type: Boolean, default: false },
-    privacyAccepted: { type: Boolean, default: false }
+    privacyAccepted: { type: Boolean, default: false },
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   /** Accès par module (dashboard, radio, movies, etc.). Si null/absent, utilise les défauts du rôle. */
   allowedModules: {
     type: mongoose.Schema.Types.Mixed,
-    default: null
+    default: null,
   },
   lastLogin: {
-    type: Date
+    type: Date,
   },
   mustChangePassword: {
     type: Boolean,
-    default: false
+    default: false,
   },
   /** Secret TOTP (base32) — jamais exposé en JSON ; select: false */
   twoFactorSecret: {
@@ -115,7 +115,7 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    default: null
+    default: null,
   },
   /** Favoris et historique de lecture (persistés côté serveur, survivent au vidage du cache). */
   userData: {
@@ -126,18 +126,18 @@ const userSchema = new mongoose.Schema({
         restaurantIds: [],
         enfantIds: [],
         watchlist: [],
-        shopItems: []
+        shopItems: [],
       },
-      playbackPositions: {}
-    })
-  }
+      playbackPositions: {},
+    }),
+  },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 // Hash password before saving — try/catch pour éviter un crash si bcrypt échoue sous charge
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password')) {return next();}
 
   try {
     const salt = await bcrypt.genSalt(12);

@@ -43,13 +43,13 @@ function getTokenFromRequest(req) {
 
 const generateToken = (payload) => {
   return jwt.sign(payload, getSecret(), {
-    expiresIn: process.env.JWT_EXPIRES_IN || process.env.JWT_EXPIRE || '7d'
+    expiresIn: process.env.JWT_EXPIRES_IN || process.env.JWT_EXPIRE || '7d',
   });
 };
 
 const generateAccessToken = (payload) => {
   return jwt.sign(payload, getSecret(), {
-    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m'
+    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
   });
 };
 
@@ -69,7 +69,7 @@ function generateTwoFactorChallengeToken(userId, email) {
       email: email || undefined,
     },
     getSecret(),
-    { expiresIn: TWO_FACTOR_CHALLENGE_TTL }
+    { expiresIn: TWO_FACTOR_CHALLENGE_TTL },
   );
 }
 
@@ -95,7 +95,7 @@ function isMfaExemptApiPath(req) {
     '/auth/2fa/setup',
     '/auth/2fa/verify',
   ]);
-  if (exempt.has(path)) return true;
+  if (exempt.has(path)) {return true;}
   return false;
 }
 

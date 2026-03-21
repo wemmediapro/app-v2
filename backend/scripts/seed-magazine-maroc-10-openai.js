@@ -56,7 +56,7 @@ Chaque article doit avoir:
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
   const data = JSON.parse(raw);
   const list = data.articles || data.items || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list.slice(0, count) : [];
@@ -140,7 +140,7 @@ async function seedMarocMagazine() {
     console.log('\n✅ Seed terminé : 10 articles sur le Maroc insérés (chaque langue en base). Total articles:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

@@ -5,7 +5,7 @@ const handleValidationErrors = (req, res, next) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({
       message: 'Validation failed',
-      errors: errors.array()
+      errors: errors.array(),
     });
   }
   next();
@@ -35,12 +35,12 @@ function validateParams(...validators) {
 
 /** Exige au moins 8 caractères, une majuscule, une minuscule, un chiffre et un symbole (pour admin) */
 const strongPassword = (value) => {
-  if (!value || typeof value !== 'string') return false;
-  if (value.length < 8) return false;
-  if (!/[A-Z]/.test(value)) return false;
-  if (!/[a-z]/.test(value)) return false;
-  if (!/[0-9]/.test(value)) return false;
-  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)) return false;
+  if (!value || typeof value !== 'string') {return false;}
+  if (value.length < 8) {return false;}
+  if (!/[A-Z]/.test(value)) {return false;}
+  if (!/[a-z]/.test(value)) {return false;}
+  if (!/[0-9]/.test(value)) {return false;}
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)) {return false;}
   return true;
 };
 
@@ -51,19 +51,19 @@ const registerValidation = [
     .withMessage('First name is required')
     .isLength({ max: 50 })
     .withMessage('First name cannot exceed 50 characters'),
-  
+
   body('lastName')
     .trim()
     .notEmpty()
     .withMessage('Last name is required')
     .isLength({ max: 50 })
     .withMessage('Last name cannot exceed 50 characters'),
-  
+
   body('email')
     .isEmail()
     .withMessage('Please provide a valid email')
     .normalizeEmail(),
-  
+
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
@@ -73,13 +73,13 @@ const registerValidation = [
       }
       return true;
     }),
-  
+
   body('phone')
     .optional()
     .matches(/^[+]?[\d\s\-\(\)]+$/)
     .withMessage('Please provide a valid phone number'),
-  
-  handleValidationErrors
+
+  handleValidationErrors,
 ];
 
 const loginValidation = [
@@ -87,12 +87,12 @@ const loginValidation = [
     .isEmail()
     .withMessage('Please provide a valid email')
     .normalizeEmail(),
-  
+
   body('password')
     .notEmpty()
     .withMessage('Password is required'),
-  
-  handleValidationErrors
+
+  handleValidationErrors,
 ];
 
 /** [Q1] Validation PUT /api/auth/profile — champs optionnels, formats contrôlés */
@@ -129,33 +129,33 @@ const profileValidation = [
     .optional()
     .isObject()
     .withMessage('Preferences must be an object'),
-  handleValidationErrors
+  handleValidationErrors,
 ];
 
 const feedbackValidation = [
   body('type')
     .isIn(['complaint', 'suggestion', 'compliment', 'technical'])
     .withMessage('Invalid feedback type'),
-  
+
   body('category')
     .isIn(['restaurant', 'entertainment', 'service', 'technical', 'other'])
     .withMessage('Invalid category'),
-  
+
   body('title')
     .trim()
     .notEmpty()
     .withMessage('Title is required')
     .isLength({ max: 100 })
     .withMessage('Title cannot exceed 100 characters'),
-  
+
   body('description')
     .trim()
     .notEmpty()
     .withMessage('Description is required')
     .isLength({ max: 1000 })
     .withMessage('Description cannot exceed 1000 characters'),
-  
-  handleValidationErrors
+
+  handleValidationErrors,
 ];
 
 const validatePagination = (req, res, next) => {

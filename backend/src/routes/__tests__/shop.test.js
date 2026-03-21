@@ -55,7 +55,7 @@ describe('API Shop', () => {
         .expect(200);
       const data = res.body?.data ?? res.body;
       expect(Array.isArray(data)).toBe(true);
-      if (res.body.limit != null) expect(res.body.limit).toBe(100);
+      if (res.body.limit != null) {expect(res.body.limit).toBe(100);}
     });
   });
 

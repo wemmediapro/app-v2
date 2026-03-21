@@ -36,14 +36,14 @@ async function run() {
       const coll = db.collection(name);
       const r = await coll.updateMany(
         { [field]: { $regex: '\\.png$', $options: 'i' } },
-        [{ $set: { [field]: { $replaceAll: { input: `$${field}`, find: '.png', replacement: '.jpg' } } } }]
+        [{ $set: { [field]: { $replaceAll: { input: `$${field}`, find: '.png', replacement: '.jpg' } } } }],
       );
       if (r.modifiedCount > 0) {
         console.log(`  ${name}.${field}: ${r.modifiedCount} doc(s) mis à jour (.png → .jpg)`);
         totalUpdated += r.modifiedCount;
       }
     } catch (e) {
-      if (e.codeName !== 'NamespaceNotFound') console.warn(`  ${name}.${field}:`, e.message);
+      if (e.codeName !== 'NamespaceNotFound') {console.warn(`  ${name}.${field}:`, e.message);}
     }
   }
 
@@ -79,7 +79,7 @@ async function run() {
       totalUpdated += productsUpdated;
     }
   } catch (e) {
-    if (e.codeName !== 'NamespaceNotFound') console.warn('  products.images:', e.message);
+    if (e.codeName !== 'NamespaceNotFound') {console.warn('  products.images:', e.message);}
   }
 
   await mongoose.disconnect();

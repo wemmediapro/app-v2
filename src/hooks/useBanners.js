@@ -18,7 +18,7 @@ export function useBanners(page, language) {
   const bannerPageId = page === 'restaurant' ? 'restaurants' : page;
   const [homeBanners, setHomeBanners] = useState([]);
   const [bannerViewWidth, setBannerViewWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 1024
+    typeof window !== 'undefined' ? window.innerWidth : 1024,
   );
   const [bannerIndex, setBannerIndex] = useState(0);
 

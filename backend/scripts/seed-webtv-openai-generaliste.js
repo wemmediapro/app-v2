@@ -43,7 +43,7 @@ Tu dois renvoyer UNIQUEMENT un objet JSON valide, sans texte avant ou après, av
 Les 8 créneaux sont (par ordre) : 00h-03h, 03h-06h, 06h-09h, 09h-12h, 12h-15h, 15h-18h, 18h-21h, 21h-00h.
 Propose des programmes variés et réalistes pour une chaîne généraliste (infos, films, divertissement, sport, magazine, etc.).`;
 
-  const userPrompt = `Génère la chaîne généraliste avec ses 8 programmes (un par créneau de 3h). Réponse : uniquement l'objet JSON.`;
+  const userPrompt = 'Génère la chaîne généraliste avec ses 8 programmes (un par créneau de 3h). Réponse : uniquement l\'objet JSON.';
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -56,15 +56,14 @@ Propose des programmes variés et réalistes pour une chaîne généraliste (inf
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
 
   let data;
   try {
     data = JSON.parse(raw);
   } catch (e) {
     const match = raw.match(/\{[\s\S]*\}/);
-    if (match) data = JSON.parse(match[0]);
-    else throw new Error('Impossible de parser le JSON OpenAI: ' + raw.slice(0, 200));
+    if (match) {data = JSON.parse(match[0]);} else {throw new Error('Impossible de parser le JSON OpenAI: ' + raw.slice(0, 200));}
   }
 
   const name = data.name || 'GNV TV Généraliste';
@@ -161,7 +160,7 @@ async function seedWebTV() {
     console.log('\n✅ Seed WebTV généraliste terminé. Total chaînes:', await WebTVChannel.countDocuments({}));
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

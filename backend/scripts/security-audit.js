@@ -54,7 +54,7 @@ const credentialPatterns = [
 let foundCredentials = false;
 for (const file of scriptFilesToCheck) {
   const filePath = path.join(BACKEND_ROOT, file);
-  if (!fs.existsSync(filePath)) continue;
+  if (!fs.existsSync(filePath)) {continue;}
   const content = fs.readFileSync(filePath, 'utf8');
   for (const pattern of credentialPatterns) {
     if (pattern.test(content)) {
@@ -102,7 +102,7 @@ const paginationHints = [
 
 for (const file of routeFiles) {
   const filePath = path.join(BACKEND_ROOT, file);
-  if (!fs.existsSync(filePath)) continue;
+  if (!fs.existsSync(filePath)) {continue;}
   const content = fs.readFileSync(filePath, 'utf8');
   const usesLimit = /req\.query\.limit|query\(['"]limit['"]\)/.test(content);
   const hasCap = paginationHints.some((p) => p.test(content));
@@ -144,12 +144,12 @@ const dangerousPatterns = [
 const skipDirs = new Set(['node_modules', 'coverage', 'dist', '.git']);
 
 function walkJsFiles(dir, out) {
-  if (!fs.existsSync(dir)) return;
+  if (!fs.existsSync(dir)) {return;}
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const e of entries) {
     const full = path.join(dir, e.name);
     if (e.isDirectory()) {
-      if (skipDirs.has(e.name) || e.name === '__tests__') continue;
+      if (skipDirs.has(e.name) || e.name === '__tests__') {continue;}
       walkJsFiles(full, out);
     } else if (e.isFile() && e.name.endsWith('.js') && !e.name.endsWith('.test.js')) {
       out.push(full);
@@ -160,7 +160,7 @@ function walkJsFiles(dir, out) {
 const jsFiles = [];
 walkJsFiles(SRC_ROOT, jsFiles);
 const serverJs = path.join(BACKEND_ROOT, 'server.js');
-if (fs.existsSync(serverJs)) jsFiles.push(serverJs);
+if (fs.existsSync(serverJs)) {jsFiles.push(serverJs);}
 
 let foundDangerous = false;
 for (const filePath of jsFiles) {
@@ -180,10 +180,10 @@ if (!foundDangerous) {
 console.log('\n6️⃣  Vérification JWT_SECRET (.env / config.env)...');
 
 function readJwtSecretFromFile(filePath) {
-  if (!fs.existsSync(filePath)) return null;
+  if (!fs.existsSync(filePath)) {return null;}
   const content = fs.readFileSync(filePath, 'utf8');
   const m = content.match(/^\s*JWT_SECRET\s*=\s*(.+)$/m);
-  if (!m) return null;
+  if (!m) {return null;}
   let v = m[1].trim();
   if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
     v = v.slice(1, -1);
@@ -194,8 +194,8 @@ function readJwtSecretFromFile(filePath) {
 const envPath = path.join(BACKEND_ROOT, '.env');
 const configEnvPath = path.join(BACKEND_ROOT, 'config.env');
 
-let jwtFromEnv = readJwtSecretFromFile(envPath);
-let jwtFromConfig = readJwtSecretFromFile(configEnvPath);
+const jwtFromEnv = readJwtSecretFromFile(envPath);
+const jwtFromConfig = readJwtSecretFromFile(configEnvPath);
 const jwtSecret = jwtFromEnv || jwtFromConfig;
 const jwtLen = jwtSecret ? jwtSecret.length : 0;
 
@@ -224,7 +224,7 @@ if (fs.existsSync(validateInputPath)) {
       CRITICAL_ISSUES.push(`❌ validateInput.js: export ou symbole "${exp}" manquant`);
     }
   }
-  if (all) PASSED.push('✅ validateInput.js: exports attendus présents');
+  if (all) {PASSED.push('✅ validateInput.js: exports attendus présents');}
 } else {
   CRITICAL_ISSUES.push('❌ src/middleware/validateInput.js introuvable');
 }
@@ -239,7 +239,7 @@ if (fs.existsSync(validationPath)) {
       WARNINGS.push(`⚠️  validation.js: "${exp}" non trouvé`);
     }
   }
-  if (ok) PASSED.push('✅ validation.js: symboles clés présents');
+  if (ok) {PASSED.push('✅ validation.js: symboles clés présents');}
 }
 
 // ============ CHECK 8: Tests de sécurité ============
@@ -274,7 +274,7 @@ function runNpmAuditJson() {
     });
   } catch (e) {
     // npm audit sort souvent en code 1 tout en écrivant le JSON sur stdout
-    if (e.stdout && typeof e.stdout === 'string') return e.stdout;
+    if (e.stdout && typeof e.stdout === 'string') {return e.stdout;}
     throw e;
   }
 }

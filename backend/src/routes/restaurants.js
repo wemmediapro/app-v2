@@ -8,17 +8,17 @@ const restaurantsFallback = require('../lib/restaurants-fallback');
 const router = express.Router();
 
 function localizeRestaurant(doc, lang) {
-  if (!doc) return doc;
+  if (!doc) {return doc;}
   const normalizedLang = (lang && String(lang).toLowerCase()) || '';
   const out = typeof doc.toObject === 'function' ? doc.toObject() : { ...doc };
-  if (!normalizedLang || !doc.translations || typeof doc.translations !== 'object') return out;
+  if (!normalizedLang || !doc.translations || typeof doc.translations !== 'object') {return out;}
   const t = doc.translations[normalizedLang] || doc.translations.fr || {};
-  if (t.name) out.name = t.name;
-  if (t.description) out.description = t.description;
-  if (t.type) out.type = t.type;
-  if (t.location) out.location = t.location;
-  if (t.openingHours) out.openingHours = t.openingHours;
-  if (Array.isArray(t.specialties)) out.specialties = t.specialties;
+  if (t.name) {out.name = t.name;}
+  if (t.description) {out.description = t.description;}
+  if (t.type) {out.type = t.type;}
+  if (t.location) {out.location = t.location;}
+  if (t.openingHours) {out.openingHours = t.openingHours;}
+  if (Array.isArray(t.specialties)) {out.specialties = t.specialties;}
   // Menu : appliquer les traductions par plat (même si les longueurs diffèrent)
   if (Array.isArray(out.menu) && Array.isArray(t.menu)) {
     out.menu = out.menu.map((item, idx) => {
@@ -48,7 +48,7 @@ router.get('/categories/list', async (req, res) => {
       { id: 'french', name: 'The Swordfish & Steakhouse', icon: '🥩' },
       { id: 'fastfood', name: 'The Transatlantic', icon: '🍽️' },
       { id: 'dessert', name: 'Snack Bar / Café', icon: '☕' },
-      { id: 'seafood', name: 'Pizzeria & Service', icon: '🍕' }
+      { id: 'seafood', name: 'Pizzeria & Service', icon: '🍕' },
     ];
     res.json(categories);
   } catch (error) {
@@ -67,24 +67,24 @@ router.get('/', async (req, res) => {
 
     const { category, search, lang: rawLang } = req.query;
     const lang = (rawLang && String(rawLang).toLowerCase()) || '';
-    
-    let query = { isActive: true };
-    
+
+    const query = { isActive: true };
+
     if (category && category !== 'all') {
       query.category = category;
     }
-    
+
     if (search) {
       const safe = safeRegexSearch(search);
       if (safe) {
         query.$or = [
           { name: { $regex: safe, $options: 'i' } },
           { description: { $regex: safe, $options: 'i' } },
-          { specialties: { $regex: safe, $options: 'i' } }
+          { specialties: { $regex: safe, $options: 'i' } },
         ];
       }
     }
-    
+
     const restaurants = await Restaurant.find(query).read('secondaryPreferred').sort({ name: 1 }).lean();
     res.json(restaurants.map(doc => localizeRestaurant(doc, lang)));
   } catch (error) {
@@ -98,7 +98,7 @@ router.get('/:id', async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       const restaurant = restaurantsFallback.getById(req.params.id, (req.query.lang && String(req.query.lang).toLowerCase()) || '');
-      if (!restaurant) return res.status(404).json({ message: 'Restaurant not found' });
+      if (!restaurant) {return res.status(404).json({ message: 'Restaurant not found' });}
       return res.json(restaurant);
     }
     const restaurant = await Restaurant.findById(req.params.id).read('secondaryPreferred').lean();
@@ -116,12 +116,12 @@ router.get('/:id', async (req, res) => {
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const body = { ...req.body };
-    if (body.translations && typeof body.translations !== 'object') delete body.translations;
+    if (body.translations && typeof body.translations !== 'object') {delete body.translations;}
     const restaurant = new Restaurant(body);
     await restaurant.save();
     res.status(201).json({
       message: 'Restaurant created successfully',
-      restaurant
+      restaurant,
     });
   } catch (error) {
     console.error('Create restaurant error:', error);
@@ -129,7 +129,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
       const messages = Object.values(error.errors).map((e) => e.message).filter(Boolean);
       return res.status(400).json({
         message: messages.length ? messages.join('. ') : 'Données invalides',
-        errors: error.errors
+        errors: error.errors,
       });
     }
     res.status(500).json({ message: error.message || 'Server error' });
@@ -142,20 +142,20 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const body = { ...req.body };
-    if (body.translations && typeof body.translations !== 'object') delete body.translations;
+    if (body.translations && typeof body.translations !== 'object') {delete body.translations;}
     const restaurant = await Restaurant.findByIdAndUpdate(
       req.params.id,
       body,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
-    
+
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
-    
+
     res.json({
       message: 'Restaurant updated successfully',
-      restaurant
+      restaurant,
     });
   } catch (error) {
     console.error('Update restaurant error:', error);
@@ -163,7 +163,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       const messages = Object.values(error.errors).map((e) => e.message).filter(Boolean);
       return res.status(400).json({
         message: messages.length ? messages.join('. ') : 'Données invalides',
-        errors: error.errors
+        errors: error.errors,
       });
     }
     res.status(500).json({ message: error.message || 'Server error' });
@@ -178,13 +178,13 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     const restaurant = await Restaurant.findByIdAndUpdate(
       req.params.id,
       { isActive: false },
-      { new: true }
+      { new: true },
     );
-    
+
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
-    
+
     res.json({ message: 'Restaurant deactivated successfully' });
   } catch (error) {
     console.error('Delete restaurant error:', error);

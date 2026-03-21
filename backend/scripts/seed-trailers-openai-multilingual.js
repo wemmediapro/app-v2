@@ -63,7 +63,7 @@ Renvoie UNIQUEMENT un objet JSON valide avec la structure :
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
   const data = JSON.parse(raw);
   const list = data.trailers || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list.slice(0, TOTAL_TRAILERS) : [];
@@ -123,7 +123,7 @@ async function seedTrailers() {
           };
         }
       }
-      if (Object.keys(translations).length) trailer.translations = translations;
+      if (Object.keys(translations).length) {trailer.translations = translations;}
 
       await trailer.save();
       inserted++;
@@ -133,7 +133,7 @@ async function seedTrailers() {
     console.log(`\n✅ Seed terminé. ${inserted} bande(s) d'annonce(s) ajoutée(s).`);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

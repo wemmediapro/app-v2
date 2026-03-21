@@ -30,8 +30,7 @@ async function run() {
     console.log('🔌 Connexion MongoDB...');
     await mongoose.connect(MONGODB_URI).catch(() => {});
     const connected = useMongo();
-    if (connected) console.log('✅ Connecté:', mongoose.connection.name);
-    else console.log('ℹ️ MongoDB non disponible, utilisation du fichier data/movies.json');
+    if (connected) {console.log('✅ Connecté:', mongoose.connection.name);} else {console.log('ℹ️ MongoDB non disponible, utilisation du fichier data/movies.json');}
 
     const list = connected
       ? await Movie.find({ isActive: true }).lean()
@@ -73,7 +72,7 @@ async function run() {
     console.log(`\n✅ Terminé. ${updated}/${list.length} contenu(s) mis à jour avec le contenu par langue.`);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect().catch(() => {});

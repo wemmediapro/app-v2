@@ -21,10 +21,10 @@ const BACKEND_TYPES = ['passenger', 'vehicle', 'cabin', 'service', 'public'];
 
 function mapTypeToBackend(label) {
   const l = (label || '').toLowerCase();
-  if (l.includes('garage') || l.includes('véhicule') || l.includes('vehicle')) return 'vehicle';
-  if (l.includes('cabine') || l.includes('cabin') || l.includes('chambre')) return 'cabin';
-  if (l.includes('restaurant') || l.includes('bar') || l.includes('service')) return 'service';
-  if (l.includes('pont') || l.includes('sun') || l.includes('public')) return 'public';
+  if (l.includes('garage') || l.includes('véhicule') || l.includes('vehicle')) {return 'vehicle';}
+  if (l.includes('cabine') || l.includes('cabin') || l.includes('chambre')) {return 'cabin';}
+  if (l.includes('restaurant') || l.includes('bar') || l.includes('service')) {return 'service';}
+  if (l.includes('pont') || l.includes('sun') || l.includes('public')) {return 'public';}
   return 'passenger';
 }
 
@@ -65,7 +65,7 @@ Règles:
 - Pour chaque pont, fournis "nameByLocale" et "descriptionByLocale" avec les 6 clés: fr, en, es, it, de, ar. "name" = nameByLocale.fr, "description" = descriptionByLocale.fr.
 - Pas de markdown, pas de commentaire.`;
 
-  const userPrompt = `Génère le plan complet des ponts pour le ferry GNV Excellent (Gênes - Palerme) avec les traductions des noms en français, anglais, espagnol, italien, allemand et arabe. Réponse: uniquement l'objet JSON avec la clé "decks".`;
+  const userPrompt = 'Génère le plan complet des ponts pour le ferry GNV Excellent (Gênes - Palerme) avec les traductions des noms en français, anglais, espagnol, italien, allemand et arabe. Réponse: uniquement l\'objet JSON avec la clé "decks".';
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -78,7 +78,7 @@ Règles:
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
   const data = JSON.parse(raw);
   const decks = data.decks || (Array.isArray(data) ? data : []);
   return Array.isArray(decks) ? decks : [];
@@ -123,17 +123,17 @@ async function seedShipmapExcellenceMultilingual() {
       const rawNames = d.nameByLocale || {};
       for (const lang of LANGS) {
         const val = (rawNames[lang] || name).trim().slice(0, 80);
-        if (val) nameByLocale[lang] = val;
+        if (val) {nameByLocale[lang] = val;}
       }
-      if (!nameByLocale.fr) nameByLocale.fr = name;
+      if (!nameByLocale.fr) {nameByLocale.fr = name;}
 
       const descriptionByLocale = {};
       const rawDescs = d.descriptionByLocale || {};
       for (const lang of LANGS) {
         const val = (rawDescs[lang] || description).trim().slice(0, 500);
-        if (val) descriptionByLocale[lang] = val;
+        if (val) {descriptionByLocale[lang] = val;}
       }
-      if (!descriptionByLocale.fr) descriptionByLocale.fr = description || '';
+      if (!descriptionByLocale.fr) {descriptionByLocale.fr = description || '';}
 
       await Shipmap.create({
         name,
@@ -161,7 +161,7 @@ async function seedShipmapExcellenceMultilingual() {
     console.log('\n✅ Seed plan navire Excellence (multilingue) terminé. Ponts en base:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

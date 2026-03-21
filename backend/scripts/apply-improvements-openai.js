@@ -63,8 +63,8 @@ function parseModifications(text) {
     const filePath = pathMatch ? pathMatch[1].trim() : '';
     const oldNewMatch = /=== OLD ===\s*([\s\S]*?)=== NEW ===\s*([\s\S]*?)(?=== FILE:|$)/.exec(section);
     if (oldNewMatch) {
-      let oldContent = oldNewMatch[1].trimEnd();
-      let newContent = oldNewMatch[2].trimEnd();
+      const oldContent = oldNewMatch[1].trimEnd();
+      const newContent = oldNewMatch[2].trimEnd();
       if (oldContent && (filePath.startsWith('dashboard/') || filePath.startsWith('src/'))) {
         blocks.push({ filePath, oldContent, newContent });
       }
@@ -142,12 +142,12 @@ Important : OLD doit être une copie exacte du code actuel (indentation, sauts d
     messages: [
       {
         role: 'system',
-        content: 'Tu génères des modifications de code précises. Tu réponds uniquement par des blocs === FILE ===, === OLD ===, === NEW ===. Pas de texte avant ou après les blocs.'
+        content: 'Tu génères des modifications de code précises. Tu réponds uniquement par des blocs === FILE ===, === OLD ===, === NEW ===. Pas de texte avant ou après les blocs.',
       },
-      { role: 'user', content: prompt }
+      { role: 'user', content: prompt },
     ],
     max_tokens: 4096,
-    temperature: 0.2
+    temperature: 0.2,
   });
 
   const response = completion.choices[0]?.message?.content || '';
@@ -161,7 +161,7 @@ Important : OLD doit être une copie exacte du code actuel (indentation, sauts d
   const log = [];
   let applied = 0;
   for (const { filePath, oldContent, newContent } of modifications) {
-    if (applyChange(filePath, oldContent, newContent, log)) applied++;
+    if (applyChange(filePath, oldContent, newContent, log)) {applied++;}
   }
 
   const logText = [
@@ -169,7 +169,7 @@ Important : OLD doit être une copie exacte du code actuel (indentation, sauts d
     `Modifications parsées: ${modifications.length}`,
     `Appliquées: ${applied}`,
     '',
-    ...log.map((l) => `[${l.status}] ${l.file}${l.message ? ' - ' + l.message : ''}`)
+    ...log.map((l) => `[${l.status}] ${l.file}${l.message ? ' - ' + l.message : ''}`),
   ].join('\n');
   fs.writeFileSync(logPath, logText, 'utf8');
   console.log(logText);

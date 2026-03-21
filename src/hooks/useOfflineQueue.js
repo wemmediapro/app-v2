@@ -12,7 +12,7 @@ function sleep(ms) {
 
 function countActionable(items) {
   return items.filter(
-    (i) => i.status === 'pending' || i.status === 'failed' || i.status === 'sending'
+    (i) => i.status === 'pending' || i.status === 'failed' || i.status === 'sending',
   ).length;
 }
 
@@ -56,7 +56,7 @@ export function useOfflineQueue(options = {}) {
           onFlushComplete({ sent: totalSent });
         }
         window.dispatchEvent(
-          new CustomEvent('gnv-offline-flush-complete', { detail: { sent: totalSent } })
+          new CustomEvent('gnv-offline-flush-complete', { detail: { sent: totalSent } }),
         );
       }
     } finally {

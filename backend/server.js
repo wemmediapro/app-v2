@@ -140,19 +140,19 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce || ''}'`],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", 'data:', 'https:'],
       // React utilise style={{ … }} (attributs style inline) — sans 'unsafe-inline', l’UI est bloquée par la CSP.
       styleSrc: ["'self'", "'unsafe-inline'"],
-      mediaSrc: ["'self'", "blob:"],
-      connectSrc: ["'self'", "ws:", "wss:"],
-      fontSrc: ["'self'", "https:", "data:"],
+      mediaSrc: ["'self'", 'blob:'],
+      connectSrc: ["'self'", 'ws:', 'wss:'],
+      fontSrc: ["'self'", 'https:', 'data:'],
     },
   },
   hsts: {
     maxAge: 31536000, // 1 year
     includeSubDomains: true,
   },
-  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 app.use(cookieParser());
 app.use('/api', csrfCookie);
@@ -200,13 +200,13 @@ app.use('/api', (req, res, next) => {
 // Les requêtes avec Authorization (dashboard admin) ne sont pas mises en cache pour que les ajouts/modifs/suppressions s'affichent immédiatement
 // GET /notifications (app passagers) : pas de cache pour que les notifications envoyées depuis le dashboard s'affichent tout de suite
 app.use('/api', (req, res, next) => {
-  if (req.method !== 'GET') return next();
+  if (req.method !== 'GET') {return next();}
   if (req.path === '/notifications' || req.path === '/notifications/') {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     return next();
   }
   const isListPath = /^\/(movies|magazine|radio|banners|shop|restaurants|webtv|enfant|shipmap|notifications)(\/|$)/.test(req.path);
-  if (!isListPath) return next();
+  if (!isListPath) {return next();}
   if (req.get('Authorization')) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     return next();
@@ -267,7 +267,7 @@ const cacheManager = require('./src/lib/cache-manager');
 
 /** En production : vérifier que Redis est accessible (obligatoire pour rate limit, Socket.io, cache). */
 async function ensureRedisInProduction() {
-  if (process.env.NODE_ENV !== 'production') return;
+  if (process.env.NODE_ENV !== 'production') {return;}
   const uri = config.redis?.uri;
   if (!uri || typeof uri !== 'string' || !uri.startsWith('redis')) {
     console.error('CRITICAL: En production REDIS_URI (ou REDIS_URL) doit être défini.');
@@ -290,7 +290,7 @@ async function ensureRedisInProduction() {
 async function setupAfterDb() {
   await ensureRedisInProduction();
   const redisStore = await createRedisStore(config.redis && config.redis.uri, 'rl:api:');
-  if (redisStore) redisStore.init({ windowMs: config.rateLimit.windowMs });
+  if (redisStore) {redisStore.init({ windowMs: config.rateLimit.windowMs });}
   if (config.redis && config.redis.uri) {
     const cacheConnected = await cacheManager.connect(config.redis.uri);
     if (cacheConnected) {
@@ -307,13 +307,13 @@ async function setupAfterDb() {
   }
   const skipApiLimit = (req) => {
     const p = (req.path || '').toLowerCase();
-    if (p === '/health' || p === '/time') return true;
-    if (p.startsWith('/stream') || p.startsWith('/upload') || p.startsWith('/media-library')) return true;
+    if (p === '/health' || p === '/time') {return true;}
+    if (p.startsWith('/stream') || p.startsWith('/upload') || p.startsWith('/media-library')) {return true;}
     try {
       const token = req.get('Authorization')?.replace('Bearer ', '') || req.cookies?.authToken;
       if (token && config.jwt?.secret) {
         const decoded = jwt.verify(token, config.jwt.secret);
-        if (decoded.role === 'admin') return true;
+        if (decoded.role === 'admin') {return true;}
       }
     } catch (e) { /* ignore */ }
     return false;
@@ -378,7 +378,7 @@ async function setupAfterDb() {
   app.get('/', sendIndexWithNonce);
   // Express 5 : wildcard doit être nommé (ex. /*splat)
   app.get('/*splat', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {return next();}
     sendIndexWithNonce(req, res);
   });
   app.use('/*splat', (req, res) => {
@@ -437,7 +437,7 @@ io.use(async (socket, next) => {
     try {
       const atLimit = await redisConnectionManager.isIpAtOrOverLimit(
         clientIp,
-        parseInt(process.env.MAX_CONNECTIONS_PER_IP, 10) || 50
+        parseInt(process.env.MAX_CONNECTIONS_PER_IP, 10) || 50,
       );
       if (atLimit) {
         logSocketAuthFailed(socket.id, 'ip_limit_global');
@@ -476,13 +476,13 @@ let lastMemoryWebhookCritical = 0;
 
 function postMemoryWebhook(payload) {
   const url = process.env.MEMORY_ALERT_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL;
-  if (!url || typeof url !== 'string') return Promise.resolve();
+  if (!url || typeof url !== 'string') {return Promise.resolve();}
   return new Promise((resolve) => {
     try {
       const lib = new URL(url).protocol === 'https:' ? https : http;
       const text = `[GNV Backend] ${payload.title || 'Memory'}\nheap ${payload.percent}% | used=${payload.heapUsed} | rss=${payload.rss} | ${payload.timestamp}`;
       const body = JSON.stringify(
-        payload.raw && typeof payload.raw === 'object' ? payload.raw : { text }
+        payload.raw && typeof payload.raw === 'object' ? payload.raw : { text },
       );
       const req = lib.request(
         url,
@@ -497,7 +497,7 @@ function postMemoryWebhook(payload) {
         (res) => {
           res.resume();
           res.on('end', resolve);
-        }
+        },
       );
       req.on('error', (err) => {
         logger.warn({ event: 'memory_webhook_error', message: err.message });

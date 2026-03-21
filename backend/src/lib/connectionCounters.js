@@ -45,7 +45,7 @@ async function decrement() {
       console.warn('connectionCounters Redis DECR:', err?.message || err);
     }
   }
-  if (localTotal > 0) localTotal -= 1;
+  if (localTotal > 0) {localTotal -= 1;}
 }
 
 /**
@@ -79,5 +79,5 @@ module.exports = {
   decrement,
   getTotalCount,
   getTotalCountAsync,
-  initRedis
+  initRedis,
 };

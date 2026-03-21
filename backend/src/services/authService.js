@@ -57,9 +57,9 @@ async function hashBackupCodes(plainCodes) {
  * @returns {boolean}
  */
 function verifyTOTPToken(secretBase32, token) {
-  if (!secretBase32 || token == null) return false;
+  if (!secretBase32 || token == null) {return false;}
   const clean = String(token).replace(/\s/g, '');
-  if (!/^\d{6}$/.test(clean)) return false;
+  if (!/^\d{6}$/.test(clean)) {return false;}
   return speakeasy.totp.verify({
     secret: secretBase32,
     encoding: 'base32',
@@ -76,7 +76,7 @@ function verifyTOTPToken(secretBase32, token) {
  */
 async function validateBackupCode(userDoc, token) {
   const hashes = userDoc.twoFactorBackupCodes;
-  if (!Array.isArray(hashes) || hashes.length === 0 || token == null) return { valid: false };
+  if (!Array.isArray(hashes) || hashes.length === 0 || token == null) {return { valid: false };}
   const raw = String(token).replace(/\s/g, '');
   for (let i = 0; i < hashes.length; i += 1) {
     try {

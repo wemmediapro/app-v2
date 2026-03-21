@@ -75,19 +75,18 @@ Règles :
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
 
   let data;
   try {
     data = JSON.parse(raw);
   } catch (e) {
     const match = raw.match(/\{[\s\S]*\}/);
-    if (match) data = JSON.parse(match[0]);
-    else throw new Error('Impossible de parser le JSON: ' + raw.slice(0, 300));
+    if (match) {data = JSON.parse(match[0]);} else {throw new Error('Impossible de parser le JSON: ' + raw.slice(0, 300));}
   }
 
   const list = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : null);
-  if (!list || list.length === 0) throw new Error('Aucun contenu dans la réponse');
+  if (!list || list.length === 0) {throw new Error('Aucun contenu dans la réponse');}
   return list.slice(0, MAX_ITEMS).map((item) => ({
     ...item,
     type: item.type === 'series' ? 'series' : 'movie',
@@ -101,7 +100,7 @@ async function generateAndSavePoster(openai, item, index) {
     prompt,
   });
   const img = response.data?.[0];
-  if (!img?.b64_json) throw new Error('Pas d’image retournée par OpenAI');
+  if (!img?.b64_json) {throw new Error('Pas d’image retournée par OpenAI');}
 
   const safeName = slug(item.title) || (item.type === 'series' ? 'series' : 'movie');
   const filename = `${item.type === 'series' ? 'series' : 'movie'}-${index + 1}-${safeName}.png`;
@@ -112,7 +111,7 @@ async function generateAndSavePoster(openai, item, index) {
   if (health?.ok) {
     const uploadUrl = `${API_BASE_URL}/api/upload/image-from-base64`;
     const headers = { 'Content-Type': 'application/json' };
-    if (SEED_SECRET) headers['X-Seed-Secret'] = SEED_SECRET;
+    if (SEED_SECRET) {headers['X-Seed-Secret'] = SEED_SECRET;}
     const res = await fetch(uploadUrl, {
       method: 'POST',
       headers,
@@ -121,11 +120,11 @@ async function generateAndSavePoster(openai, item, index) {
     if (res.ok) {
       const data = await res.json();
       const pathRel = data?.image?.path || (data?.image?.url || '').replace(/^https?:\/\/[^/]+/, '');
-      if (pathRel) return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;
+      if (pathRel) {return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;}
     }
   }
 
-  if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
+  if (!fs.existsSync(IMAGES_DIR)) {fs.mkdirSync(IMAGES_DIR, { recursive: true });}
   const fullPath = path.join(IMAGES_DIR, nameWithExt);
   fs.writeFileSync(fullPath, Buffer.from(img.b64_json, 'base64'));
   return `/uploads/images/${nameWithExt}`;
@@ -143,8 +142,7 @@ async function run() {
   try {
     console.log('🔌 Connexion MongoDB...');
     await mongoose.connect(MONGODB_URI).catch(() => {});
-    if (useMongo()) console.log('✅ Connecté:', mongoose.connection.name);
-    else console.log('ℹ️ MongoDB non disponible → utilisation de backend/data/movies.json\n');
+    if (useMongo()) {console.log('✅ Connecté:', mongoose.connection.name);} else {console.log('ℹ️ MongoDB non disponible → utilisation de backend/data/movies.json\n');}
 
     console.log(`🤖 Génération de ${MAX_ITEMS} films/séries (OpenAI)...`);
     const items = await generateNineMoviesAndSeries(openai);
@@ -177,7 +175,7 @@ async function run() {
         openai,
         titleFr,
         (item.description || '').trim().slice(0, 2000),
-        typeLabel
+        typeLabel,
       );
 
       console.log('   🖼️ Génération de l\'affiche (DALL-E 3, format portrait)...');
@@ -210,7 +208,7 @@ async function run() {
         translations,
         episodes: item.type === 'series' ? [] : undefined,
       };
-      if (doc.episodes === undefined) delete doc.episodes;
+      if (doc.episodes === undefined) {delete doc.episodes;}
 
       if (useMongo()) {
         await Movie.create(doc);
@@ -228,7 +226,7 @@ async function run() {
     console.log('\n✅ Terminé. Créés:', created, '| Total actifs:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect().catch(() => {});

@@ -13,7 +13,7 @@ const RADIO_FILE = path.join(DATA_DIR, 'radio.json');
 const DEFAULT_STATIONS = [
   { _id: '1', id: '1', name: 'FIP', genre: 'Variétés', description: 'Radio France - Musique et découverte', streamUrl: 'https://icecast.radiofrance.fr/fip-midfi.mp3', isActive: true, schedule: [], programs: [] },
   { _id: '2', id: '2', name: 'France Inter', genre: 'Actualités', description: 'Radio France - Info et divertissement', streamUrl: 'https://icecast.radiofrance.fr/franceinter-midfi.mp3', isActive: true, schedule: [], programs: [] },
-  { _id: '3', id: '3', name: 'Radio Paradise', genre: 'Eclectique', description: 'Webradio internationale', streamUrl: 'https://stream.radioparadise.com/mp3-128', isActive: true, schedule: [], programs: [] }
+  { _id: '3', id: '3', name: 'Radio Paradise', genre: 'Eclectique', description: 'Webradio internationale', streamUrl: 'https://stream.radioparadise.com/mp3-128', isActive: true, schedule: [], programs: [] },
 ];
 
 function ensureDir() {
@@ -24,7 +24,7 @@ function ensureDir() {
 
 function readStations() {
   ensureDir();
-  if (!fs.existsSync(RADIO_FILE)) return [...DEFAULT_STATIONS];
+  if (!fs.existsSync(RADIO_FILE)) {return [...DEFAULT_STATIONS];}
   try {
     const raw = fs.readFileSync(RADIO_FILE, 'utf8');
     const data = JSON.parse(raw);
@@ -44,7 +44,7 @@ function nextId(stations) {
   let max = 0;
   stations.forEach(s => {
     const id = typeof s._id === 'string' && s._id.match(/^\d+$/) ? parseInt(s._id, 10) : 0;
-    if (id > max) max = id;
+    if (id > max) {max = id;}
   });
   return String(max + 1);
 }
@@ -60,7 +60,7 @@ function toDoc(body) {
     schedule: Array.isArray(body.schedule) ? body.schedule : [],
     programs: Array.isArray(body.programs) ? body.programs : [],
     playlistId: (body.playlistId && body.playlistId.trim()) ? body.playlistId.trim() : '',
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   };
 }
 
@@ -78,14 +78,14 @@ module.exports = {
     return stations.find(s => String(s._id) === String(id));
   },
   create(body) {
-    if (!body.name || !body.name.trim()) return null;
+    if (!body.name || !body.name.trim()) {return null;}
     const stations = readStations();
     const _id = nextId(stations);
     const station = {
       _id,
       id: _id,
       ...toDoc(body),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     stations.push(station);
     writeStations(stations);
@@ -94,7 +94,7 @@ module.exports = {
   update(id, body) {
     const stations = readStations();
     const idx = stations.findIndex(s => String(s._id) === String(id));
-    if (idx === -1) return null;
+    if (idx === -1) {return null;}
     const updates = toDoc(body);
     stations[idx] = { ...stations[idx], ...updates };
     writeStations(stations);
@@ -104,7 +104,7 @@ module.exports = {
   remove(id) {
     const stations = readStations();
     const idx = stations.findIndex(s => String(s._id) === String(id));
-    if (idx === -1) return null;
+    if (idx === -1) {return null;}
     const removed = stations.splice(idx, 1)[0];
     writeStations(stations);
     return removed;
@@ -113,12 +113,12 @@ module.exports = {
   updateListeners(id, action) {
     const stations = readStations();
     const idx = stations.findIndex(s => String(s._id) === String(id));
-    if (idx === -1) return null;
+    if (idx === -1) {return null;}
     const current = Number(stations[idx].listeners) || 0;
     const next = action === 'join' ? current + 1 : Math.max(0, current - 1);
     stations[idx].listeners = next;
     stations[idx].updatedAt = new Date().toISOString();
     writeStations(stations);
     return stations[idx];
-  }
+  },
 };

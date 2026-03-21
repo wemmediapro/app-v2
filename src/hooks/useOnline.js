@@ -7,13 +7,13 @@ import { registerSync, attachSyncResultListener } from '../services/backgroundSy
 
 function countPending(items) {
   return items.filter(
-    (i) => i.status === 'pending' || i.status === 'failed' || i.status === 'sending'
+    (i) => i.status === 'pending' || i.status === 'failed' || i.status === 'sending',
   ).length;
 }
 
 export function useOnline() {
   const [isOnline, setIsOnline] = useState(
-    () => (typeof navigator !== 'undefined' ? navigator.onLine : true)
+    () => (typeof navigator !== 'undefined' ? navigator.onLine : true),
   );
   const [syncFeedback, setSyncFeedback] = useState(null);
   const prevOnlineRef = useRef(isOnline);

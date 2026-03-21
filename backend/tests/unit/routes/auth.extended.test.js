@@ -129,7 +129,7 @@ describe('API Auth (étendu)', () => {
           isActive: false,
           comparePassword: mockComparePassword,
           save: mockSave,
-        })
+        }),
       );
       const res = await request(app)
         .post('/api/auth/login')
@@ -148,7 +148,7 @@ describe('API Auth (étendu)', () => {
           isActive: true,
           comparePassword: mockComparePassword,
           save: mockSave,
-        })
+        }),
       );
       const res = await request(app)
         .post('/api/auth/login')

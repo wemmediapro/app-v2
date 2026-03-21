@@ -38,7 +38,7 @@ async function seedAdmin() {
       email: adminEmail,
       password: adminPassword,
       role: 'admin',
-      isActive: true
+      isActive: true,
     });
     console.log('✅ Utilisateur admin créé. Connexion avec les identifiants définis dans config.env.');
     console.log('');

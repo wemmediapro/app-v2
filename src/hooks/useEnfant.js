@@ -36,7 +36,7 @@ export function useEnfant(language, t, enfantFavoritesIds = []) {
 
   const enfantHighlights = useMemo(
     () => (enfantActivities.filter(a => a.isHighlight) || enfantActivities).slice(0, 3),
-    [enfantActivities]
+    [enfantActivities],
   );
 
   useEffect(() => {

@@ -69,17 +69,16 @@ Réponse : UNIQUEMENT un objet JSON valide, sans texte avant ou après :
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
   let data;
   try {
     data = JSON.parse(raw);
   } catch (e) {
     const match = raw.match(/\{[\s\S]*\}/);
-    if (match) data = JSON.parse(match[0]);
-    else throw new Error('JSON invalide');
+    if (match) {data = JSON.parse(match[0]);} else {throw new Error('JSON invalide');}
   }
   const products = data.products || data;
-  if (!Array.isArray(products) || products.length === 0) throw new Error('Aucun produit dans la réponse');
+  if (!Array.isArray(products) || products.length === 0) {throw new Error('Aucun produit dans la réponse');}
 
   return products.slice(0, NUM_PRODUCTS).map((p) => {
     const cat = CATEGORIES.includes(p.category) ? p.category : CATEGORIES[0];
@@ -131,7 +130,7 @@ async function generateAndSaveImage(openai, product, index) {
     style: 'natural',
   });
   const img = response.data?.[0];
-  if (!img?.b64_json) throw new Error('Pas d’image retournée par OpenAI');
+  if (!img?.b64_json) {throw new Error('Pas d’image retournée par OpenAI');}
 
   const safeName = slug(product.name) || `product-${index + 1}`;
   const filename = `shop-product-${index + 1}-${safeName}.png`;
@@ -142,7 +141,7 @@ async function generateAndSaveImage(openai, product, index) {
   if (health?.ok) {
     const uploadUrl = `${API_BASE_URL}/api/upload/image-from-base64`;
     const headers = { 'Content-Type': 'application/json' };
-    if (SEED_SECRET) headers['X-Seed-Secret'] = SEED_SECRET;
+    if (SEED_SECRET) {headers['X-Seed-Secret'] = SEED_SECRET;}
     const res = await fetch(uploadUrl, {
       method: 'POST',
       headers,
@@ -151,11 +150,11 @@ async function generateAndSaveImage(openai, product, index) {
     if (res.ok) {
       const data = await res.json();
       const pathRel = data?.image?.path || (data?.image?.url || '').replace(/^https?:\/\/[^/]+/, '');
-      if (pathRel) return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;
+      if (pathRel) {return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;}
     }
   }
 
-  if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
+  if (!fs.existsSync(IMAGES_DIR)) {fs.mkdirSync(IMAGES_DIR, { recursive: true });}
   const fullPath = path.join(IMAGES_DIR, withExt);
   fs.writeFileSync(fullPath, Buffer.from(img.b64_json, 'base64'));
   return `/uploads/images/${withExt}`;
@@ -218,7 +217,7 @@ async function run() {
     console.log(`\n✅ Terminé. ${created}/${productsFr.length} produits ajoutés (multilingues + images).`);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

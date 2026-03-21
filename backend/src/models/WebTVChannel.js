@@ -4,54 +4,54 @@ const webTVChannelSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Channel name is required'],
-    trim: true
+    trim: true,
   },
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: ['actualites', 'sport', 'entertainment', 'music', 'kids', 'documentary', 'divertissement', 'enfants', 'musique', 'documentaire']
+    enum: ['actualites', 'sport', 'entertainment', 'music', 'kids', 'documentary', 'divertissement', 'enfants', 'musique', 'documentaire'],
   },
   description: {
     type: String,
-    trim: true
+    trim: true,
   },
   streamUrl: {
     type: String,
-    required: [true, 'Stream URL is required']
+    required: [true, 'Stream URL is required'],
   },
   logo: {
-    type: String
+    type: String,
   },
   imageUrl: {
-    type: String
+    type: String,
   },
   isLive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   quality: {
     type: String,
     enum: ['SD', 'HD', 'FHD', '4K'],
-    default: 'HD'
+    default: 'HD',
   },
   viewers: {
     type: Number,
     default: 0,
-    min: 0
+    min: 0,
   },
   language: {
     type: String,
     default: 'fr',
-    enum: ['fr', 'en', 'it', 'es', 'ar']
+    enum: ['fr', 'en', 'it', 'es', 'ar'],
   },
   schedule: [{
     time: String,
     program: String,
-    description: String
+    description: String,
   }],
   programs: [{
     title: String,
@@ -67,25 +67,25 @@ const webTVChannelSchema = new mongoose.Schema({
     isRepeating: Boolean,
     isActive: Boolean,
     order: Number,
-    tags: [String]
+    tags: [String],
   }],
   countries: [{
-    type: String
+    type: String,
   }],
   shipId: {
-    type: Number
+    type: Number,
   },
   destination: {
-    type: String
+    type: String,
   },
   statistics: {
     totalViews: { type: Number, default: 0 },
     totalWatchTime: { type: Number, default: 0 },
-    averageViewTime: { type: Number, default: 0 }
+    averageViewTime: { type: Number, default: 0 },
   },
-  translations: { type: mongoose.Schema.Types.Mixed }
+  translations: { type: mongoose.Schema.Types.Mixed },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 webTVChannelSchema.index({ category: 1, isActive: 1 });

@@ -62,14 +62,13 @@ async function main() {
       const merged = {};
       for (const lang of ['fr', 'en', 'es', 'it', 'de', 'ar']) {
         merged[lang] = { ...(existing[lang] || {}), ...(generated[lang] || {}) };
-        if (merged[lang].ageRange === undefined && ageRangeFr) merged[lang].ageRange = ageRangeFr;
-        if (merged[lang].schedule === undefined && scheduleFr) merged[lang].schedule = scheduleFr;
-        if (featuresFr && (!Array.isArray(merged[lang].features) || merged[lang].features.length === 0))
-          merged[lang].features = (generated[lang] && generated[lang].features && generated[lang].features.length > 0) ? generated[lang].features : (existing[lang]?.features || featuresFr);
+        if (merged[lang].ageRange === undefined && ageRangeFr) {merged[lang].ageRange = ageRangeFr;}
+        if (merged[lang].schedule === undefined && scheduleFr) {merged[lang].schedule = scheduleFr;}
+        if (featuresFr && (!Array.isArray(merged[lang].features) || merged[lang].features.length === 0)) {merged[lang].features = (generated[lang] && generated[lang].features && generated[lang].features.length > 0) ? generated[lang].features : (existing[lang]?.features || featuresFr);}
       }
 
       await EnfantActivity.updateOne({ _id: id }, { $set: { translations: merged } });
-      console.log(`      ✅ Traductions (ageRange, schedule, features) mises à jour.`);
+      console.log('      ✅ Traductions (ageRange, schedule, features) mises à jour.');
     } catch (err) {
       console.error(`   ❌ ${label.slice(0, 40)}:`, err.message);
     }

@@ -18,7 +18,7 @@ function ensureDir() {
 
 function readBanners() {
   ensureDir();
-  if (!fs.existsSync(BANNERS_FILE)) return [];
+  if (!fs.existsSync(BANNERS_FILE)) {return [];}
   try {
     const raw = fs.readFileSync(BANNERS_FILE, 'utf8');
     const data = JSON.parse(raw);
@@ -30,15 +30,15 @@ function readBanners() {
 }
 
 function localizeBanner(doc, lang) {
-  if (!doc) return doc;
+  if (!doc) {return doc;}
   const out = { ...doc, _id: doc._id?.toString() };
   if (lang && doc.translations && typeof doc.translations === 'object') {
     const fallbackLangs = [lang, 'fr', 'en'].filter((l, i, a) => a.indexOf(l) === i);
     for (const l of fallbackLangs) {
       const t = doc.translations[l];
       if (t) {
-        if (t.title) out.title = t.title;
-        if (t.description !== undefined) out.description = t.description;
+        if (t.title) {out.title = t.title;}
+        if (t.description !== undefined) {out.description = t.description;}
         break;
       }
     }

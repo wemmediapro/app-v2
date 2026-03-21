@@ -170,65 +170,65 @@ function MainContent(props) {
             <PageTransition keyProp="radio">
               <Suspense fallback={<LoadingFallback t={t} minHeight="short" />}>
                 <RadioPage
-                t={t}
-                radioStations={radioStations}
-                currentRadio={currentRadio}
-                toggleRadio={toggleRadio}
-                isPlaying={isPlaying}
-                volume={volume}
-                onVolumeChange={handleVolumeChange}
-                isFavorite={isFavorite}
-                toggleFavorite={toggleFavorite}
-                loading={radioLoading}
-                getRadioLogoUrl={getRadioLogoUrl}
-                isDirectStream={!!(currentRadio && radioPlaylistTracks.length === 0)}
-                getRadioStreamProgress={getRadioStreamProgress}
-              />
+                  t={t}
+                  radioStations={radioStations}
+                  currentRadio={currentRadio}
+                  toggleRadio={toggleRadio}
+                  isPlaying={isPlaying}
+                  volume={volume}
+                  onVolumeChange={handleVolumeChange}
+                  isFavorite={isFavorite}
+                  toggleFavorite={toggleFavorite}
+                  loading={radioLoading}
+                  getRadioLogoUrl={getRadioLogoUrl}
+                  isDirectStream={!!(currentRadio && radioPlaylistTracks.length === 0)}
+                  getRadioStreamProgress={getRadioStreamProgress}
+                />
               </Suspense>
             </PageTransition>
           ) : page === 'movies' ? (
             <PageTransition keyProp="movies">
               <Suspense fallback={<LoadingFallback t={t} minHeight="short" />}>
                 <MoviesPage
-                t={t}
-                language={language}
-                moviesAndSeries={moviesAndSeries}
-                moviesLoading={moviesLoading}
-                watchlist={watchlist}
-                toggleWatchlist={toggleWatchlist}
-                playbackStorageSuffix={favoritesStorageSuffix}
-                onSyncPlaybackToServer={syncPlaybackToServer}
-                initialSelectedMovie={movieToOpenFromFavorites}
-                initialAutoPlay={!!movieToOpenFromFavorites}
-                onClearInitialMovie={() => setMovieToOpenFromFavorites(null)}
-                onVideoPlayStart={() => setIsMoviesVideoPlaying(true)}
-                onVideoPlayEnd={() => setIsMoviesVideoPlaying(false)}
-              />
+                  t={t}
+                  language={language}
+                  moviesAndSeries={moviesAndSeries}
+                  moviesLoading={moviesLoading}
+                  watchlist={watchlist}
+                  toggleWatchlist={toggleWatchlist}
+                  playbackStorageSuffix={favoritesStorageSuffix}
+                  onSyncPlaybackToServer={syncPlaybackToServer}
+                  initialSelectedMovie={movieToOpenFromFavorites}
+                  initialAutoPlay={!!movieToOpenFromFavorites}
+                  onClearInitialMovie={() => setMovieToOpenFromFavorites(null)}
+                  onVideoPlayStart={() => setIsMoviesVideoPlaying(true)}
+                  onVideoPlayEnd={() => setIsMoviesVideoPlaying(false)}
+                />
               </Suspense>
             </PageTransition>
           ) : page === 'webtv' ? (
             <Suspense fallback={<LoadingFallback t={t} minHeight="short" />}>
               <WebtvPageContent
-              t={t}
-              setPage={setPage}
-              selectedChannelCategory={selectedChannelCategory}
-              setSelectedChannelCategory={setSelectedChannelCategory}
-              channelCategories={channelCategories}
-              selectedChannel={selectedChannel}
-              setSelectedChannel={setSelectedChannel}
-              selectedWebtvProgram={selectedWebtvProgram}
-              webtvVideoRefRef={webtvVideoRefRef}
-              setWebtvVideoRef={setWebtvVideoRef}
-              handleWebtvVideoEnded={handleWebtvVideoEnded}
-              handleWebtvPlayByServerTime={handleWebtvPlayByServerTime}
-              webtvVideoError={webtvVideoError}
-              setWebtvVideoError={setWebtvVideoError}
-              webtvPlaySyncing={webtvPlaySyncing}
-              setIsWebtvVideoPlaying={setIsWebtvVideoPlaying}
-              webtvLoading={webtvLoading}
-              filteredChannels={filteredChannels}
-              getWebtvCategoryLabel={getWebtvCategoryLabel}
-            />
+                t={t}
+                setPage={setPage}
+                selectedChannelCategory={selectedChannelCategory}
+                setSelectedChannelCategory={setSelectedChannelCategory}
+                channelCategories={channelCategories}
+                selectedChannel={selectedChannel}
+                setSelectedChannel={setSelectedChannel}
+                selectedWebtvProgram={selectedWebtvProgram}
+                webtvVideoRefRef={webtvVideoRefRef}
+                setWebtvVideoRef={setWebtvVideoRef}
+                handleWebtvVideoEnded={handleWebtvVideoEnded}
+                handleWebtvPlayByServerTime={handleWebtvPlayByServerTime}
+                webtvVideoError={webtvVideoError}
+                setWebtvVideoError={setWebtvVideoError}
+                webtvPlaySyncing={webtvPlaySyncing}
+                setIsWebtvVideoPlaying={setIsWebtvVideoPlaying}
+                webtvLoading={webtvLoading}
+                filteredChannels={filteredChannels}
+                getWebtvCategoryLabel={getWebtvCategoryLabel}
+              />
             </Suspense>
           ) : page === 'magazine' ? (
             <Suspense fallback={<LoadingFallback t={t} />}>
@@ -298,59 +298,59 @@ function MainContent(props) {
           ) : page === 'shipmap' ? (
             <Suspense fallback={<LoadingFallback t={t} minHeight="short" />}>
               <ShipmapSection
-              t={t}
-              shipmapShip={shipmapShip}
-              shipmapLoading={shipmapLoading}
-              refetchShipmap={refetchShipmap}
-              shipDecks={shipDecks}
-              shipDecksFiltered={shipDecksFiltered}
-              selectedDeck={selectedDeck}
-              setSelectedDeck={setSelectedDeck}
-              shipmapDeckTypeFilter={shipmapDeckTypeFilter}
-              setShipmapDeckTypeFilter={setShipmapDeckTypeFilter}
-              shipSearchQuery={shipSearchQuery}
-              setShipSearchQuery={setShipSearchQuery}
-              deckServices={deckServices}
-              selectedDeckInfo={selectedDeckInfo}
-              filteredDeckServices={filteredDeckServices}
-              deckRooms={deckRooms}
-              showShipmapAddPlanModal={showShipmapAddPlanModal}
-              setShowShipmapAddPlanModal={setShowShipmapAddPlanModal}
-            />
+                t={t}
+                shipmapShip={shipmapShip}
+                shipmapLoading={shipmapLoading}
+                refetchShipmap={refetchShipmap}
+                shipDecks={shipDecks}
+                shipDecksFiltered={shipDecksFiltered}
+                selectedDeck={selectedDeck}
+                setSelectedDeck={setSelectedDeck}
+                shipmapDeckTypeFilter={shipmapDeckTypeFilter}
+                setShipmapDeckTypeFilter={setShipmapDeckTypeFilter}
+                shipSearchQuery={shipSearchQuery}
+                setShipSearchQuery={setShipSearchQuery}
+                deckServices={deckServices}
+                selectedDeckInfo={selectedDeckInfo}
+                filteredDeckServices={filteredDeckServices}
+                deckRooms={deckRooms}
+                showShipmapAddPlanModal={showShipmapAddPlanModal}
+                setShowShipmapAddPlanModal={setShowShipmapAddPlanModal}
+              />
             </Suspense>
           ) : page === 'notifications' ? (
             <Suspense fallback={<LoadingFallback t={t} minHeight="short" />}>
               <NotificationsPage
-              notificationsList={notificationsList}
-              notificationsLoading={notificationsLoading}
-              t={t}
-              language={language}
-              onBack={() => setPage('home')}
-            />
+                notificationsList={notificationsList}
+                notificationsLoading={notificationsLoading}
+                t={t}
+                language={language}
+                onBack={() => setPage('home')}
+              />
             </Suspense>
           ) : page === 'favorites' ? (
             <Suspense fallback={<LoadingFallback t={t} minHeight="short" />}>
               <FavoritesPageContent
-              pageTitleFavorites={pageTitles.favorites}
-              shopFavorites={shopFavorites}
-              myWatchlist={myWatchlist}
-              magazineFavoritesArticles={magazineFavoritesArticles}
-              enfantFavoritesActivities={enfantFavoritesActivities}
-              restaurantFavoritesList={restaurantFavoritesList}
-              shopCategories={shopCategories}
-              magazineCategories={magazineCategories}
-              t={t}
-              language={language}
-              setPage={setPage}
-              setMovieToOpenFromFavorites={setMovieToOpenFromFavorites}
-              setSelectedArticle={setSelectedArticle}
-              setSelectedActivity={setSelectedActivity}
-              setSelectedRestaurant={setSelectedRestaurant}
-              removeFromShopFavorites={removeFromShopFavorites}
-              getPosterUrl={getPosterUrl}
-              getRadioLogoUrl={getRadioLogoUrl}
-              defaultRestaurantImage={DEFAULT_RESTAURANT_IMAGE}
-            />
+                pageTitleFavorites={pageTitles.favorites}
+                shopFavorites={shopFavorites}
+                myWatchlist={myWatchlist}
+                magazineFavoritesArticles={magazineFavoritesArticles}
+                enfantFavoritesActivities={enfantFavoritesActivities}
+                restaurantFavoritesList={restaurantFavoritesList}
+                shopCategories={shopCategories}
+                magazineCategories={magazineCategories}
+                t={t}
+                language={language}
+                setPage={setPage}
+                setMovieToOpenFromFavorites={setMovieToOpenFromFavorites}
+                setSelectedArticle={setSelectedArticle}
+                setSelectedActivity={setSelectedActivity}
+                setSelectedRestaurant={setSelectedRestaurant}
+                removeFromShopFavorites={removeFromShopFavorites}
+                getPosterUrl={getPosterUrl}
+                getRadioLogoUrl={getRadioLogoUrl}
+                defaultRestaurantImage={DEFAULT_RESTAURANT_IMAGE}
+              />
             </Suspense>
           ) : page === 'shop' ? (
             <Suspense fallback={<LoadingFallback t={t} />}>
@@ -366,11 +366,11 @@ function MainContent(props) {
           ) : (
             <Suspense fallback={<LoadingFallback t={t} minHeight="short" />}>
               <MochaFallbackPage
-              page={page}
-              pageTitle={pageTitles[page]}
-              setPage={setPage}
-              t={t}
-            />
+                page={page}
+                pageTitle={pageTitles[page]}
+                setPage={setPage}
+                t={t}
+              />
             </Suspense>
           )}
         </AnimatePresence>

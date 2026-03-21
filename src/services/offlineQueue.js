@@ -203,7 +203,7 @@ async function updateItemById(id, updater) {
 export async function retry() {
   const items = await getAll();
   const next = items.map((it) =>
-    it.status === QUEUE_STATUS.FAILED ? { ...it, status: QUEUE_STATUS.PENDING } : it
+    it.status === QUEUE_STATUS.FAILED ? { ...it, status: QUEUE_STATUS.PENDING } : it,
   );
   await persistAll(next);
   return next.filter((i) => i.status === QUEUE_STATUS.PENDING).length;
@@ -244,7 +244,7 @@ export async function flushPendingQueue() {
     (x) =>
       x.status === QUEUE_STATUS.PENDING ||
       x.status === QUEUE_STATUS.FAILED ||
-      x.status === QUEUE_STATUS.SENDING
+      x.status === QUEUE_STATUS.SENDING,
   ).length;
 
   return { sent, remaining };

@@ -42,7 +42,7 @@ Génère 2 restaurants pour le bateau "GNV Excellent", avec des styles différen
 
 Les plats doivent être variés (entrées, plats principaux, desserts, boissons), adaptés à un ferry Méditerranée (influences italiennes, françaises, fruits de mer).`;
 
-  const userPrompt = `Génère 2 restaurants pour le ferry GNV Excellent (traversée Gênes - Palerme), avec des menus complets (au moins 8 plats par restaurant). Réponse: uniquement l'objet JSON avec la clé "restaurants".`;
+  const userPrompt = 'Génère 2 restaurants pour le ferry GNV Excellent (traversée Gênes - Palerme), avec des menus complets (au moins 8 plats par restaurant). Réponse: uniquement l\'objet JSON avec la clé "restaurants".';
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -55,7 +55,7 @@ Les plats doivent être variés (entrées, plats principaux, desserts, boissons)
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
   const data = JSON.parse(raw);
   const list = data.restaurants || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list : [];
@@ -137,7 +137,7 @@ async function seedRestaurantExcellent() {
     console.log('\n✅ Seed restaurant GNV Excellent terminé. Restaurants sur ce bateau:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

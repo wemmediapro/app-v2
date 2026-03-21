@@ -47,7 +47,7 @@ Génère exactement ${count} produits. Chaque produit doit avoir:
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
   const data = JSON.parse(raw);
   const list = data.products || data.items || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list : [];
@@ -125,7 +125,7 @@ async function seedShop() {
     console.log('\n✅ Seed shop multilingue terminé. Total produits:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

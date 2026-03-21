@@ -11,7 +11,7 @@ const validateMongoId = (paramName = 'id') => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         message: 'Invalid ID format',
-        code: 'INVALID_ID'
+        code: 'INVALID_ID',
       });
     }
     next();
@@ -40,7 +40,7 @@ const validatePagination = createValidatePagination({ defaultLimit: 20 });
  * Échappe les caractères regex spéciaux, trim, max 100 caractères (recherche sûre $regex).
  */
 const sanitizeSearchString = (str) => {
-  if (!str || typeof str !== 'string') return '';
+  if (!str || typeof str !== 'string') {return '';}
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim().slice(0, 100);
 };
 
@@ -50,7 +50,7 @@ const handleValidationErrors = (req, res, next) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({
       message: 'Validation failed',
-      errors: errors.array()
+      errors: errors.array(),
     });
   }
   next();
@@ -61,5 +61,5 @@ module.exports = {
   validatePagination,
   createValidatePagination,
   sanitizeSearchString,
-  handleValidationErrors
+  handleValidationErrors,
 };

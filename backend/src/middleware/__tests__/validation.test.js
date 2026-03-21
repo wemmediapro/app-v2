@@ -56,7 +56,7 @@ describe('validation middleware', () => {
             path: 'firstName',
             msg: expect.stringMatching(/50/),
           }),
-        ])
+        ]),
       );
     });
 
@@ -70,7 +70,7 @@ describe('validation middleware', () => {
           expect.objectContaining({
             path: 'dateOfBirth',
           }),
-        ])
+        ]),
       );
     });
 

@@ -105,7 +105,7 @@ function createAdminToken() {
   return jwt.sign(
     { id: adminUser._id, email: adminUser.email, role: 'admin' },
     JWT_SECRET,
-    { expiresIn: '1h' }
+    { expiresIn: '1h' },
   );
 }
 

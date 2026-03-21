@@ -139,7 +139,7 @@ export function useShipmap(language, t, shipmapShipId = DEFAULT_SHIP_ID) {
       (service) =>
         (service.title && service.title.toLowerCase().includes(query)) ||
         (service.type && service.type.toLowerCase().includes(query)) ||
-        (service.details && service.details.toLowerCase().includes(query))
+        (service.details && service.details.toLowerCase().includes(query)),
     );
   }, [currentDeck, shipSearchQuery]);
 

@@ -9,8 +9,7 @@ describe('validateSecurityConfig — credentials admin (production)', () => {
 
   afterEach(() => {
     KEYS.forEach((k) => {
-      if (backup[k] === undefined) delete process.env[k];
-      else process.env[k] = backup[k];
+      if (backup[k] === undefined) {delete process.env[k];} else {process.env[k] = backup[k];}
     });
   });
 

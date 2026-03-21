@@ -9,15 +9,15 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const Trailer = require('../models/Trailer');
 
 function localizeTrailer(doc, lang) {
-  if (!doc) return doc;
+  if (!doc) {return doc;}
   const out = { ...doc, id: (doc._id || doc.id)?.toString() };
   if (lang && doc.translations && typeof doc.translations === 'object') {
     const fallbackLangs = [lang, 'fr', 'en'].filter((l, i, a) => a.indexOf(l) === i);
     for (const l of fallbackLangs) {
       const t = doc.translations[l];
       if (t) {
-        if (t.title) out.title = t.title;
-        if (t.description !== undefined) out.description = t.description;
+        if (t.title) {out.title = t.title;}
+        if (t.description !== undefined) {out.description = t.description;}
         break;
       }
     }
@@ -49,7 +49,7 @@ router.get('/:id', async (req, res) => {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
     const doc = await Trailer.findById(req.params.id).lean();
-    if (!doc) return res.status(404).json({ message: 'Bande d\'annonce non trouvée' });
+    if (!doc) {return res.status(404).json({ message: 'Bande d\'annonce non trouvée' });}
     return res.json(localizeTrailer(doc, lang));
   } catch (error) {
     console.error('Get trailer error:', error);
@@ -65,7 +65,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     }
     const body = req.body;
     const title = body.title && String(body.title).trim();
-    if (!title) return res.status(400).json({ message: 'Le titre est requis' });
+    if (!title) {return res.status(400).json({ message: 'Le titre est requis' });}
 
     const trailer = new Trailer({
       title,
@@ -75,7 +75,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
       type: body.type === 'series' ? 'series' : 'movie',
       order: body.order ?? 0,
       isActive: body.isActive !== false,
-      translations: body.translations && typeof body.translations === 'object' ? body.translations : undefined
+      translations: body.translations && typeof body.translations === 'object' ? body.translations : undefined,
     });
     await trailer.save();
     const doc = trailer.toObject();
@@ -94,9 +94,9 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     const updates = { ...req.body };
     delete updates._id;
-    if (updates.translations && typeof updates.translations !== 'object') delete updates.translations;
+    if (updates.translations && typeof updates.translations !== 'object') {delete updates.translations;}
     const doc = await Trailer.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true }).lean();
-    if (!doc) return res.status(404).json({ message: 'Bande d\'annonce non trouvée' });
+    if (!doc) {return res.status(404).json({ message: 'Bande d\'annonce non trouvée' });}
     return res.json({ ...doc, id: doc._id?.toString() });
   } catch (error) {
     console.error('Update trailer error:', error);
@@ -111,7 +111,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
     const doc = await Trailer.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
-    if (!doc) return res.status(404).json({ message: 'Bande d\'annonce non trouvée' });
+    if (!doc) {return res.status(404).json({ message: 'Bande d\'annonce non trouvée' });}
     res.json({ message: 'Bande d\'annonce désactivée' });
   } catch (error) {
     console.error('Delete trailer error:', error);

@@ -31,9 +31,9 @@ class CacheManager {
    * Retourne le TTL (secondes) selon le préfixe de la clé.
    */
   getTTL(key) {
-    if (!key || typeof key !== 'string') return this.defaultTTL;
+    if (!key || typeof key !== 'string') {return this.defaultTTL;}
     for (const { prefix, ttl } of TTL_BY_PREFIX) {
-      if (key.startsWith(prefix)) return ttl;
+      if (key.startsWith(prefix)) {return ttl;}
     }
     return this.defaultTTL;
   }
@@ -44,7 +44,7 @@ class CacheManager {
    */
   async connect(redisUrl) {
     const url = redisUrl || process.env.REDIS_URI || process.env.REDIS_URL || 'redis://localhost:6379';
-    
+
     try {
       this.client = createClient({
         url: url,
@@ -216,7 +216,7 @@ class CacheManager {
     }
     try {
       const n = await this.client.decr(key);
-      if (n < 0) await this.client.set(key, '0');
+      if (n < 0) {await this.client.set(key, '0');}
       return n;
     } catch (error) {
       console.error(`❌ Erreur Redis DECR pour ${key}:`, error.message);

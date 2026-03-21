@@ -10,7 +10,7 @@ const languages = [
   { code: 'es', name: 'Español', flag: '🇪🇸' },
   { code: 'it', name: 'Italiano', flag: '🇮🇹' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'ar', name: 'العربية', flag: '🇲🇦' }
+  { code: 'ar', name: 'العربية', flag: '🇲🇦' },
 ];
 
 const LanguageSelector = ({ variant = 'dark' }) => {
@@ -34,7 +34,7 @@ const LanguageSelector = ({ variant = 'dark' }) => {
     const next = {
       top: rect.bottom + 8,
       right: window.innerWidth - rect.right,
-      width: 208
+      width: 208,
     };
     const prev = prevPositionRef.current;
     if (prev.top === next.top && prev.right === next.right && prev.width === next.width) return;
@@ -93,7 +93,7 @@ const LanguageSelector = ({ variant = 'dark' }) => {
         style={{
           top: dropdownPosition.top,
           right: dropdownPosition.right,
-          width: dropdownPosition.width
+          width: dropdownPosition.width,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -103,28 +103,28 @@ const LanguageSelector = ({ variant = 'dark' }) => {
           </p>
         </div>
         <div className="py-1">
-        {languages.map((lang) => (
-          <motion.button
-            key={lang.code}
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleSelectLanguage(lang.code, e);
-            }}
-            whileHover={{ backgroundColor: 'rgba(240, 248, 255, 0.9)' }}
-            whileTap={{ scale: 0.99 }}
-            className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors cursor-pointer select-none touch-manipulation rounded-xl mx-1 ${
-              language === lang.code ? 'bg-blue-50 text-blue-700' : 'text-slate-700'
-            }`}
-          >
-            <span className="text-xl flex-shrink-0" aria-hidden>{lang.flag}</span>
-            <span className="flex-1 text-sm font-medium">{lang.name}</span>
-            {language === lang.code && (
-              <Check size={18} className="text-blue-600 flex-shrink-0" strokeWidth={2.5} />
-            )}
-          </motion.button>
-        ))}
+          {languages.map((lang) => (
+            <motion.button
+              key={lang.code}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSelectLanguage(lang.code, e);
+              }}
+              whileHover={{ backgroundColor: 'rgba(240, 248, 255, 0.9)' }}
+              whileTap={{ scale: 0.99 }}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors cursor-pointer select-none touch-manipulation rounded-xl mx-1 ${
+                language === lang.code ? 'bg-blue-50 text-blue-700' : 'text-slate-700'
+              }`}
+            >
+              <span className="text-xl flex-shrink-0" aria-hidden>{lang.flag}</span>
+              <span className="flex-1 text-sm font-medium">{lang.name}</span>
+              {language === lang.code && (
+                <Check size={18} className="text-blue-600 flex-shrink-0" strokeWidth={2.5} />
+              )}
+            </motion.button>
+          ))}
         </div>
       </motion.div>
     </AnimatePresence>

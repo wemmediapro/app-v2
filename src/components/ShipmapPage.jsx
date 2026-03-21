@@ -67,7 +67,7 @@ export default function ShipmapPage({
   const deckInfo = selectedDeck ? deckServices[selectedDeck] : null;
   const totalServices = shipDecks.reduce((acc, d) => acc + (deckServices[d.id]?.services?.length || 0), 0);
   const filtersToShow = DECK_TYPE_FILTERS.filter(
-    (f) => f.value === 'all' || shipDecks.some((d) => d.type === f.value)
+    (f) => f.value === 'all' || shipDecks.some((d) => d.type === f.value),
   );
 
   return (

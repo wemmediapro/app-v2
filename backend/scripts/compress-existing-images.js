@@ -34,8 +34,8 @@ const LARGE_JPEG_QUALITY = 68;
 const LARGE_WEBP_QUALITY = 68;
 
 function formatBytes(n) {
-  if (n >= 1024 * 1024) return (n / (1024 * 1024)).toFixed(2) + ' Mo';
-  if (n >= 1024) return (n / 1024).toFixed(1) + ' Ko';
+  if (n >= 1024 * 1024) {return (n / (1024 * 1024)).toFixed(2) + ' Mo';}
+  if (n >= 1024) {return (n / 1024).toFixed(1) + ' Ko';}
   return n + ' o';
 }
 
@@ -44,7 +44,7 @@ function escapeRegex(s) {
 }
 
 async function updateDbRenames(renames) {
-  if (renames.length === 0) return;
+  if (renames.length === 0) {return;}
   const mongoose = require('mongoose');
   const MONGODB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/gnv_onboard';
   await mongoose.connect(MONGODB_URI);
@@ -70,13 +70,13 @@ async function updateDbRenames(renames) {
         const coll = db.collection(collName);
         const r = await coll.updateMany(
           { [field]: { $regex: escaped } },
-          [{ $set: { [field]: { $replaceAll: { input: `$${field}`, find: oldName, replacement: newName } } } }]
+          [{ $set: { [field]: { $replaceAll: { input: `$${field}`, find: oldName, replacement: newName } } } }],
         );
         if (r.modifiedCount > 0) {
           console.log(`    DB: ${collName}.${field} → ${r.modifiedCount} doc(s) mis à jour (${oldName} → ${newName})`);
         }
       } catch (e) {
-        if (e.codeName !== 'NamespaceNotFound') console.warn(`    DB ${collName}.${field}:`, e.message);
+        if (e.codeName !== 'NamespaceNotFound') {console.warn(`    DB ${collName}.${field}:`, e.message);}
       }
     }
     const products = db.collection('products');
@@ -85,13 +85,13 @@ async function updateDbRenames(renames) {
       for (const doc of docs) {
         const images = (doc.images || []).map((img) =>
           typeof img === 'string' ? (img.includes(oldName) ? img.replace(oldName, newName) : img)
-          : { ...img, url: (img.url || '').includes(oldName) ? img.url.replace(oldName, newName) : img.url }
+            : { ...img, url: (img.url || '').includes(oldName) ? img.url.replace(oldName, newName) : img.url },
         );
         await products.updateOne({ _id: doc._id }, { $set: { images } });
       }
-      if (docs.length > 0) console.log(`    DB: products.images → ${docs.length} doc(s) mis à jour`);
+      if (docs.length > 0) {console.log(`    DB: products.images → ${docs.length} doc(s) mis à jour`);}
     } catch (e) {
-      if (e.codeName !== 'NamespaceNotFound') console.warn('    DB products.images:', e.message);
+      if (e.codeName !== 'NamespaceNotFound') {console.warn('    DB products.images:', e.message);}
     }
   }
 
@@ -131,11 +131,11 @@ async function main() {
     const isLarge = APP_MODE && sizeBeforeFile > SIZE_THRESHOLD_LARGE;
     const inPlaceOptions = APP_MODE
       ? {
-          keepFormat: true,
-          maxWidth: isLarge ? LARGE_MAX_WIDTH : APP_MAX_WIDTH,
-          jpegQuality: isLarge ? LARGE_JPEG_QUALITY : APP_JPEG_QUALITY,
-          webpQuality: isLarge ? LARGE_WEBP_QUALITY : undefined,
-        }
+        keepFormat: true,
+        maxWidth: isLarge ? LARGE_MAX_WIDTH : APP_MAX_WIDTH,
+        jpegQuality: isLarge ? LARGE_JPEG_QUALITY : APP_JPEG_QUALITY,
+        webpQuality: isLarge ? LARGE_WEBP_QUALITY : undefined,
+      }
       : { keepFormat: true };
 
     try {

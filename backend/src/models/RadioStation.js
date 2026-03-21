@@ -4,53 +4,53 @@ const radioStationSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Station name is required'],
-    trim: true
+    trim: true,
   },
   frequency: {
     type: String,
-    trim: true
+    trim: true,
   },
   genre: {
     type: String,
-    trim: true
+    trim: true,
   },
   description: {
     type: String,
-    trim: true
+    trim: true,
   },
   streamUrl: {
-    type: String
+    type: String,
   },
   /** Pour diffusion 100% offline : id de la playlist locale (localStorage) */
   playlistId: {
     type: String,
-    trim: true
+    trim: true,
   },
   isLive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   currentSong: {
     type: String,
-    trim: true
+    trim: true,
   },
   listeners: {
     type: Number,
     default: 0,
-    min: 0
+    min: 0,
   },
   logo: {
-    type: String
+    type: String,
   },
   countries: [{
     type: String,
-    trim: true
+    trim: true,
   }],
   shipId: { type: Number },
   destination: { type: String },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   // Programmation (même principe que WebTV) : nom, heure début/fin, ordre, description, upload MP3 direct
   programs: [{
@@ -69,7 +69,7 @@ const radioStationSchema = new mongoose.Schema({
     endTime: { type: String, trim: true },
     daysOfWeek: [{ type: String }],
     isRepeating: { type: Boolean, default: false },
-    fileName: { type: String, trim: true }
+    fileName: { type: String, trim: true },
   }],
   // Ancien format (conservé pour compat)
   translations: { type: mongoose.Schema.Types.Mixed },
@@ -83,10 +83,10 @@ const radioStationSchema = new mongoose.Schema({
     streamUrl: { type: String },
     isActive: { type: Boolean, default: true },
     daysOfWeek: [{ type: String }],
-    order: { type: Number, default: 0 }
-  }]
+    order: { type: Number, default: 0 },
+  }],
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 radioStationSchema.index({ genre: 1, isActive: 1 });

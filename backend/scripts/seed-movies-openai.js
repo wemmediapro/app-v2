@@ -65,20 +65,19 @@ Répartis environ 7 films et 5 séries. Les trailerUrl doivent être des vrais l
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
 
   let data;
   try {
     data = JSON.parse(raw);
   } catch (e) {
     const match = raw.match(/\{[\s\S]*\}/);
-    if (match) data = JSON.parse(match[0]);
-    else throw new Error('Impossible de parser le JSON OpenAI: ' + raw.slice(0, 300));
+    if (match) {data = JSON.parse(match[0]);} else {throw new Error('Impossible de parser le JSON OpenAI: ' + raw.slice(0, 300));}
   }
 
   let list = Array.isArray(data.items) ? data.items : null;
-  if (!list && Array.isArray(data)) list = data;
-  if (!list || list.length === 0) throw new Error('Aucun film/série dans la réponse');
+  if (!list && Array.isArray(data)) {list = data;}
+  if (!list || list.length === 0) {throw new Error('Aucun film/série dans la réponse');}
   return list.slice(0, MAX_ITEMS);
 }
 
@@ -139,7 +138,7 @@ async function seedMovies() {
     console.log('\n✅ Seed films/séries OpenAI terminé. Créés:', created, '| Total actifs en base:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

@@ -20,7 +20,7 @@ const PROMOTIONS = [
       es: { title: 'Descuento de verano 2026', description: 'Disfruta de -20% en todos los recuerdos' },
       it: { title: 'Sconto estate 2026', description: 'Approfitta del -20% su tutti i souvenir' },
       de: { title: 'Sommerrabatt 2026', description: '-20% auf alle Souvenirs' },
-      ar: { title: 'خصم الصيف 2026', description: 'استمتع بخصم 20٪ على جميع الهدايا التذكارية' }
+      ar: { title: 'خصم الصيف 2026', description: 'استمتع بخصم 20٪ على جميع الهدايا التذكارية' },
     },
     discountType: 'percentage',
     discountValue: 20,
@@ -28,7 +28,7 @@ const PROMOTIONS = [
     countries: ['Maroc', 'Tunisie', 'Italie'],
     validFrom: new Date('2024-06-01'),
     validUntil: new Date('2024-08-31'),
-    isActive: true
+    isActive: true,
   },
   {
     title: 'Offre Duty Free -10€',
@@ -39,7 +39,7 @@ const PROMOTIONS = [
       es: { title: 'Oferta Duty Free -10€', description: '10€ de descuento en una selección de productos duty free a partir de 50€ de compra' },
       it: { title: 'Offerta Duty Free -10€', description: '10€ di sconto su una selezione di prodotti duty free per acquisti oltre 50€' },
       de: { title: 'Duty-Free-Angebot -10€', description: '10€ Rabatt auf eine Auswahl an Duty-Free-Produkten ab 50€ Einkaufswert' },
-      ar: { title: 'عرض الديوتي فري -10 يورو', description: 'خصم 10 يورو على مجموعة مختارة من منتجات الديوتي فري عند الشراء بقيمة 50 يورو فأكثر' }
+      ar: { title: 'عرض الديوتي فري -10 يورو', description: 'خصم 10 يورو على مجموعة مختارة من منتجات الديوتي فري عند الشراء بقيمة 50 يورو فأكثر' },
     },
     discountType: 'fixed',
     discountValue: 10,
@@ -47,7 +47,7 @@ const PROMOTIONS = [
     countries: ['Maroc', 'Tunisie', 'Algérie', 'Italie', 'Espagne'],
     validFrom: new Date('2025-01-01'),
     validUntil: new Date('2025-12-31'),
-    isActive: true
+    isActive: true,
   },
   {
     title: 'Black Friday Boutique',
@@ -58,7 +58,7 @@ const PROMOTIONS = [
       es: { title: 'Black Friday Boutique', description: 'Hasta -30% en moda y electrónica a bordo' },
       it: { title: 'Black Friday Boutique', description: 'Fino a -30% su moda ed elettronica a bordo' },
       de: { title: 'Black Friday Boutique', description: 'Bis zu -30% auf Mode und Elektronik an Bord' },
-      ar: { title: 'بلاك فرايداي بوتيك', description: 'حتى -30٪ على الأزياء والإلكترونيات على متن السفينة' }
+      ar: { title: 'بلاك فرايداي بوتيك', description: 'حتى -30٪ على الأزياء والإلكترونيات على متن السفينة' },
     },
     discountType: 'percentage',
     discountValue: 30,
@@ -66,8 +66,8 @@ const PROMOTIONS = [
     countries: ['Maroc', 'Tunisie', 'Italie', 'Espagne'],
     validFrom: new Date('2025-11-28'),
     validUntil: new Date('2025-11-30'),
-    isActive: true
-  }
+    isActive: true,
+  },
 ];
 
 async function seed() {

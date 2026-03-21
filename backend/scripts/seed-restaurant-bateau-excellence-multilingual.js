@@ -72,7 +72,7 @@ Règles :
 - Chaque restaurant a au moins 8 plats (entrées, plats, desserts, boissons). Le tableau "menu" dans translations doit avoir exactement le même nombre d’éléments que "menu" du restaurant, dans le même ordre.
 - Pour chaque langue (fr, en, es, it, de, ar), fournis name, description du restaurant et menu = tableau de { name, description } pour chaque plat.`;
 
-  const userPrompt = `Génère 2 restaurants pour le Bateau GNV Excellent avec des menus complets et les traductions dans les 6 langues (fr, en, es, it, de, ar). Utilise le contexte réel GNV (à la carte, self-service, pizzeria, style italien/méditerranéen). Réponse : uniquement l'objet JSON avec la clé "restaurants".`;
+  const userPrompt = 'Génère 2 restaurants pour le Bateau GNV Excellent avec des menus complets et les traductions dans les 6 langues (fr, en, es, it, de, ar). Utilise le contexte réel GNV (à la carte, self-service, pizzeria, style italien/méditerranéen). Réponse : uniquement l\'objet JSON avec la clé "restaurants".';
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -85,7 +85,7 @@ Règles :
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) throw new Error('Réponse OpenAI vide');
+  if (!raw) {throw new Error('Réponse OpenAI vide');}
   const data = JSON.parse(raw);
   const list = data.restaurants || (Array.isArray(data) ? data : []);
   return Array.isArray(list) ? list : [];
@@ -146,7 +146,7 @@ async function seedRestaurantBateauExcellence() {
       const rawTranslations = r.translations || {};
       for (const lang of LANGS) {
         const t = rawTranslations[lang];
-        if (!t) continue;
+        if (!t) {continue;}
         const entry = {
           name: (t.name || name).trim().slice(0, 200),
           description: (t.description || description).trim().slice(0, 2000),
@@ -199,7 +199,7 @@ async function seedRestaurantBateauExcellence() {
     console.log('\n✅ Seed restaurant Bateau Excellence (multilingue) terminé. Restaurants sur ce bateau:', total);
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

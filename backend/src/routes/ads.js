@@ -9,7 +9,7 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const Ad = require('../models/Ad');
 
 function toResponse(doc) {
-  if (!doc) return doc;
+  if (!doc) {return doc;}
   const d = doc.toObject ? doc.toObject() : doc;
   return { ...d, id: (d._id || d.id)?.toString() };
 }
@@ -136,9 +136,9 @@ router.post('/:id/impression', async (req, res) => {
     const doc = await Ad.findByIdAndUpdate(
       req.params.id,
       { $inc: { impressions: 1 } },
-      { new: true }
+      { new: true },
     ).lean();
-    if (!doc) return res.status(404).json({ message: 'Pub non trouvée' });
+    if (!doc) {return res.status(404).json({ message: 'Pub non trouvée' });}
     res.json({ ok: true, impressions: (doc.impressions || 0) });
   } catch (error) {
     console.error('Ad impression error:', error);
@@ -153,7 +153,7 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
     const doc = await Ad.findById(req.params.id).lean();
-    if (!doc) return res.status(404).json({ message: 'Pub non trouvée' });
+    if (!doc) {return res.status(404).json({ message: 'Pub non trouvée' });}
     const raw = doc.skipAfterPercent;
     const skipAfterPercent = (typeof raw === 'number' || (typeof raw === 'string' && String(raw).trim() !== ''))
       ? Math.min(100, Math.max(0, Number(raw)))
@@ -181,7 +181,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     }
     const body = req.body;
     const videoUrl = body.videoUrl && String(body.videoUrl).trim();
-    if (!videoUrl) return res.status(400).json({ message: 'videoUrl est requis' });
+    if (!videoUrl) {return res.status(400).json({ message: 'videoUrl est requis' });}
     const type = body.type === 'midroll' ? 'midroll' : 'preroll';
     const startDate = body.startDate ? new Date(body.startDate) : new Date();
     const endDate = body.endDate ? new Date(body.endDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -227,11 +227,11 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
     const updates = { ...req.body };
     delete updates._id;
-    if (updates.videoUrl !== undefined) updates.videoUrl = String(updates.videoUrl).trim();
-    if (updates.type !== undefined) updates.type = updates.type === 'midroll' ? 'midroll' : 'preroll';
-    if (updates.type === 'preroll') updates.skipAfterPercent = 0;
-    if (updates.startDate !== undefined) updates.startDate = new Date(updates.startDate);
-    if (updates.endDate !== undefined) updates.endDate = new Date(updates.endDate);
+    if (updates.videoUrl !== undefined) {updates.videoUrl = String(updates.videoUrl).trim();}
+    if (updates.type !== undefined) {updates.type = updates.type === 'midroll' ? 'midroll' : 'preroll';}
+    if (updates.type === 'preroll') {updates.skipAfterPercent = 0;}
+    if (updates.startDate !== undefined) {updates.startDate = new Date(updates.startDate);}
+    if (updates.endDate !== undefined) {updates.endDate = new Date(updates.endDate);}
     // Toujours lire triggerAtPercent depuis le body pour la mise à jour (mid-roll)
     const rawTriggerBody = req.body.triggerAtPercent ?? req.body.trigger_at_percent ?? updates.triggerAtPercent;
     let typeIsMidroll = updates.type === 'midroll';
@@ -239,7 +239,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     if (updates.type === undefined) {
       docBefore = await Ad.findById(req.params.id).select('type').lean();
       typeIsMidroll = docBefore?.type === 'midroll';
-    } else if (updates.type === 'preroll') typeIsMidroll = false;
+    } else if (updates.type === 'preroll') {typeIsMidroll = false;}
     if (typeIsMidroll) {
       updates.triggerAtPercent =
         rawTriggerBody !== undefined && rawTriggerBody !== null && rawTriggerBody !== '' && !Number.isNaN(Number(rawTriggerBody))
@@ -257,7 +257,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
           : 0;
     }
     const doc = await Ad.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true }).lean();
-    if (!doc) return res.status(404).json({ message: 'Pub non trouvée' });
+    if (!doc) {return res.status(404).json({ message: 'Pub non trouvée' });}
     return res.json({ ...doc, id: doc._id?.toString() });
   } catch (error) {
     console.error('Update ad error:', error);
@@ -272,7 +272,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(503).json({ message: 'Base de données indisponible' });
     }
     const doc = await Ad.findByIdAndDelete(req.params.id);
-    if (!doc) return res.status(404).json({ message: 'Pub non trouvée' });
+    if (!doc) {return res.status(404).json({ message: 'Pub non trouvée' });}
     res.json({ message: 'Pub supprimée' });
   } catch (error) {
     console.error('Delete ad error:', error);

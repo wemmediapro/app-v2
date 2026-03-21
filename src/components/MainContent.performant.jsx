@@ -21,7 +21,7 @@ function MainContentPerformant(props) {
 
   const fallback = useMemo(
     () => <LoadingFallback t={t} minHeight={fallbackHeight} />,
-    [t, fallbackHeight]
+    [t, fallbackHeight],
   );
 
   const content = (

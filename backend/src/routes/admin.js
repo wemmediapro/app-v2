@@ -89,7 +89,7 @@ router.get('/memory-stats', (req, res) => {
 
 /** Formate une taille en octets en chaîne lisible (Ko, Mo, Go) */
 function formatBytes(bytes) {
-  if (bytes === 0) return '0 o';
+  if (bytes === 0) {return '0 o';}
   const k = 1024;
   const sizes = ['o', 'Ko', 'Mo', 'Go', 'To'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -106,7 +106,7 @@ router.get('/databases', async (req, res) => {
         message: 'MongoDB non connecté',
         databases: [],
         totalSize: 0,
-        totalSizeFormatted: '0 o'
+        totalSizeFormatted: '0 o',
       });
     }
     const admin = mongoose.connection.db.admin();
@@ -114,12 +114,12 @@ router.get('/databases', async (req, res) => {
     const databases = (list || []).map((db) => ({
       name: db.name,
       sizeOnDisk: db.sizeOnDisk || 0,
-      sizeFormatted: formatBytes(db.sizeOnDisk || 0)
+      sizeFormatted: formatBytes(db.sizeOnDisk || 0),
     })).sort((a, b) => (b.sizeOnDisk || 0) - (a.sizeOnDisk || 0));
     res.json({
       databases,
       totalSize: totalSize || 0,
-      totalSizeFormatted: formatBytes(totalSize || 0)
+      totalSizeFormatted: formatBytes(totalSize || 0),
     });
   } catch (error) {
     console.error('List databases error:', error);
@@ -139,13 +139,13 @@ router.get('/dashboard', async (req, res) => {
       return res.json({
         statistics: { totalUsers: 0, activeUsers: 0, totalRestaurants: 0, totalMessages: 0, totalFeedback: 0, totalViewers: 0, totalArticles: 0, totalRadioStations: 0, totalMovies: 0, totalActivities: 0, totalProducts: 0 },
         charts: { feedbackByStatus: [], usersByRole: [] },
-        recent: { users: [], feedback: [] }
+        recent: { users: [], feedback: [] },
       });
     }
 
     if (cacheManager.isConnected) {
       const cached = await cacheManager.get(DASHBOARD_CACHE_KEY);
-      if (cached) return res.json(cached);
+      if (cached) {return res.json(cached);}
     }
 
     // Get statistics (toutes les valeurs depuis la base de données)
@@ -162,7 +162,7 @@ router.get('/dashboard', async (req, res) => {
       totalActivities,
       totalProducts,
       recentUsers,
-      recentFeedback
+      recentFeedback,
     ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ isActive: true }),
@@ -176,7 +176,7 @@ router.get('/dashboard', async (req, res) => {
       EnfantActivity.countDocuments().catch(() => 0),
       Product.countDocuments().catch(() => 0),
       User.find().sort({ createdAt: -1 }).limit(5).select('firstName lastName email createdAt'),
-      Feedback.find().sort({ createdAt: -1 }).limit(5).populate('user', 'firstName lastName email')
+      Feedback.find().sort({ createdAt: -1 }).limit(5).populate('user', 'firstName lastName email'),
     ]);
 
     const totalViewers = (totalViewersResult && totalViewersResult[0] && totalViewersResult[0].total) || 0;
@@ -186,9 +186,9 @@ router.get('/dashboard', async (req, res) => {
       {
         $group: {
           _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
+          count: { $sum: 1 },
+        },
+      },
     ]);
 
     // Get users by role
@@ -196,9 +196,9 @@ router.get('/dashboard', async (req, res) => {
       {
         $group: {
           _id: '$role',
-          count: { $sum: 1 }
-        }
-      }
+          count: { $sum: 1 },
+        },
+      },
     ]);
 
     const payload = {
@@ -213,18 +213,18 @@ router.get('/dashboard', async (req, res) => {
         totalRadioStations: totalRadioStations ?? 0,
         totalMovies: totalMovies ?? 0,
         totalActivities: totalActivities ?? 0,
-        totalProducts: totalProducts ?? 0
+        totalProducts: totalProducts ?? 0,
       },
       charts: {
         feedbackByStatus,
-        usersByRole
+        usersByRole,
       },
       recent: {
         users: recentUsers,
-        feedback: recentFeedback
-      }
+        feedback: recentFeedback,
+      },
     };
-    if (cacheManager.isConnected) await cacheManager.set(DASHBOARD_CACHE_KEY, payload, DASHBOARD_CACHE_TTL);
+    if (cacheManager.isConnected) {await cacheManager.set(DASHBOARD_CACHE_KEY, payload, DASHBOARD_CACHE_TTL);}
     res.json(payload);
   } catch (error) {
     console.error('Dashboard error:', error);
@@ -244,7 +244,7 @@ router.get('/users', validatePagination, handleValidationErrors, async (req, res
     const { page, limit, skip } = req.pagination;
     const { search, role, status } = req.query;
 
-    let query = {};
+    const query = {};
 
     if (search) {
       const safe = sanitizeSearchString(search);
@@ -253,13 +253,13 @@ router.get('/users', validatePagination, handleValidationErrors, async (req, res
           { firstName: { $regex: safe, $options: 'i' } },
           { lastName: { $regex: safe, $options: 'i' } },
           { email: { $regex: safe, $options: 'i' } },
-          { cabinNumber: { $regex: safe, $options: 'i' } }
+          { cabinNumber: { $regex: safe, $options: 'i' } },
         ];
       }
     }
 
-    if (role) query.role = role;
-    if (status !== undefined) query.isActive = status === 'active';
+    if (role) {query.role = role;}
+    if (status !== undefined) {query.isActive = status === 'active';}
 
     const users = await User.find(query)
       .select('-password')
@@ -273,7 +273,7 @@ router.get('/users', validatePagination, handleValidationErrors, async (req, res
       users,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
-      total
+      total,
     });
   } catch (error) {
     console.error('Get users error:', error);
@@ -306,7 +306,7 @@ router.post('/users', registerValidation, async (req, res) => {
       password,
       phone: phone || undefined,
       cabinNumber: cabinNumber || undefined,
-      role: userRole
+      role: userRole,
     });
 
     await user.save();
@@ -330,8 +330,8 @@ router.post('/users', registerValidation, async (req, res) => {
         email: user.email,
         role: user.role,
         cabinNumber: user.cabinNumber,
-        isActive: user.isActive
-      }
+        isActive: user.isActive,
+      },
     });
   } catch (error) {
     console.error('Create user error:', error);
@@ -370,12 +370,12 @@ router.put('/users/:id', validateMongoId('id'), ...adminUserUpdateValidation, as
       }
       user.email = normalized;
     }
-    if (firstName !== undefined) user.firstName = firstName;
-    if (lastName !== undefined) user.lastName = lastName;
-    if (phone !== undefined) user.phone = phone;
-    if (cabinNumber !== undefined) user.cabinNumber = cabinNumber;
-    if (role && ['passenger', 'crew', 'admin'].includes(role)) user.role = role;
-    if (isActive !== undefined) user.isActive = !!isActive;
+    if (firstName !== undefined) {user.firstName = firstName;}
+    if (lastName !== undefined) {user.lastName = lastName;}
+    if (phone !== undefined) {user.phone = phone;}
+    if (cabinNumber !== undefined) {user.cabinNumber = cabinNumber;}
+    if (role && ['passenger', 'crew', 'admin'].includes(role)) {user.role = role;}
+    if (isActive !== undefined) {user.isActive = !!isActive;}
     if (password && String(password).length >= 8) {
       const effectiveRole = role || user.role;
       if (effectiveRole === 'admin' && !strongPassword(password)) {
@@ -385,7 +385,7 @@ router.put('/users/:id', validateMongoId('id'), ...adminUserUpdateValidation, as
       }
       user.password = password;
     }
-    if (allowedModules !== undefined) user.allowedModules = allowedModules && typeof allowedModules === 'object' ? allowedModules : null;
+    if (allowedModules !== undefined) {user.allowedModules = allowedModules && typeof allowedModules === 'object' ? allowedModules : null;}
 
     await user.save();
 
@@ -410,7 +410,7 @@ router.put('/users/:id', validateMongoId('id'), ...adminUserUpdateValidation, as
 
     res.json({
       message: 'User updated successfully',
-      user: updated
+      user: updated,
     });
   } catch (error) {
     console.error('Update user error:', error);
@@ -477,7 +477,7 @@ router.get('/conversations/unread-count', async (req, res) => {
     }
     const count = await Message.countDocuments({
       receiver: req.user._id,
-      isRead: false
+      isRead: false,
     });
     res.json({ count });
   } catch (error) {
@@ -509,7 +509,7 @@ router.get('/conversations', validatePagination, handleValidationErrors, async (
           _id: m._id,
           user: m.sender?._id?.toString() === adminId ? m.receiver : m.sender,
           lastMessage: { content: m.content, createdAt: m.createdAt, isRead: m.isRead },
-          unreadCount: 0
+          unreadCount: 0,
         });
       }
     }
@@ -529,7 +529,7 @@ router.post('/cache/clear', async (req, res) => {
     const redisCleared = await cacheManager.flush();
     res.json({
       message: 'Cache vidé',
-      redis: redisCleared
+      redis: redisCleared,
     });
   } catch (error) {
     console.error('Cache clear error:', error);
@@ -630,7 +630,7 @@ router.put('/settings/access', ...settingsAccessValidation, async (req, res) => 
     const accessByRole = {
       ...(admin != null && typeof admin === 'object' ? { admin } : {}),
       ...(crew != null && typeof crew === 'object' ? { crew } : {}),
-      ...(passenger != null && typeof passenger === 'object' ? { passenger } : {})
+      ...(passenger != null && typeof passenger === 'object' ? { passenger } : {}),
     };
     if (Object.keys(accessByRole).length === 0) {
       return res.status(400).json({ success: false, message: 'Corps invalide : fournir admin, crew et/ou passenger (objets)' });
@@ -640,7 +640,7 @@ router.put('/settings/access', ...settingsAccessValidation, async (req, res) => 
     await LocalServerConfig.findOneAndUpdate(
       { id: 'local' },
       { $set: { accessByRole: merged } },
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     );
     res.json({ success: true, message: 'Droits enregistrés' });
   } catch (error) {

@@ -21,7 +21,7 @@ const LANG_NAMES = { fr: 'French', en: 'English', es: 'Spanish', it: 'Italian', 
 
 // --- 1) Traductions restaurant : name, description ---
 async function generateRestaurantNameDescriptionForLang(openai, nameFr, descriptionFr, lang) {
-  if (lang === 'fr') return { name: nameFr, description: descriptionFr };
+  if (lang === 'fr') {return { name: nameFr, description: descriptionFr };}
   const langName = LANG_NAMES[lang] || lang;
   const systemPrompt = `Tu es un traducteur professionnel pour un site de restaurants (ferry / bateau). Traduis UNIQUEMENT en ${langName}. Réponse : un objet JSON avec exactement { "name": "Nom du restaurant en ${langName}", "description": "Description courte en ${langName}" }.`;
   const userContent = `Traduire en ${langName} :\nNom : ${nameFr}\nDescription : ${descriptionFr || nameFr}`;
@@ -29,13 +29,13 @@ async function generateRestaurantNameDescriptionForLang(openai, nameFr, descript
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userContent }
+      { role: 'user', content: userContent },
     ],
     response_format: { type: 'json_object' },
-    temperature: 0.3
+    temperature: 0.3,
   });
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) return null;
+  if (!raw) {return null;}
   try {
     return JSON.parse(raw);
   } catch {
@@ -50,7 +50,7 @@ async function generateMenuTranslationsForLang(openai, menu, lang, existingTrans
     const entry = Array.isArray(t) && t[idx] ? t[idx] : null;
     return {
       name: (entry && entry.name) || item.name || '',
-      description: (entry && entry.description) || item.description || ''
+      description: (entry && entry.description) || item.description || '',
     };
   });
 
@@ -62,14 +62,14 @@ async function generateMenuTranslationsForLang(openai, menu, lang, existingTrans
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userContent }
+      { role: 'user', content: userContent },
     ],
     response_format: { type: 'json_object' },
-    temperature: 0.3
+    temperature: 0.3,
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) return null;
+  if (!raw) {return null;}
   try {
     const data = JSON.parse(raw);
     const arr = data.menu || data.items || (Array.isArray(data) ? data : []);
@@ -81,8 +81,8 @@ async function generateMenuTranslationsForLang(openai, menu, lang, existingTrans
 
 // --- 3) Traductions spécialités (tableau de strings) ---
 async function generateSpecialtiesForLang(openai, specialtiesFr, lang, restaurantName) {
-  if (!Array.isArray(specialtiesFr) || specialtiesFr.length === 0) return [];
-  if (lang === 'fr') return specialtiesFr.map(s => String(s).trim());
+  if (!Array.isArray(specialtiesFr) || specialtiesFr.length === 0) {return [];}
+  if (lang === 'fr') {return specialtiesFr.map(s => String(s).trim());}
   const langName = LANG_NAMES[lang] || lang;
   const systemPrompt = `Tu es un traducteur pour un menu de restaurant (ferry). Traduis la liste de spécialités UNIQUEMENT en ${langName}. Réponse : un objet JSON avec une clé "specialties" qui est un tableau de chaînes, dans le même ordre et la même longueur.`;
   const userContent = `Restaurant : ${restaurantName}. Spécialités à traduire en ${langName} : ${JSON.stringify(specialtiesFr)}`;
@@ -90,13 +90,13 @@ async function generateSpecialtiesForLang(openai, specialtiesFr, lang, restauran
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userContent }
+      { role: 'user', content: userContent },
     ],
     response_format: { type: 'json_object' },
-    temperature: 0.3
+    temperature: 0.3,
   });
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) return [];
+  if (!raw) {return [];}
   try {
     const data = JSON.parse(raw);
     const arr = data.specialties || (Array.isArray(data) ? data : []);
@@ -108,11 +108,11 @@ async function generateSpecialtiesForLang(openai, specialtiesFr, lang, restauran
 
 // --- 4) Traductions promotions (title, description par promo) ---
 async function generatePromotionsTranslationsForLang(openai, promotions, lang) {
-  if (!Array.isArray(promotions) || promotions.length === 0) return [];
+  if (!Array.isArray(promotions) || promotions.length === 0) {return [];}
   if (lang === 'fr') {
     return promotions.map(p => ({
       title: (p.title || '').trim().slice(0, 200),
-      description: (p.description || '').trim().slice(0, 1000)
+      description: (p.description || '').trim().slice(0, 1000),
     }));
   }
   const langName = LANG_NAMES[lang] || lang;
@@ -123,20 +123,20 @@ async function generatePromotionsTranslationsForLang(openai, promotions, lang) {
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userContent }
+      { role: 'user', content: userContent },
     ],
     response_format: { type: 'json_object' },
-    temperature: 0.3
+    temperature: 0.3,
   });
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) return [];
+  if (!raw) {return [];}
   try {
     const data = JSON.parse(raw);
     const arr = data.promotions || (Array.isArray(data) ? data : []);
-    if (!Array.isArray(arr) || arr.length !== promotions.length) return [];
+    if (!Array.isArray(arr) || arr.length !== promotions.length) {return [];}
     return arr.map((p, i) => ({
       title: String(p.title || promotions[i].title || '').trim().slice(0, 200),
-      description: String(p.description || promotions[i].description || '').trim().slice(0, 1000)
+      description: String(p.description || promotions[i].description || '').trim().slice(0, 1000),
     }));
   } catch {
     return [];
@@ -171,15 +171,15 @@ async function run() {
       let updated = false;
 
       for (const lang of LANGS) {
-        if (!translations[lang]) translations[lang] = {};
+        if (!translations[lang]) {translations[lang] = {};}
 
         // 1) Nom et description du restaurant
         const needNameDesc = !translations[lang].name || !translations[lang].description;
         if (needNameDesc && (nameFr || descriptionFr)) {
           const gen = await generateRestaurantNameDescriptionForLang(openai, nameFr, descriptionFr, lang);
           if (gen) {
-            if (gen.name) translations[lang].name = gen.name.trim().slice(0, 200);
-            if (gen.description) translations[lang].description = gen.description.trim().slice(0, 2000);
+            if (gen.name) {translations[lang].name = gen.name.trim().slice(0, 200);}
+            if (gen.description) {translations[lang].description = gen.description.trim().slice(0, 2000);}
             updated = true;
           }
         }
@@ -188,7 +188,7 @@ async function run() {
         if (menu.length > 0) {
           const filled = await generateMenuTranslationsForLang(openai, menu, lang, rest.translations);
           if (filled && filled.length === menu.length) {
-            if (!translations[lang].menu) translations[lang].menu = menu.map((m, i) => ({ name: m.name, description: m.description || '' }));
+            if (!translations[lang].menu) {translations[lang].menu = menu.map((m, i) => ({ name: m.name, description: m.description || '' }));}
             for (let i = 0; i < menu.length; i++) {
               const gen = filled[i];
               if (gen && typeof gen === 'object') {
@@ -237,7 +237,7 @@ async function run() {
         promotionsArray = rest.promotions ? rest.promotions.map(p => ({ ...p })) : [];
         for (let k = 0; k < promotionsArray.length; k++) {
           const p = promotionsArray[k];
-          if (!p.translations) p.translations = {};
+          if (!p.translations) {p.translations = {};}
           for (const lang of LANGS) {
             const t = translations[lang] && translations[lang].promotions && translations[lang].promotions[k];
             if (t) {
@@ -254,14 +254,14 @@ async function run() {
         }
         await Restaurant.updateOne(
           { _id: rest._id },
-          update
+          update,
         );
         console.log(`✅ ${rest.name} : titres, descriptions, plats, spécialités et promos complétés en ${LANGS.length} langues.`);
       } else if (promotionsArray && promotionsArray.length > 0) {
         // Seulement promo.translations à mettre à jour
         await Restaurant.updateOne(
           { _id: rest._id },
-          { $set: { promotions: promotionsArray } }
+          { $set: { promotions: promotionsArray } },
         );
         console.log(`✅ ${rest.name} : traductions des promos (promotions[].translations) mises à jour.`);
       } else {
@@ -272,7 +272,7 @@ async function run() {
     console.log('\n✅ Script terminé.');
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

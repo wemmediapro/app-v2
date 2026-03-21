@@ -32,11 +32,11 @@ function hasAllowedPrefix(room) {
  * @returns {boolean}
  */
 function isRoomAuthorizedForUser(socket, room) {
-  if (typeof room !== 'string' || room.length === 0 || room.length > 96) return false;
-  if (!hasAllowedPrefix(room)) return false;
+  if (typeof room !== 'string' || room.length === 0 || room.length > 96) {return false;}
+  if (!hasAllowedPrefix(room)) {return false;}
 
   const uid = socket.userId != null ? String(socket.userId) : '';
-  if (!uid || !mongoose.Types.ObjectId.isValid(uid)) return false;
+  if (!uid || !mongoose.Types.ObjectId.isValid(uid)) {return false;}
 
   if (room.startsWith('notifications:')) {
     const target = room.slice('notifications:'.length);
@@ -52,9 +52,9 @@ function isRoomAuthorizedForUser(socket, room) {
   if (room.startsWith('chat:')) {
     const rest = room.slice('chat:'.length);
     const parts = rest.split('_');
-    if (parts.length !== 2) return false;
+    if (parts.length !== 2) {return false;}
     const [id1, id2] = parts;
-    if (!mongoose.Types.ObjectId.isValid(id1) || !mongoose.Types.ObjectId.isValid(id2)) return false;
+    if (!mongoose.Types.ObjectId.isValid(id1) || !mongoose.Types.ObjectId.isValid(id2)) {return false;}
     return id1 === uid || id2 === uid;
   }
 

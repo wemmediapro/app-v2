@@ -41,7 +41,7 @@ export function useRestaurant(language, t, restaurantFavoritesIds = []) {
       restaurantImage: restaurant.image,
       restaurantCategory: restaurant.category,
       restaurant,
-    }))
+    })),
   ), [restaurants]);
 
   useEffect(() => {

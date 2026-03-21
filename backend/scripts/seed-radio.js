@@ -20,7 +20,7 @@ const stations = [
     streamUrl: 'https://icecast.omroep.nl/radio1-bb-mp3',
     logo: '',
     isActive: true,
-    playlistId: ''
+    playlistId: '',
   },
   {
     name: 'GNV Radio Playlist',
@@ -29,8 +29,8 @@ const stations = [
     streamUrl: '',
     logo: '',
     isActive: true,
-    playlistId: 'playlist_demo'
-  }
+    playlistId: 'playlist_demo',
+  },
 ];
 
 async function seedRadio() {

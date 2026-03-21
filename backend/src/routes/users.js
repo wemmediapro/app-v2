@@ -23,7 +23,7 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
     const { search } = req.query;
     const { skip, limit, page } = req.pagination;
 
-    let query = { isActive: true };
+    const query = { isActive: true };
     if (search) {
       const safe = sanitizeSearchString(search);
       if (safe) {
@@ -31,7 +31,7 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
           { firstName: { $regex: safe, $options: 'i' } },
           { lastName: { $regex: safe, $options: 'i' } },
           { email: { $regex: safe, $options: 'i' } },
-          { cabinNumber: { $regex: safe, $options: 'i' } }
+          { cabinNumber: { $regex: safe, $options: 'i' } },
         ];
       }
     }
@@ -55,11 +55,11 @@ router.get('/:id', authMiddleware, validateMongoId('id'), handleValidationErrors
   try {
     const user = await User.findById(req.params.id)
       .select('-password');
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     res.json(user);
   } catch (error) {
     console.error('Get user error:', error);

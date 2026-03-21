@@ -4,36 +4,36 @@ const messageSchema = new mongoose.Schema({
   sender: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
   },
   receiver: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
   },
   content: {
     type: String,
     required: [true, 'Message content is required'],
-    maxlength: [1000, 'Message cannot exceed 1000 characters']
+    maxlength: [1000, 'Message cannot exceed 1000 characters'],
   },
   type: {
     type: String,
     enum: ['text', 'image', 'file'],
-    default: 'text'
+    default: 'text',
   },
   isRead: {
     type: Boolean,
-    default: false
+    default: false,
   },
   readAt: {
-    type: Date
+    type: Date,
   },
   attachments: [{
     filename: String,
     originalName: String,
     mimetype: String,
     size: Number,
-    url: String
+    url: String,
   }],
   /** Id client (ex. id file hors ligne) — idempotence batch sync, pas de doublon côté serveur */
   clientSyncId: {
@@ -41,7 +41,7 @@ const messageSchema = new mongoose.Schema({
     maxlength: 128,
   },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 // Index for efficient queries

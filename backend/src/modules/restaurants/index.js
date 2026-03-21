@@ -28,7 +28,7 @@ const demoRestaurants = [
         allergens: ['Poisson', 'Crustacés'],
         isVegetarian: false,
         isVegan: false,
-        isGlutenFree: false
+        isGlutenFree: false,
       },
       {
         id: 2,
@@ -40,7 +40,7 @@ const demoRestaurants = [
         allergens: ['Gluten'],
         isVegetarian: false,
         isVegan: false,
-        isGlutenFree: false
+        isGlutenFree: false,
       },
       {
         id: 3,
@@ -52,8 +52,8 @@ const demoRestaurants = [
         allergens: ['Gluten', 'Œufs', 'Lait'],
         isVegetarian: true,
         isVegan: false,
-        isGlutenFree: false
-      }
+        isGlutenFree: false,
+      },
     ],
     promotions: [
       {
@@ -61,8 +61,8 @@ const demoRestaurants = [
         title: 'Menu déjeuner',
         description: 'Entrée + Plat + Dessert',
         discount: 20,
-        validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-      }
+        validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      },
     ],
     images: ['/images/bistrot1.jpg', '/images/bistrot2.jpg'],
     capacity: 80,
@@ -71,9 +71,9 @@ const demoRestaurants = [
     features: ['WiFi', 'Terrasse', 'Vue mer'],
     contact: {
       phone: '+33 4 91 23 45 67',
-      email: 'bistrot@gnv.com'
+      email: 'bistrot@gnv.com',
     },
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     _id: 'rest2',
@@ -97,7 +97,7 @@ const demoRestaurants = [
         allergens: ['Poisson'],
         isVegetarian: false,
         isVegan: false,
-        isGlutenFree: true
+        isGlutenFree: true,
       },
       {
         id: 5,
@@ -109,8 +109,8 @@ const demoRestaurants = [
         allergens: ['Poisson', 'Sésame'],
         isVegetarian: false,
         isVegan: false,
-        isGlutenFree: false
-      }
+        isGlutenFree: false,
+      },
     ],
     promotions: [],
     images: ['/images/sushi-bar1.jpg', '/images/sushi-bar2.jpg'],
@@ -120,9 +120,9 @@ const demoRestaurants = [
     features: ['Bar à sushis', 'Vue panoramique'],
     contact: {
       phone: '+33 4 91 23 45 68',
-      email: 'sushi@gnv.com'
+      email: 'sushi@gnv.com',
     },
-    createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString()
+    createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     _id: 'rest3',
@@ -146,8 +146,8 @@ const demoRestaurants = [
         allergens: ['Crustacés', 'Mollusques'],
         isVegetarian: false,
         isVegan: false,
-        isGlutenFree: true
-      }
+        isGlutenFree: true,
+      },
     ],
     promotions: [
       {
@@ -155,8 +155,8 @@ const demoRestaurants = [
         title: 'Happy hour',
         description: 'Cocktails à -30%',
         discount: 30,
-        validUntil: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
-      }
+        validUntil: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      },
     ],
     images: ['/images/terrasse1.jpg'],
     capacity: 120,
@@ -165,9 +165,9 @@ const demoRestaurants = [
     features: ['Terrasse extérieure', 'Vue mer', 'Bar'],
     contact: {
       phone: '+33 4 91 23 45 69',
-      email: 'terrasse@gnv.com'
+      email: 'terrasse@gnv.com',
     },
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
+    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     _id: 'rest4',
@@ -191,8 +191,8 @@ const demoRestaurants = [
         allergens: [],
         isVegetarian: false,
         isVegan: false,
-        isGlutenFree: true
-      }
+        isGlutenFree: true,
+      },
     ],
     promotions: [],
     images: ['/images/grill1.jpg'],
@@ -202,9 +202,9 @@ const demoRestaurants = [
     features: ['Grill visible', 'Cave à vin'],
     contact: {
       phone: '+33 4 91 23 45 70',
-      email: 'grill@gnv.com'
+      email: 'grill@gnv.com',
     },
-    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
+    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     _id: 'rest5',
@@ -228,8 +228,8 @@ const demoRestaurants = [
         allergens: ['Lait'],
         isVegetarian: true,
         isVegan: false,
-        isGlutenFree: true
-      }
+        isGlutenFree: true,
+      },
     ],
     promotions: [
       {
@@ -237,8 +237,8 @@ const demoRestaurants = [
         title: 'Petit-déjeuner complet',
         description: 'Café + Croissant + Jus d\'orange',
         discount: 20,
-        validUntil: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString()
-      }
+        validUntil: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+      },
     ],
     images: ['/images/cafe1.jpg', '/images/cafe2.jpg'],
     capacity: 50,
@@ -247,9 +247,9 @@ const demoRestaurants = [
     features: ['WiFi', 'Vue mer', 'Pâtisseries maison'],
     contact: {
       phone: '+33 4 91 23 45 71',
-      email: 'cafe@gnv.com'
+      email: 'cafe@gnv.com',
     },
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     _id: 'rest6',
@@ -273,8 +273,8 @@ const demoRestaurants = [
         allergens: ['Lait'],
         isVegetarian: true,
         isVegan: false,
-        isGlutenFree: true
-      }
+        isGlutenFree: true,
+      },
     ],
     promotions: [],
     images: ['/images/bar-vins1.jpg'],
@@ -284,9 +284,9 @@ const demoRestaurants = [
     features: ['Cave à vin', 'Ambiance cosy'],
     contact: {
       phone: '+33 4 91 23 45 72',
-      email: 'bar-vins@gnv.com'
+      email: 'bar-vins@gnv.com',
     },
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     _id: 'rest7',
@@ -310,8 +310,8 @@ const demoRestaurants = [
         allergens: ['Gluten', 'Lait', 'Œufs'],
         isVegetarian: false,
         isVegan: false,
-        isGlutenFree: false
-      }
+        isGlutenFree: false,
+      },
     ],
     promotions: [
       {
@@ -319,8 +319,8 @@ const demoRestaurants = [
         title: 'Menu Burger',
         description: 'Burger + Frites + Boisson',
         discount: 25,
-        validUntil: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
-      }
+        validUntil: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+      },
     ],
     images: ['/images/snack1.jpg'],
     capacity: 100,
@@ -329,78 +329,78 @@ const demoRestaurants = [
     features: ['Service rapide', 'Emporté'],
     contact: {
       phone: '+33 4 91 23 45 73',
-      email: 'snack@gnv.com'
+      email: 'snack@gnv.com',
     },
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-  }
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
 ];
 
 // GET /api/restaurants - Liste des restaurants
 router.get('/', (req, res) => {
   try {
-    const { 
-      type, 
-      priceRange, 
-      isOpen, 
-      search, 
-      page = 1, 
+    const {
+      type,
+      priceRange,
+      isOpen,
+      search,
+      page = 1,
       limit = 20,
       sortBy = 'rating',
-      sortOrder = 'desc'
+      sortOrder = 'desc',
     } = req.query;
-    
+
     let filteredRestaurants = [...demoRestaurants];
-    
+
     // Filtrage par type
     if (type && type !== 'all') {
       filteredRestaurants = filteredRestaurants.filter(rest => rest.type === type);
     }
-    
+
     // Filtrage par gamme de prix
     if (priceRange && priceRange !== 'all') {
       filteredRestaurants = filteredRestaurants.filter(rest => rest.priceRange === priceRange);
     }
-    
+
     // Filtrage par statut d'ouverture
     if (isOpen !== undefined) {
       const isOpenBool = isOpen === 'true';
       filteredRestaurants = filteredRestaurants.filter(rest => rest.isOpen === isOpenBool);
     }
-    
+
     // Filtrage par recherche
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredRestaurants = filteredRestaurants.filter(rest => 
+      filteredRestaurants = filteredRestaurants.filter(rest =>
         rest.name.toLowerCase().includes(searchLower) ||
         rest.description.toLowerCase().includes(searchLower) ||
-        rest.specialties.some(spec => spec.toLowerCase().includes(searchLower))
+        rest.specialties.some(spec => spec.toLowerCase().includes(searchLower)),
       );
     }
-    
+
     // Tri
     filteredRestaurants.sort((a, b) => {
       const aValue = a[sortBy];
       const bValue = b[sortBy];
-      
+
       if (sortOrder === 'asc') {
         return aValue > bValue ? 1 : -1;
       } else {
         return aValue < bValue ? 1 : -1;
       }
     });
-    
+
     // Pagination
     const startIndex = (parseInt(page) - 1) * parseInt(limit);
     const endIndex = startIndex + parseInt(limit);
     const paginatedRestaurants = filteredRestaurants.slice(startIndex, endIndex);
-    
+
     res.json({
       restaurants: paginatedRestaurants,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
         total: filteredRestaurants.length,
-        pages: Math.ceil(filteredRestaurants.length / parseInt(limit))
+        pages: Math.ceil(filteredRestaurants.length / parseInt(limit)),
       },
       filters: {
         type,
@@ -408,10 +408,10 @@ router.get('/', (req, res) => {
         isOpen,
         search,
         sortBy,
-        sortOrder
-      }
+        sortOrder,
+      },
     });
-    
+
   } catch (error) {
     console.error('Get restaurants error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des restaurants' });
@@ -423,13 +423,13 @@ router.get('/:id', (req, res) => {
   try {
     const { id } = req.params;
     const restaurant = demoRestaurants.find(r => r._id === id);
-    
+
     if (!restaurant) {
       return res.status(404).json({ error: 'Restaurant non trouvé' });
     }
-    
+
     res.json(restaurant);
-    
+
   } catch (error) {
     console.error('Get restaurant error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération du restaurant' });
@@ -441,29 +441,29 @@ router.get('/:id/menu', (req, res) => {
   try {
     const { id } = req.params;
     const restaurant = demoRestaurants.find(r => r._id === id);
-    
+
     if (!restaurant) {
       return res.status(404).json({ error: 'Restaurant non trouvé' });
     }
-    
+
     const { category, allergens, dietary } = req.query;
     let menu = restaurant.menu;
-    
+
     // Filtrage par catégorie
     if (category && category !== 'all') {
       menu = menu.filter(item => item.category === category);
     }
-    
+
     // Filtrage par allergènes
     if (allergens) {
       const allergenList = allergens.split(',');
-      menu = menu.filter(item => 
-        !allergenList.some(allergen => 
-          item.allergens.includes(allergen)
-        )
+      menu = menu.filter(item =>
+        !allergenList.some(allergen =>
+          item.allergens.includes(allergen),
+        ),
       );
     }
-    
+
     // Filtrage par régime alimentaire
     if (dietary) {
       switch (dietary) {
@@ -478,16 +478,16 @@ router.get('/:id/menu', (req, res) => {
           break;
       }
     }
-    
+
     res.json({
       restaurant: {
         _id: restaurant._id,
         name: restaurant.name,
-        type: restaurant.type
+        type: restaurant.type,
       },
-      menu
+      menu,
     });
-    
+
   } catch (error) {
     console.error('Get restaurant menu error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération du menu' });
@@ -498,23 +498,23 @@ router.get('/:id/menu', (req, res) => {
 router.post('/', authenticateToken, requireAdmin, (req, res) => {
   try {
     const restaurantData = req.body;
-    
+
     const newRestaurant = {
       _id: 'rest' + Date.now(),
       ...restaurantData,
       createdAt: new Date().toISOString(),
       isOpen: true,
       currentOccupancy: 0,
-      averageWaitTime: 0
+      averageWaitTime: 0,
     };
-    
+
     demoRestaurants.push(newRestaurant);
-    
+
     res.status(201).json({
       message: 'Restaurant créé avec succès',
-      restaurant: newRestaurant
+      restaurant: newRestaurant,
     });
-    
+
   } catch (error) {
     console.error('Create restaurant error:', error);
     res.status(500).json({ error: 'Erreur lors de la création du restaurant' });
@@ -526,25 +526,25 @@ router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
-    
+
     const restaurantIndex = demoRestaurants.findIndex(r => r._id === id);
     if (restaurantIndex === -1) {
       return res.status(404).json({ error: 'Restaurant non trouvé' });
     }
-    
+
     const updatedRestaurant = {
       ...demoRestaurants[restaurantIndex],
       ...updates,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    
+
     demoRestaurants[restaurantIndex] = updatedRestaurant;
-    
+
     res.json({
       message: 'Restaurant mis à jour avec succès',
-      restaurant: updatedRestaurant
+      restaurant: updatedRestaurant,
     });
-    
+
   } catch (error) {
     console.error('Update restaurant error:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour du restaurant' });
@@ -556,15 +556,15 @@ router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const restaurantIndex = demoRestaurants.findIndex(r => r._id === id);
-    
+
     if (restaurantIndex === -1) {
       return res.status(404).json({ error: 'Restaurant non trouvé' });
     }
-    
+
     demoRestaurants.splice(restaurantIndex, 1);
-    
+
     res.json({ message: 'Restaurant supprimé avec succès' });
-    
+
   } catch (error) {
     console.error('Delete restaurant error:', error);
     res.status(500).json({ error: 'Erreur lors de la suppression du restaurant' });
@@ -582,11 +582,11 @@ router.get('/categories/list', (req, res) => {
       { id: 'Steakhouse', name: 'Steakhouse', icon: '🥩' },
       { id: 'Café', name: 'Café', icon: '☕' },
       { id: 'Bar', name: 'Bar', icon: '🍷' },
-      { id: 'Fast Food', name: 'Fast Food', icon: '🍔' }
+      { id: 'Fast Food', name: 'Fast Food', icon: '🍔' },
     ];
-    
+
     res.json(categories);
-    
+
   } catch (error) {
     console.error('Get categories error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des catégories' });
@@ -601,7 +601,7 @@ router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
       open: demoRestaurants.filter(r => r.isOpen).length,
       closed: demoRestaurants.filter(r => !r.isOpen).length,
       averageRating: Math.round(
-        demoRestaurants.reduce((sum, r) => sum + r.rating, 0) / demoRestaurants.length * 10
+        demoRestaurants.reduce((sum, r) => sum + r.rating, 0) / demoRestaurants.length * 10,
       ) / 10,
       totalCapacity: demoRestaurants.reduce((sum, r) => sum + r.capacity, 0),
       currentOccupancy: demoRestaurants.reduce((sum, r) => sum + r.currentOccupancy, 0),
@@ -612,17 +612,17 @@ router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
         'Steakhouse': demoRestaurants.filter(r => r.type === 'Steakhouse').length,
         'Café': demoRestaurants.filter(r => r.type === 'Café').length,
         'Bar': demoRestaurants.filter(r => r.type === 'Bar').length,
-        'Fast Food': demoRestaurants.filter(r => r.type === 'Fast Food').length
+        'Fast Food': demoRestaurants.filter(r => r.type === 'Fast Food').length,
       },
       byPriceRange: {
         '€': demoRestaurants.filter(r => r.priceRange === '€').length,
         '€€': demoRestaurants.filter(r => r.priceRange === '€€').length,
-        '€€€': demoRestaurants.filter(r => r.priceRange === '€€€').length
-      }
+        '€€€': demoRestaurants.filter(r => r.priceRange === '€€€').length,
+      },
     };
-    
+
     res.json(stats);
-    
+
   } catch (error) {
     console.error('Get restaurant stats error:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
@@ -638,6 +638,6 @@ const initialize = (app, io) => {
 module.exports = {
   router,
   initialize,
-  demoRestaurants
+  demoRestaurants,
 };
 

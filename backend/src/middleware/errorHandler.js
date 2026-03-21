@@ -7,7 +7,7 @@ function errorHandler(err, req, res, next) {
   const message = err.message ?? 'Internal Server Error';
   if (status >= 500) {
     console.error('[errorHandler]', status, req.method, req.url, message);
-    if (err.stack) console.error(err.stack);
+    if (err.stack) {console.error(err.stack);}
   }
   res.status(status).json({
     message: status >= 500 ? 'Internal Server Error' : message,

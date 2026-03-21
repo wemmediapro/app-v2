@@ -48,7 +48,7 @@ class ConnectionManager extends EventEmitter {
     const idleMs = opts.idleMs != null ? opts.idleMs : this.defaultInactivityMs;
     const maxDisconnect = Math.min(
       CLEANUP_MAX_PER_CYCLE,
-      Math.max(1, opts.maxDisconnect != null ? opts.maxDisconnect : CLEANUP_MAX_PER_CYCLE)
+      Math.max(1, opts.maxDisconnect != null ? opts.maxDisconnect : CLEANUP_MAX_PER_CYCLE),
     );
     const now = Date.now();
     const entries = [];
@@ -93,7 +93,7 @@ class ConnectionManager extends EventEmitter {
    * @param {{ active?: number }} stats
    */
   applyGlobalSnapshotFromRedis(stats) {
-    if (!stats || typeof stats.active !== 'number') return;
+    if (!stats || typeof stats.active !== 'number') {return;}
     if (stats.active > this.connectionStats.peak) {
       this.connectionStats.peak = stats.active;
     }
@@ -111,7 +111,7 @@ class ConnectionManager extends EventEmitter {
       const okGlobal = await redisConnectionManager.addConnectionGlobal(
         socket.id,
         ip,
-        this.maxConnectionsPerIP
+        this.maxConnectionsPerIP,
       );
       if (!okGlobal) {
         this.connectionStats.rejected++;
@@ -164,7 +164,7 @@ class ConnectionManager extends EventEmitter {
    */
   removeConnection(socketId) {
     const connection = this.socketConnections.get(socketId);
-    if (!connection) return;
+    if (!connection) {return;}
 
     const ip = connection.ip;
     const ipCount = this.ipConnections.get(ip) || 0;

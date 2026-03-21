@@ -21,28 +21,28 @@ try {
 const TRANSLATIONS = {
   fr: {
     name: 'GNV WebTV À bord',
-    description: 'Infos lignes, offres, services à bord, coulisses et conseils voyage pour préparer votre traversée.'
+    description: 'Infos lignes, offres, services à bord, coulisses et conseils voyage pour préparer votre traversée.',
   },
   en: {
     name: 'GNV WebTV On Board',
-    description: 'Line news, onboard offers and services, behind the scenes and travel tips to prepare for your crossing.'
+    description: 'Line news, onboard offers and services, behind the scenes and travel tips to prepare for your crossing.',
   },
   es: {
     name: 'GNV WebTV A bordo',
-    description: 'Información de líneas, ofertas, servicios a bordo, detrás de cámaras y consejos de viaje para preparar su travesía.'
+    description: 'Información de líneas, ofertas, servicios a bordo, detrás de cámaras y consejos de viaje para preparar su travesía.',
   },
   it: {
     name: 'GNV WebTV A bordo',
-    description: 'Info linee, offerte, servizi a bordo, retroscena e consigli di viaggio per preparare la vostra traversata.'
+    description: 'Info linee, offerte, servizi a bordo, retroscena e consigli di viaggio per preparare la vostra traversata.',
   },
   de: {
     name: 'GNV WebTV An Bord',
-    description: 'Infos zu Linien, Angeboten und Service an Bord, Hinter den Kulissen und Reisetipps für Ihre Überfahrt.'
+    description: 'Infos zu Linien, Angeboten und Service an Bord, Hinter den Kulissen und Reisetipps für Ihre Überfahrt.',
   },
   ar: {
     name: 'GNV WebTV على متن السفينة',
-    description: 'معلومات الخطوط والعروض والخدمات على متن السفينة وكواليس ونصائح السفر للاستعداد لعبوركم.'
-  }
+    description: 'معلومات الخطوط والعروض والخدمات على متن السفينة وكواليس ونصائح السفر للاستعداد لعبوركم.',
+  },
 };
 
 async function updateChannel() {
@@ -55,8 +55,8 @@ async function updateChannel() {
       $or: [
         { name: /GNV WebTV À bord/i },
         { name: /GNV WebTV.*bord/i },
-        { 'translations.fr.name': /GNV WebTV À bord/i }
-      ]
+        { 'translations.fr.name': /GNV WebTV À bord/i },
+      ],
     });
 
     if (!channel) {

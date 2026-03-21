@@ -38,7 +38,7 @@ export function useMagazine(language, t) {
 
   const magazineCategories = useMemo(
     () => MAGAZINE_CATEGORY_IDS.map(({ id, icon }) => ({ id, name: t('magazine.categories.' + id), icon })),
-    [t]
+    [t],
   );
 
   const categoryMap = useMemo(() => ({

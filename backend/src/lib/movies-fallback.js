@@ -18,7 +18,7 @@ function ensureDir() {
 
 function readMovies() {
   ensureDir();
-  if (!fs.existsSync(MOVIES_FILE)) return [];
+  if (!fs.existsSync(MOVIES_FILE)) {return [];}
   try {
     const raw = fs.readFileSync(MOVIES_FILE, 'utf8');
     const data = JSON.parse(raw);
@@ -38,7 +38,7 @@ function nextId(movies) {
   let max = 0;
   movies.forEach(m => {
     const id = typeof m._id === 'string' && m._id.match(/^\d+$/) ? parseInt(m._id, 10) : 0;
-    if (id > max) max = id;
+    if (id > max) {max = id;}
   });
   return String(max + 1);
 }
@@ -78,14 +78,14 @@ module.exports = {
       translations: body.translations && typeof body.translations === 'object' ? body.translations : {},
       episodes: (body.type === 'series' && Array.isArray(body.episodes))
         ? body.episodes.map((ep, i) => ({
-            title: ep.title,
-            duration: ep.duration || '',
-            description: ep.description || '',
-            videoUrl: ep.videoUrl || '',
-            order: ep.order ?? i,
-            translations: ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined
-          }))
-        : []
+          title: ep.title,
+          duration: ep.duration || '',
+          description: ep.description || '',
+          videoUrl: ep.videoUrl || '',
+          order: ep.order ?? i,
+          translations: ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined,
+        }))
+        : [],
     };
     movies.push(movie);
     writeMovies(movies);
@@ -94,7 +94,7 @@ module.exports = {
   update(id, body) {
     const movies = readMovies();
     const idx = movies.findIndex(m => String(m._id) === String(id));
-    if (idx === -1) return null;
+    if (idx === -1) {return null;}
     const updates = {
       title: body.title,
       type: body.type === 'series' ? 'series' : 'movie',
@@ -111,7 +111,7 @@ module.exports = {
       tags: body.tags,
       shipId: body.shipId,
       destination: body.destination,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
     if (body.type === 'series' && Array.isArray(body.episodes)) {
       updates.episodes = body.episodes.map((ep, i) => ({
@@ -120,7 +120,7 @@ module.exports = {
         description: ep.description || '',
         videoUrl: ep.videoUrl || '',
         order: ep.order ?? i,
-        translations: ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined
+        translations: ep.translations && typeof ep.translations === 'object' ? ep.translations : undefined,
       }));
     }
     if (body.translations != null && typeof body.translations === 'object') {
@@ -134,10 +134,10 @@ module.exports = {
   remove(id) {
     const movies = readMovies();
     const idx = movies.findIndex(m => String(m._id) === String(id));
-    if (idx === -1) return null;
+    if (idx === -1) {return null;}
     movies[idx].isActive = false;
     movies[idx].updatedAt = new Date().toISOString();
     writeMovies(movies);
     return movies[idx];
-  }
+  },
 };

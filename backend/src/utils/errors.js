@@ -45,7 +45,7 @@ function globalErrorHandler(config = {}) {
     }
 
     // Erreur non opérationnelle (crash, bug) — envoi à Sentry si configuré
-    if (sentry && sentry.captureException) sentry.captureException(err);
+    if (sentry && sentry.captureException) {sentry.captureException(err);}
     logger.error({
       event: 'unhandled_error',
       err: err.message,

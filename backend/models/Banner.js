@@ -4,52 +4,52 @@ const bannerSchema = new mongoose.Schema({
   title: {
     type: String,
     required: [true, 'Banner title is required'],
-    trim: true
+    trim: true,
   },
   description: {
     type: String,
-    trim: true
+    trim: true,
   },
   imageUrl: {
     type: String,
-    required: [true, 'Image URL is required']
+    required: [true, 'Image URL is required'],
   },
   linkUrl: {
-    type: String
+    type: String,
   },
   position: {
     type: String,
     enum: ['home', 'restaurant', 'shop', 'movies', 'radio', 'magazine', 'other'],
-    default: 'home'
+    default: 'home',
   },
   priority: {
     type: Number,
     default: 0,
-    min: 0
+    min: 0,
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   startDate: {
     type: Date,
-    default: Date.now
+    default: Date.now,
   },
   endDate: {
-    type: Date
+    type: Date,
   },
   clicks: {
     type: Number,
     default: 0,
-    min: 0
+    min: 0,
   },
   views: {
     type: Number,
     default: 0,
-    min: 0
-  }
+    min: 0,
+  },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 // Indexes

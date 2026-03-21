@@ -13,17 +13,17 @@ const User = require('../models/User');
 const router = express.Router();
 
 function parseReceiverFromChatRoom(room, myUserId) {
-  if (!room || myUserId == null) return null;
+  if (!room || myUserId == null) {return null;}
   const prefix = 'chat:';
   const r = String(room);
-  if (!r.startsWith(prefix)) return null;
+  if (!r.startsWith(prefix)) {return null;}
   const rest = r.slice(prefix.length);
   const parts = rest.split('_');
-  if (parts.length !== 2) return null;
+  if (parts.length !== 2) {return null;}
   const [a, b] = parts;
   const me = String(myUserId);
-  if (a === me) return b;
-  if (b === me) return a;
+  if (a === me) {return b;}
+  if (b === me) {return a;}
   return null;
 }
 
@@ -172,7 +172,7 @@ router.post(
         error: error.message,
       });
     }
-  }
+  },
 );
 
 module.exports = router;

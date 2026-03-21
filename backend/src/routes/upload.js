@@ -22,14 +22,14 @@ const ALLOWED_AUDIO_MIMES = new Set(['audio/mpeg', 'audio/mp3', 'audio/wav', 'au
 async function validateFileTypeFromPath(filePath, allowedMimes) {
   const { fileTypeFromFile } = await import('file-type');
   const type = await fileTypeFromFile(filePath);
-  if (!type || !allowedMimes.has(type.mime)) return { valid: false, detected: type?.mime };
+  if (!type || !allowedMimes.has(type.mime)) {return { valid: false, detected: type?.mime };}
   return { valid: true };
 }
 
 async function validateFileTypeFromBuffer(buffer, allowedMimes) {
   const { fileTypeFromBuffer } = await import('file-type');
   const type = await fileTypeFromBuffer(buffer);
-  if (!type || !allowedMimes.has(type.mime)) return { valid: false, detected: type?.mime };
+  if (!type || !allowedMimes.has(type.mime)) {return { valid: false, detected: type?.mime };}
   return { valid: true };
 }
 const { temp: UPLOAD_DIR, videos: VIDEOS_DIR, images: IMAGES_DIR, audio: AUDIO_DIR, public: PUBLIC_DIR } = config.paths;
@@ -51,7 +51,7 @@ const videoStorage = multer.diskStorage({
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
     const ext = path.extname(file.originalname) || '.mp4';
     cb(null, `video-${uniqueSuffix}${ext}`);
-  }
+  },
 });
 
 const videoUpload = multer({
@@ -64,7 +64,7 @@ const videoUpload = multer({
     } else {
       cb(new Error('Type de fichier non autorisé. Utilisez MP4, WebM, OGG ou MOV.'));
     }
-  }
+  },
 });
 
 // Stockage pour les images (logos, etc.)
@@ -75,7 +75,7 @@ const imageStorage = multer.diskStorage({
     const base = path.basename(file.originalname || 'image', ext) || 'image';
     const safe = base.replace(/[^a-zA-Z0-9.-]/g, '_').slice(0, 30);
     cb(null, `logo-${Date.now()}-${safe}${ext}`);
-  }
+  },
 });
 const imageUpload = multer({
   storage: imageStorage,
@@ -87,7 +87,7 @@ const imageUpload = multer({
     } else {
       cb(new Error('Type non autorisé. Utilisez JPEG, PNG, GIF ou WebP.'));
     }
-  }
+  },
 });
 
 // Stockage pour les fichiers audio (MP3, etc.) — programmation radio
@@ -97,7 +97,7 @@ const audioStorage = multer.diskStorage({
     const ext = path.extname(file.originalname) || '.mp3';
     const safe = (file.originalname || 'audio').replace(/[^a-zA-Z0-9.-]/g, '_').slice(0, 40);
     cb(null, `audio-${Date.now()}-${safe}${ext}`);
-  }
+  },
 });
 const audioUpload = multer({
   storage: audioStorage,
@@ -109,30 +109,30 @@ const audioUpload = multer({
     } else {
       cb(new Error('Type non autorisé. Utilisez MP3, WAV ou OGG.'));
     }
-  }
+  },
 });
 
 /**
  * Gère les erreurs Multer (taille, type) pour renvoyer un JSON clair au front
  */
 function handleUploadError(err, req, res, next) {
-  if (!err) return next();
+  if (!err) {return next();}
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(413).json({
       success: false,
-      message: 'Fichier trop volumineux (maximum 1000 Mo).'
+      message: 'Fichier trop volumineux (maximum 1000 Mo).',
     });
   }
   if (err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE') {
     return res.status(400).json({
       success: false,
-      message: 'Envoyez un seul fichier vidéo avec le champ "video".'
+      message: 'Envoyez un seul fichier vidéo avec le champ "video".',
     });
   }
   if (err.message && err.message.includes('Type de fichier')) {
     return res.status(400).json({
       success: false,
-      message: err.message
+      message: err.message,
     });
   }
   return next(err);
@@ -147,7 +147,7 @@ router.post('/video', authMiddleware, adminMiddleware, videoUpload.single('video
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'Aucun fichier vidéo fourni. Utilisez le champ "video".'
+        message: 'Aucun fichier vidéo fourni. Utilisez le champ "video".',
       });
     }
     const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_VIDEO_MIMES);
@@ -169,7 +169,7 @@ router.post('/video', authMiddleware, adminMiddleware, videoUpload.single('video
 
     if (process.env.ENABLE_HLS_STATIC === 'true' && outputPath && fs.existsSync(outputPath)) {
       encodeToHls(outputPath).then((hls) => {
-        if (hls) console.log('HLS généré:', hls.hlsUrl);
+        if (hls) {console.log('HLS généré:', hls.hlsUrl);}
       }).catch((e) => console.warn('HLS encode (async):', e.message));
     }
 
@@ -180,8 +180,8 @@ router.post('/video', authMiddleware, adminMiddleware, videoUpload.single('video
       video: {
         url: fullUrl,
         path: url,
-        quality: '480p'
-      }
+        quality: '480p',
+      },
     });
   } catch (error) {
     console.error('Erreur upload vidéo:', error);
@@ -196,7 +196,7 @@ router.post('/video', authMiddleware, adminMiddleware, videoUpload.single('video
     res.status(500).json({
       success: false,
       message,
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
@@ -218,53 +218,53 @@ router.post('/image', authMiddleware, adminMiddleware, imageUpload.single('image
   next();
 }, (req, res) => {
   return (async () => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Aucune image fournie. Utilisez le champ "image".'
-      });
-    }
-    const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_IMAGE_MIMES);
-    if (!valid) {
-      try { fs.unlinkSync(req.file.path); } catch (e) {}
-      return res.status(400).json({
-        success: false,
-        message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez JPEG, PNG, GIF ou WebP.',
-      });
-    }
-    let filePath = req.file.path;
-    let filename = req.file.filename;
     try {
-      const result = await optimizeImage(req.file.path);
-      filePath = result.path;
-      filename = result.filename;
-    } catch (optErr) {
-      console.warn('Optimisation image (fallback sans optimisation):', optErr.message);
-    }
-    const port = process.env.PORT || 3000;
-    const host = req.get('host') || `localhost:${port}`;
-    const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
-    const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
-    const relativePath = `/uploads/images/${filename}`;
-    const fullUrl = `${baseUrl}${relativePath}`;
-    res.json({
-      success: true,
-      message: 'Image enregistrée',
-      image: {
-        url: fullUrl,
-        path: relativePath
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'Aucune image fournie. Utilisez le champ "image".',
+        });
       }
-    });
-  } catch (error) {
-    console.error('Upload image error:', error);
-    if (!res.headersSent) {
-      res.status(500).json({
-        success: false,
-        message: process.env.NODE_ENV === 'development' ? error.message : 'Erreur lors de l\'upload.',
+      const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_IMAGE_MIMES);
+      if (!valid) {
+        try { fs.unlinkSync(req.file.path); } catch (e) {}
+        return res.status(400).json({
+          success: false,
+          message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez JPEG, PNG, GIF ou WebP.',
+        });
+      }
+      let filePath = req.file.path;
+      let filename = req.file.filename;
+      try {
+        const result = await optimizeImage(req.file.path);
+        filePath = result.path;
+        filename = result.filename;
+      } catch (optErr) {
+        console.warn('Optimisation image (fallback sans optimisation):', optErr.message);
+      }
+      const port = process.env.PORT || 3000;
+      const host = req.get('host') || `localhost:${port}`;
+      const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
+      const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
+      const relativePath = `/uploads/images/${filename}`;
+      const fullUrl = `${baseUrl}${relativePath}`;
+      res.json({
+        success: true,
+        message: 'Image enregistrée',
+        image: {
+          url: fullUrl,
+          path: relativePath,
+        },
       });
+    } catch (error) {
+      console.error('Upload image error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          message: process.env.NODE_ENV === 'development' ? error.message : 'Erreur lors de l\'upload.',
+        });
+      }
     }
-  }
   })();
 });
 
@@ -288,7 +288,7 @@ router.post('/audio', authMiddleware, adminMiddleware, audioUpload.single('audio
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'Aucun fichier audio fourni. Utilisez le champ "audio".'
+        message: 'Aucun fichier audio fourni. Utilisez le champ "audio".',
       });
     }
     const { valid } = await validateFileTypeFromPath(req.file.path, ALLOWED_AUDIO_MIMES);
@@ -311,15 +311,15 @@ router.post('/audio', authMiddleware, adminMiddleware, audioUpload.single('audio
       audio: {
         url: fullUrl,
         path: relativePath,
-        fileName: req.file.originalname
-      }
+        fileName: req.file.originalname,
+      },
     });
   } catch (error) {
     console.error('Upload audio error:', error);
     if (!res.headersSent) {
       res.status(500).json({
         success: false,
-        message: process.env.NODE_ENV === 'development' ? error.message : 'Erreur lors de l\'upload.'
+        message: process.env.NODE_ENV === 'development' ? error.message : 'Erreur lors de l\'upload.',
       });
     }
   }
@@ -330,7 +330,7 @@ router.post('/audio', authMiddleware, adminMiddleware, audioUpload.single('audio
  */
 function scanUploadDir(dirPath, urlPrefix) {
   const items = [];
-  if (!fs.existsSync(dirPath)) return items;
+  if (!fs.existsSync(dirPath)) {return items;}
   const names = fs.readdirSync(dirPath);
   for (const name of names) {
     const fullPath = path.join(dirPath, name);
@@ -446,9 +446,9 @@ router.get('/status', authMiddleware, adminMiddleware, async (req, res) => {
       videoCompression: true,
       targetQuality: '480p',
       ffmpegAvailable,
-      message: ffmpegAvailable 
-        ? 'Système de compression 480p opérationnel' 
-        : 'FFmpeg non détecté - Les vidéos seront stockées sans compression. Installez ffmpeg pour activer la compression.'
+      message: ffmpegAvailable
+        ? 'Système de compression 480p opérationnel'
+        : 'FFmpeg non détecté - Les vidéos seront stockées sans compression. Installez ffmpeg pour activer la compression.',
     });
   } catch (error) {
     res.status(500).json({

@@ -4,61 +4,61 @@ const shipmapSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Deck name is required'],
-    trim: true
+    trim: true,
   },
   type: {
     type: String,
     required: [true, 'Deck type is required'],
-    enum: ['passenger', 'vehicle', 'cabin', 'service', 'public']
+    enum: ['passenger', 'vehicle', 'cabin', 'service', 'public'],
   },
   description: {
-    type: String
+    type: String,
   },
   area: {
-    type: String
+    type: String,
   },
   capacity: {
     type: Number,
     default: 0,
-    min: [0, 'Capacity cannot be negative']
+    min: [0, 'Capacity cannot be negative'],
   },
   shipId: {
     type: Number,
-    required: [true, 'Ship ID is required']
+    required: [true, 'Ship ID is required'],
   },
   shipName: {
     type: String,
-    required: [true, 'Ship name is required']
+    required: [true, 'Ship name is required'],
   },
   // Rétrocompat: stocke string (ancien) ou { name, icon, openingHours }
   services: [mongoose.Schema.Types.Mixed],
   accessPoints: [{
     type: String,
-    trim: true
+    trim: true,
   }],
   facilities: [{
     type: String,
-    trim: true
+    trim: true,
   }],
   zones: [{
     name: String,
     type: String,
     capacity: Number,
     currentOccupancy: Number,
-    facilities: [String]
+    facilities: [String],
   }],
   cabinTypes: [{
     type: String,
     capacity: Number,
     price: Number,
-    amenities: [String]
+    amenities: [String],
   }],
   restaurants: [{
     name: String,
     type: String,
     location: String,
     capacity: Number,
-    currentOccupancy: Number
+    currentOccupancy: Number,
   }],
   poolInfo: {
     hasPool: Boolean,
@@ -67,11 +67,11 @@ const shipmapSchema = new mongoose.Schema({
     openingHours: String,
     size: String,
     depth: String,
-    temperature: String
+    temperature: String,
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   nameByLocale: {
     fr: String,
@@ -79,7 +79,7 @@ const shipmapSchema = new mongoose.Schema({
     es: String,
     it: String,
     de: String,
-    ar: String
+    ar: String,
   },
   descriptionByLocale: {
     fr: String,
@@ -87,10 +87,10 @@ const shipmapSchema = new mongoose.Schema({
     es: String,
     it: String,
     de: String,
-    ar: String
-  }
+    ar: String,
+  },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 shipmapSchema.index({ shipId: 1, isActive: 1 });

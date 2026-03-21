@@ -27,7 +27,7 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
  */
 function resolveAdminEmail() {
   const fromEnv = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-  if (fromEnv) return fromEnv;
+  if (fromEnv) {return fromEnv;}
   console.error('CRITICAL: ADMIN_EMAIL doit être défini dans config.env (init-database-prisma, aucun défaut).');
   process.exit(1);
 }
@@ -83,7 +83,7 @@ async function createAdminUser() {
     const { plain: adminPasswordPlain, mustChangePassword } = resolveAdminPasswordPlain();
 
     const existingAdmin = await prisma.user.findUnique({
-      where: { email: adminEmail }
+      where: { email: adminEmail },
     });
 
     if (existingAdmin) {
@@ -110,13 +110,13 @@ async function createAdminUser() {
               create: {
                 email: true,
                 push: true,
-                sms: false
-              }
-            }
-          }
+                sms: false,
+              },
+            },
+          },
         },
-        isActive: true
-      }
+        isActive: true,
+      },
     });
 
     console.log('✅ Utilisateur admin créé (email / mot de passe : config.env — ne pas logger).');
@@ -146,11 +146,11 @@ async function createTestUsers() {
               create: {
                 email: true,
                 push: true,
-                sms: false
-              }
-            }
-          }
-        }
+                sms: false,
+              },
+            },
+          },
+        },
       },
       {
         firstName: 'Maria',
@@ -167,11 +167,11 @@ async function createTestUsers() {
               create: {
                 email: true,
                 push: true,
-                sms: false
-              }
-            }
-          }
-        }
+                sms: false,
+              },
+            },
+          },
+        },
       },
       {
         firstName: 'John',
@@ -188,11 +188,11 @@ async function createTestUsers() {
               create: {
                 email: true,
                 push: true,
-                sms: false
-              }
-            }
-          }
-        }
+                sms: false,
+              },
+            },
+          },
+        },
       },
       {
         firstName: 'Sophie',
@@ -209,23 +209,23 @@ async function createTestUsers() {
               create: {
                 email: true,
                 push: true,
-                sms: false
-              }
-            }
-          }
-        }
-      }
+                sms: false,
+              },
+            },
+          },
+        },
+      },
     ];
 
     const createdUsers = [];
     for (const userData of users) {
       const existing = await prisma.user.findUnique({
-        where: { email: userData.email }
+        where: { email: userData.email },
       });
 
       if (!existing) {
         const user = await prisma.user.create({
-          data: userData
+          data: userData,
         });
         createdUsers.push(user);
         console.log(`✅ Utilisateur créé: ${user.email}`);
@@ -267,7 +267,7 @@ async function createRestaurants() {
               price: 18,
               category: 'Entrées',
               isPopular: true,
-              allergens: ['Poisson']
+              allergens: ['Poisson'],
             },
             {
               menuId: 2,
@@ -276,9 +276,9 @@ async function createRestaurants() {
               price: 32,
               category: 'Plats',
               isPopular: true,
-              allergens: []
-            }
-          ]
+              allergens: [],
+            },
+          ],
         },
         promotions: {
           create: [
@@ -289,10 +289,10 @@ async function createRestaurants() {
               price: 45,
               originalPrice: 62,
               discount: 27,
-              validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-            }
-          ]
-        }
+              validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            },
+          ],
+        },
       },
       {
         name: 'Self-Service',
@@ -315,22 +315,22 @@ async function createRestaurants() {
               price: 25,
               category: 'Plats',
               isPopular: true,
-              allergens: []
-            }
-          ]
-        }
-      }
+              allergens: [],
+            },
+          ],
+        },
+      },
     ];
 
     const createdRestaurants = [];
     for (const restaurantData of restaurants) {
       const existing = await prisma.restaurant.findFirst({
-        where: { name: restaurantData.name }
+        where: { name: restaurantData.name },
       });
 
       if (!existing) {
         const restaurant = await prisma.restaurant.create({
-          data: restaurantData
+          data: restaurantData,
         });
         createdRestaurants.push(restaurant);
         console.log(`✅ Restaurant créé: ${restaurant.name}`);

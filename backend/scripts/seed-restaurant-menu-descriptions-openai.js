@@ -30,7 +30,7 @@ function needFill(translations, lang, menu, idx) {
     needName: !name && baseName,
     needDesc: !description && (baseDesc || baseName),
     baseName,
-    baseDesc: baseDesc || baseName
+    baseDesc: baseDesc || baseName,
   };
 }
 
@@ -40,7 +40,7 @@ async function generateMenuTranslationsForLang(openai, menu, lang, existingTrans
     const entry = Array.isArray(t) && t[idx] ? t[idx] : null;
     return {
       name: (entry && entry.name) || item.name || '',
-      description: (entry && entry.description) || item.description || ''
+      description: (entry && entry.description) || item.description || '',
     };
   });
 
@@ -48,7 +48,7 @@ async function generateMenuTranslationsForLang(openai, menu, lang, existingTrans
     const n = needFill({ [lang]: { menu: existingTranslations?.[lang]?.menu } }, lang, menu, i);
     return n.needName || n.needDesc;
   });
-  if (!hasMissing) return null;
+  if (!hasMissing) {return null;}
 
   const langName = LANG_NAMES[lang] || lang;
   const systemPrompt = `Tu es un traducteur professionnel pour des menus de restaurant (ferry / bateau). Tu traduis UNIQUEMENT en ${langName}. Pour chaque plat, renvoie un nom et une description courts et appétissants dans cette langue. Réponse : un objet JSON avec une clé "menu" qui est un tableau. Chaque élément du tableau = { "name": "Nom du plat en ${langName}", "description": "Description courte en ${langName}" }. Le nombre d'éléments doit être exactement le même que le menu fourni.`;
@@ -59,14 +59,14 @@ async function generateMenuTranslationsForLang(openai, menu, lang, existingTrans
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userContent }
+      { role: 'user', content: userContent },
     ],
     response_format: { type: 'json_object' },
-    temperature: 0.3
+    temperature: 0.3,
   });
 
   const raw = completion.choices[0]?.message?.content?.trim();
-  if (!raw) return null;
+  if (!raw) {return null;}
   try {
     const data = JSON.parse(raw);
     const arr = data.menu || data.items || (Array.isArray(data) ? data : []);
@@ -104,17 +104,17 @@ async function run() {
       let updated = false;
 
       for (const lang of LANGS) {
-        if (lang === 'fr') continue;
+        if (lang === 'fr') {continue;}
         const filled = await generateMenuTranslationsForLang(openai, menu, lang, rest.translations);
-        if (!filled || filled.length !== menu.length) continue;
+        if (!filled || filled.length !== menu.length) {continue;}
 
-        if (!translations[lang]) translations[lang] = { name: rest.name, description: rest.description || '' };
-        if (!translations[lang].menu) translations[lang].menu = menu.map((m, i) => ({ name: m.name, description: m.description || '' }));
+        if (!translations[lang]) {translations[lang] = { name: rest.name, description: rest.description || '' };}
+        if (!translations[lang].menu) {translations[lang].menu = menu.map((m, i) => ({ name: m.name, description: m.description || '' }));}
 
         for (let i = 0; i < menu.length; i++) {
           const n = needFill(rest.translations, lang, menu, i);
           const gen = filled[i];
-          if (!gen || typeof gen !== 'object') continue;
+          if (!gen || typeof gen !== 'object') {continue;}
           if (n.needName && gen.name) {
             translations[lang].menu[i].name = String(gen.name).trim().slice(0, 200);
             updated = true;
@@ -129,7 +129,7 @@ async function run() {
       if (updated) {
         await Restaurant.updateOne(
           { _id: rest._id },
-          { $set: { translations } }
+          { $set: { translations } },
         );
         console.log(`✅ ${rest.name} : descriptions/noms complétés pour les langues manquantes.`);
       } else {
@@ -140,7 +140,7 @@ async function run() {
     console.log('\n✅ Script terminé.');
   } catch (err) {
     console.error('❌ Erreur:', err.message);
-    if (err.response?.data) console.error(err.response.data);
+    if (err.response?.data) {console.error(err.response.data);}
     process.exit(1);
   } finally {
     await mongoose.disconnect();

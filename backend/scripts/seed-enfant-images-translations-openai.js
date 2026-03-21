@@ -46,21 +46,21 @@ async function generateAndUploadImage(openai, prompt, filename) {
     style: 'vivid',
   });
   const img = response.data?.[0];
-  if (!img?.b64_json) throw new Error('Pas d’image retournée par OpenAI');
+  if (!img?.b64_json) {throw new Error('Pas d’image retournée par OpenAI');}
 
   const uploadUrl = `${API_BASE_URL}/api/upload/image-from-base64`;
   const headers = { 'Content-Type': 'application/json' };
-  if (SEED_SECRET) headers['X-Seed-Secret'] = SEED_SECRET;
+  if (SEED_SECRET) {headers['X-Seed-Secret'] = SEED_SECRET;}
 
   const res = await fetch(uploadUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify({ base64: img.b64_json, filename }),
   });
-  if (!res.ok) throw new Error(`Upload échoué (${res.status}): ${await res.text()}`);
+  if (!res.ok) {throw new Error(`Upload échoué (${res.status}): ${await res.text()}`);}
   const data = await res.json();
   const pathRel = data?.image?.path || (data?.image?.url || '').replace(/^https?:\/\/[^/]+/, '');
-  if (!pathRel) throw new Error('Réponse upload sans image.path');
+  if (!pathRel) {throw new Error('Réponse upload sans image.path');}
   return pathRel.startsWith('/') ? pathRel : `/${pathRel}`;
 }
 
@@ -100,7 +100,7 @@ async function main() {
       const prompt = buildImagePrompt(a);
       const imagePath = await generateAndUploadImage(openai, prompt, filename);
       updates.imageUrl = imagePath;
-      console.log(`      ✅ Image uploadée.`);
+      console.log('      ✅ Image uploadée.');
 
       // 2) Traductions : nom + description + ageRange + schedule + features en 6 langues
       const nameFr = (a.name || '').trim();
@@ -111,7 +111,7 @@ async function main() {
       console.log(`   [${i + 1}/${activities.length}] 🌐 Traductions (fr, en, es, it, de, ar)...`);
       const translations = await generateTranslationsForEnfant(openai, nameFr, descriptionFr, a.category, ageRangeFr, scheduleFr, featuresFr);
       updates.translations = translations;
-      console.log(`      ✅ Traductions générées.`);
+      console.log('      ✅ Traductions générées.');
 
       await EnfantActivity.updateOne({ _id: id }, { $set: updates });
     } catch (err) {

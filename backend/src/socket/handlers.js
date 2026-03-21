@@ -64,7 +64,7 @@ function isRoomAllowed(room) {
 
 /** Sanitize contenu (XSS) : strip HTML, limite longueur. En Node sans DOMPurify. */
 function sanitizeContent(str) {
-  if (str == null) return '';
+  if (str == null) {return '';}
   const s = String(str).replace(/<[^>]*>/g, '').trim();
   return s.slice(0, MAX_MESSAGE_LENGTH);
 }
@@ -86,7 +86,7 @@ function attachSocketHandlers(io, connectionCounters) {
     }
 
     const shipId = socket._shipId || (connectionCounters && connectionCounters.getShipId(socket));
-    if (connectionCounters) await connectionCounters.increment();
+    if (connectionCounters) {await connectionCounters.increment();}
 
     logger.info({
       event: 'socket_connect',
@@ -97,32 +97,32 @@ function attachSocketHandlers(io, connectionCounters) {
     });
 
     socket.on('join-room', (room, cb) => {
-      if (!checkSocketRateLimit(socket)) return;
+      if (!checkSocketRateLimit(socket)) {return;}
       if (!hasAllowedPrefix(room) || !isRoomAuthorizedForUser(socket, room)) {
         logger.warn({ event: 'socket_join_room_denied', socketId: socket.id, room });
-        if (typeof cb === 'function') cb(new Error('Invalid or forbidden room'));
+        if (typeof cb === 'function') {cb(new Error('Invalid or forbidden room'));}
         return;
       }
       socket.join(room);
-      if (typeof cb === 'function') cb();
+      if (typeof cb === 'function') {cb();}
       logger.debug({ event: 'socket_join_room', socketId: socket.id, room });
     });
 
     socket.on('send-message', (data, cb) => {
-      if (!checkSocketRateLimit(socket)) return;
-      if (!checkSendMessageRateLimit(socket)) return; // C6 : 60 msg/min/socket
+      if (!checkSocketRateLimit(socket)) {return;}
+      if (!checkSendMessageRateLimit(socket)) {return;} // C6 : 60 msg/min/socket
       if (!data || !hasAllowedPrefix(data.room) || !isRoomAuthorizedForUser(socket, data.room)) {
         logger.warn({ event: 'socket_send_message_denied', socketId: socket.id, room: data?.room });
-        if (typeof cb === 'function') cb(new Error('Invalid or forbidden room'));
+        if (typeof cb === 'function') {cb(new Error('Invalid or forbidden room'));}
         return;
       }
       if (!socket.rooms.has(data.room)) {
-        if (typeof cb === 'function') cb(new Error('Not in room'));
+        if (typeof cb === 'function') {cb(new Error('Not in room'));}
         return;
       }
       const content = sanitizeContent(data.content ?? data.text);
       if (content.length === 0 && !data.attachment) {
-        if (typeof cb === 'function') cb(new Error('Empty message'));
+        if (typeof cb === 'function') {cb(new Error('Empty message'));}
         return;
       }
       const payload = {
@@ -135,13 +135,13 @@ function attachSocketHandlers(io, connectionCounters) {
         ...(data.attachment && { attachment: sanitizeContent(data.attachment) }),
       };
       socket.to(data.room).emit('new-message', payload);
-      if (typeof cb === 'function') cb(null, payload);
+      if (typeof cb === 'function') {cb(null, payload);}
     });
 
     socket.on('disconnect', () => {
       clearSocketRateLimit(socket.id);
       connectionManager.removeConnection(socket.id);
-      if (connectionCounters) connectionCounters.decrement();
+      if (connectionCounters) {connectionCounters.decrement();}
       logger.info({ event: 'socket_disconnect', socketId: socket.id });
     });
   });
