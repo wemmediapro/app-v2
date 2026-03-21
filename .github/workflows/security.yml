@@ -24,7 +24,7 @@ jobs:
     name: npm audit (racine + backend)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
@@ -47,7 +47,7 @@ jobs:
     name: OWASP Dependency-Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # SHA figé (déc. 2025) — évite @main mutable côté supply chain
       - name: Dependency-Check
@@ -72,7 +72,7 @@ jobs:
     name: Snyk (optionnel)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
