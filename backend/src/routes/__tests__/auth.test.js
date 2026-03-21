@@ -27,8 +27,18 @@ jest.mock('../../models/User', () => {
   return MockUser;
 });
 
-jest.mock('../../lib/logger', () => ({ logFailedLogin: jest.fn(), error: jest.fn() }));
-jest.mock('../../lib/cache-manager', () => ({ isConnected: false, get: jest.fn(), set: jest.fn() }));
+jest.mock('../../lib/logger', () => ({
+  logFailedLogin: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+}));
+jest.mock('../../lib/cache-manager', () => ({
+  isConnected: false,
+  get: jest.fn(),
+  set: jest.fn(),
+  del: jest.fn(),
+}));
 jest.mock('../../services/auditService', () => ({ logAction: jest.fn().mockResolvedValue(null) }));
 
 /** Chaîne Mongoose findById().select().lean() ou findById().select() / findById() pour les routes */

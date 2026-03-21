@@ -26,6 +26,9 @@ function redactEmail(email) {
 
 // Masquer les champs sensibles dans les logs (OWASP Logging)
 const SENSITIVE_KEYS = /password|token|secret|authorization|cookie|csrf|jwt|adminToken/i;
+/**
+ *
+ */
 function redact(obj) {
   if (obj == null) {
     return obj;

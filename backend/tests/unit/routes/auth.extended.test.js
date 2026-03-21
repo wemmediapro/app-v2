@@ -33,6 +33,8 @@ const mockCacheManager = {
 jest.mock('../../../src/lib/cache-manager', () => mockCacheManager);
 jest.mock('../../../src/lib/logger', () => ({
   logFailedLogin: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn(),
   error: jest.fn(),
 }));
 jest.mock('../../../src/services/auditService', () => ({

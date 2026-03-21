@@ -32,10 +32,10 @@ const RESOURCES = {
 /**
  * Enregistre une action d'audit.
  * @param {object} opts
- * @param {string|ObjectId} opts.userId - Admin ayant effectué l'action (null pour login échoué)
+ * @param {string|import('mongoose').Types.ObjectId} opts.userId - Admin ayant effectué l'action (null pour login échoué)
  * @param {string} opts.action - login | create-user | update-user | delete-user | admin-action | create | update | delete
  * @param {string} opts.resource - user | restaurant | content | settings | auth
- * @param {ObjectId|null} [opts.resourceId] - ID de la ressource ciblée
+ * @param {import('mongoose').Types.ObjectId|null} [opts.resourceId] - ID de la ressource ciblée
  * @param {{before?: object, after?: object}} [opts.changes]
  * @param {string} [opts.ipAddress]
  * @param {string} [opts.userAgent]
@@ -93,7 +93,7 @@ async function logAction(opts) {
 /**
  * Récupère les logs admin avec filtres et pagination.
  * @param {object} filters
- * @param {string|ObjectId} [filters.adminId] - Filtrer par admin
+ * @param {string|import('mongoose').Types.ObjectId} [filters.adminId] - Filtrer par admin
  * @param {string} [filters.action]
  * @param {string} [filters.resource]
  * @param {number} [filters.days] - Période en jours
@@ -177,6 +177,7 @@ async function exportLogs(format = 'json', filters = {}) {
 /**
  * Archive ou supprime les logs plus anciens que la date donnée.
  * En production : préférer une archivage (export) avant suppression.
+ * Si un index TTL est actif sur AuditLog (voir AUDIT_LOG_TTL_DAYS), MongoDB purge aussi automatiquement après le délai.
  * @param {Date|number} olderThan - Date ou millisecondes
  * @returns {Promise<{ deleted: number }>}
  */

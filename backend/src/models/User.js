@@ -178,5 +178,7 @@ userSchema.methods.toJSON = function () {
 userSchema.index({ cabinNumber: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ twoFactorEnabled: 1 });
+// GET /api/users : { isActive: true } + sort({ createdAt: -1 }) + skip/limit
+userSchema.index({ isActive: 1, createdAt: -1 });
 
 module.exports = mongoose.model('User', userSchema);

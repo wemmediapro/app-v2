@@ -7,6 +7,58 @@ const logger = require('../lib/logger');
 
 const ROOT = path.join(__dirname, '..', '..');
 
+/** Plafonds par préfixe (suffixe après /api[/v1]) — complètent le rate limit global. */
+const DEFAULT_RATE_LIMIT_ENDPOINT_RULES = [
+  { prefix: '/export', max: 40 },
+  { prefix: '/auth', max: 200 },
+  { prefix: '/messages', max: 450 },
+  { prefix: '/admin', max: 500 },
+  { prefix: '/sync', max: 250 },
+  { prefix: '/analytics', max: 120 },
+  { prefix: '/notifications', max: 600 },
+];
+
+function parseRateLimitEndpointRules(fallbackWindowMs) {
+  const raw = process.env.RATE_LIMIT_ENDPOINT_RULES_JSON;
+  if (raw && String(raw).trim()) {
+    try {
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) {
+        logger.warn({ event: 'rate_limit_endpoint_rules_json_not_array' });
+        return DEFAULT_RATE_LIMIT_ENDPOINT_RULES.map((r) => ({ ...r, windowMs: r.windowMs ?? fallbackWindowMs }));
+      }
+      const parsed = arr
+        .map((r) => {
+          const pre = String(r.prefix ?? '').trim();
+          const prefix = pre.startsWith('/') ? pre : `/${pre}`;
+          const max = Math.max(1, parseInt(r.max, 10) || 100);
+          const windowMs = r.windowMs != null && r.windowMs !== '' ? parseInt(r.windowMs, 10) : undefined;
+          const methods = Array.isArray(r.methods) ? r.methods.map((m) => String(m).toUpperCase()) : null;
+          const bucket = r.bucket != null ? String(r.bucket) : undefined;
+          return {
+            prefix,
+            max,
+            windowMs: Number.isFinite(windowMs) && windowMs > 0 ? windowMs : undefined,
+            methods,
+            bucket,
+          };
+        })
+        .filter((r) => r.prefix.length > 1);
+      if (parsed.length === 0) {
+        logger.warn({ event: 'rate_limit_endpoint_rules_json_empty' });
+        return DEFAULT_RATE_LIMIT_ENDPOINT_RULES.map((r) => ({ ...r, windowMs: r.windowMs ?? fallbackWindowMs }));
+      }
+      return parsed.map((r) => ({
+        ...r,
+        windowMs: r.windowMs ?? fallbackWindowMs,
+      }));
+    } catch (e) {
+      logger.warn({ event: 'rate_limit_endpoint_rules_json_invalid', err: e.message });
+    }
+  }
+  return DEFAULT_RATE_LIMIT_ENDPOINT_RULES.map((r) => ({ ...r, windowMs: r.windowMs ?? fallbackWindowMs }));
+}
+
 module.exports = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 3000,
@@ -96,6 +148,7 @@ module.exports = {
       max,
       streamWindowMs: parseInt(process.env.RATE_LIMIT_STREAM_WINDOW_MS, 10) || 60 * 1000,
       streamMax: parseInt(process.env.RATE_LIMIT_STREAM_MAX, 10) || 1200,
+      endpointRules: parseRateLimitEndpointRules(windowMs),
     };
   })(),
 

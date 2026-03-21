@@ -4,7 +4,21 @@
 
 const mongoose = require('mongoose');
 const logger = require('./logger');
+const {
+  buildMongoPoolOptions,
+  startMongoPoolMonitoring,
+  prepareMongoPoolGracefulShutdown,
+  getMongoPoolMetrics,
+} = require('./mongoose-connection');
+const {
+  startMongoQueryMonitoring,
+  stopMongoQueryMonitoring,
+  getMongoQueryMonitorStats,
+} = require('./mongo-query-monitor');
 
+/**
+ *
+ */
 class DatabaseManager {
   constructor() {
     this.connection = null;
@@ -24,15 +38,14 @@ class DatabaseManager {
    * Configure les options de connexion optimisées pour haute charge
    */
   getConnectionOptions(serverType) {
-    const isProduction = process.env.NODE_ENV === 'production';
+    const pool = buildMongoPoolOptions();
 
-    // Options de base optimisées pour 2000+ connexions
+    // Options de base — pool dimensionné pour ~1500 users (défaut max 20 / min 10, voir mongoose-connection.js)
     const baseOptions = {
       retryWrites: true,
       w: 'majority',
-      // Pool de connexions optimisé
-      maxPoolSize: parseInt(process.env.MONGODB_MAX_POOL_SIZE) || 200,
-      minPoolSize: parseInt(process.env.MONGODB_MIN_POOL_SIZE) || 10,
+      maxPoolSize: pool.maxPoolSize,
+      minPoolSize: pool.minPoolSize,
       // Timeouts optimisés
       socketTimeoutMS: 45000,
       serverSelectionTimeoutMS: 10000,
@@ -50,17 +63,11 @@ class DatabaseManager {
 
     switch (serverType) {
       case 'atlas':
-        return {
-          ...baseOptions,
-          maxPoolSize: 200,
-          minPoolSize: 20,
-        };
+        return { ...baseOptions };
 
       case 'remote':
         return {
           ...baseOptions,
-          maxPoolSize: 200,
-          minPoolSize: 20,
           tls: process.env.MONGODB_TLS === 'true',
           tlsInsecure: process.env.MONGODB_TLS_INSECURE === 'true',
         };
@@ -70,8 +77,6 @@ class DatabaseManager {
         return {
           ...baseOptions,
           directConnection: true,
-          maxPoolSize: 100,
-          minPoolSize: 10,
         };
     }
   }
@@ -126,6 +131,12 @@ class DatabaseManager {
       });
 
       this.setupEventListeners();
+
+      startMongoPoolMonitoring(mongoose.connection, {
+        maxPoolSize: options.maxPoolSize,
+      });
+
+      startMongoQueryMonitoring(mongoose.connection);
 
       return true;
     } catch (error) {
@@ -214,6 +225,8 @@ class DatabaseManager {
       readyState: connection.readyState,
       serverType: this.detectServerType(process.env.MONGODB_URI),
       poolSize: connection.db?.serverConfig?.poolSize || 'N/A',
+      pool: getMongoPoolMetrics(),
+      queryMonitor: getMongoQueryMonitorStats(),
     };
   }
 
@@ -244,6 +257,9 @@ class DatabaseManager {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
     }
+
+    prepareMongoPoolGracefulShutdown();
+    stopMongoQueryMonitoring();
 
     if (this.connection) {
       await mongoose.connection.close();

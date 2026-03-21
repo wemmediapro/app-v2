@@ -6,6 +6,9 @@ const request = require('supertest');
 const { validatePagination, createValidatePagination, handleValidationErrors } = require('../validateInput');
 
 describe('validateInput middleware', () => {
+  /**
+   *
+   */
   function buildApp(extra = {}) {
     const app = express();
     app.get('/list', validatePagination, handleValidationErrors, (req, res) => {

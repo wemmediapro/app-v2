@@ -1,0 +1,23 @@
+# Autoscaling horizontal (metrics-server requis sur le cluster).
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gnv-backend
+  namespace: gnv-onboard
+  labels:
+    app.kubernetes.io/name: gnv-backend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gnv-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

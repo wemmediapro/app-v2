@@ -70,7 +70,7 @@ export default function ShipmapPage({
   shipmapDeckTypeFilter,
   setShipmapDeckTypeFilter,
   shipSearchQuery,
-  setShipSearchQuery,
+  setShipSearchQuery: _setShipSearchQuery,
   deckServices,
   selectedDeckInfo,
   filteredDeckServices,

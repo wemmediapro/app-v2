@@ -7,12 +7,9 @@ import {
   Users,
   Calendar,
   Navigation,
-  Wifi,
   Coffee,
   Search,
-  Edit,
   Plus,
-  Trash2,
   Info,
   MapPin,
   Filter,
@@ -23,7 +20,6 @@ import {
   Clock3,
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
-import toast from 'react-hot-toast';
 
 const Bateaux = () => {
   const [ships, setShips] = useState([]);

@@ -6,6 +6,9 @@ const logger = require('./logger');
 let Sentry = null;
 let isActive = false;
 
+/**
+ *
+ */
 function init() {
   const dsn = process.env.SENTRY_DSN;
   const env = process.env.NODE_ENV || 'development';
@@ -19,7 +22,7 @@ function init() {
       environment: env,
       tracesSampleRate: env === 'production' ? 0.1 : 1,
       maxBreadcrumbs: 50,
-      beforeSend(event, hint) {
+      beforeSend(event, _hint) {
         if (process.env.SENTRY_IGNORE_LOGS === '1') {
           return null;
         }
@@ -33,12 +36,18 @@ function init() {
   }
 }
 
+/**
+ *
+ */
 function captureException(err) {
   if (isActive && Sentry) {
     Sentry.captureException(err);
   }
 }
 
+/**
+ *
+ */
 function captureMessage(message, level = 'error') {
   if (isActive && Sentry) {
     Sentry.captureMessage(message, level);

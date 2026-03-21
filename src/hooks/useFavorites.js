@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 
 /**
  * @param {string} storageKey - Clé localStorage (ex. magazineFavorites_guest)
- * @param {string} [idField='id'] - Champ id sur les items ('id' ou '_id')
+ * @param {string} [idField] - Champ id sur les items ('id' ou '_id')
  * @returns {{ ids: string[], setIds: Function, isFavorite: (item: object) => boolean, toggle: (item: object) => void }}
  */
 export function useFavorites(storageKey, idField = 'id') {

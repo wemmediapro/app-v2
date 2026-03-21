@@ -1,6 +1,14 @@
 /**
- * Contenu principal : routeur de pages (home, radio, movies, webtv, magazine, …).
- * Données via PassengerMainContentContext (app) ou props (tests / storybook).
+ * Zone centrale : affiche **une** page à la fois selon `page` (state passager).
+ *
+ * Pages lazy-loadées : home, radio, films/séries, WebTV, magazine, restaurants, enfants, boutique,
+ * plan du navire, notifications, favoris, etc. (voir imports `lazy` ci-dessous).
+ *
+ * Données :
+ * - **Production** : lues depuis `PassengerMainContentContext` (rempli par `AppPassengerLayout`).
+ * - **Tests / storybook** : props directes ; si le contexte est absent et que `props` est vide, `{}`.
+ *
+ * `AnimatePresence` + `PageTransition` gèrent les entrées/sorties entre pages.
  */
 import React, { Suspense, lazy, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
@@ -23,7 +31,16 @@ const MochaFallbackPage = lazy(() => import('../pages/MochaFallbackPage'));
 
 function MainContent(props) {
   const fromContext = usePassengerMainContentOptional();
-  const merged = useMemo(() => (fromContext != null ? { ...fromContext, ...props } : props), [fromContext, props]);
+  /** Sans props de test/storybook : réutiliser la ref du contexte (évite un spread + nouvel objet à chaque render parent). */
+  const merged = useMemo(() => {
+    if (fromContext == null) {
+      return props ?? {};
+    }
+    if (props == null || (typeof props === 'object' && Object.keys(props).length === 0)) {
+      return fromContext;
+    }
+    return { ...fromContext, ...props };
+  }, [fromContext, props]);
   const {
     page,
     setPage,
@@ -150,7 +167,6 @@ function MainContent(props) {
     shopCategories,
     setShopFavorites,
     removeFromShopFavorites,
-    chat,
   } = merged;
 
   return (

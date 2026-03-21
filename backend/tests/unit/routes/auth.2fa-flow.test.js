@@ -28,6 +28,8 @@ jest.mock('../../../src/models/User', () => {
 
 jest.mock('../../../src/lib/logger', () => ({
   logFailedLogin: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn(),
   error: jest.fn(),
 }));
 jest.mock('../../../src/lib/cache-manager', () => ({

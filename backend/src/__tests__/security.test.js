@@ -38,11 +38,6 @@ function buildSecurityRoutesApp() {
 
 describe('Security Tests', () => {
   const User = require('../models/User');
-  const validAdminToken = generateToken({
-    id: '507f1f77bcf86cd799439011',
-    email: 'admin@test.com',
-    role: 'admin',
-  });
   const validUserToken = generateToken({
     id: '507f1f77bcf86cd799439012',
     email: 'user@test.com',

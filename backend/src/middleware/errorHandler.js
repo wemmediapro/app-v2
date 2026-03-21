@@ -11,7 +11,10 @@ try {
   sentry = { captureException: () => {} };
 }
 
-function errorHandler(err, req, res, next) {
+/**
+ * Répond en JSON ; journalise les 5xx et envoie à Sentry si disponible.
+ */
+function errorHandler(err, req, res, _next) {
   const status = err.status ?? err.statusCode ?? res.statusCode ?? 500;
   const message = err.message ?? 'Internal Server Error';
   if (status >= 500) {

@@ -1,11 +1,24 @@
 # CI — tests frontend (Vitest + Playwright), backend (Jest), charge légère (PR), audit npm
+# Optimisations : cache Playwright, action composite npm-ci, paths-ignore (docs/infra), Mongo 8.
 name: Tests
 
 on:
   push:
     branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'monitoring/**'
+      - 'k8s/**'
+      - 'infra/**'
   pull_request:
     branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'monitoring/**'
+      - 'k8s/**'
+      - 'infra/**'
   workflow_dispatch:
 
 permissions:
@@ -18,6 +31,8 @@ concurrency:
 
 env:
   NODE_VERSION: '22'
+  HUSKY: '0'
+  NPM_CONFIG_FUND: 'false'
 
 jobs:
   frontend-tests:
@@ -26,7 +41,7 @@ jobs:
     timeout-minutes: 45
     services:
       mongo:
-        image: mongo:7
+        image: mongo:8
         ports:
           - 27017:27017
     steps:
@@ -55,8 +70,11 @@ jobs:
         run: npm run test:coverage
 
       - name: Dépendances backend (e2e + API)
-        working-directory: backend
-        run: npm ci
+        uses: ./.github/actions/npm-ci
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          lockfile: backend/package-lock.json
+          working-directory: backend
 
       - name: Démarrer le backend
         working-directory: backend
@@ -94,8 +112,20 @@ jobs:
           done
           exit 1
 
-      - name: Playwright — navigateurs
-        run: npx playwright install --with-deps chromium
+      - name: Cache Playwright (navigateurs)
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Playwright — installation navigateurs
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            npx playwright install chromium
+          else
+            npx playwright install --with-deps chromium
+          fi
 
       - name: Playwright — e2e (chromium uniquement en CI)
         env:
@@ -144,13 +174,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/npm-ci
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: backend/package-lock.json
-
-      - run: npm ci
+          lockfile: backend/package-lock.json
+          working-directory: backend
 
       - name: TypeScript (types Express)
         run: npm run typecheck
@@ -218,13 +246,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/npm-ci
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: dashboard/package-lock.json
+          lockfile: dashboard/package-lock.json
+          working-directory: dashboard
 
-      - run: npm ci
       - run: npm run build
       - name: Audit dashboard (moderate → fail)
         run: npm audit --audit-level=moderate
@@ -236,7 +263,7 @@ jobs:
     timeout-minutes: 25
     services:
       mongo:
-        image: mongo:7
+        image: mongo:8
         ports:
           - 27017:27017
     steps:
@@ -305,16 +332,16 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            backend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Audit racine (moderate → fail)
         run: npm audit --audit-level=moderate
 
-      - name: Dépendances backend
-        working-directory: backend
-        run: npm ci
+      - uses: ./.github/actions/npm-ci
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          lockfile: backend/package-lock.json
+          working-directory: backend
 
       - name: Audit backend (moderate → fail)
         working-directory: backend

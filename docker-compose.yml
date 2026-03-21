@@ -1,13 +1,18 @@
-# MongoDB 8 — compatible Ubuntu 24.04 (MongoDB 7 Enterprise non dispo pour 24.04)
-# Redis — obligatoire en mode cluster PM2 pour Socket.IO
-# Usage : docker-compose up -d (démarre mongo + redis)
-# L’application (backend, frontend) se déploie avec PM2 sur l’OS, pas dans Docker.
+# Stack locale / pré-prod : MongoDB 8 + Redis 7 (sécurisés, healthchecks, limites).
 #
-# MongoDB (S5) : auth + bind loopback. MONGO_ROOT_PASSWORD (défaut "changeme"). En prod : mot de passe fort.
-# Backend : MONGODB_URI=mongodb://admin:${MONGO_ROOT_PASSWORD}@localhost:27017/gnv_onboard
+# Défaut (infra uniquement, comme avant) :
+#   docker compose up -d
 #
-# Redis (S4) : bind loopback + requirepass + volume persistant. REDIS_PASSWORD (défaut "changeme"). En prod : mot de passe fort.
-# Backend : REDIS_URI=redis://:${REDIS_PASSWORD}@localhost:6379
+# Infra + API Node (image Dockerfile à la racine) :
+#   docker compose --profile app up -d --build
+#
+# Variables : copier .env.docker.example vers .env ou exporter MONGO_ROOT_PASSWORD / REDIS_PASSWORD.
+#
+# Sans profil « app » : backend sur l’hôte utilise encore :
+#   MONGODB_URI=mongodb://admin:PASSWORD@127.0.0.1:27017/gnv_onboard?authSource=admin
+#   REDIS_URI=redis://:PASSWORD@127.0.0.1:6379
+
+name: gnv-onboard
 
 services:
   mongo:
@@ -16,22 +21,107 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-changeme}
-    command: mongod --auth
+    command: >
+      mongod --auth
+      --bind_ip_all
+      --wiredTigerCacheSizeGB ${MONGO_WIRED_TIGER_CACHE_GB:-0.5}
     ports:
-      - "127.0.0.1:27017:27017"  # C5 : bind loopback uniquement
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo_data:/data/db
+    networks:
+      - gnv_internal
     restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'mongosh -u "$$MONGO_INITDB_ROOT_USERNAME" -p "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --quiet --eval "db.adminCommand(\"ping\").ok" | grep -q 1',
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+    mem_limit: 1g
+    cpus: "1.0"
 
   redis:
     image: redis:7-alpine
     container_name: gnv-redis
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
     ports:
-      - "127.0.0.1:6379:6379"  # C4 : bind loopback uniquement
+      - "127.0.0.1:6379:6379"
     volumes:
-      - redis_data:/data       # C4 : volume persistant
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme} --maxmemory 512mb --maxmemory-policy allkeys-lru
+      - redis_data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-changeme}
+      --maxmemory ${REDIS_MAXMEMORY:-512mb}
+      --maxmemory-policy allkeys-lru
+      --tcp-backlog 511
+      --timeout 0
+      --tcp-keepalive 300
+    networks:
+      - gnv_internal
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 768m
+    cpus: "0.5"
+
+  # Profil « app » : API dans Docker (même réseau que mongo/redis).
+  # Obligatoire en prod : JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, FRONTEND_URL, SENTRY_DSN (via env_file ou variables).
+  backend:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gnv-backend
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-changeme}@mongo:27017/gnv_onboard?authSource=admin&directConnection=true
+      REDIS_URI: redis://:${REDIS_PASSWORD:-changeme}@redis:6379
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gnv_internal
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    mem_limit: 1536m
+    cpus: "1.5"
+
+networks:
+  gnv_internal:
+    driver: bridge
 
 volumes:
   mongo_data:

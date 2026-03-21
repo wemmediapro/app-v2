@@ -9,6 +9,7 @@ jest.mock('../../../src/lib/cache-manager', () => ({
   isConnected: false,
   get: jest.fn(),
   set: jest.fn(),
+  del: jest.fn(),
 }));
 
 const jwt = require('jsonwebtoken');
@@ -210,6 +211,35 @@ describe('authMiddleware (flux)', () => {
     expect(req.user).toMatchObject({ email: 'u@test.com', role: 'user' });
   });
 
+  it('cache miss + user valide → set Redis avec TTL 60 s', async () => {
+    cacheManager.isConnected = true;
+    cacheManager.get.mockResolvedValue(null);
+    User.findById.mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue({
+          _id: '507f1f77bcf86cd799439011',
+          email: 'fresh@test.com',
+          role: 'user',
+          isActive: true,
+        }),
+      }),
+    });
+    const token = generateToken({ id: '507f1f77bcf86cd799439011', email: 'u@test.com', role: 'user' });
+    const req = {
+      cookies: {},
+      header: (n) => (n === 'Authorization' ? `Bearer ${token}` : ''),
+    };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const next = jest.fn();
+    await authMiddleware(req, res, next);
+    expect(next).toHaveBeenCalled();
+    expect(cacheManager.set).toHaveBeenCalledWith(
+      'auth:user:507f1f77bcf86cd799439011',
+      expect.objectContaining({ email: 'fresh@test.com', role: 'user' }),
+      60
+    );
+  });
+
   it('401 compte désactivé', async () => {
     User.findById.mockReturnValue({
       select: jest.fn().mockReturnValue({
@@ -255,6 +285,37 @@ describe('authMiddleware (flux)', () => {
     expect(next).toHaveBeenCalled();
     expect(req.user.email).toBe('cached@test.com');
     expect(User.findById).not.toHaveBeenCalled();
+  });
+
+  it('cache hit admin + 2FA : MFA_REQUIRED sans claim mfa (pas de contournement cache)', async () => {
+    cacheManager.isConnected = true;
+    cacheManager.get.mockImplementation(async (key) => {
+      if (String(key).startsWith('blacklist:')) return null;
+      if (String(key).startsWith('auth:user:')) {
+        return {
+          _id: '507f1f77bcf86cd799439011',
+          email: 'a@test.com',
+          role: 'admin',
+          twoFactorEnabled: true,
+          isActive: true,
+        };
+      }
+      return null;
+    });
+    const token = generateToken({ id: '507f1f77bcf86cd799439011', email: 'a@test.com', role: 'admin' });
+    const req = {
+      originalUrl: '/api/admin/users',
+      cookies: {},
+      header: (n) => (n === 'Authorization' ? `Bearer ${token}` : ''),
+      get: (h) => (h === 'X-2FA-Token' ? '' : ''),
+    };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const next = jest.fn();
+    await authMiddleware(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'MFA_REQUIRED' }));
+    expect(User.findById).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('cache utilisateur avec id seul (sans _id) alimente req.user.id', async () => {

@@ -11,12 +11,18 @@ const BACKEND_ROOT = path.join(__dirname, '..', '..');
 const DATA_DIR = path.join(BACKEND_ROOT, 'data');
 const MOVIES_FILE = path.join(DATA_DIR, 'movies.json');
 
+/**
+ *
+ */
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 }
 
+/**
+ *
+ */
 function readMovies() {
   ensureDir();
   if (!fs.existsSync(MOVIES_FILE)) {
@@ -32,11 +38,17 @@ function readMovies() {
   }
 }
 
+/**
+ *
+ */
 function writeMovies(movies) {
   ensureDir();
   fs.writeFileSync(MOVIES_FILE, JSON.stringify(movies, null, 2), 'utf8');
 }
 
+/**
+ *
+ */
 function nextId(movies) {
   let max = 0;
   movies.forEach((m) => {

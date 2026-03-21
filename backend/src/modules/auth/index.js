@@ -27,7 +27,7 @@ const requireCrew = (req, res, next) => {
  * Initialisation : les routes auth sont déjà montées par src/routes/index.js.
  * Cette fonction ne monte plus de routes pour éviter les doublons.
  */
-const initialize = (app, io) => {
+const initialize = (_app, _io) => {
   logger.info({ event: 'module_auth_initialized' });
 };
 

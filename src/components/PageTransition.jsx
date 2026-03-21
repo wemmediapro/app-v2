@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 
 const transition = { duration: 0.25 };
 
-export default function PageTransition({ keyProp, children, className }) {
+function PageTransition({ keyProp, children, className }) {
   return (
     <motion.div
       key={keyProp}
@@ -20,3 +20,5 @@ export default function PageTransition({ keyProp, children, className }) {
     </motion.div>
   );
 }
+
+export default React.memo(PageTransition);

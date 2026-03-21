@@ -1,18 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import {
-  MessageSquare,
-  Search,
-  User,
-  Clock,
-  Send,
-  MoreVertical,
-  Lock,
-  Unlock,
-  Filter,
-  Globe,
-  MapPin,
-} from 'lucide-react';
+import { MessageSquare, Search, User, Send, MoreVertical, Unlock, Globe, MapPin } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import toast from 'react-hot-toast';
 
@@ -88,17 +76,6 @@ const Messages = () => {
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
-
-  const formatDate = (date) => {
-    const now = new Date();
-    const messageDate = new Date(date);
-    const diffTime = Math.abs(now - messageDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 1) return "Aujourd'hui";
-    if (diffDays === 2) return 'Hier';
-    return messageDate.toLocaleDateString('fr-FR');
   };
 
   const decryptedMessages = useMemo(() => {

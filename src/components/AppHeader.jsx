@@ -5,7 +5,7 @@ import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import LanguageSelector from './LanguageSelector';
 
-export default function AppHeader({ page, setPage, t }) {
+function AppHeader({ page, setPage, t }) {
   return (
     <header
       className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between gap-2 sm:gap-4 px-4 sm:px-5 py-3.5 sm:py-3 text-white shadow-lg rounded-b-2xl min-h-[60px] sm:min-h-[56px] max-w-[768px] mx-auto bg-[#264FFF] safe-area-top"
@@ -39,3 +39,5 @@ export default function AppHeader({ page, setPage, t }) {
     </header>
   );
 }
+
+export default React.memo(AppHeader);

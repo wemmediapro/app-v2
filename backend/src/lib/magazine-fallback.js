@@ -11,12 +11,18 @@ const BACKEND_ROOT = path.join(__dirname, '..', '..');
 const DATA_DIR = path.join(BACKEND_ROOT, 'data');
 const MAGAZINE_FILE = path.join(DATA_DIR, 'magazine.json');
 
+/**
+ *
+ */
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 }
 
+/**
+ *
+ */
 function readArticles() {
   ensureDir();
   if (!fs.existsSync(MAGAZINE_FILE)) {
@@ -32,6 +38,9 @@ function readArticles() {
   }
 }
 
+/**
+ *
+ */
 function localizeArticle(article, lang) {
   if (!article) {
     return article;

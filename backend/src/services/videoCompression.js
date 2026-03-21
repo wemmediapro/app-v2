@@ -66,7 +66,7 @@ function compressTo480p(inputPath, outputPath) {
         '+faststart', // Optimisation pour le streaming web
       ])
       .output(outputPath)
-      .on('start', (cmd) => {
+      .on('start', (_cmd) => {
         logger.info({ event: 'video_compression_started', file: path.basename(inputPath) });
       })
       .on('progress', (progress) => {

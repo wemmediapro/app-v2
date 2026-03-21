@@ -5,6 +5,7 @@
 
 const express = require('express');
 const path = require('path');
+const { RE_HTTP_RANGE_BYTES } = require('../constants/regex');
 const fs = require('fs');
 const fsp = fs.promises;
 const crypto = require('crypto');
@@ -52,7 +53,7 @@ function setStreamHeaders(res, contentType, options = {}) {
 }
 
 function pipeWithErrorHandling(stream, res, errMessage = 'Erreur lecture média') {
-  stream.on('error', (err) => {
+  stream.on('error', (_err) => {
     if (!res.headersSent) {
       res.status(500).json({ message: errMessage });
     } else {
@@ -69,7 +70,7 @@ function pipeWithErrorHandling(stream, res, errMessage = 'Erreur lecture média'
  * @param {object} res
  * @param {string} filePath
  * @param {object} mimeMap - ex. MIME_TYPES_VIDEO ou MIME_TYPES_AUDIO
- * @param {function} [next] - Si fourni et fichier absent, appelle next() au lieu d'envoyer 404 (middleware).
+ * @param {Function} [next] - Si fourni et fichier absent, appelle next() au lieu d'envoyer 404 (middleware).
  * @param {string} [notFoundMessage] - Message 404 si fichier absent.
  */
 async function streamFile(req, res, filePath, mimeMap, next, notFoundMessage = 'Fichier non trouvé') {
@@ -94,7 +95,7 @@ async function streamFile(req, res, filePath, mimeMap, next, notFoundMessage = '
 
   const isHead = req.method === 'HEAD';
   const range = req.headers.range;
-  const hasRange = range && /^bytes=/.test(range.trim());
+  const hasRange = range && RE_HTTP_RANGE_BYTES.test(range.trim());
 
   setStreamHeaders(res, contentType, { exposeHeaders: 'Content-Range, Accept-Ranges, Content-Length' });
   res.setHeader('Last-Modified', lastModified);

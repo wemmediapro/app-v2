@@ -12,6 +12,9 @@ const THRESHOLD_ALERT = parseFloat(process.env.MEMORY_HEAP_ALERT_PERCENT, 10) ||
 const THRESHOLD_WARNING = parseFloat(process.env.MEMORY_HEAP_WARNING_PERCENT, 10) || 85;
 const THRESHOLD_CRITICAL = parseFloat(process.env.MEMORY_HEAP_CRITICAL_PERCENT, 10) || 90;
 
+/**
+ *
+ */
 class MemoryMonitor extends EventEmitter {
   constructor() {
     super();

@@ -16,7 +16,15 @@ import { PAGE_CONFIG, getFallbackRoute } from './mainContentRoutes';
 
 function MainContentPerformant(props) {
   const fromContext = usePassengerMainContentOptional();
-  const merged = useMemo(() => (fromContext != null ? { ...fromContext, ...props } : props), [fromContext, props]);
+  const merged = useMemo(() => {
+    if (fromContext == null) {
+      return props ?? {};
+    }
+    if (props == null || (typeof props === 'object' && Object.keys(props).length === 0)) {
+      return fromContext;
+    }
+    return { ...fromContext, ...props };
+  }, [fromContext, props]);
   const { page, t } = merged;
   const route = PAGE_CONFIG[page] || getFallbackRoute(page);
   const { Component, getProps, useTransition, fallbackHeight } = route;

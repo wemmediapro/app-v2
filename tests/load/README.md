@@ -19,6 +19,12 @@ Dans `config.env` du backend, augmenter par exemple :
 | -------------------------------- | ------------------------------------------------------------ |
 | `npm run test:load:k6`           | k6 — profil **full** (1500 VUs, ~8 min)                      |
 | `npm run test:load:k6:ci`        | k6 — profil **ci** (100 VUs)                                 |
+| `npm run test:load:api`          | k6 — **GET publics** (liste films, radio, banners, etc.)     |
+| `npm run test:load:api:ci`       | k6 — même scénario, profil **ci** (rampe courte)             |
+| `npm run test:load:spike`        | k6 — **pic** de charge sur quelques GET publics              |
+| `npm run test:load:spike:ci`     | k6 — pic, profil **ci**                                      |
+| `npm run test:load:soak`         | k6 — **soak** (charge faible longue durée, stabilité)        |
+| `npm run test:load:soak:ci`      | k6 — soak court (~90 s) pour CI / smoke                      |
 | `npm run test:load:artillery`    | Artillery — `-e full`                                        |
 | `npm run test:load:artillery:ci` | Artillery — `-e ci`                                          |
 | `npm run test:load:report`       | k6 JSON + Artillery JSON + **HTML** (profil `ci` par défaut) |

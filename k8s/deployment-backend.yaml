@@ -1,0 +1,112 @@
+# Image : construire depuis la racine du dépôt (Dockerfile) et pousser vers votre registry.
+#   docker build -t your-registry/gnv-backend:1.0.0 .
+#   docker push your-registry/gnv-backend:1.0.0
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gnv-backend
+  namespace: gnv-onboard
+  labels:
+    app.kubernetes.io/name: gnv-backend
+    app.kubernetes.io/component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gnv-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gnv-backend
+    spec:
+      securityContext:
+        fsGroup: 1001
+      containers:
+        - name: backend
+          image: your-registry/gnv-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: gnv-backend-config
+          env:
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: gnv-secrets
+                  key: mongodb-uri
+            - name: REDIS_URI
+              valueFrom:
+                secretKeyRef:
+                  name: gnv-secrets
+                  key: redis-uri
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: gnv-secrets
+                  key: jwt-secret
+            - name: ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: gnv-secrets
+                  key: admin-email
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gnv-secrets
+                  key: admin-password
+            - name: SENTRY_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: gnv-secrets
+                  key: sentry-dsn
+                  optional: true
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 1536Mi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/public/uploads
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: uploads
+          emptyDir:
+            sizeLimit: 2Gi

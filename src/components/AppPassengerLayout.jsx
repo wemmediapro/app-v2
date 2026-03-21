@@ -1,5 +1,12 @@
 /**
- * UI shell passager : conditions, header, bannières offline/sync, MainContent, BottomNav.
+ * Coque UI passager après acceptation des conditions.
+ *
+ * Flux de rendu :
+ * 1. `ConditionsGate` tant que les CGU / politique ne sont pas acceptées (persistées en localStorage).
+ * 2. `AppHeader` + `OfflineBanner` + toasts file offline (`offlineQueue` / `offlineSentNotice`).
+ * 3. `PassengerMainContentProvider` : injecte `mainContentProps` pour que `MainContent` lise le contexte
+ *    (évite de passer des dizaines de props depuis ce composant).
+ * 4. `BannersCarousel`, `MainContent` (router de pages lazy), `BottomNav`.
  */
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';

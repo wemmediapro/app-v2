@@ -274,7 +274,7 @@ router.get('/:id', authenticateToken, (req, res) => {
       res.json(user);
     } else {
       // Retourner seulement les données publiques
-      const { password, ...publicUser } = user;
+      const { password: _password, ...publicUser } = user;
       res.json(publicUser);
     }
   } catch (error) {
@@ -422,7 +422,7 @@ router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
 });
 
 // Fonction d'initialisation du module
-const initialize = (app, io) => {
+const initialize = (app, _io) => {
   app.use('/api/users', router);
   logger.info({ event: 'module_users_initialized' });
 };

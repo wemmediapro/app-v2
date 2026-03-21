@@ -11,6 +11,9 @@ const logger = require('./logger');
 const queue = [];
 let running = false;
 
+/**
+ *
+ */
 async function drain() {
   if (running || queue.length === 0) {
     return;
@@ -47,6 +50,9 @@ function enqueueJob(label, fn) {
   });
 }
 
+/**
+ *
+ */
 function queueLength() {
   return queue.length;
 }

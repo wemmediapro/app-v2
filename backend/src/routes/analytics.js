@@ -13,6 +13,12 @@ const WebTVChannel = require('../models/WebTVChannel');
 const Feedback = require('../models/Feedback');
 const connectionCounters = require('../lib/connectionCounters');
 const { logRouteError } = require('../lib/route-logger');
+const {
+  aggregateContentInventorySummary,
+  aggregateAnalyticsUserOverview,
+  aggregateAnalyticsTemporalContent,
+  aggregateAnalyticsRecentFeedback,
+} = require('../services/analyticsAggregations');
 
 /** Uptime en pourcentage (basé sur process.uptime(), plafonné à 100 %) */
 function getSystemUptimePercent() {
@@ -76,8 +82,32 @@ router.get('/content', authMiddleware, adminMiddleware, async (req, res) => {
         userBehavior: {},
       });
     }
-    const [totalMovies, totalArticles, totalRadio, totalActivities, totalProducts, totalRestaurants, viewersResult] =
-      await Promise.all([
+    let totalMovies = 0;
+    let totalArticles = 0;
+    let totalRadio = 0;
+    let totalActivities = 0;
+    let totalProducts = 0;
+    let totalRestaurants = 0;
+    let totalViewers = 0;
+    try {
+      const inv = await aggregateContentInventorySummary({
+        Movie,
+        Article,
+        RadioStation,
+        EnfantActivity,
+        Product,
+        Restaurant,
+        WebTVChannel,
+      });
+      totalMovies = inv.totalMovies;
+      totalArticles = inv.totalArticles;
+      totalRadio = inv.totalRadio;
+      totalActivities = inv.totalActivities;
+      totalProducts = inv.totalProducts;
+      totalRestaurants = inv.totalRestaurants;
+      totalViewers = inv.totalViewers;
+    } catch {
+      const [tm, ta, tr, te, tp, trr, viewersResult] = await Promise.all([
         Movie.countDocuments().catch(() => 0),
         Article.countDocuments().catch(() => 0),
         RadioStation.countDocuments().catch(() => 0),
@@ -86,7 +116,14 @@ router.get('/content', authMiddleware, adminMiddleware, async (req, res) => {
         Restaurant.countDocuments({ isActive: true }).catch(() => 0),
         WebTVChannel.aggregate([{ $group: { _id: null, total: { $sum: '$viewers' } } }]).catch(() => []),
       ]);
-    const totalViewers = (viewersResult && viewersResult[0] && viewersResult[0].total) || 0;
+      totalMovies = tm;
+      totalArticles = ta;
+      totalRadio = tr;
+      totalActivities = te;
+      totalProducts = tp;
+      totalRestaurants = trr;
+      totalViewers = (viewersResult && viewersResult[0] && viewersResult[0].total) || 0;
+    }
     const totalContent = totalMovies + totalArticles + totalRadio + totalActivities + totalProducts + totalRestaurants;
     const contentTypes = [
       { type: 'Films & séries', count: totalMovies, views: 0, rating: null },
@@ -152,43 +189,33 @@ router.get('/overview', authMiddleware, adminMiddleware, async (req, res) => {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-    const [
-      totalUsers,
-      activeUsers,
-      totalMovies,
-      totalArticles,
-      totalRadio,
-      totalActivities,
-      totalProducts,
-      totalRestaurants,
-      usersLast30Days,
-      usersPrevious30Days,
-      moviesLast30Days,
-      moviesPrevious30Days,
-      articlesLast30Days,
-      articlesPrevious30Days,
-      recentFeedbacks,
-      recentMovies,
-      recentArticles,
-    ] = await Promise.all([
-      User.countDocuments(),
-      User.countDocuments({ isActive: true }),
-      Movie.countDocuments().catch(() => 0),
-      Article.countDocuments().catch(() => 0),
-      RadioStation.countDocuments().catch(() => 0),
-      EnfantActivity.countDocuments().catch(() => 0),
-      Product.countDocuments().catch(() => 0),
-      Restaurant.countDocuments({ isActive: true }).catch(() => 0),
-      User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
-      User.countDocuments({ createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } }),
-      Movie.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }).catch(() => 0),
-      Movie.countDocuments({ createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } }).catch(() => 0),
-      Article.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }).catch(() => 0),
-      Article.countDocuments({ createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } }).catch(() => 0),
-      Feedback.find().sort({ createdAt: -1 }).limit(5).lean(),
-      Movie.find().sort({ createdAt: -1 }).limit(3).select('title translations createdAt').lean(),
-      Article.find().sort({ createdAt: -1 }).limit(3).select('translations createdAt').lean(),
-    ]);
+    const userStats = await aggregateAnalyticsUserOverview(User, thirtyDaysAgo, sixtyDaysAgo);
+    const totalUsers = userStats.totalUsers;
+    const activeUsers = userStats.activeUsers;
+    const usersLast30Days = userStats.usersLast30;
+    const usersPrevious30Days = userStats.usersPrevious30;
+
+    const [movieStats, articleStats, recentFeedbacks, totalRadio, totalActivities, totalProducts, totalRestaurants] =
+      await Promise.all([
+        aggregateAnalyticsTemporalContent(Movie, thirtyDaysAgo, sixtyDaysAgo),
+        typeof Article.countDocuments === 'function'
+          ? aggregateAnalyticsTemporalContent(Article, thirtyDaysAgo, sixtyDaysAgo)
+          : Promise.resolve({ total: 0, last30: 0, prev30: 0, recent: [] }),
+        aggregateAnalyticsRecentFeedback(Feedback, 5),
+        RadioStation.countDocuments().catch(() => 0),
+        EnfantActivity.countDocuments().catch(() => 0),
+        Product.countDocuments().catch(() => 0),
+        Restaurant.countDocuments({ isActive: true }).catch(() => 0),
+      ]);
+
+    const totalMovies = movieStats.total;
+    const totalArticles = articleStats.total;
+    const moviesLast30Days = movieStats.last30;
+    const moviesPrevious30Days = movieStats.prev30;
+    const articlesLast30Days = articleStats.last30;
+    const articlesPrevious30Days = articleStats.prev30;
+    const recentMovies = movieStats.recent;
+    const recentArticles = articleStats.recent;
 
     const totalContent = totalMovies + totalArticles + totalRadio + totalActivities + totalProducts + totalRestaurants;
     const contentLast30 = moviesLast30Days + articlesLast30Days;

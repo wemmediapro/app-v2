@@ -5,6 +5,9 @@
  */
 const MAX_SEARCH_LENGTH = 100;
 
+/**
+ *
+ */
 function escapeRegex(str) {
   if (str == null || typeof str !== 'string') {
     return '';

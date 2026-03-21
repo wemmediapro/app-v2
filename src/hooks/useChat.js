@@ -3,8 +3,8 @@
  * Conforme à docs/REFACTORING-APP.md. Logique extraite de App.jsx.
  */
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
-import { io } from 'socket.io-client';
 import { apiService } from '../services/apiService';
+import { buildPassengerSocketIoOptions } from '../lib/socketIoClientOptions';
 import {
   enqueue,
   flushPendingQueue,
@@ -34,8 +34,14 @@ function chatDmRoomName(userIdA, userIdB) {
   return a < b ? `chat:${a}_${b}` : `chat:${b}_${a}`;
 }
 
+/** Id pair pour la room DM (string ou objet conversation). */
+function peerIdFromSelection(sel) {
+  if (sel == null) return null;
+  return typeof sel === 'string' ? sel : (sel?.id ?? null);
+}
+
 function peerChatRoom(selectedChat) {
-  const peerId = typeof selectedChat === 'string' ? selectedChat : selectedChat?.id;
+  const peerId = peerIdFromSelection(selectedChat);
   const myId = getUserIdFromToken();
   if (!peerId || !myId) return null;
   return chatDmRoomName(myId, peerId);
@@ -75,6 +81,13 @@ export function useChat(options = {}) {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const conversationMenuRefs = useRef({});
+  /** Réf. pour déconnecter la socket si le cleanup s’exécute avant/après la fin de l’import dynamique. */
+  const socketInstanceRef = useRef(null);
+  /** Conversation active — utilisé au `connect` / reconnect pour rejoindre la room DM sans effet dépendant. */
+  const selectedChatRef = useRef(selectedChat);
+  useEffect(() => {
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
 
   useLayoutEffect(() => {
     setOfflineFlushHandler(async (item) => {
@@ -95,84 +108,98 @@ export function useChat(options = {}) {
     return () => setOfflineFlushHandler(null);
   }, [socket]);
 
-  // Socket.io connection
+  // Socket.io — import dynamique pour réduire le JS initial (chunk séparé).
   useEffect(() => {
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) return;
-    let newSocket = null;
-    let connectTimeout;
+    if (!token) return undefined;
+    let cancelled = false;
+    socketInstanceRef.current = null;
     const socketUrl = import.meta.env.DEV
       ? ''
       : import.meta.env.VITE_SOCKET_URL ||
         (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') ||
         (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
-    try {
-      newSocket = io(socketUrl || undefined, {
-        auth: { token: token || '' },
-        transports: ['websocket'],
-        reconnection: false,
-        timeout: 2000,
-        autoConnect: false,
-      });
-      connectTimeout = setTimeout(() => {
-        if (newSocket && !newSocket.connected) {
-          newSocket.removeAllListeners();
-          newSocket = null;
+
+    (async () => {
+      try {
+        const { io } = await import('socket.io-client');
+        if (cancelled) return;
+        const s = io(socketUrl || undefined, buildPassengerSocketIoOptions(token));
+        socketInstanceRef.current = s;
+
+        const joinNotificationAndDmRooms = () => {
+          const myId = getUserIdFromToken();
+          if (!myId) return;
+          s.emit('join-room', `notifications:${myId}`);
+          const peer = peerIdFromSelection(selectedChatRef.current);
+          if (peer) {
+            s.emit('join-room', chatDmRoomName(myId, peer));
+          }
+        };
+
+        s.connect();
+        s.on('connect', () => {
+          if (cancelled) return;
+          setSocket(s);
+          joinNotificationAndDmRooms();
+        });
+        // Ne pas détruire la socket ici : reconnexion bornée (voir socketIoClientOptions.js).
+        s.on('connect_error', () => {});
+        s.on('disconnect', () => {});
+        s.on('new-message', (message) => {
+          if (message && message.__batch === true && Array.isArray(message.messages)) {
+            setChatMessages((prev) => [...prev, ...message.messages]);
+            return;
+          }
+          setChatMessages((prev) => [...prev, message]);
+        });
+        s.on('typing', (data) => {
+          setTypingUsers((prev) => ({ ...prev, [data.userId]: data.isTyping }));
+        });
+        s.on('message-read', (data) => {
+          setChatMessages((prev) => prev.map((msg) => (msg.id === data.messageId ? { ...msg, isRead: true } : msg)));
+        });
+        if (cancelled) {
+          try {
+            s.removeAllListeners();
+            if (s.connected) s.disconnect();
+          } catch (_) {}
+          socketInstanceRef.current = null;
         }
-      }, 2000);
-      newSocket.connect();
-      newSocket.on('connect', () => {
-        clearTimeout(connectTimeout);
-        setSocket(newSocket);
-        const myId = getUserIdFromToken();
-        if (myId) {
-          newSocket.emit('join-room', `notifications:${myId}`);
+      } catch (_err) {
+        const inst = socketInstanceRef.current;
+        if (inst) {
+          try {
+            inst.disconnect();
+          } catch (_) {}
+          socketInstanceRef.current = null;
         }
-      });
-      newSocket.on('connect_error', () => {
-        clearTimeout(connectTimeout);
-        if (newSocket) {
-          newSocket.removeAllListeners();
-          newSocket = null;
-        }
-      });
-      newSocket.on('disconnect', () => {});
-      newSocket.on('new-message', (message) => {
-        setChatMessages((prev) => [...prev, message]);
-      });
-      newSocket.on('typing', (data) => {
-        setTypingUsers((prev) => ({ ...prev, [data.userId]: data.isTyping }));
-      });
-      newSocket.on('message-read', (data) => {
-        setChatMessages((prev) => prev.map((msg) => (msg.id === data.messageId ? { ...msg, isRead: true } : msg)));
-      });
-    } catch (err) {
-      if (newSocket) {
-        try {
-          newSocket.disconnect();
-        } catch (_) {}
       }
-    }
+    })();
+
     return () => {
-      clearTimeout(connectTimeout);
-      if (newSocket) {
+      cancelled = true;
+      const s = socketInstanceRef.current;
+      socketInstanceRef.current = null;
+      if (s) {
         try {
-          if (newSocket.connected) newSocket.disconnect();
-          else newSocket.removeAllListeners();
+          if (s.connected) s.disconnect();
+          else s.removeAllListeners();
         } catch (_) {}
       }
     };
   }, []);
 
+  // Room DM quand la conversation change (pas sur `socket` : évite un 2e join identique au premier `connect`).
   useEffect(() => {
-    if (!socket?.connected) return;
+    const peer = peerIdFromSelection(selectedChat);
+    if (!peer) return;
+    const s = socketInstanceRef.current;
+    if (!s?.connected) return;
     const myId = getUserIdFromToken();
     if (!myId) return;
-    socket.emit('join-room', `notifications:${myId}`);
-    if (selectedChat) {
-      socket.emit('join-room', chatDmRoomName(myId, selectedChat));
-    }
-  }, [socket, selectedChat]);
+    s.emit('join-room', chatDmRoomName(myId, peer));
+  }, [selectedChat]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

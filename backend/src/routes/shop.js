@@ -458,7 +458,7 @@ router.post('/cart/add', authenticateToken, async (req, res) => {
 // Remove item from cart
 router.delete('/cart/remove/:productId', authenticateToken, async (req, res) => {
   try {
-    const { productId } = req.params;
+    const { productId: _productId } = req.params;
 
     // Mock removing from cart
     res.json({

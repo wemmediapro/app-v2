@@ -24,8 +24,6 @@ import {
   BarChart3,
   Volume2,
   VolumeX,
-  ArrowUp,
-  ArrowDown,
   Copy,
   CheckCircle,
   AlertCircle,
@@ -34,7 +32,6 @@ import {
   ChevronRight,
   GripVertical,
 } from 'lucide-react';
-import FilterBar from '../components/FilterBar';
 import { apiService } from '../services/apiService';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
@@ -47,8 +44,8 @@ const WebTV = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all'); // all, live, ondemand
-  const [countryFilter, setCountryFilter] = useState('all');
-  const [destinationFilter, setDestinationFilter] = useState('all');
+  const [countryFilter, _setCountryFilter] = useState('all');
+  const [destinationFilter, _setDestinationFilter] = useState('all');
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [editingChannel, setEditingChannel] = useState(null); // copie pour modifier nom, description, etc.
   const [showModal, setShowModal] = useState(false);

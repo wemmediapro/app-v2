@@ -1,6 +1,7 @@
 const express = require('express');
+const fs = require('fs');
 const mongoose = require('mongoose');
-const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware, invalidateAuthUserCache } = require('../middleware/auth');
 const {
   registerValidation,
   strongPassword,
@@ -30,6 +31,8 @@ const redisConnectionManager = require('../lib/redis-connection-manager');
 const connectionManager = require('../lib/connection-manager');
 const memoryMonitor = require('../lib/memory-monitor');
 const auditService = require('../services/auditService');
+const { aggregateAdminUserDashboard, aggregateAdminFeedbackDashboard } = require('../services/analyticsAggregations');
+const bullJobs = require('../jobs');
 const { auditContext } = require('../middleware/auditLog');
 const { logRouteError } = require('../lib/route-logger');
 
@@ -253,66 +256,39 @@ router.get('/dashboard', async (req, res) => {
       }
     }
 
-    // Get statistics (toutes les valeurs depuis la base de données)
     const [
-      totalUsers,
-      activeUsers,
+      userDash,
+      feedbackDash,
       totalRestaurants,
       totalMessages,
-      totalFeedback,
       totalViewersResult,
       totalArticles,
       totalRadioStations,
       totalMovies,
       totalActivities,
       totalProducts,
-      recentUsers,
-      recentFeedback,
     ] = await Promise.all([
-      User.countDocuments(),
-      User.countDocuments({ isActive: true }),
+      aggregateAdminUserDashboard(User),
+      aggregateAdminFeedbackDashboard(Feedback),
       Restaurant.countDocuments({ isActive: true }),
       Message.countDocuments(),
-      Feedback.countDocuments(),
       WebTVChannel.aggregate([{ $group: { _id: null, total: { $sum: '$viewers' } } }]),
       typeof Article.countDocuments === 'function' ? Article.countDocuments().catch(() => 0) : Promise.resolve(0),
       RadioStation.countDocuments().catch(() => 0),
       Movie.countDocuments().catch(() => 0),
       EnfantActivity.countDocuments().catch(() => 0),
       Product.countDocuments().catch(() => 0),
-      User.find().sort({ createdAt: -1 }).limit(5).select('firstName lastName email createdAt'),
-      Feedback.find().sort({ createdAt: -1 }).limit(5).populate('user', 'firstName lastName email'),
     ]);
 
     const totalViewers = (totalViewersResult && totalViewersResult[0] && totalViewersResult[0].total) || 0;
 
-    // Get feedback by status
-    const feedbackByStatus = await Feedback.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
-    // Get users by role
-    const usersByRole = await User.aggregate([
-      {
-        $group: {
-          _id: '$role',
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
     const payload = {
       statistics: {
-        totalUsers,
-        activeUsers,
+        totalUsers: userDash.totalUsers,
+        activeUsers: userDash.activeUsers,
         totalRestaurants,
         totalMessages,
-        totalFeedback,
+        totalFeedback: feedbackDash.totalFeedback,
         totalViewers,
         totalArticles: totalArticles ?? 0,
         totalRadioStations: totalRadioStations ?? 0,
@@ -321,12 +297,12 @@ router.get('/dashboard', async (req, res) => {
         totalProducts: totalProducts ?? 0,
       },
       charts: {
-        feedbackByStatus,
-        usersByRole,
+        feedbackByStatus: feedbackDash.feedbackByStatus,
+        usersByRole: userDash.usersByRole,
       },
       recent: {
-        users: recentUsers,
-        feedback: recentFeedback,
+        users: userDash.recentUsers,
+        feedback: feedbackDash.recentFeedback,
       },
     };
     if (cacheManager.isConnected) {
@@ -418,7 +394,7 @@ router.post('/users', registerValidation, async (req, res) => {
 
     await user.save();
 
-    await auditService.logAction({
+    await bullJobs.submitAuditLog({
       userId: req.user._id,
       action: 'create-user',
       resource: 'user',
@@ -541,6 +517,7 @@ router.put('/users/:id', validateMongoId('id'), ...adminUserUpdateValidation, as
     }
 
     await user.save();
+    await invalidateAuthUserCache(user._id);
 
     const updated = await User.findById(user._id).select('-password');
     const after = {
@@ -551,7 +528,7 @@ router.put('/users/:id', validateMongoId('id'), ...adminUserUpdateValidation, as
       isActive: updated.isActive,
     };
 
-    await auditService.logAction({
+    await bullJobs.submitAuditLog({
       userId: req.user._id,
       action: 'update-user',
       resource: 'user',
@@ -608,7 +585,8 @@ router.delete('/users/:id', validateMongoId('id'), ...adminDeleteUserQueryValida
 
     if (hard) {
       await User.findByIdAndDelete(req.params.id);
-      await auditService.logAction({
+      await invalidateAuthUserCache(req.params.id);
+      await bullJobs.submitAuditLog({
         userId: req.user._id,
         action: 'delete-user',
         resource: 'user',
@@ -623,7 +601,8 @@ router.delete('/users/:id', validateMongoId('id'), ...adminDeleteUserQueryValida
 
     user.isActive = false;
     await user.save();
-    await auditService.logAction({
+    await invalidateAuthUserCache(user._id);
+    await bullJobs.submitAuditLog({
       userId: req.user._id,
       action: 'delete-user',
       resource: 'user',
@@ -742,6 +721,117 @@ router.get('/audit-logs/export', async (req, res) => {
   } catch (error) {
     logRouteError(req, 'admin_audit_logs_export_failed', error);
     res.status(500).json({ message: "Erreur lors de l'export des logs", error: error.message });
+  }
+});
+
+const ALLOWED_JOB_QUEUES = new Set(['audit', 'email', 'upload', 'export']);
+
+// @route   POST /api/admin/audit-logs/export-async
+// @desc    Export audit en arrière-plan (Bull) — 202 + jobId, puis GET .../jobs/export/:jobId + download
+// @access  Private (Admin)
+router.post('/audit-logs/export-async', express.json(), async (req, res) => {
+  try {
+    if (!bullJobs.isJobsEnabled()) {
+      return res.status(503).json({
+        message: 'Export asynchrone indisponible. Définir BULL_JOBS_ENABLED=1 et REDIS_URI.',
+      });
+    }
+    const format = String(req.body?.format || req.query.format || 'json').toLowerCase() === 'csv' ? 'csv' : 'json';
+    const userId = req.body?.userId ?? req.query.userId;
+    const action = req.body?.action ?? req.query.action;
+    const resource = req.body?.resource ?? req.query.resource;
+    const days = parseInt(req.body?.days ?? req.query.days ?? 30, 10);
+    const job = await bullJobs.submitExportJob({
+      format,
+      filters: {
+        adminId: userId,
+        action,
+        resource,
+        days: Number.isFinite(days) ? days : 30,
+        limit: 10000,
+      },
+    });
+    return res.status(202).json({
+      queued: true,
+      queue: 'export',
+      jobId: job.id,
+      pollUrl: `/api/admin/jobs/export/${job.id}`,
+      downloadUrl: `/api/admin/jobs/export/${job.id}/download`,
+    });
+  } catch (error) {
+    logRouteError(req, 'admin_audit_logs_export_async_failed', error);
+    res.status(500).json({ message: "Erreur lors de la mise en file d'export", error: error.message });
+  }
+});
+
+// @route   POST /api/admin/jobs/email
+// @desc    Met en file un e-mail (SMTP) — ou envoi immédiat si Bull désactivé
+// @access  Private (Admin)
+router.post('/jobs/email', express.json(), async (req, res) => {
+  try {
+    const { to, subject, text, html, from } = req.body || {};
+    if (!to || !subject) {
+      return res.status(400).json({ message: 'Champs requis : to, subject (optionnel : text, html, from)' });
+    }
+    const result = await bullJobs.submitEmailJob({ to, subject, text, html, from });
+    if (bullJobs.isJobsEnabled()) {
+      return res.status(202).json({ queued: true, queue: 'email', jobId: result.id });
+    }
+    return res.json({ queued: false, result });
+  } catch (error) {
+    logRouteError(req, 'admin_jobs_email_failed', error);
+    res.status(500).json({ message: "Erreur lors de l'envoi / mise en file e-mail", error: error.message });
+  }
+});
+
+// @route   GET /api/admin/jobs/:queue/:jobId
+// @desc    État d’un job Bull (audit, email, upload, export)
+// @access  Private (Admin)
+router.get('/jobs/:queue/:jobId', async (req, res) => {
+  try {
+    const { queue, jobId } = req.params;
+    if (!ALLOWED_JOB_QUEUES.has(String(queue).toLowerCase())) {
+      return res.status(400).json({ message: 'File inconnue' });
+    }
+    const status = await bullJobs.getJobStatus(queue, jobId);
+    res.json(status);
+  } catch (error) {
+    logRouteError(req, 'admin_jobs_status_failed', error);
+    res.status(500).json({ message: 'Erreur lecture job', error: error.message });
+  }
+});
+
+// @route   GET /api/admin/jobs/:queue/:jobId/download
+// @desc    Télécharge le fichier produit par un job export terminé
+// @access  Private (Admin)
+router.get('/jobs/:queue/:jobId/download', async (req, res) => {
+  try {
+    const { queue, jobId } = req.params;
+    if (String(queue).toLowerCase() !== 'export') {
+      return res.status(400).json({ message: 'Téléchargement réservé à la file export' });
+    }
+    const meta = await bullJobs.getExportJobFileMeta(queue, jobId);
+    if (!meta?.filePath) {
+      return res.status(404).json({ message: 'Export introuvable ou non terminé' });
+    }
+    res.setHeader('Content-Type', meta.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${meta.filename}"`);
+    const stream = fs.createReadStream(meta.filePath);
+    stream.on('error', (err) => {
+      logRouteError(req, 'admin_jobs_download_stream_failed', err);
+      if (!res.headersSent) {
+        res.status(500).end();
+      }
+    });
+    res.on('finish', () => {
+      fs.unlink(meta.filePath, () => {});
+    });
+    stream.pipe(res);
+  } catch (error) {
+    logRouteError(req, 'admin_jobs_download_failed', error);
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Erreur téléchargement export', error: error.message });
+    }
   }
 });
 

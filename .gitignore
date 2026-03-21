@@ -22,6 +22,8 @@ dashboard/.env
 dashboard/.env.local
 dashboard/.env.production
 scripts/vps-config.env
+k8s/secret.local.yaml
+monitoring/.env
 
 # IDE
 .vscode/
@@ -68,6 +70,10 @@ coverage/
 # Rapports de tests et artefacts locaux
 playwright-report/
 test-results/
+
+# Rapport d’inventaire code (généré : npm run report:code)
+reports/code-report.md
+reports/code-report.json
 
 # Scripts et docs dev / Cursor (ne pas réintroduire)
 *.sh

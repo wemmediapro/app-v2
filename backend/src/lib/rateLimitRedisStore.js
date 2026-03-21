@@ -6,6 +6,9 @@
 const redis = require('redis');
 const logger = require('./logger');
 
+/**
+ *
+ */
 class RedisStore {
   constructor(options = {}) {
     this.prefix = options.prefix ?? 'rl:';
@@ -37,9 +40,12 @@ class RedisStore {
    * Incrémente le compteur pour une clé. En cas d'erreur Redis (déconnexion, timeout),
    * retourne un résultat "fail open" pour ne pas bloquer l'API.
    * express-rate-limit v7 exige totalHits >= 1 (validation positiveHits) — jamais 0.
+   * @param {string} key
+   * @param {{ windowMs?: number }} [options] — fenêtre par clé (rate limit par endpoint)
    */
-  async increment(key) {
-    const resetTime = new Date(Date.now() + this.windowMs);
+  async increment(key, options = {}) {
+    const windowMs = Number.isFinite(options.windowMs) && options.windowMs > 0 ? options.windowMs : this.windowMs;
+    const resetTime = new Date(Date.now() + windowMs);
     if (!this.client) {
       return { totalHits: 1, resetTime };
     }
@@ -48,8 +54,8 @@ class RedisStore {
       const totalHits = await this.client.incr(k);
       let ttlMs = await this.client.sendCommand(['PTTL', k]);
       if (ttlMs === -1) {
-        await this.client.pExpire(k, this.windowMs);
-        ttlMs = this.windowMs;
+        await this.client.pExpire(k, windowMs);
+        ttlMs = windowMs;
       }
       const rt = new Date(Date.now() + ttlMs);
       return { totalHits, resetTime: rt };

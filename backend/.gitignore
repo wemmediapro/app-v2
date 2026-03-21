@@ -2,4 +2,7 @@ node_modules
 # Keep environment variables out of version control
 .env
 
+# Profiling V8 (npm run profile:cpu / profile:heap)
+profile-out/
+
 /src/generated/prisma

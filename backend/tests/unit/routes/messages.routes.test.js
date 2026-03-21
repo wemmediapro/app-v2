@@ -11,6 +11,7 @@ jest.mock('../../../src/models/User', () => {
   const M = function UserMock() {};
   M.findById = jest.fn();
   M.find = jest.fn();
+  M.exists = jest.fn();
   return M;
 });
 
@@ -389,10 +390,8 @@ describe('POST /api/messages', () => {
   });
 
   it('404 si destinataire inexistant', async () => {
-    User.findById.mockImplementation((id) => {
-      if (String(id) === uid) return authUserChain();
-      return Promise.resolve(null);
-    });
+    User.findById.mockImplementation(() => authUserChain());
+    User.exists.mockResolvedValue(null);
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
     await request(app)
       .post('/api/messages')
@@ -402,22 +401,13 @@ describe('POST /api/messages', () => {
   });
 
   it('201 envoi message', async () => {
-    User.findById.mockImplementation((id) => {
-      if (String(id) === uid) return authUserChain();
-      return Promise.resolve({ _id: peerId, isActive: true });
-    });
+    User.findById.mockImplementation(() => authUserChain());
+    User.exists.mockResolvedValue({ _id: peerId });
     const saveMock = jest.spyOn(Message.prototype, 'save').mockResolvedValue();
-    jest.spyOn(Message, 'findById').mockReturnValue({
-      populate: jest.fn().mockReturnThis(),
-      then(onFulfilled) {
-        const doc = {
-          _id: new mongoose.Types.ObjectId(),
-          content: 'Salut',
-          sender: { firstName: 'A' },
-          receiver: { firstName: 'B' },
-        };
-        return Promise.resolve(doc).then(onFulfilled);
-      },
+    const populateMock = jest.spyOn(Message.prototype, 'populate').mockImplementation(async function populateImpl() {
+      this.sender = { firstName: 'A' };
+      this.receiver = { firstName: 'B' };
+      return this;
     });
 
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
@@ -430,7 +420,7 @@ describe('POST /api/messages', () => {
     expect(res.body.message).toMatch(/sent/i);
     expect(res.body.data).toBeDefined();
     saveMock.mockRestore();
-    Message.findById.mockRestore();
+    populateMock.mockRestore();
   });
 
   it('200 idempotence clientSyncId si déjà présent', async () => {
@@ -439,10 +429,8 @@ describe('POST /api/messages', () => {
       content: 'old',
       clientSyncId: 'sync-1',
     };
-    User.findById.mockImplementation((id) => {
-      if (String(id) === uid) return authUserChain();
-      return Promise.resolve({ _id: peerId, isActive: true });
-    });
+    User.findById.mockImplementation(() => authUserChain());
+    User.exists.mockResolvedValue({ _id: peerId });
     jest.spyOn(Message, 'findOne').mockReturnValue({
       populate: jest.fn().mockReturnThis(),
       then(onFulfilled) {
@@ -468,10 +456,8 @@ describe('POST /api/messages', () => {
       clientSyncId: 'race-cs',
     };
     let findOneN = 0;
-    User.findById.mockImplementation((id) => {
-      if (String(id) === uid) return authUserChain();
-      return Promise.resolve({ _id: peerId, isActive: true });
-    });
+    User.findById.mockImplementation(() => authUserChain());
+    User.exists.mockResolvedValue({ _id: peerId });
     jest.spyOn(Message, 'findOne').mockImplementation(() => {
       const chain = {
         populate: jest.fn().mockReturnThis(),
@@ -501,10 +487,8 @@ describe('POST /api/messages', () => {
 
   it('500 si save échoue sans gestion E11000', async () => {
     const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
-    User.findById.mockImplementation((id) => {
-      if (String(id) === uid) return authUserChain();
-      return Promise.resolve({ _id: peerId, isActive: true });
-    });
+    User.findById.mockImplementation(() => authUserChain());
+    User.exists.mockResolvedValue({ _id: peerId });
     jest.spyOn(Message.prototype, 'save').mockRejectedValue(new Error('disk full'));
 
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
@@ -524,19 +508,12 @@ describe('POST /api/messages', () => {
     }
   });
 
-  it('500 si findById après save échoue', async () => {
+  it('500 si populate après save échoue', async () => {
     const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
-    User.findById.mockImplementation((id) => {
-      if (String(id) === uid) return authUserChain();
-      return Promise.resolve({ _id: peerId, isActive: true });
-    });
+    User.findById.mockImplementation(() => authUserChain());
+    User.exists.mockResolvedValue({ _id: peerId });
     jest.spyOn(Message.prototype, 'save').mockResolvedValue();
-    jest.spyOn(Message, 'findById').mockReturnValue({
-      populate: jest.fn().mockReturnThis(),
-      then(_onOk, onErr) {
-        return Promise.reject(new Error('populate failed')).catch(onErr);
-      },
-    });
+    jest.spyOn(Message.prototype, 'populate').mockRejectedValue(new Error('populate failed'));
 
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
     try {
@@ -552,16 +529,14 @@ describe('POST /api/messages', () => {
     } finally {
       errSpy.mockRestore();
       Message.prototype.save.mockRestore();
-      Message.findById.mockRestore();
+      Message.prototype.populate.mockRestore();
     }
   });
 
   it('500 si E11000 et aucun document après findOne de secours', async () => {
     const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
-    User.findById.mockImplementation((id) => {
-      if (String(id) === uid) return authUserChain();
-      return Promise.resolve({ _id: peerId, isActive: true });
-    });
+    User.findById.mockImplementation(() => authUserChain());
+    User.exists.mockResolvedValue({ _id: peerId });
     jest.spyOn(Message, 'findOne').mockImplementation(() => ({
       populate: jest.fn().mockReturnThis(),
       then(onF) {

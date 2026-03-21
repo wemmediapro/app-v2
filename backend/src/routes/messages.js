@@ -230,9 +230,8 @@ router.post(
     try {
       const { receiver, content, type = 'text', attachments = [], clientSyncId } = req.body;
 
-      // Check if receiver exists
-      const receiverUser = await User.findById(receiver);
-      if (!receiverUser) {
+      const receiverExists = await User.exists({ _id: receiver });
+      if (!receiverExists) {
         return res.status(404).json({ message: 'Receiver not found' });
       }
 
@@ -280,13 +279,14 @@ router.post(
         throw saveErr;
       }
 
-      const populatedMessage = await Message.findById(message._id)
-        .populate('sender', 'firstName lastName avatar')
-        .populate('receiver', 'firstName lastName avatar');
+      await message.populate([
+        { path: 'sender', select: 'firstName lastName avatar' },
+        { path: 'receiver', select: 'firstName lastName avatar' },
+      ]);
 
       res.status(201).json({
         message: 'Message sent successfully',
-        data: populatedMessage,
+        data: message,
       });
     } catch (error) {
       logRouteError(req, 'messages_send_failed', error);

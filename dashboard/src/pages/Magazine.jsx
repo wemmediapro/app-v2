@@ -15,7 +15,6 @@ import {
   Upload,
   Image as ImageIcon,
   Video,
-  Link,
   Bold,
   Italic,
   List,
@@ -24,7 +23,6 @@ import {
   AlignRight,
   Eye as EyeIcon,
   Clock,
-  Tag,
   Globe,
   FileText,
   Heading2,
@@ -87,7 +85,7 @@ const Magazine = () => {
     readingTime: 0,
     translations: emptyTranslations(),
   });
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [_uploadingImage, setUploadingImage] = useState(false);
   const [editActiveLang, setEditActiveLang] = useState('fr');
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImagePreview, setEditImagePreview] = useState(null);
@@ -103,7 +101,7 @@ const Magazine = () => {
   const [loadingMediaLibrary, setLoadingMediaLibrary] = useState(false);
   const [insertTargetMode, setInsertTargetMode] = useState('new'); // 'new' | 'edit'
   const [showEditPreview, setShowEditPreview] = useState(false);
-  const [loadingEditArticle, setLoadingEditArticle] = useState(false);
+  const [_loadingEditArticle, setLoadingEditArticle] = useState(false);
   const [editPublishDate, setEditPublishDate] = useState('');
   const [editPublishTime, setEditPublishTime] = useState('');
   const [editGalleryImages, setEditGalleryImages] = useState([]);

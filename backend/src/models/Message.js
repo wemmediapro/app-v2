@@ -54,5 +54,8 @@ messageSchema.index({ sender: 1, receiver: 1, createdAt: -1 });
 messageSchema.index({ receiver: 1, isRead: 1 });
 messageSchema.index({ createdAt: -1 });
 messageSchema.index({ sender: 1, clientSyncId: 1 }, { unique: true, sparse: true });
+// Agrégation liste conversations : $match $or sur sender / receiver + tri createdAt
+messageSchema.index({ sender: 1, createdAt: -1 });
+messageSchema.index({ receiver: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Message', messageSchema);

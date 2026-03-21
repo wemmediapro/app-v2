@@ -10,6 +10,7 @@ const {
   adminMiddleware,
   generateTwoFactorChallengeToken,
   verifyTwoFactorChallengeToken,
+  invalidateAuthUserCache,
 } = require('../middleware/auth');
 const User = require('../models/User');
 const cacheManager = require('../lib/cache-manager');
@@ -18,17 +19,7 @@ const authService = require('../services/authService');
 const auditService = require('../services/auditService');
 const { auditContext } = require('../middleware/auditLog');
 const { logRouteError } = require('../lib/route-logger');
-
-async function invalidateAuthUserCache(userId) {
-  if (!userId || !cacheManager.isConnected) {
-    return;
-  }
-  try {
-    await cacheManager.del(`auth:user:${userId}`);
-  } catch (_) {
-    /* ignore */
-  }
-}
+const { RE_TOTP_SIX_DIGITS, RE_WHITESPACE_ALL } = require('../constants/regex');
 
 // [SEC-1/PERF-1] Hash bcrypt admin pré-calculé une fois au premier login (évite bcrypt.hash à chaque requête)
 let cachedAdminPasswordHash = null;
@@ -379,7 +370,7 @@ router.post('/login', auditContext, loginLimiter, loginValidation, async (req, r
     user = fresh;
 
     if (user.role === 'admin' && user.twoFactorEnabled) {
-      const tfa = (req.body.twoFactorToken || req.header('x-2fa-token') || '').replace(/\s/g, '');
+      const tfa = (req.body.twoFactorToken || req.header('x-2fa-token') || '').replace(RE_WHITESPACE_ALL, '');
       if (!tfa) {
         const twoFactorChallenge = generateTwoFactorChallengeToken(user._id, user.email);
         return res.status(200).json({
@@ -513,7 +504,7 @@ router.post('/2fa/complete-login', auditContext, loginLimiter, async (req, res) 
     if (user.role !== 'admin' || !user.twoFactorEnabled) {
       return res.status(400).json({ message: '2FA non actif pour ce compte' });
     }
-    const tfa = String(token).replace(/\s/g, '');
+    const tfa = String(token).replace(RE_WHITESPACE_ALL, '');
     const okTotp = user.twoFactorSecret && authService.verifyTOTPToken(user.twoFactorSecret, tfa);
     const backupRes = okTotp ? { valid: false } : await authService.validateBackupCode(user, tfa);
     if (!okTotp && !backupRes.valid) {
@@ -619,8 +610,8 @@ router.post('/2fa/setup', authMiddleware, adminMiddleware, async (req, res) => {
 // @access  Private admin
 router.post('/2fa/verify', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const raw = String(req.body.token || '').replace(/\s/g, '');
-    if (!/^\d{6}$/.test(raw)) {
+    const raw = String(req.body.token || '').replace(RE_WHITESPACE_ALL, '');
+    if (!RE_TOTP_SIX_DIGITS.test(raw)) {
       return res.status(400).json({ message: 'Token TOTP à 6 chiffres requis (champ token)' });
     }
     const u = await User.findById(req.user.id).select('+twoFactorPendingSecret twoFactorPendingBackupHashes');
@@ -780,6 +771,7 @@ router.put('/profile', authMiddleware, profileValidation, async (req, res) => {
     }
 
     await user.save();
+    await invalidateAuthUserCache(user._id);
 
     res.json({
       message: 'Profile updated successfully',
@@ -824,6 +816,7 @@ router.put('/change-password', authMiddleware, async (req, res) => {
     user.password = newPassword.trim();
     user.mustChangePassword = false;
     await user.save();
+    await invalidateAuthUserCache(user._id);
     res.json({ message: 'Mot de passe modifié avec succès' });
   } catch (error) {
     logRouteError(req, 'auth_change_password_failed', error);
@@ -887,6 +880,7 @@ router.put('/user-data', authMiddleware, async (req, res) => {
     }
     user.markModified('userData');
     await user.save();
+    await invalidateAuthUserCache(user._id);
     res.json({
       message: 'User data saved',
       favorites: user.userData.favorites,

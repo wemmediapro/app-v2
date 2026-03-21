@@ -16,6 +16,12 @@ export default defineConfig(({ mode }) => {
   const viteBase =
     assetBase === '' || assetBase === '/' ? '/' : assetBase.endsWith('/') ? assetBase : `${assetBase}/`;
 
+  /** App shell hors ligne (SPA) — aligné sur `base` Vite. */
+  const pwaNavigateFallback =
+    viteBase === '/' ? '/index.html' : `${viteBase.replace(/\/$/, '')}/index.html`;
+  /** Préfixe des chunks Vite dans l’URL (pour runtimeCaching SWR). */
+  const pwaAssetsPathPrefix = viteBase === '/' ? '/assets/' : `${viteBase.replace(/\/$/, '')}/assets/`;
+
   return {
     base: viteBase,
     test: {
@@ -23,10 +29,13 @@ export default defineConfig(({ mode }) => {
       globals: true,
       setupFiles: './src/tests/setup.js',
       include: ['src/tests/**/*.{test,spec}.{js,jsx,ts,tsx}'],
-      exclude: ['node_modules', 'dist', 'tests/**', 'backend/**'],
+      exclude: ['node_modules', 'dist', 'tests/**', 'backend/**', '**/*.bench.*'],
       coverage: {
         provider: 'v8',
         reporter: ['text', 'lcov', 'html'],
+      },
+      benchmark: {
+        include: ['src/tests/**/*.bench.{js,jsx,ts,tsx}'],
       },
     },
     optimizeDeps: {
@@ -70,14 +79,44 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          skipWaiting: true,
+          clientsClaim: true,
+          cleanupOutdatedCaches: true,
+          /** Précachage build : webp / webmanifest / woff, chunks lazy inclus. */
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2,woff,webmanifest}'],
+          /** Navigation hors ligne → index (routes React). Hors API, Socket.io et médias directs. */
+          navigateFallback: pwaNavigateFallback,
+          navigateFallbackDenylist: [
+            /^\/api\//,
+            /^\/socket\.io/,
+            new RegExp(`^${viteBase === '/' ? '' : viteBase.replace(/\/$/, '')}/uploads/`, 'i'),
+            /\.(?:png|jpe?g|gif|webp|svg|ico|woff2?|mp4|webm|m3u8|ts|mp3|wav|ogg)$/i,
+          ],
           // Handlers Background Sync + sync file hors ligne (voir public/service-worker.js)
           importScripts: ['service-worker.js'],
           runtimeCaching: [
+            // Jamais de cache pour le transport Socket.io (évite états incohérents).
+            {
+              urlPattern: ({ url }) => url.pathname.startsWith('/socket.io'),
+              handler: 'NetworkOnly',
+            },
             {
               urlPattern: /^https:\/\/fonts\.(?:gstatic|googleapis)\.com\/.*/i,
               handler: 'CacheFirst',
               options: { cacheName: 'google-fonts', expiration: { maxEntries: 4, maxAgeSeconds: 365 * 24 * 60 * 60 } },
+            },
+            // Mise à jour en arrière-plan des chunks JS/CSS (complément du précachage Workbox).
+            {
+              urlPattern: ({ request, url }) =>
+                url.pathname.startsWith(pwaAssetsPathPrefix) &&
+                /\.(js|css)$/i.test(url.pathname) &&
+                (request.destination === 'script' || request.destination === 'style'),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'gnv-assets-swr-v1',
+                expiration: { maxEntries: 80, maxAgeSeconds: 7 * 24 * 60 * 60 },
+                cacheableResponse: { statuses: [200] },
+              },
             },
             // Cache des réponses API (NetworkFirst) — après 1ère visite en ligne, données disponibles hors ligne
             {
@@ -100,6 +139,19 @@ export default defineConfig(({ mode }) => {
                 cacheableResponse: { statuses: [0, 200, 206] },
               },
             },
+            // Ressources publiques (logo, loading-init, manifest) si hors précachage.
+            {
+              urlPattern: ({ url }) =>
+                url.pathname.endsWith('.webmanifest') ||
+                url.pathname.endsWith('/loading-init.js') ||
+                url.pathname.endsWith('/logo-gnv.png'),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'gnv-public-static-v1',
+                expiration: { maxEntries: 16, maxAgeSeconds: 7 * 24 * 60 * 60 },
+                cacheableResponse: { statuses: [200] },
+              },
+            },
           ],
         },
       }),
@@ -116,6 +168,8 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       assetsDir: 'assets',
+      /** Navigateurs ES2020+ : moins de transpilation → bundle légèrement plus petit. */
+      target: 'es2020',
       // hls.js reste ~520 ko minifié dans son chunk async ; éviter un faux positif sur la limite par défaut (500).
       chunkSizeWarningLimit: 600,
       reportCompressedSize: true,
@@ -130,6 +184,8 @@ export default defineConfig(({ mode }) => {
               if (id.includes('socket.io-client')) return 'socket.io';
               if (id.includes('axios')) return 'axios';
               if (id.includes('hls.js')) return 'hls';
+              if (id.includes('dompurify')) return 'dompurify';
+              if (id.includes('idb')) return 'idb';
             }
           },
         },

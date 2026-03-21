@@ -1,5 +1,14 @@
 /**
- * Orchestration hooks passagers + props MainContent mémoïsées (allège App.jsx).
+ * Modèle applicatif passager : compose les hooks métier et produit `mainContentProps` (mémoïsé).
+ *
+ * Rôles principaux :
+ * - **Navigation** : `useAppNavigation` (page courante + historique URL).
+ * - **Médias** : radio / films / WebTV partagent une notion de « vidéo en cours » (`isAnyVideoPlaying`) pour éviter la double lecture.
+ * - **Hors ligne** : `useOfflineQueue` + bannières de sync (`useOnline` / service worker).
+ * - **Favoris** : stockage local suffixé invité + resync serveur via `useFavoritesProfileSync` quand l’utilisateur est connecté.
+ * - **Données domaine** : un hook par vertical (magazine, restaurants, shop, …) — logique détaillée dans chaque fichier `use*Logic`.
+ *
+ * Consommateurs : `PassengerApp` → `AppPassengerLayout` → contexte → `MainContent`.
  */
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { getPosterUrl } from '../services/apiService';
@@ -25,6 +34,7 @@ import { DEFAULT_RESTAURANT_IMAGE } from '../constants/defaultImages';
 import { CONDITIONS_ACCEPTED_KEY } from '../components/ConditionsGate';
 
 export function usePassengerAppModel() {
+  // --- Fondations : langue, conditions d’utilisation, navigation ---
   const { t, language } = useLanguage();
   const [conditionsAccepted, setConditionsAccepted] = useState(() => {
     try {
@@ -95,6 +105,7 @@ export function usePassengerAppModel() {
     getWebtvCategoryLabel,
   } = useWebtv(language, page, t, videoPositionOnFullscreenExitRef);
 
+  // Reprend la lecture WebTV après sortie plein écran (position mémorisée).
   useWebtvFullscreenResume(webtvVideoRefRef, videoPositionOnFullscreenExitRef);
 
   const isAnyVideoPlaying = isWebtvVideoPlaying || isMoviesVideoPlaying;
@@ -131,8 +142,9 @@ export function usePassengerAppModel() {
     void offlineQueue.refreshCount();
   }, [syncFeedback, offlineQueue.refreshCount]);
 
-  const chat = useChatLogic({ refreshOfflineQueueCount: offlineQueue.refreshCount });
+  useChatLogic({ refreshOfflineQueueCount: offlineQueue.refreshCount });
 
+  // --- Commerce & restauration & enfants & plan du navire ---
   const { shopFavorites, setShopFavorites, homeShopPromotions, shopCategories, removeFromShopFavorites } = useShopLogic(
     t,
     favoritesStorageSuffix
@@ -219,12 +231,14 @@ export function usePassengerAppModel() {
     language,
   });
 
+  // UX : revenir en haut de page lors d’un passage explicite vers la section restaurants.
   useEffect(() => {
     if (page === 'restaurant') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [page]);
 
+  // --- Props agrégées pour MainContent (liste longue volontaire : évite prop drilling depuis le layout) ---
   const mainContentProps = useMemo(
     () => ({
       page,
@@ -326,7 +340,6 @@ export function usePassengerAppModel() {
       setShopFavorites,
       removeFromShopFavorites,
       getPosterUrl,
-      chat,
     }),
     [
       page,
@@ -426,7 +439,6 @@ export function usePassengerAppModel() {
       shopCategories,
       setShopFavorites,
       removeFromShopFavorites,
-      chat,
     ]
   );
 

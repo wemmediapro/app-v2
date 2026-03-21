@@ -2,8 +2,25 @@
  * Modèle d'audit trail pour les actions admin.
  * Rétention minimale : 1 an (voir docs/AUDIT-LOGGING-POLICY.md).
  * Index : userId, timestamp, action pour recherches performantes.
+ * Index TTL optionnel sur `timestamp` : purge automatique après AUDIT_LOG_TTL_DAYS (défaut 365 jours).
+ * Désactiver : AUDIT_LOG_TTL_DAYS=0 — utiliser archiveOldLogs ou export manuel.
  */
 const mongoose = require('mongoose');
+
+const SECONDS_PER_DAY = 86_400;
+/** @param {object} [env] */
+function resolveAuditLogTtlSeconds(env = process.env) {
+  const raw = env.AUDIT_LOG_TTL_DAYS;
+  if (raw === undefined || raw === '') {
+    return 365 * SECONDS_PER_DAY;
+  }
+  const days = parseInt(String(raw), 10);
+  if (!Number.isFinite(days) || days <= 0) {
+    return null;
+  }
+  const capped = Math.min(days, 3650);
+  return capped * SECONDS_PER_DAY;
+}
 
 const auditLogSchema = new mongoose.Schema(
   {
@@ -54,7 +71,6 @@ const auditLogSchema = new mongoose.Schema(
     timestamp: {
       type: Date,
       default: Date.now,
-      index: true,
     },
     status: {
       type: String,
@@ -83,4 +99,11 @@ auditLogSchema.index({ action: 1, timestamp: -1 });
 auditLogSchema.index({ resource: 1, resourceId: 1, timestamp: -1 });
 auditLogSchema.index({ timestamp: -1 }); // Pour archiveOldLogs et export
 
-module.exports = mongoose.model('AuditLog', auditLogSchema);
+const auditTtlSeconds = resolveAuditLogTtlSeconds();
+if (auditTtlSeconds != null && auditTtlSeconds > 0) {
+  auditLogSchema.index({ timestamp: 1 }, { expireAfterSeconds: auditTtlSeconds });
+}
+
+const AuditLog = mongoose.model('AuditLog', auditLogSchema);
+AuditLog.resolveAuditLogTtlSeconds = resolveAuditLogTtlSeconds;
+module.exports = AuditLog;

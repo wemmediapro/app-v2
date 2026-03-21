@@ -13,7 +13,6 @@ import {
   BookOpen,
   Baby,
   ShoppingBag,
-  Map,
   Eye,
   BarChart3,
   Wifi,

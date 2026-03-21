@@ -1,6 +1,16 @@
 /**
- * Point d’entrée des routes API : monte toutes les routes sur l’app Express.
- * Versionnement : préfixe canonique `/api/v1` ; `/api` reste un alias (MVP / rétrocompatibilité).
+ * Point d’entrée des routes API : monte les routeurs Express pour chaque base (`/api`, `/api/v1`, …).
+ *
+ * Versionnement : préfixe canonique **`/api/v1`** ; **`/api`** reste un alias (rétrocompatibilité app / proxies).
+ * `mountRoutes` itère `API_BASE_PATHS` (ou `deps.apiBases`) pour dupliquer les mêmes montages sur chaque base.
+ *
+ * Regroupement logique dans `mountRoutesAtBase` (ordre sensible aux chemins les plus spécifiques) :
+ * - **Médias & fichiers** : `media-library`, `upload`, `stream`
+ * - **Auth & utilisateurs** : `auth`, `users`
+ * - **Contenu passager** : `restaurants`, `movies`, `radio`, `magazine`, `webtv`, `enfant`, `shipmap`, `banners`, `trailers`, `notifications`, `shop`, `gnv`
+ * - **Temps réel / sync** : `messages`, `sync`
+ * - **Admin & ops** : `admin`, `analytics`, `export`, `feedback`, `ads`
+ * - **Santé** : `GET …/health`, `GET …/health/ready` (définis dans ce fichier après les `app.use` routeurs)
  * @param {import('express').Application} app
  * @param {{ dbManager: { isConnected: () => boolean }, connectionCounters?: object, apiBases?: string[], cacheManager?: { pingHealth?: () => Promise<{ ok: boolean, status: string }> } }} deps
  */
@@ -19,6 +29,7 @@ function mountRoutes(app, deps = {}) {
  * @param {string} base ex. /api/v1 ou /api
  */
 function mountRoutesAtBase(app, base, { dbManager, connectionCounters, cacheManager }) {
+  // Même arbre de routeurs pour chaque `base` ; les chemins absolus dans les routeurs restent relatifs à `base`.
   const mediaLibraryRouter = require('./media-library');
   app.use(`${base}/media-library`, mediaLibraryRouter);
   app.use(`${base}/upload/media`, mediaLibraryRouter);
@@ -95,6 +106,13 @@ function mountRoutesAtBase(app, base, { dbManager, connectionCounters, cacheMana
       const stats = dbManager.getStats();
       if (stats.name) {
         payload.mongodbDatabase = stats.name;
+      }
+      if (stats.pool && typeof stats.pool === 'object') {
+        payload.mongoPool = {
+          checkedOut: stats.pool.checkedOut,
+          maxPoolSize: stats.pool.maxPoolSize,
+          utilizationPercent: stats.pool.utilizationPercent,
+        };
       }
     }
     if (configModule.env !== 'production') {

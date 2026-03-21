@@ -8,7 +8,11 @@ const DOMPurify = require('isomorphic-dompurify');
 const logger = require('../lib/logger');
 const connectionManager = require('../lib/connection-manager');
 const { hasAllowedPrefix, isRoomAuthorizedForUser } = require('./roomUtils');
+const { createMessageBroadcaster } = require('./broadcast-batcher');
 const MAX_MESSAGE_LENGTH = 5000;
+
+/** Plafond de rooms Socket.io par connexion (évite fuites join + charge mémoire). */
+const MAX_ROOMS_PER_SOCKET = parseInt(process.env.SOCKET_MAX_ROOMS_PER_SOCKET, 10) || 40;
 
 // C6 : rate limit strict send-message — 60 msg/min/socket (configurable)
 const SEND_MESSAGE_RATE_WINDOW_MS = parseInt(process.env.SOCKET_SEND_MESSAGE_WINDOW_MS, 10) || 60 * 1000; // 1 min
@@ -99,6 +103,15 @@ function sanitizeSocketAttachment(value) {
 
 /** Applique les handlers sur une instance io déjà authentifiée. */
 function attachSocketHandlers(io, connectionCounters) {
+  const messageBroadcaster = createMessageBroadcaster(io);
+  io._gnvBroadcasterShutdown = () => {
+    try {
+      messageBroadcaster.shutdown();
+    } catch (_) {
+      /* ignore */
+    }
+  };
+
   io.on('connection', async (socket) => {
     const allowed = await connectionManager.addConnection(socket);
     if (!allowed) {
@@ -137,7 +150,26 @@ function attachSocketHandlers(io, connectionCounters) {
         }
         return;
       }
+      if (socket.rooms.has(room)) {
+        if (typeof cb === 'function') {
+          cb();
+        }
+        return;
+      }
+      const roomCount = [...socket.rooms].filter((r) => r !== socket.id).length;
+      if (roomCount >= MAX_ROOMS_PER_SOCKET) {
+        logger.warn({
+          event: 'socket_join_room_limit_exceeded',
+          socketId: socket.id,
+          max: MAX_ROOMS_PER_SOCKET,
+        });
+        if (typeof cb === 'function') {
+          cb(new Error('Too many rooms'));
+        }
+        return;
+      }
       socket.join(room);
+      connectionManager.joinRoom(socket.id, room);
       if (typeof cb === 'function') {
         cb();
       }
@@ -189,7 +221,7 @@ function attachSocketHandlers(io, connectionCounters) {
         timestamp: new Date(),
         ...(attachment != null && { attachment }),
       };
-      socket.to(data.room).emit('new-message', payload);
+      messageBroadcaster.emitChatMessage(socket, data.room, payload);
       if (typeof cb === 'function') {
         cb(null, payload);
       }

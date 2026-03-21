@@ -11,15 +11,65 @@ const cacheManager = require('../lib/cache-manager');
 const authService = require('../services/authService');
 const { getApiPathSuffix } = require('../lib/apiPath');
 const logger = require('../lib/logger');
+const { RE_TOTP_SIX_DIGITS, RE_WHITESPACE_ALL } = require('../constants/regex');
 
-const AUTH_USER_CACHE_TTL = 60; // 1 min
+/** TTL Redis secondes — entrée `auth:user:<userId>` (document user sans mot de passe, aligné cache-manager TTL_BY_PREFIX). */
+const AUTH_USER_CACHE_TTL = 60;
 const AUTH_USER_CACHE_PREFIX = 'auth:user:';
+
+/**
+ *
+ */
+function authUserCacheKey(userId) {
+  return AUTH_USER_CACHE_PREFIX + String(userId);
+}
+
+/**
+ * Télémétrie hit/miss : toujours `debug` ; dupliquer en `info` si AUTH_CACHE_LOG=1 (volume élevé en prod).
+ */
+function logAuthUserCacheTelemetry(event, fields) {
+  const payload = { event, ...fields };
+  logger.debug(payload);
+  if (process.env.AUTH_CACHE_LOG === '1') {
+    logger.info(payload);
+  }
+}
+
+/**
+ * Invalide le cache utilisateur Redis après toute mutation (profil, 2FA, mot de passe, admin, user-data).
+ * Dégradation gracieuse si Redis indisponible (no-op).
+ */
+async function invalidateAuthUserCache(userId) {
+  if (userId == null) {
+    return;
+  }
+  if (!cacheManager.isConnected) {
+    logAuthUserCacheTelemetry('auth_user_cache_invalidate_skipped', {
+      userId: String(userId),
+      reason: 'redis_unavailable',
+    });
+    return;
+  }
+  try {
+    await cacheManager.del(authUserCacheKey(userId));
+    logAuthUserCacheTelemetry('auth_user_cache_invalidated', { userId: String(userId) });
+  } catch (err) {
+    logger.warn({
+      event: 'auth_user_cache_invalidate_failed',
+      userId: String(userId),
+      err: err.message,
+    });
+  }
+}
 
 const isProduction = process.env.NODE_ENV === 'production';
 let secretMissingWarned = false;
 
 /** P1 : JWT_SECRET jamais utilisé sans guard — lecture centralisée avec vérification. */
 const JWT_MIN_LENGTH = 32;
+/**
+ *
+ */
 function getSecret() {
   const secret = config.jwt?.secret;
   if (!secret || typeof secret !== 'string' || secret.length === 0) {
@@ -78,6 +128,9 @@ function generateTwoFactorChallengeToken(userId, email) {
   );
 }
 
+/**
+ *
+ */
 function verifyTwoFactorChallengeToken(token) {
   const d = jwt.verify(token, getSecret());
   if (d.typ !== '2fa_challenge') {
@@ -124,61 +177,81 @@ const authMiddleware = async (req, res, next) => {
         code: 'INVALID_TOKEN_TYPE',
       });
     }
-    if (cacheManager.isConnected) {
-      try {
-        const blacklisted = await cacheManager.get(`blacklist:${token}`);
-        if (blacklisted) {
-          return res.status(401).json({ message: 'Token has been revoked.', code: 'TOKEN_REVOKED' });
-        }
-      } catch (_) {
-        /* Redis down, skip check */
-      }
-    }
     const userId = decoded.id || decoded.userId || decoded._id;
     if (!userId) {
       return res.status(401).json({ message: 'Invalid token payload.' });
     }
-    const cacheKey = AUTH_USER_CACHE_PREFIX + userId;
+    const cacheKey = authUserCacheKey(userId);
+
+    let blacklisted = null;
+    let cached = null;
     if (cacheManager.isConnected) {
       try {
-        const cached = await cacheManager.get(cacheKey);
-        if (cached && typeof cached === 'object') {
-          if (cached.invalid) {
-            return res.status(401).json({ message: 'User not found.', code: 'INVALID_TOKEN' });
-          }
-          if (cached.isActive === false) {
-            return res.status(401).json({ message: 'Account is deactivated.', code: 'ACCOUNT_DEACTIVATED' });
-          }
-          req.user = { ...cached, id: cached._id || cached.id };
-          return next();
-        }
-      } catch (_) {
-        /* cache miss or error: fall through to MongoDB */
+        [blacklisted, cached] = await Promise.all([cacheManager.get(`blacklist:${token}`), cacheManager.get(cacheKey)]);
+      } catch (err) {
+        logger.warn({ event: 'auth_redis_read_degraded', err: err.message });
       }
     }
-    const user = await User.findById(userId).select('-password').lean();
-    if (!user) {
-      if (cacheManager.isConnected) {
-        await cacheManager.set(cacheKey, { invalid: true }, AUTH_USER_CACHE_TTL);
-      }
-      return res.status(401).json({ message: 'User not found.', code: 'INVALID_TOKEN' });
-    }
-    if (user.isActive === false) {
-      if (cacheManager.isConnected) {
-        await cacheManager.set(cacheKey, { ...user, invalid: true }, AUTH_USER_CACHE_TTL);
-      }
-      return res.status(401).json({ message: 'Account is deactivated.', code: 'ACCOUNT_DEACTIVATED' });
-    }
-    if (cacheManager.isConnected) {
-      await cacheManager.set(cacheKey, user, AUTH_USER_CACHE_TTL);
-    }
-    req.user = { ...user, id: user._id };
 
-    // Admins avec 2FA activé : JWT doit contenir mfa: true (sauf routes d’onboarding / profil léger)
+    if (blacklisted) {
+      return res.status(401).json({ message: 'Token has been revoked.', code: 'TOKEN_REVOKED' });
+    }
+
+    let user = null;
+
+    if (cached && typeof cached === 'object') {
+      if (cached.invalid) {
+        logAuthUserCacheTelemetry('auth_user_cache_hit', { userId: String(userId), variant: 'invalid' });
+        return res.status(401).json({ message: 'User not found.', code: 'INVALID_TOKEN' });
+      }
+      if (cached.isActive === false) {
+        logAuthUserCacheTelemetry('auth_user_cache_hit', { userId: String(userId), variant: 'inactive' });
+        return res.status(401).json({ message: 'Account is deactivated.', code: 'ACCOUNT_DEACTIVATED' });
+      }
+      user = cached;
+      logAuthUserCacheTelemetry('auth_user_cache_hit', { userId: String(userId), variant: 'ok' });
+    } else {
+      logAuthUserCacheTelemetry('auth_user_cache_miss', {
+        userId: String(userId),
+        reason: cacheManager.isConnected ? 'key_absent' : 'redis_unavailable',
+      });
+      user = await User.findById(userId).select('-password').lean();
+      if (!user) {
+        if (cacheManager.isConnected) {
+          try {
+            await cacheManager.set(cacheKey, { invalid: true }, AUTH_USER_CACHE_TTL);
+          } catch (_) {
+            /* ignore */
+          }
+        }
+        return res.status(401).json({ message: 'User not found.', code: 'INVALID_TOKEN' });
+      }
+      if (user.isActive === false) {
+        if (cacheManager.isConnected) {
+          try {
+            await cacheManager.set(cacheKey, { ...user, invalid: true }, AUTH_USER_CACHE_TTL);
+          } catch (_) {
+            /* ignore */
+          }
+        }
+        return res.status(401).json({ message: 'Account is deactivated.', code: 'ACCOUNT_DEACTIVATED' });
+      }
+      if (cacheManager.isConnected) {
+        try {
+          await cacheManager.set(cacheKey, user, AUTH_USER_CACHE_TTL);
+        } catch (_) {
+          /* ignore */
+        }
+      }
+    }
+
+    req.user = { ...user, id: user._id || user.id };
+
+    // 2FA : doit s’exécuter aussi après cache hit (évite contournement si user en Redis).
     if (user.role === 'admin' && user.twoFactorEnabled && decoded.mfa !== true) {
-      const headerTotp = (req.get('X-2FA-Token') || req.get('x-2fa-token') || '').replace(/\s/g, '');
+      const headerTotp = (req.get('X-2FA-Token') || req.get('x-2fa-token') || '').replace(RE_WHITESPACE_ALL, '');
       let headerOk = false;
-      if (headerTotp && /^\d{6}$/.test(headerTotp)) {
+      if (headerTotp && RE_TOTP_SIX_DIGITS.test(headerTotp)) {
         try {
           const u2 = await User.findById(userId).select('+twoFactorSecret').lean();
           if (u2 && u2.twoFactorSecret) {
@@ -218,6 +291,9 @@ const ADMIN_2FA_ONBOARDING_PATHS = new Set([
   '/auth/register',
 ]);
 
+/**
+ *
+ */
 function isAdminTwoFactorOnboardingPath(req) {
   const sub = getApiPathSuffix(req.originalUrl || req.url || req.path || '');
   const pathOnly = (sub || '/').split('?')[0];
@@ -276,26 +352,42 @@ const optionalAuth = async (req, res, next) => {
         const decoded = verifyToken(token);
         const userId = decoded.id || decoded.userId || decoded._id;
         if (userId) {
-          const cacheKey = AUTH_USER_CACHE_PREFIX + userId;
+          const cacheKey = authUserCacheKey(userId);
+          let cached = null;
           if (cacheManager.isConnected) {
             try {
-              const cached = await cacheManager.get(cacheKey);
-              if (cached && typeof cached === 'object' && !cached.invalid && cached.isActive !== false) {
-                req.user = { ...cached, id: cached._id || cached.id };
-                return next();
-              }
-              if (cached && cached.invalid) {
-                req.user = null;
-                return next();
-              }
+              cached = await cacheManager.get(cacheKey);
             } catch (_) {
-              /* fall through */
+              /* fall through to Mongo */
             }
           }
+          if (cached && typeof cached === 'object' && !cached.invalid && cached.isActive !== false) {
+            logAuthUserCacheTelemetry('auth_user_cache_hit', { userId: String(userId), context: 'optionalAuth' });
+            req.user = { ...cached, id: cached._id || cached.id };
+            return next();
+          }
+          if (cached && cached.invalid) {
+            logAuthUserCacheTelemetry('auth_user_cache_hit', {
+              userId: String(userId),
+              variant: 'invalid',
+              context: 'optionalAuth',
+            });
+            req.user = null;
+            return next();
+          }
+          logAuthUserCacheTelemetry('auth_user_cache_miss', {
+            userId: String(userId),
+            reason: cacheManager.isConnected ? 'key_absent' : 'redis_unavailable',
+            context: 'optionalAuth',
+          });
           const user = await User.findById(userId).select('-password').lean();
           if (user && user.isActive !== false) {
             if (cacheManager.isConnected) {
-              await cacheManager.set(cacheKey, user, AUTH_USER_CACHE_TTL);
+              try {
+                await cacheManager.set(cacheKey, user, AUTH_USER_CACHE_TTL);
+              } catch (_) {
+                /* ignore */
+              }
             }
             req.user = { ...user, id: user._id };
           } else {
@@ -340,6 +432,8 @@ module.exports = {
   adminMiddleware,
   requireRole,
   optionalAuth,
+  invalidateAuthUserCache,
+  AUTH_USER_CACHE_TTL,
 };
 
 if (process.env.NODE_ENV === 'test') {

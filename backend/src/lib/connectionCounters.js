@@ -10,6 +10,9 @@ const REDIS_KEY = 'socket:connections:total';
 let redisStore = null; // cacheManager ou client Redis
 let localTotal = 0;
 
+/**
+ *
+ */
 function getShipId(socket) {
   return socket.handshake?.auth?.shipId || socket.handshake?.query?.shipId || null;
 }
@@ -23,6 +26,9 @@ function initRedis(cacheManagerOrNull) {
   redisStore = cacheManagerOrNull && typeof cacheManagerOrNull.incr === 'function' ? cacheManagerOrNull : null;
 }
 
+/**
+ *
+ */
 async function increment() {
   if (redisStore && redisStore.isConnected) {
     try {
@@ -38,6 +44,9 @@ async function increment() {
   localTotal += 1;
 }
 
+/**
+ *
+ */
 async function decrement() {
   if (redisStore && redisStore.isConnected) {
     try {
@@ -78,6 +87,9 @@ async function getTotalCountAsync() {
   return localTotal;
 }
 
+/**
+ *
+ */
 function getTotalCount() {
   if (redisStore && redisStore.isConnected) {
     return undefined; // appelant doit utiliser getTotalCountAsync()

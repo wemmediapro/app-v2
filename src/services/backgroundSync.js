@@ -12,6 +12,9 @@ export const MERGE_STRATEGY = {
 
 const SYNC_TAG = 'sync-offline-queue';
 
+/**
+ *
+ */
 function readTokenFromLocalStorage() {
   try {
     return typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
@@ -50,6 +53,9 @@ export async function registerSync() {
   return { mode: 'timeout-fallback' };
 }
 
+/**
+ *
+ */
 function scheduleTimeoutFallback() {
   if (typeof window === 'undefined') return;
   window.setTimeout(function () {
@@ -65,7 +71,6 @@ function scheduleTimeoutFallback() {
  * Fusionne les entrées serveur `merged` avec les items locaux pour l’UI.
  * - server_timestamp / prefer_server : ordre par createdAt message serveur
  * - user_local : conserve l’ordre des ids locaux, attache le message serveur si présent
- *
  * @param {Array<{ clientSyncId: string, message?: object, duplicate?: boolean }>} mergedFromServer
  * @param {Array<{ id: string, timestamp?: string }>} localItems
  * @param {string} strategy
@@ -93,6 +98,9 @@ export function mergeOfflineSyncResults(mergedFromServer, localItems, strategy =
 
 const listeners = new Set();
 
+/**
+ *
+ */
 function dispatchToListeners(detail) {
   listeners.forEach(function (fn) {
     try {
@@ -103,6 +111,9 @@ function dispatchToListeners(detail) {
   });
 }
 
+/**
+ *
+ */
 function onSwMessage(ev) {
   const d = ev.data;
   if (!d || d.type !== 'GNV_OFFLINE_SYNC') return;
@@ -115,6 +126,9 @@ function onSwMessage(ev) {
   });
 }
 
+/**
+ *
+ */
 function onFlushComplete(ev) {
   const sent = ev.detail && typeof ev.detail.sent === 'number' ? ev.detail.sent : 0;
   if (sent <= 0) return;

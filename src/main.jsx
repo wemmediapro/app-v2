@@ -1,6 +1,13 @@
+/**
+ * Bootstrap React (Vite) : providers globaux, PWA / service worker, Framer Motion lazy.
+ *
+ * Arborescence : `BrowserRouter` → `LanguageProvider` → `LazyMotion` → `App` (`PassengerApp`).
+ * Les Web Vitals sont initialisés une fois au chargement (`initWebVitalsReporting`).
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { LazyMotion } from 'framer-motion';
 import App from './App.jsx';
 import './styles/fonts.css';
 import './styles/index.css';
@@ -8,6 +15,8 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { initWebVitalsReporting } from './lib/webVitals';
 
 initWebVitalsReporting();
+
+const loadMotionFeatures = () => import('./lib/framerLazyFeatures.js').then((m) => m.domAnimation);
 
 // ——— Service Worker (PWA) ———
 // En développement : désinscrire tout SW pour éviter le cache et voir les changements à chaud
@@ -82,7 +91,9 @@ if (!rootEl) {
         <ErrorBoundary>
           <LanguageProvider>
             <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-              <App />
+              <LazyMotion features={loadMotionFeatures}>
+                <App />
+              </LazyMotion>
             </BrowserRouter>
           </LanguageProvider>
         </ErrorBoundary>

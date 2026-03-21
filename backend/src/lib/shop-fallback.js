@@ -11,12 +11,18 @@ const BACKEND_ROOT = path.join(__dirname, '..', '..');
 const DATA_DIR = path.join(BACKEND_ROOT, 'data');
 const SHOP_FILE = path.join(DATA_DIR, 'shop.json');
 
+/**
+ *
+ */
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 }
 
+/**
+ *
+ */
 function readShop() {
   ensureDir();
   if (!fs.existsSync(SHOP_FILE)) {
@@ -35,6 +41,9 @@ function readShop() {
   }
 }
 
+/**
+ *
+ */
 function localizeProduct(doc, lang) {
   if (!doc) {
     return doc;

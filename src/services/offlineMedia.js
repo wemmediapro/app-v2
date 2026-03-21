@@ -5,11 +5,17 @@
 
 const CACHE_NAME = 'gnv-offline-media-v1';
 
+/**
+ *
+ */
 async function getCache() {
   if (!('caches' in window)) return null;
   return caches.open(CACHE_NAME);
 }
 
+/**
+ *
+ */
 export async function isAvailableOffline(url) {
   if (!url || !('caches' in window)) return false;
   try {

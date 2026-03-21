@@ -48,6 +48,9 @@ const ALLOWED_ATTR = [
   'loading',
 ];
 
+/**
+ *
+ */
 function sanitizeMagazineHtml(html) {
   if (typeof html !== 'string') {
     return '';

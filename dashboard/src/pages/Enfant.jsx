@@ -1,23 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Baby,
-  Plus,
-  Edit,
-  Trash2,
-  Search,
-  Clock,
-  Users,
-  Filter,
-  MapPin,
-  Calendar,
-  X,
-  Save,
-  Upload,
-  Ship,
-  Globe,
-} from 'lucide-react';
-import FilterBar from '../components/FilterBar';
+import { Baby, Plus, Edit, Trash2, Search, Clock, Users, MapPin, Calendar, X, Save, Upload, Globe } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { LANG_LIST, emptyTranslations } from '../utils/i18n';
 import toast from 'react-hot-toast';
@@ -30,8 +13,8 @@ const Enfant = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [countryFilter, setCountryFilter] = useState('all');
-  const [destinationFilter, setDestinationFilter] = useState('all');
+  const [_countryFilter, _setCountryFilter] = useState('all');
+  const [_destinationFilter, _setDestinationFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
   const [imageFile, setImageFile] = useState(null);

@@ -123,7 +123,7 @@ export default function HomePage({
   setPage,
   homePromosCombined,
   getPromoTitle,
-  getPromoDescription,
+  getPromoDescription: _getPromoDescription,
   setSelectedRestaurant,
   language,
 }) {

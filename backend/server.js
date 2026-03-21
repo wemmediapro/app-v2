@@ -1,3 +1,15 @@
+/**
+ * Serveur HTTP + Socket.io — API GNV OnBoard.
+ *
+ * Ordre global (à respecter lors d’ajouts) :
+ * 1. Chargement env (`config.env` puis `.env`) et validation sécurité (`validateSecurityConfig`).
+ * 2. Sentry + handlers process en production.
+ * 3. `express()` : compression, helmet/CSP, CORS, cookies CSRF, corrélation `X-Request-Id`, Morgan→Pino.
+ * 4. Connexion Mongo / Redis (fichiers requis plus bas) puis rate-limit et montage `mountRoutes`.
+ * 5. `http.Server` + Socket.io (auth JWT, handlers dans `src/socket/handlers.js`), adaptateur Redis optionnel.
+ *
+ * Les routes métier sont centralisées dans `src/routes/index.js` (préfixes `/api` et `/api/v1`).
+ */
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -60,7 +72,6 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cluster = require('cluster');
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
 
 const { verifyToken } = require('./src/middleware/auth');
 const { logSocketAuthFailed } = require('./src/lib/logger');
@@ -68,6 +79,8 @@ const LocalServerConfig = require('./src/models/LocalServerConfig');
 const { csrfCookie, csrfProtection } = require('./src/middleware/csrf');
 const { videoStreamMiddleware, audioStreamMiddleware } = require('./src/routes/stream');
 const { createRedisStore } = require('./src/lib/rateLimitRedisStore');
+const { createApiRateLimitSkip } = require('./src/lib/api-rate-limit-skip');
+const { createEndpointRateLimitMiddleware } = require('./src/middleware/endpointRateLimit');
 const { mountRoutes } = require('./src/routes');
 const { globalErrorHandler } = require('./src/utils/errors');
 const { attachSocketHandlers } = require('./src/socket/handlers');
@@ -78,8 +91,21 @@ const https = require('https');
 const http = require('http');
 const { getApiPathSuffix } = require('./src/lib/apiPath');
 const { API_BASE_PATHS } = require('./src/constants/apiVersion');
+const {
+  COMPRESSION_OPTIONS,
+  startCompressionStatsReporter,
+  isTunnelOrigin,
+  RE_PUBLIC_GET_LIST_SUB,
+  RE_STATIC_LONG_CACHE,
+  RE_STATIC_MEDIA_CACHE,
+  RE_PUBLIC_STATIC_LONG_CACHE,
+  jwtAdminSkipCache,
+} = require('./src/lib/http-middleware-tuning');
+const { initPrometheusMetrics, mountPrometheusMetricsRoute } = require('./src/lib/prometheus-metrics');
 
 const app = express();
+initPrometheusMetrics();
+mountPrometheusMetricsRoute(app);
 
 // Créer les dossiers upload au démarrage (config centralisée)
 [config.paths.videos, config.paths.images, config.paths.audio, config.paths.videosHls].forEach((dir) => {
@@ -95,58 +121,21 @@ const server = createServer(app);
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
 
-const io = new Server(server, {
-  transports: ['websocket'],
-  cors: {
-    origin: (origin, callback) => {
-      const allowed = config.cors.origins;
-      const isTunnel =
-        config.cors.allowTunnelOrigins &&
-        origin &&
-        (/\.trycloudflare\.com$/i.test(origin) ||
-          /\.cloudflare\.com$/i.test(origin) ||
-          /\.ngrok/i.test(origin) ||
-          /\.loca\.lt$/i.test(origin));
-      if (!origin || allowed.includes(origin) || isTunnel) {
-        callback(null, true);
-      } else {
-        callback(null, false);
-      }
-    },
-    methods: ['GET', 'POST'],
-  },
-  pingTimeout: 20000,
-  pingInterval: 10000,
-});
+require('./src/socket/socket-scale-metrics');
+const { buildSocketIoServerOptions, buildSocketCorsCallback } = require('./src/socket/socket-io-server-options');
+const { attachRedisAdapterFireAndForget } = require('./src/socket/redis-adapter-setup');
 
-// Adapter Redis pour Socket.io (scalabilité multi-instances / cluster)
-const { createAdapter } = require('@socket.io/redis-adapter');
-const { createClient } = require('redis');
+const io = new Server(server, buildSocketIoServerOptions(buildSocketCorsCallback()));
+
 if (config.redis && config.redis.uri) {
-  try {
-    const pubClient = createClient({ url: config.redis.uri });
-    const subClient = pubClient.duplicate();
-    Promise.all([pubClient.connect(), subClient.connect()])
-      .then(() => {
-        io.adapter(createAdapter(pubClient, subClient));
-        logger.info({ event: 'socket_io_redis_adapter_enabled' });
-      })
-      .catch((err) => {
-        logger.warn({
-          event: 'socket_io_redis_adapter_unavailable',
-          err: err.message,
-          stack: err.stack,
-        });
-      });
-  } catch (err) {
-    logger.warn({ event: 'socket_io_redis_adapter_init_failed', err: err.message, stack: err.stack });
-  }
+  attachRedisAdapterFireAndForget(io, config.redis.uri);
 }
 
 // Middleware
 app.set('trust proxy', 1);
-// [PERF-2] Compression gzip des réponses (JSON, HTML, etc.)
-app.use(compression());
+// [PERF-2] Compression gzip (niveau zlib réglable, défaut 4 — plus rapide que 6, filtre PNG/JPEG + stats optionnelles)
+app.use(compression(COMPRESSION_OPTIONS));
+startCompressionStatsReporter(logger);
 
 // Redirection HTTP→HTTPS gérée par Nginx (voir nginx.conf)
 
@@ -182,14 +171,8 @@ app.use('/api', csrfProtection);
 const corsOptions = {
   origin: (origin, callback) => {
     const allowed = config.cors.origins;
-    const isTunnel =
-      config.cors.allowTunnelOrigins &&
-      origin &&
-      (/\.trycloudflare\.com$/i.test(origin) ||
-        /\.cloudflare\.com$/i.test(origin) ||
-        /\.ngrok/i.test(origin) ||
-        /\.loca\.lt$/i.test(origin));
-    if (!origin || allowed.includes(origin) || isTunnel) {
+    const tunnelOk = config.cors.allowTunnelOrigins && origin && isTunnelOrigin(origin);
+    if (!origin || allowed.includes(origin) || tunnelOk) {
       callback(null, true);
     } else {
       callback(null, false);
@@ -229,6 +212,7 @@ app.use(
         sub === '/health' ||
         sub.startsWith('/health/') ||
         sub === '/metrics/web-vitals' ||
+        req.path === '/metrics' ||
         req.path?.startsWith('/uploads/')
       );
     },
@@ -258,8 +242,7 @@ app.use('/api', (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     return next();
   }
-  const isListPath =
-    /^\/(movies|magazine|radio|banners|shop|restaurants|webtv|enfant|shipmap|notifications)(\/|$)/.test(sub);
+  const isListPath = RE_PUBLIC_GET_LIST_SUB.test(sub);
   if (!isListPath) {
     return next();
   }
@@ -328,9 +311,9 @@ app.use(
     etag: true,
     lastModified: true,
     setHeaders(res, filePath) {
-      if (/\.(webp|avif|jpe?g|png|gif|svg|ico|woff2)$/i.test(filePath)) {
+      if (RE_STATIC_LONG_CACHE.test(filePath)) {
         res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
-      } else if (/\.(mp4|webm|mp3|wav|m4a|m3u8|ts)$/i.test(filePath)) {
+      } else if (RE_STATIC_MEDIA_CACHE.test(filePath)) {
         res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
       }
     },
@@ -342,7 +325,7 @@ app.use(
     etag: true,
     lastModified: true,
     setHeaders(res, filePath) {
-      if (/\.(webp|avif|jpe?g|png|gif|svg|ico|woff2|js|css)$/i.test(filePath)) {
+      if (RE_PUBLIC_STATIC_LONG_CACHE.test(filePath)) {
         res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
       }
     },
@@ -408,42 +391,18 @@ async function setupAfterDb() {
       }
     }
   }
-  /** Loopback / local : SPA + React Strict Mode + polls = beaucoup de GET d’un coup. */
-  const isLocalLoopbackIp = (req) => {
-    const raw = req.ip || req.socket?.remoteAddress || '';
-    const ip = String(raw).replace(/^::ffff:/i, '');
-    return ip === '127.0.0.1' || ip === '::1' || ip === 'localhost';
-  };
+  const skipApiLimit = createApiRateLimitSkip({ getApiPathSuffix, jwtAdminSkipCache, config });
 
-  const skipApiLimit = (req) => {
-    const p = getApiPathSuffix(req.path || '').toLowerCase();
-    if (p === '/health' || p === '/health/ready' || p === '/time') {
-      return true;
-    }
-    if (p.startsWith('/stream') || p.startsWith('/upload') || p.startsWith('/media-library')) {
-      return true;
-    }
-    // Dev : pas de rate limit sur loopback (évite 429 au premier chargement + compteurs Redis résiduels)
-    if (
-      process.env.NODE_ENV !== 'production' &&
-      process.env.RATE_LIMIT_LOCALHOST !== '0' &&
-      isLocalLoopbackIp(req)
-    ) {
-      return true;
-    }
-    try {
-      const token = req.get('Authorization')?.replace('Bearer ', '') || req.cookies?.authToken;
-      if (token && config.jwt?.secret) {
-        const decoded = jwt.verify(token, config.jwt.secret);
-        if (decoded.role === 'admin') {
-          return true;
-        }
-      }
-    } catch (e) {
-      /* ignore */
-    }
-    return false;
-  };
+  const endpointRedisStore = await createRedisStore(config.redis && config.redis.uri, 'rl:ep:');
+  if (endpointRedisStore) {
+    endpointRedisStore.init({ windowMs: config.rateLimit.windowMs });
+  }
+  const endpointRateLimiter = createEndpointRateLimitMiddleware({
+    rules: config.rateLimit.endpointRules,
+    redisStore: endpointRedisStore,
+    skip: skipApiLimit,
+    defaultWindowMs: config.rateLimit.windowMs,
+  });
   // [SEC-6] RATE_LIMIT_LOAD_TEST ignoré en production (réservé aux tests de charge en dev)
   const apiLimitMax =
     process.env.NODE_ENV !== 'production' && process.env.RATE_LIMIT_LOAD_TEST === '1' ? 1000000 : config.rateLimit.max;
@@ -456,6 +415,7 @@ async function setupAfterDb() {
     legacyHeaders: false,
     store: redisStore || undefined,
   });
+  app.use('/api/', endpointRateLimiter);
   app.use('/api/', apiLimiter);
   if (redisStore) {
     logger.info({ event: 'api_rate_limit_redis_store_active' });
@@ -465,6 +425,32 @@ async function setupAfterDb() {
       message:
         "Rate limit API : store mémoire (REDIS_URI non configuré). En multi-process la limite n'est pas partagée.",
     });
+  }
+  if (endpointRedisStore) {
+    logger.info({
+      event: 'endpoint_rate_limit_redis_active',
+      rules: config.rateLimit.endpointRules.length,
+    });
+  } else if (config.rateLimit.endpointRules.length > 0) {
+    logger.warn({
+      event: 'endpoint_rate_limit_memory_store',
+      message:
+        "Rate limit par endpoint : compteurs mémoire (pas de REDIS_URI). En cluster, quotas par processus.",
+      rules: config.rateLimit.endpointRules.length,
+    });
+  }
+  if (process.env.RESPONSE_CACHE_ENABLED === '1') {
+    const { createResponseCacheMiddleware } = require('./src/middleware/responseCache');
+    app.use('/api', createResponseCacheMiddleware({ cacheManager }));
+    logger.info({ event: 'response_cache_middleware_active' });
+  }
+  if (process.env.BULL_JOBS_ENABLED === '1') {
+    try {
+      require('./src/jobs').init();
+      logger.info({ event: 'bull_jobs_init_called' });
+    } catch (e) {
+      logger.warn({ event: 'bull_jobs_init_skipped', err: e.message });
+    }
   }
   mountRoutes(app, { dbManager, connectionCounters, cacheManager });
 
@@ -728,7 +714,14 @@ function gracefulShutdown(signal) {
   } catch (_) {}
   server.close(() => {
     logger.info({ event: 'http_server_closed' });
-    Promise.resolve(dbManager.disconnect?.())
+    try {
+      io._gnvBroadcasterShutdown?.();
+    } catch (_) {
+      /* ignore */
+    }
+    const bullClose = () =>
+      Promise.resolve(require('./src/jobs').closeQueues?.()).catch(() => {});
+    Promise.all([bullClose(), Promise.resolve(dbManager.disconnect?.())])
       .then(() => process.exit(0))
       .catch(() => process.exit(0));
   });

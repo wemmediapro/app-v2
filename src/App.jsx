@@ -1,13 +1,7 @@
 /**
- * Point d’entrée app passagers — orchestration dans usePassengerAppModel, UI dans AppPassengerLayout.
+ * Point d’entrée racine monté par `main.jsx` (une seule responsabilité : ré-exporter l’app passager).
+ *
+ * Variante **web** dédiée : `src/web/AppWeb.jsx` (si utilisée par un autre point d’entrée Vite).
+ * Toute évolution du parcours passager standard passe par `app/PassengerApp.jsx` et ses hooks.
  */
-import React from 'react';
-import { usePassengerAppModel } from './hooks/usePassengerAppModel';
-import { AppPassengerLayout } from './components/AppPassengerLayout';
-
-function App() {
-  const layout = usePassengerAppModel();
-  return <AppPassengerLayout {...layout} />;
-}
-
-export default App;
+export { default } from './app/PassengerApp.jsx';

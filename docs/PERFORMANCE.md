@@ -4,10 +4,10 @@ Objectif : donner des **leviers concrets** déjà présents dans le codebase, sa
 
 ## Processus Node
 
-| Levier | Où / comment |
-|--------|----------------|
+| Levier       | Où / comment                                                                                                                                                                 |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Mémoire heap | Script prod : `npm run start:prod` utilise `NODE_OPTIONS='--max-old-space-size=2048'` et `UV_THREADPOOL_SIZE=16` (`backend/package.json`). Ajuster selon RAM VM / conteneur. |
-| Cluster | `npm run start:cluster` — plusieurs workers derrière le même port (voir `backend/cluster.js`). |
+| Cluster      | `npm run start:cluster` — plusieurs workers derrière le même port (voir `backend/cluster.js`).                                                                               |
 
 ## Données & cache
 
@@ -35,6 +35,15 @@ npm run test:load:k6:ci
 
 Seuils cibles (produit) : p95 HTTP &lt; 500 ms, erreurs &lt; 1 % — détail dans `tests/load/README.md`.
 
+## Micro-benchmarks (CPU, reproductibles)
+
+| Cible                         | Commande                      | Rôle                                                                                                                                    |
+| ----------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend (Vitest + Tinybench) | `npm run test:bench`          | Ex. sanitization HTML (`src/tests/perf/sanitize.bench.js`) — repère les régressions sur le chemin magazine.                             |
+| Backend (scripts Node)        | `cd backend && npm run bench` | Regex tunnel, liste publique, gzip, cache JWT (`bench-middleware-helpers.js`) ; simulation hit cache auth (`bench-auth-user-cache.js`). |
+
+Les micro-benchmarks mesurent surtout le **coût CPU** sur une machine donnée ; pour la latence bout-en-bout, combiner avec **k6** et les métriques `/api/v1/health` / Prometheus. Vitest affiche un avertissement « experimental » sur `bench` : épingler la version de Vitest en CI si vous vous y fiez.
+
 ## Fichiers & médias
 
 - **HLS / vidéo** : en production, servir les segments via Nginx ou CDN plutôt que de tout faire transiter par Node — voir `docs/VERIFICATION-HLS-NGINX.md`.
@@ -42,6 +51,10 @@ Seuils cibles (produit) : p95 HTTP &lt; 500 ms, erreurs &lt; 1 % — détail dan
 
 ## Méthode recommandée
 
-1. Mesurer (k6 + métriques OS / Mongo / Redis).  
-2. Identifier le goulet (CPU Node, I/O disque, DB, réseau).  
+1. Mesurer (k6 + métriques OS / Mongo / Redis).
+2. Identifier le goulet (CPU Node, I/O disque, DB, réseau).
 3. Appliquer **un** changement à la fois (cache, index Mongo, scaling horizontal, static files).
+
+## Profiling (CPU / heap / Inspector)
+
+Procédures détaillées : [PROFILING.md](./PROFILING.md) — `npm run profile:backend:cpu` / `profile:backend:heap`, `dev:inspect`, Playwright `--trace`, `build:analyze`.

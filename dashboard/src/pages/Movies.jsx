@@ -43,7 +43,7 @@ function getImageSrc(url) {
 
 /** Calcule la durée d'un fichier vidéo (en secondes) via un élément vidéo temporaire */
 function getVideoDurationFromFile(file) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     if (!file || !file.type.startsWith('video/')) {
       resolve(0);
       return;
@@ -543,13 +543,6 @@ const Movies = () => {
     return `${d} min`;
   };
 
-  const formatDurationMovies = (seconds) => {
-    if (!seconds) return '0:00';
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
   const selectVideoFromLibrary = (video) => {
     // Stocker le chemin relatif pour que l’URL soit valide côté backend et app (ex: /uploads/videos/xxx.mp4)
     const urlToStore = video.path || (typeof video.url === 'string' ? video.url : '');
@@ -694,7 +687,6 @@ const Movies = () => {
     );
   }
 
-  const popularMovies = filteredMovies.filter((m) => m.isPopular);
   const hasActiveFilters = countryFilter !== 'all' || destinationFilter !== 'all';
 
   return (

@@ -9,7 +9,7 @@ const MIN_HEIGHT = {
   medium: 'min-h-[300px]',
 };
 
-export default function LoadingFallback({ t, minHeight = 'screen', className = '' }) {
+function LoadingFallback({ t, minHeight = 'screen', className = '' }) {
   const minHeightClass = typeof minHeight === 'string' ? MIN_HEIGHT[minHeight] || minHeight : 'min-h-screen';
   return (
     <div
@@ -21,3 +21,5 @@ export default function LoadingFallback({ t, minHeight = 'screen', className = '
     </div>
   );
 }
+
+export default React.memo(LoadingFallback);

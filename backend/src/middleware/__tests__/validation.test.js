@@ -3,7 +3,7 @@
  */
 const request = require('supertest');
 const express = require('express');
-const { profileValidation, loginValidation, handleValidationErrors, strongPassword } = require('../validation');
+const { profileValidation, loginValidation, strongPassword } = require('../validation');
 
 const app = express();
 app.use(express.json());

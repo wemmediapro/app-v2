@@ -24,6 +24,12 @@ module.exports = {
     'jsdoc/require-returns': 'off',
     'jsdoc/require-param-description': 'off',
     'jsdoc/require-returns-description': 'off',
+    'jsdoc/check-tag-names': [
+      'warn',
+      {
+        definedTags: ['swagger'],
+      },
+    ],
     eqeqeq: ['error', 'always', { null: 'ignore' }],
     'no-eval': 'error',
     'no-implied-eval': 'error',

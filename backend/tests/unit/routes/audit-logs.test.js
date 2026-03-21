@@ -40,7 +40,8 @@ jest.mock('../../../src/models/User', () => {
 
 jest.mock('../../../src/lib/logger', () => ({
   logFailedLogin: jest.fn(),
-  error: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn(),
   error: jest.fn(),
 }));
 

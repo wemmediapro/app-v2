@@ -9,14 +9,6 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const Ad = require('../models/Ad');
 const { logRouteError } = require('../lib/route-logger');
 
-function toResponse(doc) {
-  if (!doc) {
-    return doc;
-  }
-  const d = doc.toObject ? doc.toObject() : doc;
-  return { ...d, id: (d._id || d.id)?.toString() };
-}
-
 // GET /api/ads — liste (admin)
 router.get('/', authMiddleware, adminMiddleware, async (req, res) => {
   try {

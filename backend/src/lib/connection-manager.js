@@ -1,7 +1,6 @@
 /**
  * Gestionnaire de connexions Socket.io — Map locale (latence &lt; 5 ms) pour lookup,
  * synchronisation Redis asynchrone pour limites et stats cross-workers (PM2 cluster).
- *
  * @see redis-connection-manager.js — clés gnv:connections:*, limite IP globale (MAX_CONNECTIONS_PER_IP).
  */
 
@@ -16,15 +15,23 @@ const AGGRESSIVE_INACTIVITY_MS = parseInt(process.env.SOCKET_INACTIVITY_AGGRESSI
 const CRITICAL_INACTIVITY_MS = parseInt(process.env.SOCKET_INACTIVITY_CRITICAL_MS, 10) || 30 * 1000;
 const CLEANUP_MAX_PER_CYCLE = parseInt(process.env.SOCKET_CLEANUP_MAX_PER_CYCLE, 10) || 50;
 
+/**
+ *
+ */
 class ConnectionManager extends EventEmitter {
   constructor() {
     super();
     this.socketConnections = new Map(); // socketId -> connection info
     this.defaultInactivityMs = DEFAULT_INACTIVITY_MS;
     this.connectionCount = 0;
+    /** Cible ~1500 users + marge ; en cluster, total ≈ workers × cette valeur (avec Redis adapter). */
     this.maxConnections =
-      parseInt(process.env.MAX_SOCKET_CONNECTIONS || process.env.SOCKET_MAX_CONNECTIONS, 10) || 2000;
+      parseInt(process.env.MAX_SOCKET_CONNECTIONS || process.env.SOCKET_MAX_CONNECTIONS, 10) || 3500;
     this.maxConnectionsPerIP = parseInt(process.env.MAX_CONNECTIONS_PER_IP, 10) || 50;
+    /** 0 = désactivé. Limite les nouvelles poignées de main / s pour absorber les pics (burst 1 s). */
+    this.maxAcceptPerSec = parseInt(process.env.SOCKET_CONNECTION_ACCEPT_RATE_PER_SEC, 10) || 0;
+    /** @type {number[]} */
+    this._acceptTimestamps = [];
     this.ipConnections = new Map(); // ip -> count (worker local)
     this.connectionStats = {
       total: 0,
@@ -106,6 +113,17 @@ class ConnectionManager extends EventEmitter {
    * @returns {Promise<boolean>}
    */
   async addConnection(socket) {
+    if (this.maxAcceptPerSec > 0) {
+      const now = Date.now();
+      this._acceptTimestamps = this._acceptTimestamps.filter((t) => now - t < 1000);
+      if (this._acceptTimestamps.length >= this.maxAcceptPerSec) {
+        this.connectionStats.rejected++;
+        this.emit('connection-rejected', { socket, reason: 'accept_rate_limited', ip: this.getClientIP(socket) });
+        return false;
+      }
+      this._acceptTimestamps.push(now);
+    }
+
     const ip = this.getClientIP(socket);
     const useGlobalIp = redisConnectionManager.isEnabled();
 

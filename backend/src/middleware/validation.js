@@ -1,4 +1,11 @@
 const { body, query, param, validationResult } = require('express-validator');
+const {
+  RE_PHONE_LOOSE,
+  RE_STRONG_PWD_UPPER,
+  RE_STRONG_PWD_LOWER,
+  RE_STRONG_PWD_DIGIT,
+  RE_STRONG_PWD_SYMBOL,
+} = require('../constants/regex');
 
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
@@ -40,16 +47,16 @@ const strongPassword = (value) => {
   if (value.length < 8) {
     return false;
   }
-  if (!/[A-Z]/.test(value)) {
+  if (!RE_STRONG_PWD_UPPER.test(value)) {
     return false;
   }
-  if (!/[a-z]/.test(value)) {
+  if (!RE_STRONG_PWD_LOWER.test(value)) {
     return false;
   }
-  if (!/[0-9]/.test(value)) {
+  if (!RE_STRONG_PWD_DIGIT.test(value)) {
     return false;
   }
-  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)) {
+  if (!RE_STRONG_PWD_SYMBOL.test(value)) {
     return false;
   }
   return true;
@@ -82,10 +89,7 @@ const registerValidation = [
       return true;
     }),
 
-  body('phone')
-    .optional()
-    .matches(/^[+]?[\d\s\-\(\)]+$/)
-    .withMessage('Please provide a valid phone number'),
+  body('phone').optional().matches(RE_PHONE_LOOSE).withMessage('Please provide a valid phone number'),
 
   handleValidationErrors,
 ];
@@ -102,10 +106,7 @@ const loginValidation = [
 const profileValidation = [
   body('firstName').optional().trim().isLength({ max: 50 }).withMessage('First name cannot exceed 50 characters'),
   body('lastName').optional().trim().isLength({ max: 50 }).withMessage('Last name cannot exceed 50 characters'),
-  body('phone')
-    .optional()
-    .matches(/^[+]?[\d\s\-\(\)]+$/)
-    .withMessage('Please provide a valid phone number'),
+  body('phone').optional().matches(RE_PHONE_LOOSE).withMessage('Please provide a valid phone number'),
   body('cabinNumber').optional().trim().isLength({ max: 30 }).withMessage('Cabin number cannot exceed 30 characters'),
   body('country').optional().trim().isLength({ max: 100 }).withMessage('Country cannot exceed 100 characters'),
   body('dateOfBirth').optional().isISO8601().withMessage('Invalid date of birth (ISO 8601 expected)'),
@@ -192,10 +193,7 @@ const adminUserUpdateValidation = [
   body('firstName').optional({ values: 'falsy' }).trim().notEmpty().isLength({ max: 50 }),
   body('lastName').optional({ values: 'falsy' }).trim().notEmpty().isLength({ max: 50 }),
   body('email').optional().isEmail().normalizeEmail(),
-  body('phone')
-    .optional({ values: 'falsy' })
-    .matches(/^[+]?[\d\s\-\(\)]+$/)
-    .withMessage('phone invalide'),
+  body('phone').optional({ values: 'falsy' }).matches(RE_PHONE_LOOSE).withMessage('phone invalide'),
   body('cabinNumber').optional().trim().isLength({ max: 30 }),
   body('password').optional().isLength({ min: 8, max: 256 }),
   body('role').optional().isIn(['passenger', 'crew', 'admin']),

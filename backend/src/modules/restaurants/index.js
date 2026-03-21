@@ -611,7 +611,7 @@ router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
 });
 
 // Fonction d'initialisation du module
-const initialize = (app, io) => {
+const initialize = (app, _io) => {
   app.use('/api/restaurants', router);
   logger.info({ event: 'module_restaurants_initialized' });
 };

@@ -3,7 +3,7 @@
  * Utilisé par MainContent et MainContent.performant.
  * Ajouter une page = ajouter une entrée ici + lazy() dans MainContent.
  */
-import React, { lazy } from 'react';
+import { lazy } from 'react';
 
 const HomePage = lazy(() => import('../pages/HomePage'));
 const MagazinePage = lazy(() => import('../pages/MagazinePage'));

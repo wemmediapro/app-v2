@@ -11,12 +11,18 @@ const BACKEND_ROOT = path.join(__dirname, '..', '..');
 const DATA_DIR = path.join(BACKEND_ROOT, 'data');
 const RESTAURANTS_FILE = path.join(DATA_DIR, 'restaurants.json');
 
+/**
+ *
+ */
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 }
 
+/**
+ *
+ */
 function readRestaurants() {
   ensureDir();
   if (!fs.existsSync(RESTAURANTS_FILE)) {
@@ -32,6 +38,9 @@ function readRestaurants() {
   }
 }
 
+/**
+ *
+ */
 function localizeRestaurant(doc, lang) {
   if (!doc) {
     return doc;

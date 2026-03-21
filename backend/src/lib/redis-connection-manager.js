@@ -73,6 +73,9 @@ async function init(cacheManagerOrClient) {
   }
 }
 
+/**
+ *
+ */
 function isEnabled() {
   return enabled && client && client.isOpen;
 }
@@ -116,6 +119,9 @@ async function addConnectionGlobal(socketId, ip, maxPerIp = MAX_PER_IP_DEFAULT) 
   }
 }
 
+/**
+ *
+ */
 async function removeConnectionGlobal(socketId) {
   if (!isEnabled() || !socketId) {
     return;
@@ -154,6 +160,9 @@ async function retry() {
   return { ok: true };
 }
 
+/**
+ *
+ */
 async function getStatsGlobal() {
   const out = {
     redis: isEnabled(),

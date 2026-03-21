@@ -342,7 +342,8 @@ export const apiService = {
   // Health check
   healthCheck: () => api.get('/health'),
 
-  /** Heure serveur pour synchronisation WebTV / radio (retourne un Date ou null si erreur).
+  /**
+   * Heure serveur pour synchronisation WebTV / radio (retourne un Date ou null si erreur).
    * Essaie /time, puis /health, puis l'en-tête Date d'une requête GET /radio (toujours disponible si l'API répond).
    */
   getServerTime: async () => {

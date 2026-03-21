@@ -125,4 +125,8 @@ const restaurantSchema = new mongoose.Schema(
   }
 );
 
+// GET /api/restaurants : { isActive: true } [, category] + sort({ name: 1 })
+restaurantSchema.index({ isActive: 1, name: 1 });
+restaurantSchema.index({ isActive: 1, category: 1, name: 1 });
+
 module.exports = mongoose.model('Restaurant', restaurantSchema);

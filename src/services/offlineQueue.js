@@ -20,6 +20,9 @@ export const SW_TOKEN_META_KEY = 'bearerToken';
 const DB_VERSION = 2;
 const LS_KEY = 'gnv_offline_chat_outbox_v1';
 
+/**
+ *
+ */
 function generateId() {
   return `oq-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
@@ -45,6 +48,9 @@ export function parseReceiverFromChatRoom(room, myUserId) {
   return null;
 }
 
+/**
+ *
+ */
 async function tryOpenDb() {
   if (useLocalStorageFallback) return null;
   try {
@@ -69,6 +75,9 @@ async function tryOpenDb() {
   }
 }
 
+/**
+ *
+ */
 function readLocalStorage() {
   try {
     const raw = localStorage.getItem(LS_KEY);
@@ -80,6 +89,9 @@ function readLocalStorage() {
   }
 }
 
+/**
+ *
+ */
 function writeLocalStorage(items) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(items));
@@ -88,10 +100,16 @@ function writeLocalStorage(items) {
   }
 }
 
+/**
+ *
+ */
 function sortByTimestamp(items) {
   return [...items].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 }
 
+/**
+ *
+ */
 async function persistAll(items) {
   const sorted = sortByTimestamp(items);
   const db = await tryOpenDb();
@@ -155,11 +173,17 @@ export async function enqueue(partial) {
   return item;
 }
 
+/**
+ *
+ */
 export async function dequeue(id) {
   const items = (await getAll()).filter((x) => x.id !== id);
   await persistAll(items);
 }
 
+/**
+ *
+ */
 export async function clear() {
   await persistAll([]);
 }
@@ -189,6 +213,9 @@ export async function setSwSyncAuthToken(token) {
   }
 }
 
+/**
+ *
+ */
 async function updateItemById(id, updater) {
   const items = await getAll();
   const idx = items.findIndex((x) => x.id === id);
@@ -209,6 +236,9 @@ export async function retry() {
 
 let flushHandler = null;
 
+/**
+ *
+ */
 export function setOfflineFlushHandler(fn) {
   flushHandler = typeof fn === 'function' ? fn : null;
 }

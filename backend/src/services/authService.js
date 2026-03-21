@@ -4,6 +4,7 @@
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const speakeasy = require('speakeasy');
+const { RE_TOTP_SIX_DIGITS, RE_WHITESPACE_ALL } = require('../constants/regex');
 const QRCode = require('qrcode');
 
 const APP_NAME = process.env.TWO_FACTOR_ISSUER || process.env.TWO_FACTOR_APP_NAME || 'GNV OnBoard';
@@ -31,7 +32,7 @@ async function qrCodeDataUrl(otpauthUrl) {
 }
 
 /**
- * @param {number} [count=10]
+ * @param {number} [count]
  * @returns {string[]}
  */
 function generateBackupCodes(count = 10) {
@@ -60,8 +61,8 @@ function verifyTOTPToken(secretBase32, token) {
   if (!secretBase32 || token == null) {
     return false;
   }
-  const clean = String(token).replace(/\s/g, '');
-  if (!/^\d{6}$/.test(clean)) {
+  const clean = String(token).replace(RE_WHITESPACE_ALL, '');
+  if (!RE_TOTP_SIX_DIGITS.test(clean)) {
     return false;
   }
   return speakeasy.totp.verify({

@@ -13,12 +13,9 @@ import {
   ChevronRight,
   Heart,
   X,
-  Minus,
-  Plus,
   ShoppingBag,
   ArrowLeft,
 } from 'lucide-react';
-import { getPosterUrl, getRadioLogoUrl } from '../services/apiService';
 
 export default function RestaurantPage(props) {
   const {
@@ -44,7 +41,7 @@ export default function RestaurantPage(props) {
     getPosterUrl,
     setPage,
     cart,
-    addToCart,
+    addToCart: _addToCart,
   } = props;
   return (
     <motion.div

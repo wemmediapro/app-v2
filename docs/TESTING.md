@@ -4,12 +4,13 @@ Ce document regroupe **comment** lancer et étendre les tests du dépôt. Le dé
 
 ## Vue d’ensemble
 
-| Couche                  | Outil         | Emplacement                                                           |
-| ----------------------- | ------------- | --------------------------------------------------------------------- |
-| Backend API & libs      | Jest          | `backend/tests/`, `backend/src/**/__tests__/`                         |
-| Frontend (unitaire)     | Vitest        | racine — `npm test`                                                   |
-| Parcours E2E            | Playwright    | `tests/*.spec.js`, `playwright.config.js`                             |
-| Charge HTTP / WebSocket | k6, Artillery | `tests/load/`, voir [`tests/load/README.md`](../tests/load/README.md) |
+| Couche                  | Outil                        | Emplacement                                                                                      |
+| ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| Backend API & libs      | Jest                         | `backend/tests/`, `backend/src/**/__tests__/`                                                    |
+| Frontend (unitaire)     | Vitest                       | racine — `npm test`                                                                              |
+| Parcours E2E            | Playwright                   | `tests/*.spec.js`, `playwright.config.js`                                                        |
+| Charge HTTP / WebSocket | k6, Artillery                | `tests/load/`, voir [`tests/load/README.md`](../tests/load/README.md)                            |
+| Micro-benchmarks CPU    | Vitest `bench`, scripts Node | `npm run test:bench` ; `cd backend && npm run bench` — voir [`PERFORMANCE.md`](./PERFORMANCE.md) |
 
 ## Prérequis
 
@@ -53,6 +54,10 @@ Variantes : `npm run test:e2e:ui`, `test:e2e:headed`, `test:e2e:mobile` — voir
 ## Charge & performance
 
 Les scénarios k6 / Artillery servent à valider la tenue sous charge, pas à remplacer les tests unitaires. Voir [PERFORMANCE.md](./PERFORMANCE.md) et `tests/load/README.md`.
+
+**Benchmarks** : `npm run test:bench` (frontend, fichiers `*.bench.js` sous `src/tests/`) ; `npm run test:bench:backend` ou `cd backend && npm run bench` pour les scripts middleware / cache auth.
+
+**Profiling** : CPU / heap V8 et Inspector — voir [PROFILING.md](./PROFILING.md) (`profile:backend:cpu`, `dev:inspect`, traces Playwright).
 
 ## CI
 

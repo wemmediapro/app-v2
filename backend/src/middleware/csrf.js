@@ -30,6 +30,9 @@ function csrfTokensEqual(cookieToken, headerToken) {
   return crypto.timingSafeEqual(bufCookie, bufHeader);
 }
 
+/**
+ *
+ */
 function getToken() {
   return crypto.randomBytes(32).toString('hex');
 }

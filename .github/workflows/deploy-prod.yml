@@ -19,6 +19,8 @@ concurrency:
 
 env:
   NODE_VERSION: '22'
+  HUSKY: '0'
+  NPM_CONFIG_FUND: 'false'
 
 jobs:
   validate-input:

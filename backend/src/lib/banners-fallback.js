@@ -11,12 +11,18 @@ const BACKEND_ROOT = path.join(__dirname, '..', '..');
 const DATA_DIR = path.join(BACKEND_ROOT, 'data');
 const BANNERS_FILE = path.join(DATA_DIR, 'banners.json');
 
+/**
+ *
+ */
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 }
 
+/**
+ *
+ */
 function readBanners() {
   ensureDir();
   if (!fs.existsSync(BANNERS_FILE)) {
@@ -32,6 +38,9 @@ function readBanners() {
   }
 }
 
+/**
+ *
+ */
 function localizeBanner(doc, lang) {
   if (!doc) {
     return doc;

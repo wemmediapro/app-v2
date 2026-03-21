@@ -22,6 +22,9 @@ const TTL_BY_PREFIX = [
   { prefix: 'list:shop:', ttl: 120 },
 ];
 
+/**
+ *
+ */
 class CacheManager {
   constructor() {
     this.client = null;

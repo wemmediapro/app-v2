@@ -280,7 +280,7 @@ describe('Admin — erreurs HTTP et logRouteError', () => {
 
   it('GET /dashboard 500 + admin_dashboard_failed', async () => {
     const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
-    User.countDocuments.mockRejectedValueOnce(new Error('dash count'));
+    User.aggregate.mockRejectedValueOnce(new Error('dash count'));
     try {
       await request(buildApp())
         .get('/api/admin/dashboard')

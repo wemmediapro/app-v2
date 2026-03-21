@@ -24,7 +24,6 @@ const VIDEO_BITRATE = '800k';
 const AUDIO_BITRATE = '128k';
 
 const BACKEND_ROOT = path.join(__dirname, '..', '..');
-const VIDEOS_DIR = path.join(BACKEND_ROOT, 'public', 'uploads', 'videos');
 const HLS_BASE_DIR = path.join(BACKEND_ROOT, 'public', 'uploads', 'videos_hls');
 
 /**

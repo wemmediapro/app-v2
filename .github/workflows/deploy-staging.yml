@@ -1,9 +1,23 @@
 # Déploiement staging — branche develop (Heroku / Railway via secrets)
+# Ne se déclenche que si des chemins applicatifs changent (évite déploiements inutiles).
 name: Deploy Staging
 
 on:
   push:
     branches: [develop]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'backend/**'
+      - 'dashboard/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.*'
+      - 'tailwind.config.*'
+      - 'postcss.config.*'
+      - 'index.html'
+      - 'Dockerfile'
+      - '.github/workflows/deploy-staging.yml'
 
 permissions:
   contents: read
@@ -15,6 +29,8 @@ concurrency:
 
 env:
   NODE_VERSION: '22'
+  HUSKY: '0'
+  NPM_CONFIG_FUND: 'false'
 
 jobs:
   pre-deploy-tests:

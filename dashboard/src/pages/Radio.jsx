@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -11,7 +11,6 @@ import {
   Plus,
   Edit,
   Trash2,
-  Search,
   Play,
   Pause,
   X,
@@ -19,23 +18,17 @@ import {
   Clock,
   List,
   BarChart3,
-  Volume2,
-  VolumeX,
-  Copy,
   CheckCircle,
   AlertCircle,
   GripVertical,
-  Trash,
   Music,
   FileAudio,
   Calendar as CalendarIcon,
-  Repeat,
   ArrowUp,
   ArrowDown,
   Clock as ClockIcon,
   History,
   Zap,
-  Settings,
   MoreVertical,
   Image as ImageIcon,
   Upload,
@@ -73,7 +66,7 @@ const Radio = () => {
     translations: emptyTranslations(),
   });
   // Playlists locales (Bibliothèque MP3) pour diffusion 100% offline
-  const [localPlaylists, setLocalPlaylists] = useState(() => {
+  const [_localPlaylists, setLocalPlaylists] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('playlists') || '[]');
     } catch {
@@ -101,8 +94,8 @@ const Radio = () => {
   });
 
   // Planning
-  const [planningView, setPlanningView] = useState('week'); // 'day', 'week', 'month'
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [_planningView, _setPlanningView] = useState('week'); // 'day', 'week', 'month'
+  const [_currentDate, _setCurrentDate] = useState(new Date());
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date();
     const day = today.getDay();
@@ -120,7 +113,7 @@ const Radio = () => {
   });
 
   // Breaks
-  const [breaks, setBreaks] = useState([]);
+  const [_breaks, _setBreaks] = useState([]);
 
   // Daily Generation
   const [dailyGeneration, setDailyGeneration] = useState({
@@ -130,7 +123,7 @@ const Radio = () => {
   });
 
   // History
-  const [history, setHistory] = useState([]);
+  const [_history, _setHistory] = useState([]);
 
   // Upload logo
   const [logoUploading, setLogoUploading] = useState(false);
@@ -144,7 +137,7 @@ const Radio = () => {
   const [mediaLibraryAudio, setMediaLibraryAudio] = useState([]);
   const [mediaLibraryLoading, setMediaLibraryLoading] = useState(false);
   const [libraryPickLoadingPath, setLibraryPickLoadingPath] = useState(null); // path de l'item en cours de chargement durée
-  const [libraryForRadio, setLibraryForRadio] = useState([]);
+  const [_libraryForRadio, setLibraryForRadio] = useState([]);
   const [radioNewProgram, setRadioNewProgram] = useState({
     title: '',
     description: '',
@@ -182,7 +175,7 @@ const Radio = () => {
   ];
 
   // Bibliothèque MP3
-  const [mp3Library, setMp3Library] = useState(() => {
+  const [mp3Library, _setMp3Library] = useState(() => {
     const saved = localStorage.getItem('mp3Library');
     return saved ? JSON.parse(saved) : [];
   });
@@ -648,11 +641,6 @@ const Radio = () => {
     resetRadioNewProgram();
     setEditingRadioProgramIndex(null);
     toast.success(t('radio.programUpdated'));
-  };
-
-  const formatTime = (time) => {
-    if (!time) return '';
-    return time;
   };
 
   const computeEndTimeFromStartAndDuration = (startTime, durationSeconds) => {
@@ -2417,7 +2405,7 @@ const Radio = () => {
                         ))}
                       </div>
                       <div className="grid grid-cols-7">
-                        {getRadioCalendarDays(radioCalendarDate).map((day, idx) => {
+                        {getRadioCalendarDays(radioCalendarDate).map((day, _idx) => {
                           const dayProgs = getProgramsForRadioDate(day.date);
                           const isSelected = radioSelectedDate.toDateString() === day.date.toDateString();
                           return (

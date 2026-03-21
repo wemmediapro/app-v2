@@ -40,8 +40,8 @@ function auditContext(req, res, next) {
 /**
  * Helper pour logger une action depuis une route.
  * Utilise req.auditContext si disponible.
- * @param {Object} req - Express request
- * @param {Object} opts - Options pour auditService.logAction
+ * @param {object} req - Express request
+ * @param {object} opts - Options pour auditService.logAction
  */
 async function logFromRequest(req, opts) {
   const ctx = req.auditContext || {};

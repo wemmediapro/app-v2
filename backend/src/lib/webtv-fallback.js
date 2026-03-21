@@ -11,12 +11,18 @@ const BACKEND_ROOT = path.join(__dirname, '..', '..');
 const DATA_DIR = path.join(BACKEND_ROOT, 'data');
 const WEBTV_FILE = path.join(DATA_DIR, 'webtv.json');
 
+/**
+ *
+ */
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 }
 
+/**
+ *
+ */
 function readChannels() {
   ensureDir();
   if (!fs.existsSync(WEBTV_FILE)) {
@@ -32,11 +38,17 @@ function readChannels() {
   }
 }
 
+/**
+ *
+ */
 function writeChannels(channels) {
   ensureDir();
   fs.writeFileSync(WEBTV_FILE, JSON.stringify(channels, null, 2), 'utf8');
 }
 
+/**
+ *
+ */
 function nextId(channels) {
   let max = 0;
   channels.forEach((c) => {
@@ -48,6 +60,9 @@ function nextId(channels) {
   return String(max + 1);
 }
 
+/**
+ *
+ */
 function toDoc(body) {
   return {
     name: body.name || '',

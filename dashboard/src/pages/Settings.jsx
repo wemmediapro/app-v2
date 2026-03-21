@@ -117,7 +117,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { boatConfig, loading: loadingBoat, refreshBoatConfig } = useBoatConfig();
   const [access, setAccess] = useState(() => getDefaultAccess());
-  const [accessLoading, setAccessLoading] = useState(true);
+  const [_accessLoading, setAccessLoading] = useState(true);
   const [saved, setSaved] = useState(true);
 
   // Formulaire unique du bateau (nom, capacité, informations)

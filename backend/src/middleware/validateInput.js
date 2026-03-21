@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 const { validationResult } = require('express-validator');
+const { RE_REGEX_METACHAR_ESCAPER } = require('../constants/regex');
 
 /**
  * Valide qu'un paramètre d'URL est un ObjectId MongoDB valide.
- * @param {string} [paramName='id'] - nom du param dans req.params
+ * @param {string} [paramName] - nom du param dans req.params
  */
 const validateMongoId = (paramName = 'id') => {
   return (req, res, next) => {
@@ -43,10 +44,7 @@ const sanitizeSearchString = (str) => {
   if (!str || typeof str !== 'string') {
     return '';
   }
-  return str
-    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    .trim()
-    .slice(0, 100);
+  return str.replace(RE_REGEX_METACHAR_ESCAPER, '\\$&').trim().slice(0, 100);
 };
 
 /** À placer après des chaînes express-validator ; avec validateMongoId seul, résultat vide → next(). */

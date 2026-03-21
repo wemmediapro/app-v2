@@ -5,7 +5,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-export default function BannersCarousel({
+function BannersCarousel({
   banners,
   bannerIndex,
   setBannerIndex,
@@ -109,3 +109,5 @@ export default function BannersCarousel({
     </section>
   );
 }
+
+export default React.memo(BannersCarousel);

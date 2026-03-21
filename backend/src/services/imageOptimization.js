@@ -202,7 +202,6 @@ async function optimizeImageInPlaceAggressive(inputPath, options = {}) {
   const meta = await pipeline.metadata();
   const width = meta.width || 0;
   const height = meta.height || 0;
-  const hasAlpha = meta.hasAlpha;
   const shouldResize = width > maxWidth || height > maxWidth;
   if (shouldResize) {
     pipeline = pipeline.resize(maxWidth, null, { fit: 'inside', withoutEnlargement: true });

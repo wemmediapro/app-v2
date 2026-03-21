@@ -71,5 +71,7 @@ const bannerSchema = new mongoose.Schema(
 
 bannerSchema.index({ position: 1, isActive: 1 });
 bannerSchema.index({ startDate: 1, endDate: 1 });
+// Liste publique & admin : sort({ order: 1, createdAt: -1 })
+bannerSchema.index({ order: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Banner', bannerSchema);

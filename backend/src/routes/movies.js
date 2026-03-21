@@ -152,8 +152,14 @@ router.post('/:id/fetch-poster', authMiddleware, adminMiddleware, async (req, re
       });
     }
     if (useMongo()) {
-      await Movie.findByIdAndUpdate(id, { $set: { poster: posterUrl } });
-      const updated = await Movie.findById(id).lean();
+      const updated = await Movie.findOneAndUpdate(
+        { _id: id },
+        { $set: { poster: posterUrl } },
+        { new: true, lean: true }
+      );
+      if (!updated) {
+        return res.status(404).json({ message: 'Film/série non trouvé' });
+      }
       return res.json(localizeMovie(updated));
     }
     moviesFallback.update(id, { poster: posterUrl });
@@ -219,8 +225,14 @@ router.post('/:id/generate-poster', authMiddleware, adminMiddleware, async (req,
     fs.writeFileSync(fullPath, Buffer.from(img.b64_json, 'base64'));
     const posterPath = `/uploads/images/${filename}`;
     if (useMongo()) {
-      await Movie.findByIdAndUpdate(id, { $set: { poster: posterPath, tmdbPosterPath: '' } });
-      const updated = await Movie.findById(id).lean();
+      const updated = await Movie.findOneAndUpdate(
+        { _id: id },
+        { $set: { poster: posterPath, tmdbPosterPath: '' } },
+        { new: true, lean: true }
+      );
+      if (!updated) {
+        return res.status(404).json({ message: 'Film/série non trouvé' });
+      }
       return res.json(localizeMovie(updated));
     }
     moviesFallback.update(id, { poster: posterPath });

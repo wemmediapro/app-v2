@@ -15,7 +15,7 @@ const Library = () => {
   });
 
   const [librarySearchQuery, setLibrarySearchQuery] = useState('');
-  const [libraryDurationFilter, setLibraryDurationFilter] = useState('all');
+  const [libraryDurationFilter, _setLibraryDurationFilter] = useState('all');
   const [librarySortBy, setLibrarySortBy] = useState('date');
   const [selectedLibraryFiles, setSelectedLibraryFiles] = useState([]);
   const [previewingFile, setPreviewingFile] = useState(null);

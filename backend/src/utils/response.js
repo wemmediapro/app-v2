@@ -8,6 +8,9 @@ function ok(res, data = {}, status = 200) {
   return res.status(status).json({ success: true, data });
 }
 
+/**
+ *
+ */
 function err(res, message, status = 500, details = null) {
   const body = { success: false, message: message || 'Erreur serveur' };
   if (details != null) {

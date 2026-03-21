@@ -10,9 +10,6 @@ const RadioStation = require('../models/RadioStation');
 const radioFallback = require('../lib/radio-fallback');
 const { logRouteError } = require('../lib/route-logger');
 
-const DB_UNAVAILABLE_MSG =
-  'Base de données indisponible. Démarrez MongoDB (ex: docker run -d -p 27017:27017 mongo) ou vérifiez MONGODB_URI dans backend/config.env.';
-
 function toResponse(doc) {
   if (!doc) {
     return null;
@@ -162,7 +159,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
       await station.save();
       return res.status(201).json(toResponse(station));
     }
-    const { name, streamUrl, playlistId } = req.body;
+    const { name } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ message: 'Le nom de la station est requis' });
     }

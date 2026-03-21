@@ -13,6 +13,16 @@ const { encodeToHls } = require('../services/hlsEncode');
 const { optimizeImage, optimizeImageBuffer, writeWebpSibling } = require('../services/imageOptimization');
 const { logRouteError } = require('../lib/route-logger');
 const logger = require('../lib/logger');
+const bullJobs = require('../jobs');
+const {
+  RE_UPLOAD_VIDEO_MIME,
+  RE_UPLOAD_VIDEO_EXT,
+  RE_UPLOAD_IMAGE_MIME,
+  RE_UPLOAD_IMAGE_EXT,
+  RE_UPLOAD_AUDIO_MIME,
+  RE_UPLOAD_AUDIO_EXT,
+  RE_UPLOAD_IMAGE_EXT_STRICT,
+} = require('../constants/regex');
 
 const router = express.Router();
 
@@ -71,8 +81,7 @@ const videoUpload = multer({
   storage: videoStorage,
   limits: { fileSize: 1000 * 1024 * 1024 }, // 1000 MB max
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /video\/(mp4|webm|ogg|quicktime|x-msvideo|mpeg)/;
-    if (allowedTypes.test(file.mimetype) || /\.(mp4|webm|ogg|mov|avi|mpeg|mpg)$/i.test(file.originalname)) {
+    if (RE_UPLOAD_VIDEO_MIME.test(file.mimetype) || RE_UPLOAD_VIDEO_EXT.test(file.originalname)) {
       cb(null, true);
     } else {
       cb(new Error('Type de fichier non autorisé. Utilisez MP4, WebM, OGG ou MOV.'));
@@ -94,8 +103,7 @@ const imageUpload = multer({
   storage: imageStorage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
   fileFilter: (req, file, cb) => {
-    const allowed = /image\/(jpeg|jpg|png|gif|webp)/;
-    if (allowed.test(file.mimetype) || /\.(jpe?g|png|gif|webp)$/i.test(file.originalname)) {
+    if (RE_UPLOAD_IMAGE_MIME.test(file.mimetype) || RE_UPLOAD_IMAGE_EXT.test(file.originalname)) {
       cb(null, true);
     } else {
       cb(new Error('Type non autorisé. Utilisez JPEG, PNG, GIF ou WebP.'));
@@ -116,8 +124,7 @@ const audioUpload = multer({
   storage: audioStorage,
   limits: { fileSize: 1000 * 1024 * 1024 }, // 1000 MB
   fileFilter: (req, file, cb) => {
-    const allowed = /audio\/(mpeg|mp3|wav|ogg|webm|x-wav)/;
-    if (allowed.test(file.mimetype) || /\.(mp3|wav|ogg|m4a)$/i.test(file.originalname)) {
+    if (RE_UPLOAD_AUDIO_MIME.test(file.mimetype) || RE_UPLOAD_AUDIO_EXT.test(file.originalname)) {
       cb(null, true);
     } else {
       cb(new Error('Type non autorisé. Utilisez MP3, WAV ou OGG.'));
@@ -187,6 +194,23 @@ router.post(
       const host = req.get('host') || `localhost:${port}`;
       const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
       const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
+
+      if (bullJobs.isJobsEnabled() && (req.query.async === '1' || req.query.async === 'true')) {
+        const job = await bullJobs.submitUploadJob({
+          kind: 'video',
+          inputPath,
+          baseUrl,
+          enableHls: process.env.ENABLE_HLS_STATIC === 'true',
+        });
+        return res.status(202).json({
+          success: true,
+          async: true,
+          message: 'Vidéo en file de traitement (compression 480p)',
+          jobId: job.id,
+          queue: 'upload',
+          statusUrl: `/api/admin/jobs/upload/${job.id}`,
+        });
+      }
 
       const { url, path: outputPath } = await processVideo(inputPath);
 
@@ -272,6 +296,27 @@ router.post(
             message: 'Type de fichier non autorisé (vérification magic-bytes). Utilisez JPEG, PNG, GIF ou WebP.',
           });
         }
+        const port = process.env.PORT || 3000;
+        const host = req.get('host') || `localhost:${port}`;
+        const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
+        const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
+
+        if (bullJobs.isJobsEnabled() && (req.query.async === '1' || req.query.async === 'true')) {
+          const job = await bullJobs.submitUploadJob({
+            kind: 'image',
+            inputPath: req.file.path,
+            baseUrl,
+          });
+          return res.status(202).json({
+            success: true,
+            async: true,
+            message: 'Image en file de traitement (optimisation)',
+            jobId: job.id,
+            queue: 'upload',
+            statusUrl: `/api/admin/jobs/upload/${job.id}`,
+          });
+        }
+
         let filePath = req.file.path;
         let filename = req.file.filename;
         try {
@@ -282,10 +327,6 @@ router.post(
           logger.warn({ event: 'upload_image_optimize_fallback', err: optErr.message });
         }
         const webpFilename = await writeWebpSibling(filePath);
-        const port = process.env.PORT || 3000;
-        const host = req.get('host') || `localhost:${port}`;
-        const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
-        const baseUrl = (process.env.API_BASE_URL || `${protocol}://${host}`).replace(/\/$/, '');
         const relativePath = `/uploads/images/${filename}`;
         const fullUrl = `${baseUrl}${relativePath}`;
         const webpRelative = webpFilename ? `/uploads/images/${webpFilename}` : undefined;
@@ -570,7 +611,7 @@ router.post('/image-from-base64', async (req, res) => {
       logger.warn({ event: 'upload_image_base64_optimize_fallback', err: optErr.message });
     }
     const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
-    if (!/\.(png|jpe?g|gif|webp)$/i.test(safeName)) {
+    if (!RE_UPLOAD_IMAGE_EXT_STRICT.test(safeName)) {
       filename = safeName + '.png';
     } else {
       filename = safeName;

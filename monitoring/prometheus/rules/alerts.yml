@@ -1,0 +1,20 @@
+groups:
+  - name: gnv-api
+    rules:
+      - alert: GnvApiHealthProbeFailed
+        expr: probe_success{job="blackbox"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Sonde GET /api/health en échec"
+          description: "Instance {{ $labels.instance }} — vérifier le backend et le réseau."
+
+      - alert: GnvBackendMetricsDown
+        expr: up{job="backend"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Scrape GET /metrics indisponible"
+          description: "Activer PROMETHEUS_METRICS_ENABLED=1 sur le backend ou corriger la cible dans monitoring/prometheus/prometheus.yml."

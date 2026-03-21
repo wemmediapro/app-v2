@@ -8,7 +8,6 @@ import {
   Search,
   DollarSign,
   Package,
-  Filter,
   Star,
   TrendingDown,
   X,

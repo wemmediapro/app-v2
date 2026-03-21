@@ -9,6 +9,7 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const EnfantActivity = require('../models/EnfantActivity');
 const { generateTranslationsForEnfant } = require('../lib/enfant-translations-openai');
 const { logRouteError } = require('../lib/route-logger');
+const { RE_ENFANT_ANS_AT_END, RE_ENFANT_STRIP_ANS_SUFFIX } = require('../constants/regex');
 
 const AGE_RANGE_SUFFIX = {
   en: ' years',
@@ -50,10 +51,8 @@ function localizeActivity(doc, lang) {
     if (Array.isArray(t.features) && t.features.length > 0) {
       obj.features = t.features;
     }
-  } else if (lang && AGE_RANGE_SUFFIX[lang] && doc.ageRange && /ans\s*$/i.test(String(doc.ageRange))) {
-    obj.ageRange = String(doc.ageRange)
-      .replace(/\s*ans\s*$/i, AGE_RANGE_SUFFIX[lang])
-      .trim();
+  } else if (lang && AGE_RANGE_SUFFIX[lang] && doc.ageRange && RE_ENFANT_ANS_AT_END.test(String(doc.ageRange))) {
+    obj.ageRange = String(doc.ageRange).replace(RE_ENFANT_STRIP_ANS_SUFFIX, AGE_RANGE_SUFFIX[lang]).trim();
   }
   return obj;
 }

@@ -1,0 +1,26 @@
+# Action composite : setup-node (cache npm) + npm ci dans un sous-dossier.
+name: npm ci (cache)
+description: Installe Node, restaure le cache npm selon un package-lock, exécute npm ci.
+
+inputs:
+  node-version:
+    description: Version Node (ex. 22)
+    required: true
+  lockfile:
+    description: Chemin du package-lock.json depuis la racine du dépôt
+    required: true
+  working-directory:
+    description: Répertoire de travail pour npm ci
+    default: '.'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: ${{ inputs.lockfile }}
+    - run: npm ci
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}

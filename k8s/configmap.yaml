@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gnv-backend-config
+  namespace: gnv-onboard
+  labels:
+    app.kubernetes.io/name: gnv-backend
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  # URL(s) du frontend pour CORS — remplacer par la valeur réelle (Ingress / domaine public)
+  FRONTEND_URL: "https://app.example.com"
+  LOG_LEVEL: "info"

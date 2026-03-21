@@ -1,7 +1,6 @@
 /**
  * Tests unitaires — middleware auth (getTokenFromRequest, adminMiddleware, requireRole)
  */
-const jwt = require('jsonwebtoken');
 
 jest.mock('../../config', () => ({ jwt: { secret: 'test-secret-at-least-32-characters-long!!' } }));
 jest.mock('../../models/User', () => ({
