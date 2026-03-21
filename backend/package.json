@@ -116,7 +116,7 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^22.19.15",
-    "better-sqlite3": "^12.5.0",
+    "better-sqlite3": "^12.8.0",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^54.0.0",
