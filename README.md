@@ -146,10 +146,15 @@ cd ../dashboard && npm run build
 cd backend && npm start
 ```
 
-## 📚 Déploiement & sécurité
+## 📚 Déploiement, sécurité & documentation développeur
 
 - **[Guide de déploiement (vue d’ensemble)](docs/DEPLOYMENT.md)** — checklist, init base, liens Nginx / PM2 / `PRODUCTION-GUIDE.md`
 - **Backend** : [Sécurité](backend/docs/SECURITY.md) · [Validateurs API](backend/docs/VALIDATION.md)
+- **OpenAPI / Swagger** : [docs/OPENAPI.md](docs/OPENAPI.md) — UI `/api-docs`, export `npm run openapi:json` → `backend/docs/openapi.json`
+- **Tests** : [docs/TESTING.md](docs/TESTING.md) · détail Jest : [backend/tests/README.md](backend/tests/README.md)
+- **Performance** : [docs/PERFORMANCE.md](docs/PERFORMANCE.md) · charge : [tests/load/README.md](tests/load/README.md)
+- **Sécurité (synthèse dev)** : [docs/SECURITY-BEST-PRACTICES.md](docs/SECURITY-BEST-PRACTICES.md) · [SECURITY.md](SECURITY.md)
+- **Schémas API (Mongoose vs OpenAPI)** : [docs/API-SCHEMA.md](docs/API-SCHEMA.md)
 
 ## 📱 URLs d'accès
 

@@ -56,6 +56,26 @@ function localizeRestaurant(doc, lang) {
   return out;
 }
 
+/**
+ * @swagger
+ * /api/v1/restaurants/categories/list:
+ *   get:
+ *     summary: Catégories de restaurants (filtres UI)
+ *     tags: [Restaurants]
+ *     responses:
+ *       200:
+ *         description: Liste des catégories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id: { type: string }
+ *                   name: { type: string }
+ *                   icon: { type: string }
+ */
 // @route   GET /api/restaurants/categories/list — doit être avant /:id
 router.get('/categories/list', async (req, res) => {
   try {
@@ -73,6 +93,35 @@ router.get('/categories/list', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/restaurants:
+ *   get:
+ *     summary: Liste des restaurants actifs
+ *     tags: [Restaurants]
+ *     parameters:
+ *       - in: query
+ *         name: lang
+ *         schema: { type: string, example: fr }
+ *         description: Code langue pour traductions (ex. fr, en)
+ *       - in: query
+ *         name: category
+ *         schema: { type: string }
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK (MongoDB ou fallback fichier si DB hors ligne)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Restaurant'
+ *       500:
+ *         description: Erreur serveur
+ */
 // @route   GET /api/restaurants — ?lang= pour contenu localisé
 router.get('/', async (req, res) => {
   try {
@@ -109,6 +158,32 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/restaurants/{id}:
+ *   get:
+ *     summary: Détail d'un restaurant
+ *     tags: [Restaurants]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: lang
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Restaurant'
+ *       404:
+ *         description: Non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
 // @route   GET /api/restaurants/:id — ?lang=
 router.get('/:id', async (req, res) => {
   try {

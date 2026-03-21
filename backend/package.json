@@ -12,6 +12,7 @@
     "test:watch": "jest --watch",
     "test:ci": "jest --coverage --ci",
     "test:coverage": "jest --coverage",
+    "openapi:json": "node scripts/export-openapi.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .js",
     "lint:fix": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .js --fix",

@@ -106,6 +106,28 @@ function mountRoutesAtBase(app, base, { dbManager, connectionCounters }) {
     res.json(payload);
   });
 
+  /**
+   * @swagger
+   * /api/v1/health/ready:
+   *   get:
+   *     summary: Readiness (MongoDB requis pour 200)
+   *     description: Retourne 503 si la base n'est pas connectée — pour orchestrateurs (K8s, etc.).
+   *     tags: [Health]
+   *     responses:
+   *       200:
+   *         description: Prêt à recevoir du trafic
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 ready: { type: boolean, example: true }
+   *                 mongodb: { type: string, example: 'connected' }
+   *                 apiVersion: { type: string, example: 'v1' }
+   *                 timestamp: { type: string, format: date-time }
+   *       503:
+   *         description: Base indisponible
+   */
   app.get(`${base}/health/ready`, (req, res) => {
     const dbConnected = dbManager && typeof dbManager.isConnected === 'function' && dbManager.isConnected();
     const body = {

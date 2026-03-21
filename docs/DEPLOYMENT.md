@@ -11,6 +11,7 @@ Vue d’ensemble pour passer en **production** : prérequis, build, process mana
 | Hébergement VM (résumé)                     | [README-HEBERGEMENT-VM.md](../README-HEBERGEMENT-VM.md)               |
 | Nginx (exemple)                             | `nginx.conf` à la racine du dépôt                                     |
 | Sécurité (checklist)                        | [SECURITY.md](../SECURITY.md)                                         |
+| Monitoring, CI/CD, backups, PRA (runbook)   | [OPS-RUNBOOK.md](./OPS-RUNBOOK.md)                                    |
 | Sécurité backend (détail)                   | [backend/docs/SECURITY.md](../backend/docs/SECURITY.md)               |
 | Validateurs API                             | [backend/docs/VALIDATION.md](../backend/docs/VALIDATION.md)           |
 | Auth JWT                                    | [backend/docs/AUTH-MIDDLEWARE.md](../backend/docs/AUTH-MIDDLEWARE.md) |

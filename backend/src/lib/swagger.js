@@ -1,4 +1,8 @@
+const path = require('path');
 const swaggerJsdoc = require('swagger-jsdoc');
+
+const routesGlob = path.join(__dirname, '../routes/*.js');
+const serverEntry = path.join(__dirname, '../../server.js');
 
 const options = {
   definition: {
@@ -7,7 +11,8 @@ const options = {
       title: 'GNV OnBoard API',
       version: '1.0.0',
       description:
-        'API REST versionnée : préfixe canonique `/api/v1`. Les mêmes routes restent disponibles sous `/api/*` (alias, rétrocompatibilité MVP).',
+        'API REST versionnée : préfixe canonique `/api/v1`. Les mêmes routes sont montées aussi sous `/api/*` (alias rétrocompatibilité) — dans OpenAPI, seul le préfixe `/api/v1` est documenté.\n\n' +
+        '**Swagger UI** : `GET /api-docs` (dev par défaut ; prod si `SWAGGER_ENABLED=true`). **Spec JSON** : `GET /api-docs.json`.',
       contact: {
         name: 'GNV Team',
       },
@@ -82,6 +87,51 @@ const options = {
             memoryMB: { type: 'number' },
           },
         },
+        Restaurant: {
+          type: 'object',
+          description: 'Restaurant (champs localisés si `lang` est fourni)',
+          properties: {
+            _id: { type: 'string' },
+            name: { type: 'string' },
+            description: { type: 'string' },
+            category: { type: 'string' },
+            isActive: { type: 'boolean' },
+            menu: { type: 'array', items: { type: 'object' } },
+            promotions: { type: 'array', items: { type: 'object' } },
+          },
+        },
+        Movie: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' },
+            description: { type: 'string' },
+            type: { type: 'string', example: 'movie' },
+            poster: { type: 'string' },
+            isActive: { type: 'boolean' },
+            episodes: { type: 'array', items: { type: 'object' } },
+          },
+        },
+        PaginatedMovies: {
+          type: 'object',
+          properties: {
+            data: { type: 'array', items: { $ref: '#/components/schemas/Movie' } },
+            total: { type: 'integer' },
+            page: { type: 'integer' },
+            limit: { type: 'integer' },
+          },
+        },
+        RadioStation: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            description: { type: 'string' },
+            streamUrl: { type: 'string' },
+            isActive: { type: 'boolean' },
+            listeners: { type: 'integer' },
+          },
+        },
       },
     },
     tags: [
@@ -96,10 +146,10 @@ const options = {
       { name: 'Feedback', description: 'Réclamations et feedback' },
       { name: 'Admin', description: 'Administration (admin uniquement)' },
       { name: 'Analytics', description: 'Statistiques et analytics' },
-      { name: 'Health', description: 'Santé du serveur' },
+      { name: 'Health', description: 'Santé du serveur et temps' },
     ],
   },
-  apis: ['./src/routes/*.js', './server.js'],
+  apis: [routesGlob, serverEntry],
 };
 
 const swaggerSpec = swaggerJsdoc(options);

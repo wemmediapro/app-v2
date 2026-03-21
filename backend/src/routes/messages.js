@@ -16,6 +16,28 @@ const User = require('../models/User');
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/v1/messages:
+ *   get:
+ *     summary: Conversations de l'utilisateur connecté
+ *     tags: [Messages]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, minimum: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1 }
+ *     responses:
+ *       200:
+ *         description: Liste des fils (pagination serveur)
+ *       401:
+ *         description: Non authentifié
+ */
 // @route   GET /api/messages
 // @desc    Get user's conversations
 // @access  Private

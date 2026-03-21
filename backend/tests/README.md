@@ -1,5 +1,7 @@
 # Tests backend (Jest)
 
+Guide transversal (Playwright, Vitest, charge) : **[docs/TESTING.md](../../docs/TESTING.md)**.
+
 ## Structure
 
 | Chemin              | Rôle                                                           |

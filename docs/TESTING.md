@@ -1,0 +1,58 @@
+# Guide des tests
+
+Ce document regroupe **comment** lancer et étendre les tests du dépôt. Le détail backend Jest reste dans [`backend/tests/README.md`](../backend/tests/README.md).
+
+## Vue d’ensemble
+
+| Couche | Outil | Emplacement |
+|--------|-------|-------------|
+| Backend API & libs | Jest | `backend/tests/`, `backend/src/**/__tests__/` |
+| Frontend (unitaire) | Vitest | racine — `npm test` |
+| Parcours E2E | Playwright | `tests/*.spec.js`, `playwright.config.js` |
+| Charge HTTP / WebSocket | k6, Artillery | `tests/load/`, voir [`tests/load/README.md`](../tests/load/README.md) |
+
+## Prérequis
+
+- Node.js **22+** (aligné CI)
+- MongoDB pour les tests d’intégration qui toucent la base (sinon les routes mockent souvent les modèles)
+- Variables d’environnement : le setup Jest charge `backend/tests/setup.js` (JWT, assouplissement rate-limit, etc.)
+
+## Backend (Jest)
+
+```bash
+cd backend
+npm test              # couverture + sortie CI-friendly
+npm run test:watch    # boucle locale
+npm run test:ci       # CI stricte
+```
+
+### Bonnes pratiques
+
+- **Isolation** : mocker `mongoose` / modèles quand le test ne vise pas la persistance ; le projet utilise `maxWorkers: 1` pour limiter les interférences.
+- **Handlers HTTP** : monter une mini-app `express()` avec `express.json()`, brancher le routeur sous test, appeler avec `supertest` (voir `backend/tests/unit/routes/`).
+- **Handles ouverts** : si Jest ne se termine pas, `npx jest --detectOpenHandles` (timers / rate-limit).
+
+### Couverture
+
+Les seuils et le périmètre `collectCoverageFrom` sont dans `backend/jest.config.js`. Objectif produit documenté dans `backend/tests/README.md` (~80 % sur le périmètre critique).
+
+## Frontend (Vitest) & E2E (Playwright)
+
+À la racine du repo :
+
+```bash
+npm install
+npm test                 # Vitest (unitaires frontend)
+npm run test:e2e         # Playwright
+npx playwright install   # binaires navigateur (première fois)
+```
+
+Variantes : `npm run test:e2e:ui`, `test:e2e:headed`, `test:e2e:mobile` — voir `package.json` racine.
+
+## Charge & performance
+
+Les scénarios k6 / Artillery servent à valider la tenue sous charge, pas à remplacer les tests unitaires. Voir [PERFORMANCE.md](./PERFORMANCE.md) et `tests/load/README.md`.
+
+## CI
+
+Le workflow GitHub Actions (`.github/workflows/tests.yml`) exécute en général les tests backend et les checks associés ; consulter le fichier pour la matrice Node et les étapes exactes.

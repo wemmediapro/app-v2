@@ -231,6 +231,33 @@ router.post('/:id/generate-poster', authMiddleware, adminMiddleware, async (req,
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/movies:
+ *   get:
+ *     summary: Liste paginée des films/séries actifs
+ *     description: Pagination par défaut page=1, limit=20 (max 100). Cache Redis pour requêtes sans en-tête Authorization.
+ *     tags: [Movies]
+ *     parameters:
+ *       - in: query
+ *         name: lang
+ *         schema: { type: string }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, minimum: 1, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedMovies'
+ *       503:
+ *         description: Service temporairement indisponible (corps avec data vide)
+ */
 // @route   GET /api/movies — ?lang= pour contenu localisé, pagination via middleware (défaut 20, max 100)
 // Cache Redis pour listes publiques (sans Authorization) — TTL par type dans cache-manager (films 86400s)
 router.get('/', paginate, async (req, res) => {
@@ -293,6 +320,30 @@ router.get('/', paginate, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/movies/{id}:
+ *   get:
+ *     summary: Détail d'un film ou d'une série
+ *     tags: [Movies]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: lang
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Movie'
+ *       404:
+ *         description: Non trouvé
+ */
 // @route   GET /api/movies/:id — ?lang=
 router.get('/:id', async (req, res) => {
   try {

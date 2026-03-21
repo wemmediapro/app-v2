@@ -44,6 +44,30 @@ function formatFallbackStation(s) {
 
 const useMongo = () => mongoose.connection.readyState === 1;
 
+/**
+ * @swagger
+ * /api/v1/radio:
+ *   get:
+ *     summary: Liste des stations radio
+ *     tags: [Radio]
+ *     parameters:
+ *       - in: query
+ *         name: lang
+ *         schema: { type: string }
+ *       - in: query
+ *         name: all
+ *         schema: { type: string, enum: ['1'] }
+ *         description: Si `all=1`, inclut les stations inactives (usage dashboard)
+ *     responses:
+ *       200:
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/RadioStation'
+ */
 // @route   GET /api/radio — ?lang= pour contenu localisé, ?all=1 pour dashboard
 router.get('/', async (req, res) => {
   try {

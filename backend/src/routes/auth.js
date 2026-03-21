@@ -85,7 +85,7 @@ function getCookieOptions(req) {
 
 /**
  * @swagger
- * /api/auth/register:
+ * /api/v1/auth/register:
  *   post:
  *     summary: Enregistrer un nouvel utilisateur (admin uniquement)
  *     tags: [Auth]
@@ -218,7 +218,7 @@ router.post(
 
 /**
  * @swagger
- * /api/auth/login:
+ * /api/v1/auth/login:
  *   post:
  *     summary: Connexion utilisateur
  *     tags: [Auth]
