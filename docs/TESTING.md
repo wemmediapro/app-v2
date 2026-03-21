@@ -56,3 +56,16 @@ Les scénarios k6 / Artillery servent à valider la tenue sous charge, pas à re
 ## CI
 
 Le workflow GitHub Actions (`.github/workflows/tests.yml`) exécute en général les tests backend et les checks associés ; consulter le fichier pour la matrice Node et les étapes exactes.
+
+## Exemples concrets dans le dépôt (copier / s’inspirer)
+
+| Type | Fichiers |
+|------|----------|
+| **Route API + supertest** | `backend/tests/unit/routes/auth.extended.test.js`, `messages.routes.test.js`, `restaurants.routes.test.js`, `critical.routes.test.js` |
+| **Middleware** | `backend/tests/unit/middleware/authMiddleware.flow.test.js`, `validateInput.unit.test.js`, `errorHandler.test.js` |
+| **Sécurité / credentials** | `backend/tests/unit/routes/auth.security-credentials.test.js`, `backend/src/__tests__/security.test.js` |
+| **Fixtures** | `backend/tests/fixtures/` (users, restaurants, messages, feedback) — voir [backend/tests/README.md](../backend/tests/README.md) |
+| **E2E Playwright** | `tests/*.spec.js` (ex. `navigation.spec.js`, `dashboard-auth.spec.js`, `magazine.spec.js`, `offline.spec.js`) |
+| **Charge** | `tests/load/gnv-1500-connections.js`, [tests/load/README.md](../tests/load/README.md) |
+
+Pour ajouter un test : dupliquer une suite proche du module modifié, mocker Mongoose si la persistance n’est pas nécessaire, puis `cd backend && npm test -- --testPathPattern=nomDuFichier`.

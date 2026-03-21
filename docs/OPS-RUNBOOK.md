@@ -63,6 +63,8 @@ Exemple de stratégie (à adapter : chemins, auth, réseau) :
 
 - Déploiement : [DEPLOYMENT.md](./DEPLOYMENT.md), [PRODUCTION-GUIDE.md](../PRODUCTION-GUIDE.md)
 - Améliorations qualité / Sentry : [QUALITY-IMPROVEMENTS.md](./QUALITY-IMPROVEMENTS.md)
+- Escalade & rollback (checklist) : [INCIDENT-RESPONSE.md](./INCIDENT-RESPONSE.md)
+- Index global : [DOCUMENTATION-HUB.md](./DOCUMENTATION-HUB.md)
 
 ---
 

@@ -75,6 +75,7 @@ test-results/
 scripts/*.sh
 !scripts/enable-gpg-signing.sh
 docs/AUDIT-*.md
+!docs/AUDIT-LOGGING-POLICY.md
 docs/refactor/
 docs/testing/
 docs/CHECKLIST-*.md

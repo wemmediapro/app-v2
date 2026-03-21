@@ -36,3 +36,9 @@ Le fichier produit est **`backend/docs/openapi.json`** (pratique pour CI, import
 | `backend/scripts/export-openapi.js` | Export JSON |
 
 Pour une vue d’ensemble **schémas métier vs OpenAPI**, voir [API-SCHEMA.md](./API-SCHEMA.md).
+
+## Couverture des endpoints
+
+Toutes les routes Express ne sont pas encore annotées avec `@swagger` : la spec décrit **un sous-ensemble** qui grandit au fil des PR. Les routes non listées restent utilisables ; pour l’intégration, compléter la doc ou consulter le code dans `backend/src/routes/`.
+
+**Import Postman / Insomnia** : [POSTMAN-INSOMNIA.md](./POSTMAN-INSOMNIA.md).

@@ -9,6 +9,8 @@ Application complète pour la gestion des services à bord du navire GNV Excelsi
 
 > **CI/CD** : voir [docs/GITHUB_CI_CD.md](docs/GITHUB_CI_CD.md) (secrets, protections de branche, Codecov).
 
+> **Documentation (index)** : [docs/DOCUMENTATION-HUB.md](docs/DOCUMENTATION-HUB.md) — API OpenAPI/Swagger, tests, runbook, incidents, sécurité, schéma données, Postman.
+
 ## 🚢 Fonctionnalités
 
 ### Frontend (Application Passagers)
