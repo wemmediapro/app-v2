@@ -4,6 +4,7 @@
  */
 const path = require('path');
 const logger = require('../lib/logger');
+const { buildMongoPoolOptions } = require('./database');
 const { DEFAULT_ENDPOINT_RULES } = require('../middleware/rateLimits');
 
 const ROOT = path.join(__dirname, '..', '..');
@@ -83,6 +84,8 @@ module.exports = {
       process.env.MONGODB_URI ||
       'mongodb://localhost:27017/gnv_onboard?directConnection=true',
     dbName: process.env.DB_NAME || 'gnv_onboard',
+    /** Pool effectif (défaut max 30 / min 10, voir config/database.js). */
+    pool: buildMongoPoolOptions(),
     reconnectMaxRetries: parseInt(process.env.MONGODB_RECONNECT_MAX_RETRIES, 10) ?? 0,
     reconnectDelayMs: parseInt(process.env.MONGODB_RECONNECT_DELAY_MS, 10) || 5000,
     reconnectDelayMaxMs: parseInt(process.env.MONGODB_RECONNECT_DELAY_MAX_MS, 10) || 60000,

@@ -17,16 +17,30 @@ export default defineConfig(({ mode }) => {
   const analyzeBundle = process.env.ANALYZE === '1';
   const cdnBase = (env.VITE_DASHBOARD_ASSET_BASE || env.VITE_ASSET_BASE || '').trim();
   const dashboardBase = cdnBase === '' ? '/dashboard/' : cdnBase.endsWith('/') ? cdnBase : `${cdnBase}/`;
+  const isVitest = Boolean(process.env.VITEST);
 
   return {
     base: dashboardBase,
+    resolve: {
+      dedupe: ['react', 'react-dom'],
+    },
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: [path.resolve(__dirname, 'src/tests/setup.js')],
+      include: ['src/**/*.test.{js,jsx}'],
+    },
     plugins: [
-      {
-        name: 'gnv-dashboard-proxy-log',
-        configureServer() {
-          console.log(`[Vite dashboard] Proxy → backend: ${proxyTarget}`);
-        },
-      },
+      ...(isVitest
+        ? []
+        : [
+            {
+              name: 'gnv-dashboard-proxy-log',
+              configureServer() {
+                console.log(`[Vite dashboard] Proxy → backend: ${proxyTarget}`);
+              },
+            },
+          ]),
       react(),
       ...(analyzeBundle
         ? [
