@@ -59,21 +59,15 @@ function buildApp() {
   return app;
 }
 
-/** Chaîne Message.find thenable (double populate) */
+/** Chaîne Message.find → populate ×2 → lean() */
 function mockMessageFindResult(messages) {
-  const query = {
+  return {
     sort: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
     populate: jest.fn().mockReturnThis(),
-    then(resolve, reject) {
-      return Promise.resolve(messages).then(resolve, reject);
-    },
-    catch(onReject) {
-      return Promise.resolve(messages).catch(onReject);
-    },
+    lean: jest.fn().mockResolvedValue(messages),
   };
-  return query;
 }
 
 describe('GET /api/messages (conversations)', () => {
@@ -202,7 +196,9 @@ describe('GET /api/messages/users/search', () => {
   it('200 recherche par email', async () => {
     User.find.mockReturnValue({
       select: jest.fn().mockReturnValue({
-        limit: jest.fn().mockResolvedValue([{ _id: peerId, email: 'x@y.com', firstName: 'X' }]),
+        limit: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([{ _id: peerId, email: 'x@y.com', firstName: 'X' }]),
+        }),
       }),
     });
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
@@ -218,7 +214,9 @@ describe('GET /api/messages/users/search', () => {
   it('200 recherche par téléphone (chiffres)', async () => {
     User.find.mockReturnValue({
       select: jest.fn().mockReturnValue({
-        limit: jest.fn().mockResolvedValue([{ _id: peerId, phone: '+33601020304' }]),
+        limit: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([{ _id: peerId, phone: '+33601020304' }]),
+        }),
       }),
     });
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
@@ -232,7 +230,9 @@ describe('GET /api/messages/users/search', () => {
   it('200 recherche téléphone extraite depuis q avec texte (branche isPhone + phone regex)', async () => {
     User.find.mockReturnValue({
       select: jest.fn().mockReturnValue({
-        limit: jest.fn().mockResolvedValue([]),
+        limit: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([]),
+        }),
       }),
     });
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
@@ -249,7 +249,9 @@ describe('GET /api/messages/users/search', () => {
     const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
     User.find.mockReturnValue({
       select: jest.fn().mockReturnValue({
-        limit: jest.fn().mockRejectedValue(new Error('db down')),
+        limit: jest.fn().mockReturnValue({
+          lean: jest.fn().mockRejectedValue(new Error('db down')),
+        }),
       }),
     });
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
@@ -332,7 +334,7 @@ describe('GET /api/messages/:userId', () => {
     }
   });
 
-  it('500 si updateMany échoue après lecture des messages', async () => {
+  it('500 si updateMany échoue (avant chargement du fil)', async () => {
     const errSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
     updateManySpy.mockRestore();
     jest.spyOn(Message, 'updateMany').mockRejectedValue(new Error('update failed'));
@@ -433,9 +435,7 @@ describe('POST /api/messages', () => {
     User.exists.mockResolvedValue({ _id: peerId });
     jest.spyOn(Message, 'findOne').mockReturnValue({
       populate: jest.fn().mockReturnThis(),
-      then(onFulfilled) {
-        return Promise.resolve(existing).then(onFulfilled);
-      },
+      lean: jest.fn().mockResolvedValue(existing),
     });
 
     const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
@@ -459,15 +459,12 @@ describe('POST /api/messages', () => {
     User.findById.mockImplementation(() => authUserChain());
     User.exists.mockResolvedValue({ _id: peerId });
     jest.spyOn(Message, 'findOne').mockImplementation(() => {
-      const chain = {
+      findOneN += 1;
+      const val = findOneN === 1 ? null : existing;
+      return {
         populate: jest.fn().mockReturnThis(),
-        then(onF, onR) {
-          findOneN += 1;
-          const val = findOneN === 1 ? null : existing;
-          return Promise.resolve(val).then(onF, onR);
-        },
+        lean: jest.fn().mockResolvedValue(val),
       };
-      return chain;
     });
     const dupErr = Object.assign(new Error('E11000'), { code: 11000 });
     jest.spyOn(Message.prototype, 'save').mockRejectedValue(dupErr);
@@ -539,9 +536,7 @@ describe('POST /api/messages', () => {
     User.exists.mockResolvedValue({ _id: peerId });
     jest.spyOn(Message, 'findOne').mockImplementation(() => ({
       populate: jest.fn().mockReturnThis(),
-      then(onF) {
-        return Promise.resolve(null).then(onF);
-      },
+      lean: jest.fn().mockResolvedValue(null),
     }));
     const dupErr = Object.assign(new Error('E11000'), { code: 11000 });
     jest.spyOn(Message.prototype, 'save').mockRejectedValue(dupErr);

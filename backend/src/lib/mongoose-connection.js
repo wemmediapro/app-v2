@@ -7,8 +7,8 @@ const https = require('https');
 const http = require('http');
 const logger = require('./logger');
 
-/** Défaut cible ~1500 users / process : pool modéré (ajuster avec MONGODB_MAX_POOL_SIZE en cluster). */
-const DEFAULT_MAX_POOL_SIZE = 20;
+/** Défaut cible ~1500 users / process : pool élargi (surcharge MONGODB_MAX_POOL_SIZE / cluster). */
+const DEFAULT_MAX_POOL_SIZE = 30;
 const DEFAULT_MIN_POOL_SIZE = 10;
 
 const MONITOR_INTERVAL_MS =

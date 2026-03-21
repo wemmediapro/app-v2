@@ -22,11 +22,11 @@ describe('mongoose-connection', () => {
     jest.resetModules();
   });
 
-  it('buildMongoPoolOptions : défaut 20 / 10', () => {
+  it('buildMongoPoolOptions : défaut 30 / 10', () => {
     delete process.env.MONGODB_MAX_POOL_SIZE;
     delete process.env.MONGODB_MIN_POOL_SIZE;
     const { buildMongoPoolOptions } = require('../../../src/lib/mongoose-connection');
-    expect(buildMongoPoolOptions()).toEqual({ maxPoolSize: 20, minPoolSize: 10 });
+    expect(buildMongoPoolOptions()).toEqual({ maxPoolSize: 30, minPoolSize: 10 });
   });
 
   it('buildMongoPoolOptions : respecte env et borne min ≤ max', () => {

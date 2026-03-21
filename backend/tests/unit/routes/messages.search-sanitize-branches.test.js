@@ -62,7 +62,9 @@ describe('GET /api/messages/users/search — sanitize vide', () => {
     User.findById.mockImplementation(() => authUserChain());
     User.find.mockReturnValue({
       select: jest.fn().mockReturnValue({
-        limit: jest.fn().mockResolvedValue([]),
+        limit: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([]),
+        }),
       }),
     });
   });

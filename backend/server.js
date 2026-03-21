@@ -105,6 +105,9 @@ const {
   jwtAdminSkipCache,
 } = require('./src/lib/http-middleware-tuning');
 const { requestContextMiddleware, httpAccessStructuredMiddleware } = require('./src/lib/request-context');
+const { createSlowRequestLoggerMiddleware } = require('./src/middleware/performanceMonitor');
+const { securityEnhancementsHeaders } = require('./src/middleware/securityEnhancements');
+const mongoSanitizeExpress5 = require('./src/middleware/mongoSanitizeExpress5');
 const { initPrometheusMetrics, mountPrometheusMetricsRoute } = require('./src/lib/prometheus-metrics');
 
 const app = express();
@@ -169,6 +172,7 @@ app.use(
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 );
+app.use(securityEnhancementsHeaders());
 app.use(cookieParser());
 app.use('/api', csrfCookie);
 app.use('/api', csrfProtection);
@@ -187,9 +191,22 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(requestContextMiddleware());
 app.use(otelHttpCustomMetricsMiddleware());
+app.use(createSlowRequestLoggerMiddleware());
 app.use(httpAccessStructuredMiddleware());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(
+  mongoSanitizeExpress5({
+    replaceWith: '_',
+    onSanitize: ({ req, key }) => {
+      (req.log || logger).warn({
+        event: 'mongo_injection_sanitized',
+        segment: key,
+        path: req.path,
+      });
+    },
+  })
+);
 app.use(require('./src/middleware/language'));
 
 // Rate limiting — protège l’API pour 1000+ connexions (exclusions: stream, upload, health)

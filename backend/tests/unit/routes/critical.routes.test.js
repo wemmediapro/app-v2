@@ -232,7 +232,9 @@ describe('Routes critiques', () => {
           };
         }
         return {
-          select: jest.fn().mockResolvedValue(profile),
+          select: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue(profile),
+          }),
         };
       });
       const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
@@ -252,7 +254,9 @@ describe('Routes critiques', () => {
           };
         }
         return {
-          select: jest.fn().mockResolvedValue(null),
+          select: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue(null),
+          }),
         };
       });
       const token = generateToken({ id: uid, email: 'u@test.com', role: 'user' });
@@ -341,12 +345,7 @@ describe('Routes critiques', () => {
         limit: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         populate: jest.fn().mockReturnThis(),
-        then(onF) {
-          return Promise.resolve(reversed).then(onF);
-        },
-        catch(onR) {
-          return Promise.resolve(reversed).catch(onR);
-        },
+        lean: jest.fn().mockResolvedValue(reversed),
       };
       Message.find = jest.fn().mockReturnValue(query);
       Message.updateMany = jest.fn().mockResolvedValue({ modifiedCount: 0 });

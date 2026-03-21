@@ -11,6 +11,7 @@ const {
 const { logRouteError } = require('../lib/route-logger');
 const queryCache = require('../lib/queryCache');
 const { hashQueryPart } = require('../lib/queryCache');
+const { withSecondaryRead } = require('../utils/queryOptimizer');
 
 const router = express.Router();
 
@@ -43,13 +44,13 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
 
     const body = await queryCache.getCached(cacheKey, async () => {
       const [data, total] = await Promise.all([
-        User.find(query)
+        withSecondaryRead(User.find(query))
           .select('firstName lastName email cabinNumber avatar')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit)
           .lean(),
-        User.countDocuments(query),
+        withSecondaryRead(User.countDocuments(query)),
       ]);
       return { data, total, page, limit };
     });
@@ -66,7 +67,7 @@ router.get('/', authMiddleware, validatePagination, handleValidationErrors, asyn
 // @access  Private
 router.get('/:id', authMiddleware, validateMongoId('id'), handleValidationErrors, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findById(req.params.id).select('-password').lean();
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });

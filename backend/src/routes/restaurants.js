@@ -7,6 +7,7 @@ const restaurantsFallback = require('../lib/restaurants-fallback');
 const { logRouteError } = require('../lib/route-logger');
 const queryCache = require('../lib/queryCache');
 const { hashQueryPart } = require('../lib/queryCache');
+const { withSecondaryRead } = require('../utils/queryOptimizer');
 
 const router = express.Router();
 
@@ -161,7 +162,7 @@ router.get('/', async (req, res) => {
     ].join(':');
 
     const restaurants = await queryCache.getCached(cacheKey, async () => {
-      const docs = await Restaurant.find(query).read('secondaryPreferred').sort({ name: 1 }).lean();
+      const docs = await withSecondaryRead(Restaurant.find(query)).sort({ name: 1 }).lean();
       return docs.map((doc) => localizeRestaurant(doc, lang));
     });
 
@@ -216,7 +217,7 @@ router.get('/:id', async (req, res) => {
     const cacheKey = `restaurants:byId:${id}:${lang || 'default'}`;
 
     const payload = await queryCache.getCached(cacheKey, async () => {
-      const doc = await Restaurant.findById(id).read('secondaryPreferred').lean();
+      const doc = await withSecondaryRead(Restaurant.findById(id)).lean();
       if (!doc) {
         return null;
       }

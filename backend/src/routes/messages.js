@@ -15,6 +15,7 @@ const Message = require('../models/Message');
 const User = require('../models/User');
 const { logRouteError } = require('../lib/route-logger');
 const queryCache = require('../lib/queryCache');
+const { withSecondaryRead } = require('../utils/queryOptimizer');
 
 const router = express.Router();
 
@@ -157,7 +158,10 @@ router.get(
         }
       }
 
-      const users = await User.find(searchQuery).select('firstName lastName email phone cabinNumber avatar').limit(10);
+      const users = await withSecondaryRead(User.find(searchQuery))
+        .select('firstName lastName email phone cabinNumber avatar')
+        .limit(10)
+        .lean();
 
       res.json(users);
     } catch (error) {
@@ -180,19 +184,6 @@ router.get(
     try {
       const { limit, skip } = req.pagination;
 
-      const messages = await Message.find({
-        $or: [
-          { sender: req.user.id, receiver: req.params.userId },
-          { sender: req.params.userId, receiver: req.user.id },
-        ],
-      })
-        .sort({ createdAt: -1 })
-        .limit(limit)
-        .skip(skip)
-        .populate('sender', 'firstName lastName avatar')
-        .populate('receiver', 'firstName lastName avatar');
-
-      // Mark messages as read
       const updated = await Message.updateMany(
         {
           sender: req.params.userId,
@@ -208,6 +199,19 @@ router.get(
       if (updated.modifiedCount > 0) {
         void queryCache.invalidate(`messages:conversations:${String(req.user.id)}`);
       }
+
+      const messages = await Message.find({
+        $or: [
+          { sender: req.user.id, receiver: req.params.userId },
+          { sender: req.params.userId, receiver: req.user.id },
+        ],
+      })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .skip(skip)
+        .populate('sender', 'firstName lastName avatar')
+        .populate('receiver', 'firstName lastName avatar')
+        .lean();
 
       res.json(messages.reverse());
     } catch (error) {
@@ -251,7 +255,8 @@ router.post(
           clientSyncId: String(clientSyncId).trim(),
         })
           .populate('sender', 'firstName lastName avatar')
-          .populate('receiver', 'firstName lastName avatar');
+          .populate('receiver', 'firstName lastName avatar')
+          .lean();
         if (existing) {
           return res.status(200).json({
             message: 'Message already synced',
@@ -278,7 +283,8 @@ router.post(
             clientSyncId: String(clientSyncId).trim(),
           })
             .populate('sender', 'firstName lastName avatar')
-            .populate('receiver', 'firstName lastName avatar');
+            .populate('receiver', 'firstName lastName avatar')
+            .lean();
           if (again) {
             return res.status(200).json({
               message: 'Message already synced',

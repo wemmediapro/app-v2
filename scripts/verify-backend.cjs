@@ -34,20 +34,32 @@ async function main() {
 
   const results = [];
 
-  // 1. Health
+  // 1. Health (legacy status OK ou rapport détaillé healthOverall / mongodb)
   try {
     const r = await request(`${BASE}/api/health`);
-    const ok = r.status === 200 && r.data && r.data.status === 'OK';
-    results.push({ name: 'GET /api/health', ok, status: r.status, detail: ok ? 'OK' : (r.data?.message || r.data) });
+    const d = r.data;
+    const mongoOk = d && d.mongodb === 'connected';
+    const legacyOk = d && d.status === 'OK';
+    const overallOk =
+      d && d.healthOverall && d.healthOverall !== 'unhealthy';
+    const ok =
+      r.status === 200 && d && (legacyOk || mongoOk || overallOk);
+    const detail = ok
+      ? d.healthOverall
+        ? `${d.healthOverall}${mongoOk ? ', mongo OK' : ''}`
+        : 'OK'
+      : d?.message || JSON.stringify(d || {}).slice(0, 120);
+    results.push({ name: 'GET /api/health', ok, status: r.status, detail });
   } catch (e) {
     results.push({ name: 'GET /api/health', ok: false, detail: e.message || 'Connexion refusée' });
   }
 
-  // 2. Movies (DB ou démo)
+  // 2. Movies (DB ou démo) — tableau racine ou { data: [...] }
   try {
     const r = await request(`${BASE}/api/movies`);
-    const ok = r.status === 200 && Array.isArray(r.data);
-    results.push({ name: 'GET /api/movies', ok, status: r.status, count: Array.isArray(r.data) ? r.data.length : 0 });
+    const arr = Array.isArray(r.data) ? r.data : r.data?.data;
+    const ok = r.status === 200 && Array.isArray(arr);
+    results.push({ name: 'GET /api/movies', ok, status: r.status, count: Array.isArray(arr) ? arr.length : 0 });
   } catch (e) {
     results.push({ name: 'GET /api/movies', ok: false, detail: e.message });
   }

@@ -40,7 +40,7 @@ class DatabaseManager {
   getConnectionOptions(serverType) {
     const pool = buildMongoPoolOptions();
 
-    // Options de base — pool dimensionné pour ~1500 users (défaut max 20 / min 10, voir mongoose-connection.js)
+    // Options de base — pool dimensionné pour ~1500 users (défaut max 30 / min 10, voir mongoose-connection.js)
     const baseOptions = {
       retryWrites: true,
       w: 'majority',

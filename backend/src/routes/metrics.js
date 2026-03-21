@@ -5,8 +5,17 @@
 
 const express = require('express');
 const logger = require('../lib/logger');
+const { getPerformanceMonitorStats } = require('../middleware/performanceMonitor');
 
 const router = express.Router();
+
+/** Compteurs requêtes lentes (opt-in : PERF_MONITOR_HTTP=1) — pas de détail par URL pour limiter la fuite d’info. */
+router.get('/perf', (_req, res) => {
+  if (process.env.PERF_MONITOR_HTTP !== '1') {
+    return res.status(404).end();
+  }
+  return res.json({ success: true, ...getPerformanceMonitorStats() });
+});
 
 const ALLOWED_NAMES = new Set(['CLS', 'FCP', 'FID', 'INP', 'LCP', 'TTFB']);
 
