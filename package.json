@@ -108,7 +108,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "husky": "^9.1.7",
-    "jsdom": "^25.0.1",
+    "jsdom": "^29.0.1",
     "lint-staged": "^15.4.3",
     "ngrok": "^5.0.0-beta.2",
     "playwright": "^1.58.2",
