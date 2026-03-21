@@ -62,3 +62,5 @@ Ce fichier est le **point d’entrée** pour les audits « documentation manquan
 ---
 
 **À faire en continu (pas « manquant » mais dette doc)** : ajouter des blocs `@swagger` sur chaque route publique dans `backend/src/routes/*.js` et regénérer `openapi.json` ; monter la couverture de tests comme décrit dans `backend/tests/README.md`.
+
+**Go-live P0** : [GO-LIVE-P0.md](./GO-LIVE-P0.md) — sécurité admin, 2FA, Husky/ESLint, Sentry.

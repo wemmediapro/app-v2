@@ -22,8 +22,26 @@ describe('validateSecurityConfig — credentials admin (production)', () => {
     process.env.JWT_SECRET = 'x'.repeat(32);
     process.env.MONGODB_URI = 'mongodb://localhost:27017/t';
     process.env.ADMIN_EMAIL = 'admin@gnv.com';
-    process.env.ADMIN_PASSWORD = 'ValidPass1!';
+    process.env.ADMIN_PASSWORD = 'ValidPass12!x';
     expect(() => validateSecurityConfig()).toThrow(/admin@gnv\.com/);
+  });
+
+  it('lève une erreur si ADMIN_PASSWORD fait moins de 12 caractères en production', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET = 'x'.repeat(32);
+    process.env.MONGODB_URI = 'mongodb://localhost:27017/t';
+    process.env.ADMIN_EMAIL = 'ops@entreprise.example';
+    process.env.ADMIN_PASSWORD = 'short';
+    expect(() => validateSecurityConfig()).toThrow(/at least 12 characters/);
+  });
+
+  it('lève une erreur si ADMIN_PASSWORD est un mot de passe de démo connu', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET = 'x'.repeat(32);
+    process.env.MONGODB_URI = 'mongodb://localhost:27017/t';
+    process.env.ADMIN_EMAIL = 'ops@entreprise.example';
+    process.env.ADMIN_PASSWORD = 'Administrator'; // ≥12 car. et entrée exacte bannie (administrator)
+    expect(() => validateSecurityConfig()).toThrow(/known default|trivial password/i);
   });
 
   it('passe avec ADMIN_EMAIL non démo et secrets valides', () => {
@@ -31,7 +49,7 @@ describe('validateSecurityConfig — credentials admin (production)', () => {
     process.env.JWT_SECRET = 'x'.repeat(32);
     process.env.MONGODB_URI = 'mongodb://localhost:27017/t';
     process.env.ADMIN_EMAIL = 'ops@entreprise.example';
-    process.env.ADMIN_PASSWORD = 'ValidPass1!';
+    process.env.ADMIN_PASSWORD = 'ValidPass12!Secure';
     expect(() => validateSecurityConfig()).not.toThrow();
   });
 });

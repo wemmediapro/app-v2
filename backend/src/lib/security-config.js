@@ -30,10 +30,30 @@ function validateSecurityConfig() {
       throw new Error('CRITICAL: ADMIN_EMAIL must not be the default demo address admin@gnv.com in production.');
     }
 
-    // ADMIN_PASSWORD : obligatoire pour le dashboard
+    // ADMIN_PASSWORD : obligatoire pour le dashboard (longueur + pas de mots de passe de démo connus)
     const ap = process.env.ADMIN_PASSWORD;
     if (!ap || typeof ap !== 'string' || !ap.trim()) {
       throw new Error('CRITICAL: ADMIN_PASSWORD must be set (non-empty) in production.');
+    }
+    const apTrim = ap.trim();
+    if (apTrim.length < 12) {
+      throw new Error('CRITICAL: ADMIN_PASSWORD must be at least 12 characters in production.');
+    }
+    const apLower = apTrim.toLowerCase();
+    const bannedAdminPasswords = new Set([
+      'admin123!',
+      'admin123!!',
+      'password',
+      'password123',
+      'changeme',
+      'admin123',
+      'administrator',
+      'gnvadmin123',
+    ]);
+    if (bannedAdminPasswords.has(apLower)) {
+      throw new Error(
+        'CRITICAL: ADMIN_PASSWORD must not be a known default or trivial password. Choose a unique strong password (12+ characters).'
+      );
     }
   } else {
     // En dev : avertissements seulement

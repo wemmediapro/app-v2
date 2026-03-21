@@ -73,19 +73,19 @@
   },
   "lint-staged": {
     "src/**/*.{js,jsx}": [
-      "eslint --fix",
+      "cross-env ESLINT_USE_FLAT_CONFIG=false eslint --fix",
       "prettier --write"
     ],
     "tests/**/*.js": [
-      "eslint --fix",
+      "cross-env ESLINT_USE_FLAT_CONFIG=false eslint --fix",
       "prettier --write"
     ],
     "dashboard/src/**/*.{js,jsx}": [
-      "eslint --fix --config dashboard/.eslintrc.cjs",
+      "cross-env ESLINT_USE_FLAT_CONFIG=false eslint --fix --config dashboard/.eslintrc.cjs",
       "prettier --write"
     ],
     "backend/src/**/*.js": [
-      "eslint --fix --config backend/.eslintrc.js",
+      "cross-env ESLINT_USE_FLAT_CONFIG=false eslint --fix --config backend/.eslintrc.js",
       "prettier --write"
     ],
     "*.{json,css,md}": [
@@ -101,6 +101,7 @@
     "artillery": "^2.0.30",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^54.0.0",
