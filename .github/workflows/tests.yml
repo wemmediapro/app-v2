@@ -142,7 +142,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload couverture frontend → Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
@@ -195,7 +195,7 @@ jobs:
         run: npm run test
 
       - name: Upload couverture backend → Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./backend/coverage/lcov.info
