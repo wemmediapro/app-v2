@@ -5,7 +5,7 @@
   "private": true,
   "dependencies": {
     "@sentry/react": "^8.55.0",
-    "axios": "^1.6.0",
+    "axios": "^1.14.0",
     "dompurify": "^3.3.3",
     "framer-motion": "^11.0.0",
     "hls.js": "^1.6.15",
