@@ -16,7 +16,7 @@
     "react-router-dom": "^6.30.3",
     "socket.io-client": "^4.8.1",
     "tailwindcss": "^3.4.0",
-    "web-vitals": "^5.1.0"
+    "web-vitals": "^5.2.0"
   },
   "scripts": {
     "analyze": "node scripts/analyze-and-sync.cjs --sync-db",
