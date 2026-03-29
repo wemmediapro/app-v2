@@ -53,7 +53,7 @@
     "jsdom": "^25.0.1",
     "http-proxy": "^1.18.1",
     "localtunnel": "^2.0.2",
-    "postcss": "^8.4.32",
+    "postcss": "^8.5.8",
     "prettier": "^3.8.1",
     "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^3.4.0",
