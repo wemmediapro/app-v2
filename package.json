@@ -116,7 +116,7 @@
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.1.0",
     "cross-env": "^7.0.3",
-    "eslint": "^9.39.4",
+    "eslint": "^10.2.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsdoc": "^54.0.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
